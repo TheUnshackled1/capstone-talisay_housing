@@ -675,34 +675,6 @@
                 {% endif %}
             </div>
 
-            {% if user.position == 'second_member' or user.position == 'fourth_member' %}
-            <!-- Quick Actions Strip -->
-            <div style="margin-bottom: 0.5rem;">
-                <div class="quick-actions-label">Quick Actions</div>
-                <div class="quick-actions">
-                    <a href="{% url 'intake:applicants_list' request.user.position %}" class="quick-action-btn qa-primary">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        New Applicant
-                    </a>
-                    <a href="{% url 'cases:case_dashboard' request.user.position %}" class="quick-action-btn qa-cases">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        View Cases
-                    </a>
-                    <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="quick-action-btn qa-housing">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        Housing Units
-                    </a>
-                    <a href="{% url 'documents:management' request.user.position %}" class="quick-action-btn qa-docs">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        Documents
-                    </a>
-                    <a href="{% url 'applications:applications_list' request.user.position %}" class="quick-action-btn qa-apps">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
-                        Applications
-                    </a>
-                </div>
-            </div>
-            {% endif %}
 
             {% if user.position == 'second_member' or user.position == 'fourth_member' %}
 <style>
@@ -1225,101 +1197,6 @@
     .welcome-summary-item.warn strong { color: #fde68a; }
     .welcome-summary-item.warn svg { stroke: #fde68a; }
 
-    /* ── Quick Actions strip ── */
-    .quick-actions {
-        display: flex;
-        gap: 0.65rem;
-        flex-wrap: nowrap;
-        margin-bottom: 1.1rem;
-    }
-    .quick-action-btn {
-        flex: 1;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.45rem;
-        padding: 0.52rem 1.05rem;
-        font-size: 0.78rem;
-        font-weight: 600;
-        color: #0f172a;
-        background: rgba(255,255,255,0.72);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.7);
-        border-radius: 999px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
-        font-family: inherit;
-        white-space: nowrap;
-    }
-    .quick-action-btn:hover {
-        background: rgba(255,255,255,0.95);
-        transform: translateY(-2px);
-        color: #047857;
-    }
-    .quick-action-btn svg {
-        width: 14px; height: 14px;
-        stroke: currentColor;
-        flex-shrink: 0;
-    }
-    .quick-action-btn.qa-primary {
-        background: #10b981;
-        color: #ffffff;
-        border-color: #10b981;
-    }
-    .quick-action-btn.qa-primary:hover {
-        background: #059669;
-        color: #ffffff;
-    }
-    
-    .quick-action-btn.qa-cases {
-        background: #8b5cf6;
-        color: #ffffff;
-        border-color: #8b5cf6;
-    }
-    .quick-action-btn.qa-cases:hover {
-        background: #7c3aed;
-        color: #ffffff;
-    }
-
-    .quick-action-btn.qa-housing {
-        background: #f59e0b;
-        color: #ffffff;
-        border-color: #f59e0b;
-    }
-    .quick-action-btn.qa-housing:hover {
-        background: #d97706;
-        color: #ffffff;
-    }
-
-    .quick-action-btn.qa-docs {
-        background: #0ea5e9;
-        color: #ffffff;
-        border-color: #0ea5e9;
-    }
-    .quick-action-btn.qa-docs:hover {
-        background: #0284c7;
-        color: #ffffff;
-    }
-
-    .quick-action-btn.qa-apps {
-        background: #f43f5e;
-        color: #ffffff;
-        border-color: #f43f5e;
-    }
-    .quick-action-btn.qa-apps:hover {
-        background: #e11d48;
-        color: #ffffff;
-    }
-    .quick-actions-label {
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin-bottom: 0.45rem;
-    }
 
     /* ── Nav group labels ── */
     .nav-group-label {
