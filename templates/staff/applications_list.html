@@ -827,10 +827,10 @@
         color: #0f172a;
         line-height: 1.3;
     }
-    .applicant-name.option-a { color: #b91c1c; } /* Danger zone */
-    .applicant-name.option-b { color: #b45309; } /* Ejected */
-    .applicant-name.option-c { color: #047857; } /* Relocated */
-    .applicant-name.option-d { color: #475569; } /* None of A/B/C */
+    .applicant-name.option-a { color: #b91c1c !important; } /* Danger zone */
+    .applicant-name.option-b { color: #b45309 !important; } /* Ejected */
+    .applicant-name.option-c { color: #047857 !important; } /* Relocated */
+    .applicant-name.option-d { color: #475569 !important; } /* None of A/B/C */
 
     .applicant-inline-meta {
         font-size: 0.625rem;
@@ -4713,7 +4713,7 @@
             <thead>
                 <tr>
                     <th class="col-num" title="Row number in this list">#</th>
-                    <th class="col-applicant" title="Applicant &amp; Transactions">Applicant record</th>
+                    <th class="col-applicant" title="Applicant Full Name" style="text-align: center;">Full Name</th>
                     <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
                     <th class="col-staff" title="Staff who proceeded from Module 1 (same as Intake Staff Handled)">Staff</th>
                     <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
@@ -4731,14 +4731,10 @@
                 >
                     <td class="col-num" style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="complainant-cell-info">
-                            <div class="complainant-name-card">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
+                        <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                            <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
                                 <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" 
-                                      style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer;"
+                                      style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
                                       data-full-name="{{ data.applicant.full_name }}"
                                       data-tx-id="APP-{{ data.applicant.id|slice:":8" }}..."
                                       data-ref-code="{{ data.applicant.reference_number|default:'' }}"
@@ -4746,6 +4742,19 @@
                                       data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                                       data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
                             </div>
+                            {% if data.applicant.displacement_reason == 'danger_zone' or data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason == 'relocated' or data.applicant.displacement_reason == 'not_abc' %}
+                            <div class="demographic-meta-row" style="margin-top: 0.15rem;">
+                                {% if data.applicant.displacement_reason == 'danger_zone' %}
+                                <span class="priority-hsl-badge option-a">Danger Zone</span>
+                                {% elif data.applicant.displacement_reason == 'ejected' %}
+                                <span class="priority-hsl-badge option-b">Ejected</span>
+                                {% elif data.applicant.displacement_reason == 'relocated' %}
+                                <span class="priority-hsl-badge option-c">Relocated</span>
+                                {% elif data.applicant.displacement_reason == 'not_abc' %}
+                                <span class="priority-hsl-badge option-d">Other</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
                             <!-- Removed redundant Transaction and Reference tags to maintain clean aesthetics -->
                             {% if data.blacklist_blocked %}
                             <div style="margin-top: 0.15rem; display: flex; align-items: center; gap: 0.25rem;">
