@@ -1,7 +1,7 @@
 {% extends 'accounts/staff/staff_base.html' %}
 {% load static %}
 
-{% block title %}Applications - Module 2{% endblock %}
+{% block title %}Applicant Evaluation and Eligibility{% endblock %}
 
 {% block nav_applications %}active{% endblock %}
 
@@ -598,6 +598,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
     .applications-table.compact-table th.col-encoded,
     .applications-table.compact-table th.col-encoded-ago,
     .applications-table.compact-table th.col-transaction,
@@ -791,6 +792,7 @@
         text-align: center;
         min-height: 100%;
     }
+
     .m2-readiness-chip {
         width: 100%;
         display: flex !important;
@@ -807,10 +809,30 @@
         box-sizing: border-box;
         margin-bottom: 0.25rem;
     }
-    .m2-readiness-chip.ready { background: #dcfce7; border-color: #86efac; color: #166534; }
-    .m2-readiness-chip.pending { background: #fef3c7; border-color: #fde68a; color: #92400e; }
-    .m2-readiness-chip.followup { background: #ffedd5; border-color: #fdba74; color: #9a3412; }
-    .m2-readiness-chip.blocked { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+
+    .m2-readiness-chip.ready {
+        background: #dcfce7;
+        border-color: #86efac;
+        color: #166534;
+    }
+
+    .m2-readiness-chip.pending {
+        background: #fef3c7;
+        border-color: #fde68a;
+        color: #92400e;
+    }
+
+    .m2-readiness-chip.followup {
+        background: #ffedd5;
+        border-color: #fdba74;
+        color: #9a3412;
+    }
+
+    .m2-readiness-chip.blocked {
+        background: #fee2e2;
+        border-color: #fecaca;
+        color: #991b1b;
+    }
 
     .m2-readiness-hint {
         margin-top: 0.28rem;
@@ -827,10 +849,27 @@
         color: #0f172a;
         line-height: 1.3;
     }
-    .applicant-name.option-a { color: #b91c1c !important; } /* Danger zone */
-    .applicant-name.option-b { color: #b45309 !important; } /* Ejected */
-    .applicant-name.option-c { color: #047857 !important; } /* Relocated */
-    .applicant-name.option-d { color: #475569 !important; } /* None of A/B/C */
+
+    .applicant-name.option-a {
+        color: #b91c1c !important;
+    }
+
+    /* Danger zone */
+    .applicant-name.option-b {
+        color: #b45309 !important;
+    }
+
+    /* Ejected */
+    .applicant-name.option-c {
+        color: #047857 !important;
+    }
+
+    /* Relocated */
+    .applicant-name.option-d {
+        color: #475569 !important;
+    }
+
+    /* None of A/B/C */
 
     .applicant-inline-meta {
         font-size: 0.625rem;
@@ -868,7 +907,7 @@
     }
 
     /* Status pill — visual indicator for "status" column */
-    .m2-gate-line > span {
+    .m2-gate-line>span {
         display: inline-flex !important;
         align-items: center;
         gap: 0.3rem;
@@ -882,7 +921,7 @@
         border: 1px solid transparent;
     }
 
-    .m2-gate-line > span::before {
+    .m2-gate-line>span::before {
         content: '';
         width: 0.4rem;
         height: 0.4rem;
@@ -891,22 +930,22 @@
         flex-shrink: 0;
     }
 
-    .m2-gate-line > span[style*="b91c1c"] {
+    .m2-gate-line>span[style*="b91c1c"] {
         background: #fef2f2;
         border-color: #fecaca;
     }
 
-    .m2-gate-line > span[style*="b45309"] {
+    .m2-gate-line>span[style*="b45309"] {
         background: #fffbeb;
         border-color: #fde68a;
     }
 
-    .m2-gate-line > span[style*="166534"] {
+    .m2-gate-line>span[style*="166534"] {
         background: #f0fdf4;
         border-color: #bbf7d0;
     }
 
-    .m2-gate-line > span[style*="1e3a8a"] {
+    .m2-gate-line>span[style*="1e3a8a"] {
         background: #eff6ff;
         border-color: #bfdbfe;
     }
@@ -1333,28 +1372,53 @@
         line-height: 1.45;
     }
 
-    .m2-disp-option.option-a { border-left: 4px solid #b91c1c; }
-    .m2-disp-option.option-b { border-left: 4px solid #b45309; }
-    .m2-disp-option.option-c { border-left: 4px solid #047857; }
-    .m2-disp-option.option-d { border-left: 4px solid #475569; }
+    .m2-disp-option.option-a {
+        border-left: 4px solid #b91c1c;
+    }
 
-    .m2-disp-option.option-a .m2-disp-option__label { color: #b91c1c; }
-    .m2-disp-option.option-b .m2-disp-option__label { color: #b45309; }
-    .m2-disp-option.option-c .m2-disp-option__label { color: #047857; }
-    .m2-disp-option.option-d .m2-disp-option__label { color: #475569; }
+    .m2-disp-option.option-b {
+        border-left: 4px solid #b45309;
+    }
+
+    .m2-disp-option.option-c {
+        border-left: 4px solid #047857;
+    }
+
+    .m2-disp-option.option-d {
+        border-left: 4px solid #475569;
+    }
+
+    .m2-disp-option.option-a .m2-disp-option__label {
+        color: #b91c1c;
+    }
+
+    .m2-disp-option.option-b .m2-disp-option__label {
+        color: #b45309;
+    }
+
+    .m2-disp-option.option-c .m2-disp-option__label {
+        color: #047857;
+    }
+
+    .m2-disp-option.option-d .m2-disp-option__label {
+        color: #475569;
+    }
 
     @media (max-width: 640px) {
         .m2-layer3-header {
             padding: 0.9rem 0.85rem 0.8rem;
             text-align: left;
         }
+
         .m2-layer3-desc {
             margin-left: 0;
             margin-right: 0;
         }
+
         .m2-layer3-body {
             padding: 0.85rem 0.85rem 0.95rem;
         }
+
         .m2-disp-options {
             grid-template-columns: 1fr;
         }
@@ -1922,16 +1986,19 @@
         border-color: #047857 !important;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
     }
+
     .action-btn.action-btn--proceed-form:hover:not(:disabled) {
         background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
         transform: translateY(-1px);
         box-shadow: 0 4px 14px rgba(5, 150, 105, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
+
     .action-btn.action-btn--proceed-form:active:not(:disabled) {
         transform: translateY(0);
         box-shadow: 0 1px 3px rgba(5, 150, 105, 0.28);
     }
+
     .action-btn.action-btn--proceed-form:focus-visible {
         outline: 2px solid #6ee7b7;
         outline-offset: 2px;
@@ -1947,6 +2014,7 @@
         max-width: 7.25rem;
         margin: 0 auto;
     }
+
     .applications-table td.col-actions .btn-review-walkin,
     .applications-table td.col-actions .action-btn {
         width: 100%;
@@ -1960,22 +2028,29 @@
     }
 
     /* Inline-styled action buttons (Receive / Forward / Sign / Award) — keep semantic color but harmonize */
-    .action-btn[style*="dcfce7"] { /* legacy mint inline — map to same green as Go to Form */
+    .action-btn[style*="dcfce7"] {
+        /* legacy mint inline — map to same green as Go to Form */
         background: #15803d !important;
         color: #ffffff !important;
         border-color: #166534 !important;
     }
-    .action-btn[style*="dbeafe"] { /* Receive / Forward (blue) */
+
+    .action-btn[style*="dbeafe"] {
+        /* Receive / Forward (blue) */
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border-color: #1d4ed8;
     }
-    .action-btn[style*="fef3c7"] { /* Sign (amber) */
+
+    .action-btn[style*="fef3c7"] {
+        /* Sign (amber) */
         background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
         color: #ffffff !important;
         border-color: #b45309;
     }
-    .action-btn[style*="f3e8ff"] { /* Award lot (purple) */
+
+    .action-btn[style*="f3e8ff"] {
+        /* Award lot (purple) */
         background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
         color: #ffffff !important;
         border-color: #6d28d9;
@@ -2095,6 +2170,7 @@
         overflow: hidden;
         border: 1px solid #334155;
     }
+
     .m2-field-photo-carousel-head {
         display: flex;
         align-items: flex-start;
@@ -2104,10 +2180,12 @@
         background: #1e293b;
         border-bottom: 1px solid #334155;
     }
+
     .m2-field-photo-carousel-head-main {
         flex: 1;
         min-width: 0;
     }
+
     .m2-field-photo-carousel-title {
         margin: 0;
         font-size: 0.95rem;
@@ -2115,12 +2193,14 @@
         color: #f1f5f9;
         line-height: 1.3;
     }
+
     .m2-field-photo-carousel-sub {
         margin: 0.2rem 0 0 0;
         font-size: 0.72rem;
         color: #94a3b8;
         line-height: 1.35;
     }
+
     .m2-field-photo-carousel-counter {
         font-size: 0.72rem;
         font-weight: 600;
@@ -2128,6 +2208,7 @@
         white-space: nowrap;
         padding-top: 0.15rem;
     }
+
     .m2-field-photo-carousel-x {
         flex-shrink: 0;
         border: none;
@@ -2140,10 +2221,12 @@
         font-size: 1.1rem;
         line-height: 1;
     }
+
     .m2-field-photo-carousel-x:hover {
         background: #475569;
         color: #fff;
     }
+
     .m2-field-photo-carousel-stage {
         position: relative;
         flex: 1;
@@ -2154,6 +2237,7 @@
         background: #020617;
         padding: 0.5rem;
     }
+
     .m2-field-photo-carousel-stage img {
         max-width: 100%;
         max-height: min(78vh, 720px);
@@ -2161,6 +2245,7 @@
         height: auto;
         object-fit: contain;
     }
+
     .m2-field-photo-carousel-nav {
         position: absolute;
         top: 50%;
@@ -2180,15 +2265,19 @@
         z-index: 2;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     }
+
     .m2-field-photo-carousel-nav:hover {
         background: #334155;
     }
+
     .m2-field-photo-carousel-nav--prev {
         left: 0.5rem;
     }
+
     .m2-field-photo-carousel-nav--next {
         right: 0.5rem;
     }
+
     .m2-field-photo-carousel-nav[hidden] {
         display: none;
     }
@@ -2217,12 +2306,14 @@
         overflow: hidden;
         padding: 0;
     }
+
     .flow-alert-card::before {
         content: '';
         display: block;
         height: 4px;
         background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 45%, #0ea5e9 100%);
     }
+
     .flow-alert-head {
         display: flex;
         align-items: center;
@@ -2233,10 +2324,12 @@
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         border-bottom: 1px solid #e2e8f0;
     }
+
     .flow-alert-card.success::before,
     .flow-alert-card.proceed-success::before {
         background: linear-gradient(90deg, #166534 0%, #16a34a 45%, #22c55e 100%);
     }
+
     .flow-alert-icon {
         width: 1.3rem;
         height: 1.3rem;
@@ -2248,6 +2341,7 @@
         font-weight: 800;
         line-height: 1;
     }
+
     .flow-alert-card.success .flow-alert-icon,
     .flow-alert-card.proceed-success .flow-alert-icon {
         background: #16a34a;
@@ -2298,6 +2392,7 @@
         border-color: #15803d;
         color: #ffffff;
     }
+
     .flow-alert-next {
         min-width: 88px;
         border: none;
@@ -2310,6 +2405,7 @@
         cursor: pointer;
         box-shadow: none;
     }
+
     .flow-alert-next:hover {
         background: #1d4ed8;
     }
@@ -2325,9 +2421,11 @@
         position: relative;
         overflow: hidden;
     }
+
     .flow-alert-card.flow-alert-card--celebration::before {
         display: none !important;
     }
+
     .flow-alert-celebration-icon {
         display: flex;
         width: 4.5rem;
@@ -2341,11 +2439,13 @@
         box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
         animation: flowPulseIcon 2s infinite ease-in-out;
     }
+
     .flow-alert-celebration-icon .checkmark-svg {
         width: 2.25rem;
         height: 2.25rem;
         display: block;
     }
+
     .flow-alert-celebration-icon .checkmark-circle {
         stroke-dasharray: 166;
         stroke-dashoffset: 166;
@@ -2355,6 +2455,7 @@
         fill: none;
         animation: flowStrokeCircle 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
     }
+
     .flow-alert-celebration-icon .checkmark-check {
         transform-origin: 50% 50%;
         stroke-dasharray: 48;
@@ -2364,12 +2465,14 @@
         fill: none;
         animation: flowStrokeCheck 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-head {
         border-bottom: none !important;
         padding: 0 1.25rem 0.35rem !important;
         justify-content: center !important;
         background: transparent !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-title {
         color: #0f5132 !important;
         font-size: 1.25rem !important;
@@ -2381,6 +2484,7 @@
         text-align: center !important;
         flex: none !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-message {
         padding: 0.35rem 1.5rem 0.25rem !important;
         font-size: 0.95rem !important;
@@ -2389,6 +2493,7 @@
         font-weight: 500 !important;
         line-height: 1.55 !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-actions {
         justify-content: center !important;
         align-items: center !important;
@@ -2397,12 +2502,15 @@
         border-top: none !important;
         background: transparent !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-next {
         display: none !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-ok {
         display: none !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-ok {
         display: inline-flex !important;
         align-items: center !important;
@@ -2421,14 +2529,17 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         cursor: pointer;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:hover {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35) !important;
         transform: translateY(-2px) !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:active {
         transform: translateY(0) !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next {
         display: inline-flex !important;
         align-items: center !important;
@@ -2447,14 +2558,17 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         cursor: pointer;
     }
+
     .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next:hover {
         background: linear-gradient(135deg, #1d4ed8 0%, #172554 100%) !important;
         box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35) !important;
         transform: translateY(-2px) !important;
     }
+
     .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next:active {
         transform: translateY(0) !important;
     }
+
     .flow-alert-progress-bar {
         position: absolute;
         bottom: 0;
@@ -2468,41 +2582,60 @@
 
     /* Keyframes */
     @keyframes flowStrokeCircle {
-        to { stroke-dashoffset: 0; }
+        to {
+            stroke-dashoffset: 0;
+        }
     }
+
     @keyframes flowStrokeCheck {
-        to { stroke-dashoffset: 0; }
+        to {
+            stroke-dashoffset: 0;
+        }
     }
+
     @keyframes flowPulseIcon {
-        0%, 100% {
+
+        0%,
+        100% {
             box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3), 0 0 0 0px rgba(16, 185, 129, 0.25);
         }
+
         50% {
             box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2), 0 0 0 12px rgba(16, 185, 129, 0.15);
         }
     }
+
     @keyframes flowProgressCountdown {
-        from { transform: scaleX(1); }
-        to { transform: scaleX(0); }
+        from {
+            transform: scaleX(1);
+        }
+
+        to {
+            transform: scaleX(0);
+        }
     }
+
     .eligibility-next-modal {
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 1rem;
         width: min(96vw, 1080px);
         max-height: 88vh;
-        margin-left: 250px; /* Offset for the left sidebar */
+        margin-left: 250px;
+        /* Offset for the left sidebar */
         display: flex;
         flex-direction: column;
         box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
         overflow: hidden;
     }
+
     .eligibility-next-modal::before {
         content: '';
         display: block;
         height: 4px;
         background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 45%, #0ea5e9 100%);
     }
+
     .eligibility-next-header {
         padding: 0.95rem 1.2rem 0.78rem;
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -2512,12 +2645,14 @@
         z-index: 2;
         text-align: center;
     }
+
     .eligibility-next-title {
         margin: 0;
         font-size: 1.02rem;
         font-weight: 700;
         color: #0f172a;
     }
+
     .eligibility-next-subtitle {
         margin: 0.3rem 0 0;
         font-size: 0.8rem;
@@ -2525,12 +2660,14 @@
         font-weight: 500;
         text-align: center;
     }
+
     .eligibility-next-body {
         padding: 1rem 1.2rem;
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         overflow-y: auto;
         flex: 1;
     }
+
     .eligibility-next-item {
         background: #ffffff;
         border: 1px solid #dbe3ee;
@@ -2545,6 +2682,7 @@
         gap: 0.28rem;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
     }
+
     .eligibility-next-item .line-title {
         font-size: 0.8rem;
         color: #0f172a;
@@ -2556,6 +2694,7 @@
         justify-content: center;
         text-align: center;
     }
+
     .eligibility-next-item .line-reason {
         margin-top: 0;
         font-size: 0.72rem;
@@ -2564,6 +2703,7 @@
         line-height: 1.35;
         text-align: center;
     }
+
     .eligibility-next-item .line-evidence {
         margin-top: 0.05rem;
         font-size: 0.68rem;
@@ -2578,12 +2718,14 @@
         word-break: break-word;
         text-align: center;
     }
+
     .eligibility-evidence-actions {
         margin-top: 0.1rem;
         display: flex;
         justify-content: center;
         width: 100%;
     }
+
     .eligibility-view-doc-btn {
         display: inline-flex;
         align-items: center;
@@ -2601,10 +2743,12 @@
         cursor: pointer;
         text-decoration: none;
     }
+
     .eligibility-view-doc-btn:hover {
         background: #dbeafe;
         border-color: #93c5fd;
     }
+
     .eligibility-decision-actions {
         margin-top: 0.05rem;
         display: flex;
@@ -2613,6 +2757,7 @@
         justify-content: center;
         width: 100%;
     }
+
     .eligibility-decision-btn {
         border: 1px solid #cbd5e1;
         background: #ffffff;
@@ -2632,21 +2777,25 @@
         white-space: nowrap !important;
         transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease !important;
     }
+
     .eligibility-decision-btn:hover {
         background: #f8fafc;
     }
+
     .eligibility-decision-btn.active-pass {
         border-color: #15803d;
         background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
         color: #ffffff;
         box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28);
     }
+
     .eligibility-decision-btn.active-fail {
         border-color: #b91c1c;
         background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
         color: #ffffff;
         box-shadow: 0 2px 8px rgba(220, 38, 38, 0.22);
     }
+
     .eligibility-check-chip {
         display: inline-flex;
         align-items: center;
@@ -2656,10 +2805,30 @@
         font-size: 0.6rem;
         font-weight: 700;
     }
-    .eligibility-check-chip.passed { background:#dcfce7; color:#166534; border:1px solid #86efac; }
-    .eligibility-check-chip.failed { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
-    .eligibility-check-chip.pending { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
-    .eligibility-check-chip.not_required { background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; }
+
+    .eligibility-check-chip.passed {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .eligibility-check-chip.failed {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .eligibility-check-chip.pending {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+
+    .eligibility-check-chip.not_required {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
 
     /* Module 2 eligibility checklist cards — compact grid layout */
     .m2-elig-grid {
@@ -2667,35 +2836,44 @@
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 0.65rem;
     }
+
     .m2-elig-card--compact {
         padding: 0.5rem 0.65rem;
     }
+
     .m2-elig-card--compact .m2-elig-card-head {
         gap: 0.35rem;
         margin-bottom: 0.35rem;
     }
+
     .m2-elig-card--compact .m2-elig-card-title {
         font-size: 0.8rem;
     }
+
     .m2-elig-card--compact .m2-elig-card-reason {
         font-size: 0.75rem;
         margin-bottom: 0.4rem;
     }
+
     .m2-elig-card--compact .eligibility-check-chip {
         font-size: 0.6rem;
         padding: 0.15rem 0.4rem;
     }
+
     .m2-elig-card--compact .m2-elig-evidence-box {
         padding: 0.4rem 0.5rem;
         margin-bottom: 0.5rem;
     }
+
     .m2-elig-card--compact .m2-ev-grid-row {
         padding: 0.25rem 0;
         font-size: 0.7rem;
     }
+
     .m2-elig-card--compact .m2-elig-actions {
         gap: 0.35rem;
     }
+
     .m2-elig-card--compact .eligibility-decision-btn,
     .m2-elig-card--compact .m2-elig-upload-btn,
     .m2-elig-card--compact .m2-elig-scan-btn,
@@ -2703,6 +2881,7 @@
         padding: 0.25rem 0.45rem;
         font-size: 0.7rem;
     }
+
     .m2-elig-card--compact svg {
         width: 14px;
         height: 14px;
@@ -2716,6 +2895,7 @@
         background: #f8fafc;
         padding: 0.85rem 1rem;
     }
+
     .m2-elig-banner {
         text-align: center;
         padding: 0.5rem 0.65rem;
@@ -2724,16 +2904,19 @@
         font-size: 0.76rem;
         line-height: 1.45;
     }
+
     .m2-elig-banner--pending {
         background: #eff6ff;
         border: 1px solid #bfdbfe;
         color: #1e3a8a;
     }
+
     .m2-elig-banner--fail {
         background: #fff7ed;
         border: 1px solid #fdba74;
         color: #9a3412;
     }
+
     .m2-elig-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -2741,66 +2924,80 @@
         padding: 0.65rem 0.78rem;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
+
     .m2-elig-card--pending {
         border: 1px solid #bfdbfe;
         background: linear-gradient(165deg, #eff6ff 0%, #ffffff 48%, #ffffff 100%);
         box-shadow: 0 2px 10px rgba(59, 130, 246, 0.1);
     }
+
     .m2-elig-card--fail {
         border: 1px solid #fecaca;
         background: linear-gradient(165deg, #fff1f2 0%, #ffffff 45%, #fef2f2 100%);
         box-shadow: 0 4px 14px rgba(220, 38, 38, 0.1);
     }
+
     .m2-elig-card--pass {
         border: 1px solid #86efac;
         background: linear-gradient(165deg, #ecfdf5 0%, #ffffff 42%, #f0fdf4 100%);
         box-shadow: 0 4px 14px rgba(22, 163, 74, 0.14);
     }
+
     #eligibilityNextChecklist .m2-elig-card--pass .m2-elig-card-title,
     #situationCertificationContent .m2-elig-card--pass .m2-elig-card-title {
         color: #14532d;
     }
+
     #eligibilityNextChecklist .m2-elig-card--pass .m2-elig-card-reason,
     #situationCertificationContent .m2-elig-card--pass .m2-elig-card-reason {
         color: #166534;
         font-weight: 700;
     }
+
     #eligibilityNextChecklist .m2-elig-card--fail .m2-elig-card-title,
     #situationCertificationContent .m2-elig-card--fail .m2-elig-card-title {
         color: #991b1b;
     }
+
     #eligibilityNextChecklist .m2-elig-card--fail .m2-elig-card-reason,
     #situationCertificationContent .m2-elig-card--fail .m2-elig-card-reason {
         color: #b91c1c;
     }
+
     #eligibilityNextChecklist .m2-elig-card--pending .m2-elig-card-title,
     #situationCertificationContent .m2-elig-card--pending .m2-elig-card-title {
         color: #1e3a8a;
     }
+
     #eligibilityNextChecklist .m2-elig-card--pass .m2-elig-evidence-box,
     #situationCertificationContent .m2-elig-card--pass .m2-elig-evidence-box {
         background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 100%);
         border-color: #bbf7d0;
     }
+
     #eligibilityNextChecklist .m2-elig-card--pass .m2-elig-evidence-label,
     #situationCertificationContent .m2-elig-card--pass .m2-elig-evidence-label {
         color: #15803d;
     }
+
     #eligibilityNextChecklist .m2-elig-card--pass .m2-ev-grid-value,
     #situationCertificationContent .m2-elig-card--pass .m2-ev-grid-value {
         color: #047857;
         font-weight: 700;
     }
+
     #eligibilityNextChecklist .m2-elig-card--fail .m2-elig-evidence-box,
     #situationCertificationContent .m2-elig-card--fail .m2-elig-evidence-box {
         background: linear-gradient(180deg, #fff1f2 0%, #fef2f2 100%);
         border-color: #fecaca;
     }
+
     #eligibilityNextChecklist .m2-elig-card--pending .m2-elig-evidence-box,
     #situationCertificationContent .m2-elig-card--pending .m2-elig-evidence-box {
         background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
         border-color: #bfdbfe;
     }
+
     #eligibilityNextChecklist .eligibility-check-chip.passed,
     #situationCertificationContent .eligibility-check-chip.passed {
         background: linear-gradient(180deg, #bbf7d0 0%, #86efac 100%);
@@ -2808,22 +3005,26 @@
         border-color: #4ade80;
         box-shadow: 0 1px 3px rgba(22, 163, 74, 0.15);
     }
+
     #eligibilityNextChecklist .eligibility-check-chip.failed,
     #situationCertificationContent .eligibility-check-chip.failed {
         background: linear-gradient(180deg, #fecaca 0%, #fca5a5 100%);
         color: #7f1d1d;
         border-color: #f87171;
     }
+
     .m2-elig-card-head {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         gap: 0.65rem;
     }
+
     .m2-elig-card-head .eligibility-check-chip {
         margin-left: 0;
         flex-shrink: 0;
     }
+
     .m2-elig-card-title {
         margin: 0;
         font-size: 0.82rem;
@@ -2831,6 +3032,7 @@
         color: #0f172a;
         line-height: 1.25;
     }
+
     .m2-elig-card-reason {
         margin-top: 0.38rem;
         font-size: 0.78rem;
@@ -2838,6 +3040,7 @@
         color: #334155;
         line-height: 1.45;
     }
+
     .m2-elig-fail-msg {
         margin-top: 0.38rem;
         padding: 0.4rem 0.5rem;
@@ -2849,6 +3052,7 @@
         color: #991b1b;
         line-height: 1.4;
     }
+
     .m2-elig-evidence-box {
         margin-top: 0.48rem;
         padding: 0.48rem 0.55rem;
@@ -2856,6 +3060,7 @@
         background: #f1f5f9;
         border: 1px solid #e2e8f0;
     }
+
     .m2-elig-evidence-label {
         font-size: 0.61rem;
         font-weight: 800;
@@ -2865,6 +3070,7 @@
         margin-bottom: 0.28rem;
         text-align: center;
     }
+
     .m2-ev-grid-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
@@ -2874,26 +3080,31 @@
         border-bottom: 1px solid #e2e8f0;
         align-items: baseline;
     }
+
     .m2-ev-grid-row:last-child {
         border-bottom: none;
         padding-bottom: 0;
     }
+
     .m2-ev-grid-label {
         color: #64748b;
         font-weight: 600;
     }
+
     .m2-ev-grid-value {
         color: #0f172a;
         text-align: right;
         word-break: break-word;
         font-weight: 500;
     }
+
     .m2-ev-grid-row-full {
         font-size: 0.71rem;
         color: #475569;
         padding: 0.26rem 0;
         line-height: 1.4;
     }
+
     .m2-elig-actions {
         margin-top: 0.55rem;
         display: flex;
@@ -2906,6 +3117,7 @@
     .m2-elig-carousel {
         margin-top: 0.2rem;
     }
+
     .m2-elig-carousel-toolbar {
         display: flex;
         align-items: center;
@@ -2914,12 +3126,14 @@
         margin-bottom: 0.55rem;
         flex-wrap: wrap;
     }
+
     .m2-elig-carousel-counter {
         font-size: 0.72rem;
         font-weight: 700;
         color: #475569;
         white-space: nowrap;
     }
+
     .m2-elig-carousel-dots {
         display: flex;
         flex: 1;
@@ -2929,6 +3143,7 @@
         flex-wrap: wrap;
         min-width: 0;
     }
+
     .m2-elig-carousel-dot {
         width: 0.5rem;
         height: 0.5rem;
@@ -2939,44 +3154,54 @@
         cursor: pointer;
         transition: background 0.15s ease, transform 0.15s ease;
     }
+
     .m2-elig-carousel-dot.is-active {
         background: #2563eb;
         transform: scale(1.2);
     }
+
     .m2-elig-carousel-dot.is-pass:not(.is-active) {
         background: #86efac;
     }
+
     .m2-elig-carousel-dot.is-fail:not(.is-active) {
         background: #fca5a5;
     }
+
     .m2-elig-carousel-dot:hover {
         background: #94a3b8;
     }
+
     .m2-elig-carousel-viewport {
         position: relative;
         display: flex;
         align-items: center;
         gap: 0.35rem;
     }
+
     .m2-elig-carousel-track-wrap {
         flex: 1;
         min-width: 0;
         overflow: hidden;
         border-radius: 10px;
     }
+
     .m2-elig-carousel-track {
         display: flex;
         transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         will-change: transform;
     }
+
     .m2-elig-carousel-slide {
         flex: 0 0 100%;
         min-width: 100%;
         box-sizing: border-box;
     }
+
     .m2-elig-carousel-slide .m2-elig-card {
         min-height: 12.5rem;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .eligibility-view-doc-btn,
     #situationCertificationContent .m2-elig-actions .eligibility-view-doc-btn,
     .eligibility-view-doc-btn {
@@ -2985,6 +3210,7 @@
         color: #ffffff !important;
         transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, background 0.18s ease !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .eligibility-view-doc-btn:hover,
     #situationCertificationContent .m2-elig-actions .eligibility-view-doc-btn:hover,
     .eligibility-view-doc-btn:hover {
@@ -2993,6 +3219,7 @@
         transform: translateY(-1.5px) scale(1.04) !important;
         color: #ffffff !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .m2-elig-upload-btn,
     #situationCertificationContent .m2-elig-actions .m2-elig-upload-btn,
     .m2-elig-upload-btn {
@@ -3001,6 +3228,7 @@
         color: #1e40af !important;
         transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, background 0.18s ease !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .m2-elig-upload-btn:hover,
     #situationCertificationContent .m2-elig-actions .m2-elig-upload-btn:hover,
     .m2-elig-upload-btn:hover {
@@ -3010,6 +3238,7 @@
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22) !important;
         transform: translateY(-1.5px) scale(1.04) !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .m2-elig-scan-btn,
     #situationCertificationContent .m2-elig-actions .m2-elig-scan-btn,
     .m2-elig-scan-btn {
@@ -3018,6 +3247,7 @@
         color: #065f46 !important;
         transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, background 0.18s ease !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .m2-elig-scan-btn:hover,
     #situationCertificationContent .m2-elig-actions .m2-elig-scan-btn:hover,
     .m2-elig-scan-btn:hover {
@@ -3034,6 +3264,7 @@
         border-color: #86efac !important;
         color: #166534 !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="passed"]:hover,
     #situationCertificationContent .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="passed"]:hover {
         background: linear-gradient(180deg, #dcfce7 0%, #bbf7d0 100%) !important;
@@ -3041,12 +3272,14 @@
         color: #15803d !important;
         box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15) !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"],
     #situationCertificationContent .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"] {
         background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%) !important;
         border-color: #fecaca !important;
         color: #991b1b !important;
     }
+
     #eligibilityNextChecklist .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"]:hover,
     #situationCertificationContent .m2-elig-actions .eligibility-decision-btn:not(.active-pass):not(.active-fail)[onclick*="failed"]:hover {
         background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%) !important;
@@ -3054,14 +3287,17 @@
         color: #b91c1c !important;
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
     }
+
     .eligibility-decision-btn.active-pass:hover {
         background: linear-gradient(180deg, #22c55e 0%, #15803d 100%) !important;
         box-shadow: 0 4px 12px rgba(22, 163, 74, 0.38) !important;
     }
+
     .eligibility-decision-btn.active-fail:hover {
         background: linear-gradient(180deg, #f87171 0%, #b91c1c 100%) !important;
         box-shadow: 0 4px 12px rgba(220, 38, 38, 0.32) !important;
     }
+
     .m2-elig-carousel-nav {
         flex-shrink: 0;
         width: 2.1rem;
@@ -3079,11 +3315,13 @@
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
         transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
     }
+
     .m2-elig-carousel-nav:hover:not(:disabled) {
         background: #eff6ff;
         border-color: #93c5fd;
         color: #1d4ed8;
     }
+
     .m2-elig-carousel-nav:disabled {
         opacity: 0.35;
         cursor: not-allowed;
@@ -3125,10 +3363,12 @@
         justify-content: center;
         width: 100%;
     }
+
     .m2-elig-actions .eligibility-view-doc-btn {
         min-width: unset;
         padding: 0.24rem 0.52rem;
     }
+
     .m2-elig-upload-btn {
         display: inline-flex;
         align-items: center;
@@ -3144,14 +3384,17 @@
         cursor: pointer;
         text-decoration: none;
     }
+
     .m2-elig-upload-btn:hover {
         background: #d1fae5;
         border-color: #34d399;
     }
+
     button.m2-elig-upload-btn {
         font-family: inherit;
         line-height: inherit;
     }
+
     .m2-elig-scan-btn {
         display: inline-flex;
         align-items: center;
@@ -3167,31 +3410,38 @@
         cursor: pointer;
         text-decoration: none;
     }
+
     .m2-elig-scan-btn:hover {
         background: #ede9fe;
         border-color: #a78bfa;
     }
+
     button.m2-elig-scan-btn {
         font-family: inherit;
         line-height: inherit;
     }
+
     .m2-sit-actions {
         gap: 0.42rem !important;
     }
+
     .m2-sit-actions .eligibility-view-doc-btn,
     .m2-sit-actions .m2-elig-upload-btn,
     .m2-sit-actions .m2-elig-scan-btn {
         flex: 0 0 auto;
     }
+
     button.eligibility-decision-btn.m2-sit-mark-passed:disabled:not(.active-pass) {
         opacity: 0.55;
         cursor: not-allowed;
     }
+
     .m2-elig-vault-wrap {
         margin-top: 0.78rem;
         padding-top: 0.65rem;
         border-top: 1px solid #e2e8f0;
     }
+
     .m2-elig-vault-head {
         font-size: 0.66rem;
         font-weight: 800;
@@ -3200,6 +3450,7 @@
         color: #64748b;
         margin-bottom: 0.42rem;
     }
+
     .m2-elig-vault-row {
         display: grid;
         grid-template-columns: 1fr auto;
@@ -3209,14 +3460,17 @@
         border-bottom: 1px solid #e8eef5;
         font-size: 0.74rem;
     }
+
     .m2-elig-vault-row:last-child {
         border-bottom: none;
     }
+
     .m2-elig-vault-name {
         color: #334155;
         min-width: 0;
         word-break: break-word;
     }
+
     .eligibility-evidence-card {
         margin-top: 0.5rem;
         border: 1px solid #cbd5e1;
@@ -3224,6 +3478,7 @@
         background: #f8fafc;
         overflow: hidden;
     }
+
     .eligibility-evidence-head {
         padding: 0.5rem 0.6rem;
         border-bottom: 1px solid #e2e8f0;
@@ -3231,6 +3486,7 @@
         font-weight: 700;
         color: #0f172a;
     }
+
     .eligibility-evidence-row {
         display: grid;
         grid-template-columns: 1fr auto;
@@ -3241,16 +3497,36 @@
         font-size: 0.68rem;
         color: #334155;
     }
-    .eligibility-evidence-row:first-child { border-top: none; }
-    .eligibility-evidence-code { font-family: monospace; font-weight: 700; color: #1e293b; }
+
+    .eligibility-evidence-row:first-child {
+        border-top: none;
+    }
+
+    .eligibility-evidence-code {
+        font-family: monospace;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
     .eligibility-evidence-scan {
         padding: 0.08rem 0.35rem;
         border-radius: 9999px;
         font-size: 0.62rem;
         font-weight: 700;
     }
-    .eligibility-evidence-scan.scanned { background:#dcfce7; color:#166534; border:1px solid #86efac; }
-    .eligibility-evidence-scan.not-scanned { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+
+    .eligibility-evidence-scan.scanned {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .eligibility-evidence-scan.not-scanned {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
     .m2-elig-vault-row .eligibility-evidence-scan {
         font-size: 0.65rem;
         line-height: 1.25;
@@ -3258,9 +3534,11 @@
         text-align: right;
         max-width: 9.5rem;
     }
+
     .m2-elig-card .m2-ev-grid-value {
         font-weight: 700;
     }
+
     .eligibility-next-footer {
         padding: 0.8rem 1.2rem 1rem;
         border-top: 1px solid #e2e8f0;
@@ -3271,6 +3549,7 @@
         bottom: 0;
         z-index: 2;
     }
+
     .eligibility-next-back {
         border: 1px solid #eab308;
         background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
@@ -3281,10 +3560,12 @@
         font-weight: 700;
         cursor: pointer;
     }
+
     .eligibility-next-back:hover {
         background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
         border-color: #ca8a04;
     }
+
     .eligibility-next-close {
         border: 1px solid #2563eb;
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -3295,30 +3576,36 @@
         font-weight: 700;
         cursor: pointer;
     }
+
     .eligibility-next-close:hover {
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         border-color: #1d4ed8;
     }
+
     @media (max-width: 1024px) {
         .eligibility-next-modal {
             margin-left: 0;
         }
     }
+
     @media (max-width: 640px) {
         .eligibility-next-modal {
             width: min(96vw, 640px);
             max-height: 92vh;
             margin-left: 0;
         }
+
         .eligibility-next-header,
         .eligibility-next-body,
         .eligibility-next-footer {
             padding-left: 0.85rem;
             padding-right: 0.85rem;
         }
+
         .eligibility-evidence-row {
             grid-template-columns: 54px 1fr;
         }
+
         .eligibility-evidence-scan {
             justify-self: start;
         }
@@ -3795,12 +4082,14 @@
         overflow: hidden;
         box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
     }
+
     #modalM1EvidencePanel.m1-evidence-shell::before {
         content: '';
         display: block;
         height: 4px;
         background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 35%, #0ea5e9 70%, #06b6d4 100%);
     }
+
     #modalM1EvidencePanel .m1-evidence-header {
         padding: 0.65rem 1rem 0.5rem;
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
@@ -3811,21 +4100,25 @@
         letter-spacing: 0.12em;
         color: #1e3a8a;
     }
+
     #modalM1EvidencePanel .m1-evidence-record {
         padding: 0.85rem 1rem 1rem;
         font-size: 0.8125rem;
         color: #334155;
     }
+
     #modalM1EvidencePanel .m1-evidence-section {
         border-bottom: 2px solid #e2e8f0;
         padding-bottom: 0.85rem;
         margin-bottom: 0.85rem;
     }
+
     #modalM1EvidencePanel .m1-evidence-section:last-of-type {
         border-bottom: none;
         margin-bottom: 0;
         padding-bottom: 0;
     }
+
     #modalM1EvidencePanel .m1-evidence-section-title {
         font-size: 0.8125rem;
         font-weight: 600;
@@ -3834,24 +4127,29 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }
+
     #modalM1EvidencePanel .m1-evidence-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.65rem 1rem;
         margin-bottom: 0;
     }
+
     @media (max-width: 520px) {
         #modalM1EvidencePanel .m1-evidence-grid {
             grid-template-columns: 1fr;
         }
     }
+
     #modalM1EvidencePanel .m1-evidence-field {
         margin-bottom: 0;
         min-width: 0;
     }
+
     #modalM1EvidencePanel .m1-evidence-field--full {
         grid-column: 1 / -1;
     }
+
     #modalM1EvidencePanel .m1-evidence-label {
         font-size: 0.6rem;
         font-weight: 700;
@@ -3861,6 +4159,7 @@
         letter-spacing: 0.08em;
         display: block;
     }
+
     #modalM1EvidencePanel .m1-evidence-input {
         width: 100%;
         box-sizing: border-box;
@@ -3875,16 +4174,19 @@
         cursor: default;
         box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
     }
+
     #modalM1EvidencePanel .m1-evidence-input--pass {
         border-left-color: #16a34a;
         background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
         border-color: #bbf7d0;
     }
+
     #modalM1EvidencePanel .m1-evidence-input--fail {
         border-left-color: #dc2626;
         background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
         border-color: #fecaca;
     }
+
     #modalM1EvidencePanel .m1-evidence-note {
         font-size: 0.78rem;
         color: #475569;
@@ -3896,6 +4198,7 @@
         border-radius: 0.45rem;
         line-height: 1.45;
     }
+
     #modalM1EvidencePanel .m1-evidence-muted {
         font-size: 0.7rem;
         color: #64748b;
@@ -3915,6 +4218,7 @@
         box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
         padding: 1.4rem 1.25rem 1.1rem !important;
     }
+
     .applicants-container--app-eval::before {
         content: '';
         position: absolute;
@@ -3925,6 +4229,7 @@
         background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
         z-index: 1;
     }
+
     .applicants-container--app-eval .page-title {
         font-family: 'Inter', 'Segoe UI', sans-serif !important;
         font-size: 1.32rem !important;
@@ -3937,6 +4242,7 @@
         gap: 0.55rem;
         margin: 0 0 0.4rem !important;
     }
+
     .applicants-container--app-eval .page-title::before {
         content: '';
         width: 0.55rem;
@@ -3956,6 +4262,7 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }
+
     #awardModal .lawq-award-input {
         width: 100%;
         padding: 0.65rem 0.75rem;
@@ -3966,27 +4273,32 @@
         font-family: inherit;
         background: #fff;
     }
+
     #awardModal .lawq-award-input:focus {
         outline: none;
         border-color: #7c3aed;
         box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
     }
+
     #awardModal .lawq-award-divider {
         height: 0;
         border: none;
         border-top: 1px solid #e5e7eb;
         margin: 1rem 0 0.85rem;
     }
+
     #awardModal .award-lot-vacant-hint {
         font-size: 0.72rem;
         color: #64748b;
         margin: 0 0 0.55rem 0;
         line-height: 1.45;
     }
+
     #awardModal .award-lot-vacant-hint a {
         color: #6d28d9;
         font-weight: 600;
     }
+
     #awardModal .award-lot-vacant-empty {
         font-size: 0.76rem;
         color: #b45309;
@@ -3997,9 +4309,11 @@
         margin: 0;
         line-height: 1.4;
     }
+
     #awardModal select.award-vacant-select {
         cursor: pointer;
     }
+
     #awardModal #awardLotSubmitBtn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -4016,12 +4330,13 @@
         vertical-align: middle !important;
         line-height: 1.35;
     }
+
     .applications-table.compact-table tbody td {
         vertical-align: middle !important;
     }
 
     /* Situation Status — clamp Required:... subtitle to 2 lines */
-    .applications-table.compact-table td.col-status .col-status-wrap > div:not([class]) {
+    .applications-table.compact-table td.col-status .col-status-wrap>div:not([class]) {
         display: -webkit-box !important;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -4034,7 +4349,7 @@
     }
 
     /* Situation pill — make it a box that fits the cell width */
-    .applications-table.compact-table td.col-status .col-status-wrap > span {
+    .applications-table.compact-table td.col-status .col-status-wrap>span {
         width: 100%;
         display: flex !important;
         align-items: center;
@@ -4070,6 +4385,7 @@
         gap: 0.4rem;
         align-items: flex-start;
     }
+
     .applications-table.compact-table td.col-staff .m2-staff-row__meta {
         flex: 1 1 auto;
         min-width: 3.25rem;
@@ -4077,15 +4393,17 @@
         font-size: 0.6rem;
         line-height: 1.3;
     }
-    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child:not(.handled-by-avatar) {
+
+    .applications-table.compact-table td.col-staff .m2-staff-row>div:last-child:not(.handled-by-avatar) {
         flex: 1 1 auto;
         min-width: 3.25rem;
         overflow: hidden;
         font-size: 0.6rem;
         line-height: 1.3;
     }
-    .applications-table.compact-table td.col-staff .m2-staff-row__meta > div:first-child,
-    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:first-child {
+
+    .applications-table.compact-table td.col-staff .m2-staff-row__meta>div:first-child,
+    .applications-table.compact-table td.col-staff .m2-staff-row>div:last-child>div:first-child {
         font-weight: 600;
         color: #0f172a;
         white-space: nowrap;
@@ -4093,16 +4411,18 @@
         text-overflow: ellipsis;
         max-width: 9.5rem;
     }
-    .applications-table.compact-table td.col-staff .m2-staff-row__meta > div:nth-child(2),
-    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:nth-child(2) {
+
+    .applications-table.compact-table td.col-staff .m2-staff-row__meta>div:nth-child(2),
+    .applications-table.compact-table td.col-staff .m2-staff-row>div:last-child>div:nth-child(2) {
         font-size: 0.54rem !important;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
+
     /* Hide M2 handoff sub-line — viewable on hover via tooltip */
-    .applications-table.compact-table td.col-staff .m2-staff-row__meta > div:nth-child(3),
-    .applications-table.compact-table td.col-staff .m2-staff-row > div:last-child > div:nth-child(3) {
+    .applications-table.compact-table td.col-staff .m2-staff-row__meta>div:nth-child(3),
+    .applications-table.compact-table td.col-staff .m2-staff-row>div:last-child>div:nth-child(3) {
         display: none !important;
     }
 
@@ -4121,7 +4441,8 @@
         font-size: 0.74rem;
         line-height: 1.3;
     }
-    .applications-table.compact-table td.col-applicant > * {
+
+    .applications-table.compact-table td.col-applicant>* {
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -4144,7 +4465,8 @@
         text-overflow: clip !important;
         line-height: 1.3;
     }
-    .applications-table.compact-table td.col-encoded > span {
+
+    .applications-table.compact-table td.col-encoded>span {
         white-space: normal !important;
         word-break: keep-all;
         display: inline-block;
@@ -4153,7 +4475,7 @@
 
     /* Time-ago cell — short tag, wrap to keep inside cell border */
     .applications-table.compact-table td.col-encoded-ago,
-    .applications-table.compact-table td.col-encoded-ago > span {
+    .applications-table.compact-table td.col-encoded-ago>span {
         white-space: normal !important;
         word-break: keep-all;
         font-size: 0.62rem !important;
@@ -4176,33 +4498,56 @@
         border-left: 4px solid #1e3a8a;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
+
     .summary-chip-card--emerald {
         background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
         border-color: #6ee7b7 !important;
         border-left-color: #059669 !important;
     }
+
     .summary-chip-card--emerald svg {
         color: #047857 !important;
     }
+
     .summary-chip-card--emerald p:first-of-type {
         color: #047857 !important;
     }
+
     .summary-chip-card--emerald p:last-of-type {
         color: #065f46 !important;
     }
 
     /* Equal column widths across Full Name, Proceeded time, Staff Handled, Eligibility status, Actions */
-    .applications-table.compact-table .col-num         { width: 3% !important; text-align: center !important; }
-    .applications-table.compact-table .col-applicant   { width: 19.4% !important; }
-    .applications-table.compact-table .col-encoded     { width: 19.4% !important; }
-    .applications-table.compact-table .col-staff       { width: 19.4% !important; }
-    .applications-table.compact-table .col-eligibility { width: 19.4% !important; }
-    .applications-table.compact-table .col-actions     { width: 19.4% !important; }
+    .applications-table.compact-table .col-num {
+        width: 3% !important;
+        text-align: center !important;
+    }
+
+    .applications-table.compact-table .col-applicant {
+        width: 19.4% !important;
+    }
+
+    .applications-table.compact-table .col-encoded {
+        width: 19.4% !important;
+    }
+
+    .applications-table.compact-table .col-staff {
+        width: 19.4% !important;
+    }
+
+    .applications-table.compact-table .col-eligibility {
+        width: 19.4% !important;
+    }
+
+    .applications-table.compact-table .col-actions {
+        width: 19.4% !important;
+    }
 
     /* Action stack — tighter gap */
     .applications-table.compact-table .m2-actions-stack {
         gap: 0.32rem !important;
     }
+
     .applications-table.compact-table .m2-actions-stack .btn-review,
     .applications-table.compact-table .m2-actions-stack .action-btn {
         padding: 0.36rem 0.6rem !important;
@@ -4217,6 +4562,7 @@
         min-width: 8.25rem !important;
         overflow: visible !important;
     }
+
     .applications-table td.col-staff:not(.col-status) .m2-staff-row {
         display: flex !important;
         align-items: center !important;
@@ -4224,13 +4570,15 @@
         gap: 0.4rem !important;
         width: 100% !important;
     }
+
     .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta {
         flex: 1 1 0 !important;
         min-width: 4.5rem !important;
         overflow: visible !important;
         display: block !important;
     }
-    .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta > div:first-child {
+
+    .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta>div:first-child {
         white-space: normal !important;
         overflow: visible !important;
         text-overflow: clip !important;
@@ -4240,7 +4588,8 @@
         color: #0f172a !important;
         line-height: 1.25 !important;
     }
-    .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta > div:nth-child(2) {
+
+    .applications-table td.col-staff:not(.col-status) .m2-staff-row__meta>div:nth-child(2) {
         white-space: normal !important;
         overflow: visible !important;
         text-overflow: clip !important;
@@ -4250,6 +4599,7 @@
         text-transform: none !important;
         letter-spacing: 0 !important;
     }
+
     .applications-table td.col-staff:not(.col-status) .handled-by-avatar {
         color: #ffffff !important;
         font-size: 0.58rem !important;
@@ -4354,21 +4704,25 @@
         margin-bottom: 0.25rem !important;
         white-space: normal !important;
     }
+
     .situation-badge--danger {
         background: #fee2e2 !important;
         color: #991b1b !important;
         border-color: #fca5a5 !important;
     }
+
     .situation-badge--ejected {
         background: #ffedd5 !important;
         color: #9a3412 !important;
         border-color: #fdba74 !important;
     }
+
     .situation-badge--relocated {
         background: #dcfce7 !important;
         color: #065f46 !important;
         border-color: #86efac !important;
     }
+
     .situation-badge--other {
         background: #f1f5f9 !important;
         color: #475569 !important;
@@ -4394,6 +4748,7 @@
         color: #b91c1c !important;
         border-color: #fee2e2 !important;
     }
+
     .m2-readiness-chip.blocked::before {
         content: '';
         width: 6px;
@@ -4409,6 +4764,7 @@
         color: #15803d !important;
         border-color: #dcfce7 !important;
     }
+
     .m2-readiness-chip.ready::before {
         content: '';
         width: 6px;
@@ -4420,18 +4776,19 @@
     }
 
     .m2-readiness-chip.pending {
-        background: #eff6ff !important;
-        color: #1d4ed8 !important;
-        border-color: #dbeafe !important;
+        background: #fef3c7 !important;
+        color: #b45309 !important;
+        border-color: #fde68a !important;
     }
+
     .m2-readiness-chip.pending::before {
         content: '';
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        animation: pulse-blue-el 1.8s infinite ease-in-out;
+        background: #d97706;
+        box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+        animation: pulse-amber-el 1.8s infinite ease-in-out;
     }
 
     .m2-readiness-chip.followup {
@@ -4439,6 +4796,7 @@
         color: #c2410c !important;
         border-color: #ffedd5 !important;
     }
+
     .m2-readiness-chip.followup::before {
         content: '';
         width: 6px;
@@ -4450,20 +4808,51 @@
     }
 
     @keyframes pulse-red-el {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-        50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+        }
     }
+
     @keyframes pulse-green-el {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-        50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+        }
     }
+
     @keyframes pulse-blue-el {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-        50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); }
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0);
+        }
     }
+
     @keyframes pulse-amber-el {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
-        50% { box-shadow: 0 0 0 4px rgba(249, 115, 22, 0); }
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0);
+        }
     }
 
     /* Modern action buttons */
@@ -4500,9 +4889,11 @@
     body .action-btn {
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
+
     body .action-btn:hover {
         transform: translateY(-1.5px) scale(1.02) !important;
     }
+
     body .action-btn:active {
         transform: translateY(0) scale(1) !important;
     }
@@ -4518,6 +4909,7 @@
         color: #ffffff !important;
         border-color: #047857 !important;
     }
+
     body .action-btn--proceed-form:hover {
         background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
@@ -4540,21 +4932,21 @@
         font-family: inherit;
         box-sizing: border-box;
     }
-    
+
     .applicant-hover-card.active {
         display: block;
         opacity: 1;
         transform: translateY(0) scale(1);
     }
-    
+
     .applicant-hover-card.position-below {
         transform: translateY(-8px) scale(0.97);
     }
-    
+
     .applicant-hover-card.position-below.active {
         transform: translateY(0) scale(1);
     }
-    
+
     .hover-card-arrow {
         position: absolute;
         width: 10px;
@@ -4562,19 +4954,19 @@
         background: #ffffff;
         transform: rotate(45deg);
         box-shadow: -1px -1px 0 0 rgba(0, 0, 0, 0.03);
-        border-left: 1px solid rgba(0,0,0,0.04);
-        border-top: 1px solid rgba(0,0,0,0.04);
+        border-left: 1px solid rgba(0, 0, 0, 0.04);
+        border-top: 1px solid rgba(0, 0, 0, 0.04);
         top: -5px;
         left: calc(50% - 5px);
     }
-    
+
     .applicant-hover-card:not(.position-below) .hover-card-arrow {
         top: auto;
         bottom: -5px;
         transform: rotate(225deg);
-        box-shadow: 1px 1px 0 0 rgba(0,0,0,0.03);
+        box-shadow: 1px 1px 0 0 rgba(0, 0, 0, 0.03);
     }
-    
+
     .hover-card-header {
         display: flex;
         align-items: center;
@@ -4583,7 +4975,7 @@
         padding-bottom: 0.6rem;
         margin-bottom: 0.6rem;
     }
-    
+
     .hover-card-avatar {
         width: 38px;
         height: 38px;
@@ -4599,12 +4991,12 @@
         box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
         flex-shrink: 0;
     }
-    
+
     .hover-card-title-group {
         min-width: 0;
         flex: 1;
     }
-    
+
     .hover-card-name {
         font-size: 0.84rem;
         font-weight: 800;
@@ -4614,7 +5006,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    
+
     .hover-card-tag {
         font-size: 0.62rem;
         font-weight: 600;
@@ -4623,13 +5015,13 @@
         letter-spacing: 0.05em;
         margin-top: 0.05rem;
     }
-    
+
     .hover-card-body {
         display: flex;
         flex-direction: column;
         gap: 0.45rem;
     }
-    
+
     .hover-card-meta-row {
         display: flex;
         justify-content: space-between;
@@ -4637,18 +5029,18 @@
         gap: 1rem;
         font-size: 0.72rem;
     }
-    
+
     .hover-card-label {
         font-weight: 600;
         color: #64748b;
         font-size: 0.68rem;
     }
-    
+
     .hover-card-value {
         font-weight: 700;
         color: #1e293b;
     }
-    
+
     .hover-card-footer {
         border-top: 1px solid #f1f5f9;
         margin-top: 0.6rem;
@@ -4670,7 +5062,7 @@
         font-size: 0.7rem !important;
         border: 1px solid #bfdbfe !important;
     }
-    
+
     .complainant-ref-code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
         font-weight: 600 !important;
@@ -4716,14 +5108,16 @@
             <div>
                 <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">
                     Total List</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="evaluationsTotalCount">{{ total_records|default:page_obj.paginator.count|default:applicants_data|length }}</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="evaluationsTotalCount">
+                    {{ total_records|default:page_obj.paginator.count|default:applicants_data|length }}</p>
             </div>
         </div>
 
         <!-- Search Box -->
         <form method="get" class="search-box" id="evaluationsSearchForm"
             style="flex: 1; min-width: 200px; position: relative; display: flex;">
-            {% if filter_stage and filter_stage != 'all' %}<input type="hidden" name="stage" value="{{ filter_stage }}">{% endif %}
+            {% if filter_stage and filter_stage != 'all' %}<input type="hidden" name="stage"
+                value="{{ filter_stage }}">{% endif %}
             <svg class="search-icon"
                 style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4748,35 +5142,43 @@
                 <tr>
                     <th class="col-num" title="Row number in this list">#</th>
                     <th class="col-applicant" title="Applicant Full Name" style="text-align: center;">Full Name</th>
-                    <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time</th>
-                    <th class="col-staff" title="Staff who proceeded from Module 1 (same as Intake Staff Handled)">Staff Handled</th>
-                    <th class="col-eligibility" title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility status</th>
+                    <th class="col-encoded" title="Date and time proceeded to Application & Evaluation">Proceeded time
+                    </th>
+                    <th class="col-staff" title="Staff who proceeded from Module 1 (same as Intake Staff Handled)">Staff
+                        Handled</th>
+                    <th class="col-eligibility"
+                        title="Module 2 eligibility evaluation readiness (documents, checks, certification)">Eligibility
+                        status</th>
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for data in applicants_data %}
-                <tr
-                    data-applicant-id="{{ data.applicant.id }}"
+                <tr data-applicant-id="{{ data.applicant.id }}"
                     data-has-application="{% if data.form_generated %}1{% else %}0{% endif %}"
                     data-displacement-reason="{{ data.applicant.displacement_reason|default:'' }}"
-                    class="scroll-animate-left"
-                    {% if data.blacklist_blocked %}style="background:#fef2f2;"{% endif %}
-                >
-                    <td class="col-num" style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                    class="scroll-animate-left" {% if data.blacklist_blocked %}style="background:#fef2f2;" {% endif %}>
+                    <td class="col-num" style="font-weight:700;color:#1e293b;">{{
+                        page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
-                            <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-                                <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" 
-                                      style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
-                                      data-full-name="{{ data.applicant.full_name }}"
-                                      data-tx-id="APP-{{ data.applicant.id|slice:":8" }}..."
-                                      data-ref-code="{{ data.applicant.reference_number|default:'' }}"
-                                      data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
-                                      data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
-                                      data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
+                        <div class="complainant-cell-info"
+                            style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                            <div class="complainant-name-card"
+                                style="display: inline-flex; align-items: center; gap: 0.45rem;">
+                                <span
+                                    class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
+                                    style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                                    data-full-name="{{ data.applicant.full_name }}"
+                                    data-tx-id="APP-{{ data.applicant.id|slice:" :8" }}..."
+                                    data-ref-code="{{ data.applicant.reference_number|default:'' }}"
+                                    data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
+                                    data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                    data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{
+                                    data.applicant.full_name }}</span>
                             </div>
-                            {% if data.applicant.displacement_reason == 'danger_zone' or data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason == 'relocated' or data.applicant.displacement_reason == 'not_abc' %}
+                            {% if data.applicant.displacement_reason == 'danger_zone' or
+                            data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason ==
+                            'relocated' or data.applicant.displacement_reason == 'not_abc' %}
                             <div class="demographic-meta-row" style="margin-top: 0.15rem;">
                                 {% if data.applicant.displacement_reason == 'danger_zone' %}
                                 <span class="priority-hsl-badge option-a">Danger Zone</span>
@@ -4792,7 +5194,8 @@
                             <!-- Removed redundant Transaction and Reference tags to maintain clean aesthetics -->
                             {% if data.blacklist_blocked %}
                             <div style="margin-top: 0.15rem; display: flex; align-items: center; gap: 0.25rem;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #ef4444; flex-shrink:0;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    style="width: 0.75rem; height: 0.75rem; color: #ef4444; flex-shrink:0;">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <line x1="12" y1="8" x2="12" y2="12"></line>
                                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -4800,7 +5203,10 @@
                                 <span style="font-size:0.5625rem;color:#b91c1c;font-weight:700;">
                                     Blacklist blocked
                                     {% if data.blacklist_source %}
-                                    <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}" style="font-size: 0.5rem; padding: 0.05rem 0.2rem;">{{ data.blacklist_source }}</span>
+                                    <span
+                                        class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}"
+                                        style="font-size: 0.5rem; padding: 0.05rem 0.2rem;">{{ data.blacklist_source
+                                        }}</span>
                                     {% endif %}
                                 </span>
                             </div>
@@ -4810,27 +5216,35 @@
                     <td class="col-encoded">
                         <div class="date-cell-stack">
                             <div class="date-main">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
                                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                     <line x1="16" y1="2" x2="16" y2="6"></line>
                                     <line x1="8" y1="2" x2="8" y2="6"></line>
                                     <line x1="3" y1="10" x2="21" y2="10"></line>
                                 </svg>
-                                <span>{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"M d, Y" }}</span>
+                                <span>{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"M d,
+                                    Y" }}</span>
                             </div>
                             <div class="date-sub">
-                                {{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"g:i A" }} · <span style="font-weight: 600; color: #475569;">{{ data.proceededAgo|default:"—" }}</span>
+                                {{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"g:i A" }} ·
+                                <span style="font-weight: 600; color: #475569;">{{ data.proceededAgo|default:"—"
+                                    }}</span>
                             </div>
                         </div>
                     </td>
                     <td class="col-staff">
                         {% if data.staff_user %}
-                        <div class="m2-staff-row" title="{{ data.staff_name }}{% if data.staff_role %} · {{ data.staff_role }}{% endif %}">
-                            <div class="handled-by-avatar {% if data.staff_position_key == 'second_member' %}second-member{% elif data.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ data.staff_initials }}</div>
+                        <div class="m2-staff-row"
+                            title="{{ data.staff_name }}{% if data.staff_role %} · {{ data.staff_role }}{% endif %}">
+                            <div
+                                class="handled-by-avatar {% if data.staff_position_key == 'second_member' %}second-member{% elif data.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">
+                                {{ data.staff_initials }}</div>
                             <div class="m2-staff-row__meta">
                                 <div>{{ data.staff_name }}</div>
                                 <div>{{ data.staff_role }}</div>
-                                {% if data.applicant.registered_by_id and data.applicant.module2_handoff_by_id and data.applicant.registered_by_id != data.applicant.module2_handoff_by_id %}
+                                {% if data.applicant.registered_by_id and data.applicant.module2_handoff_by_id and
+                                data.applicant.registered_by_id != data.applicant.module2_handoff_by_id %}
                                 <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;"
                                     title="Original Module 1 encoding staff">
                                     <strong>Encoded by:</strong> {{ data.applicant.registered_by.get_full_name }}
@@ -4844,38 +5258,47 @@
                     </td>
                     <td class="col-eligibility">
                         <div class="col-status-wrap">
-                        {% if data.m2_evaluator.blacklist_blocked %}
-                        <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
-                        {% elif data.form_generated %}
-                        <span class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage }}</span>
-                        {% elif not data.m2_evaluator.required_docs_complete %}
-                        <span class="m2-readiness-chip pending">Docs Incomplete</span>
-                        {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
-                        <span class="m2-readiness-chip pending">Needs Situation Docs</span>
-                        {% elif data.m2_evaluator.certification_status == 'pending' %}
-                        <span class="m2-readiness-chip pending">Pending Certification</span>
-                        {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
-                        <span class="m2-readiness-chip pending">Needs Field Evidence</span>
-                        {% elif data.m2_evaluator.has_failed_checks %}
-                        <span class="m2-readiness-chip followup" title="One or more eligibility checks marked Failed — reviewer follow-up required.">Pending Follow-up</span>
-                        {% elif data.m2_evaluator.form_generation_ready %}
-                        <span class="m2-readiness-chip ready">Ready for Form</span>
-                        {% else %}
-                        <span class="m2-readiness-chip pending">Under Review</span>
-                        {% endif %}
-                        {% if data.form_generated %}
-                        <div class="m2-readiness-hint">{{ data.application.application_number }}</div>
-                        {% elif data.m2_evaluator.readiness_hint %}
-                        <div class="m2-readiness-hint">{{ data.m2_evaluator.readiness_hint }}</div>
-                        {% endif %}
+                            {% if data.m2_evaluator.blacklist_blocked %}
+                            <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
+                            {% elif data.form_generated %}
+                            <span
+                                class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{
+                                data.current_stage }}</span>
+                            {% elif not data.m2_evaluator.required_docs_complete %}
+                            <span class="m2-readiness-chip pending">Docs Incomplete</span>
+                            {% elif data.m2_evaluator.situation_docs_required and not
+                            data.m2_evaluator.situation_docs_ready %}
+                            <span class="m2-readiness-chip pending">Needs Situation Docs</span>
+                            {% elif data.m2_evaluator.certification_status == 'pending' %}
+                            <span class="m2-readiness-chip pending">Pending Certification</span>
+                            {% elif data.m2_evaluator.field_evidence_required and
+                            data.m2_evaluator.field_evidence_status == 'missing' %}
+                            <span class="m2-readiness-chip pending">Needs Field Evidence</span>
+                            {% elif data.m2_evaluator.has_failed_checks %}
+                            <span class="m2-readiness-chip followup"
+                                title="One or more eligibility checks marked Failed — reviewer follow-up required.">Pending
+                                Follow-up</span>
+                            {% elif data.m2_evaluator.form_generation_ready %}
+                            <span class="m2-readiness-chip ready">Ready for Form</span>
+                            {% else %}
+                            <span class="m2-readiness-chip pending">Under Review</span>
+                            {% endif %}
+                            {% if data.form_generated %}
+                            <div class="m2-readiness-hint">{{ data.application.application_number }}</div>
+                            {% elif data.m2_evaluator.readiness_hint %}
+                            <div class="m2-readiness-hint">{{ data.m2_evaluator.readiness_hint }}</div>
+                            {% endif %}
                         </div>
                     </td>
                     <td class="col-actions">
                         <div class="m2-actions-stack">
                             <button type="button" class="btn-review btn-review-walkin"
                                 onclick="runEvaluatePrecheck('{{ data.applicant.id }}', '{{ data.applicant.full_name|escapejs }}')">
-                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="width:0.85rem; height:0.85rem;">
-                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" aria-hidden="true" style="width:0.85rem; height:0.85rem;">
+                                    <path
+                                        d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                                    </path>
                                     <circle cx="12" cy="14" r="2"></circle>
                                 </svg>
                                 Evaluate
@@ -4889,7 +5312,8 @@
                             {% endif %}
 
                             {% if 'award_lot' in data.user_actions %}
-                            <button class="action-btn" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important; color:#ffffff !important; border:1px solid #6d28d9 !important;"
+                            <button class="action-btn"
+                                style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important; color:#ffffff !important; border:1px solid #6d28d9 !important;"
                                 onclick="openAwardModal('{{ data.application.id }}', '{{ data.applicant.full_name }}')">
                                 🏠 Award Lot
                             </button>
@@ -4899,11 +5323,14 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                    <td colspan="7"
+                        style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
                         {% if search %}
                         No results match your search &ldquo;{{ search }}&rdquo;.
                         {% else %}
-                        No applicant records on this list yet. From Intake, use Proceed to Application &amp; Eligibility to hand off an applicant here. When eligibility shows Ready for Form, use Proceed to Ready for Form queue to route them to Go to Form.
+                        No applicant records on this list yet. From Intake, use Proceed to Application &amp; Eligibility
+                        to hand off an applicant here. When eligibility shows Ready for Form, use Proceed to Ready for
+                        Form queue to route them to Go to Form.
                         {% endif %}
                     </td>
                 </tr>
@@ -4914,17 +5341,20 @@
             <div class="table-pagination">
                 <span class="table-pagination-info">
                     {% if search %}Matching &ldquo;{{ search }}&rdquo; — {% endif %}
-                    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} applicant record{{ page_obj.paginator.count|pluralize }}
+                    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+                    applicant record{{ page_obj.paginator.count|pluralize }}
                 </span>
                 <div class="table-pagination-controls">
                     {% if page_obj.has_previous %}
-                    <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+                    <a class="btn-page"
+                        href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
                     {% else %}
                     <span class="btn-page is-disabled">Prev</span>
                     {% endif %}
                     <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
-                    <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                    <a class="btn-page"
+                        href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
                     {% else %}
                     <span class="btn-page is-disabled">Next</span>
                     {% endif %}
@@ -4957,8 +5387,7 @@
                     style="padding: 0.625rem 1rem; background: white; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.8125rem; cursor: pointer;">
                     Cancel
                 </button>
-                <button type="submit" id="awardLotSubmitBtn"
-                    {% if not vacant_units_by_site %}disabled{% endif %}
+                <button type="submit" id="awardLotSubmitBtn" {% if not vacant_units_by_site %}disabled{% endif %}
                     style="padding: 0.625rem 1rem; background: #7c3aed; color: white; border: none; border-radius: 8px; font-size: 0.8125rem; font-weight: 600; cursor: pointer;">
                     🏠 Award Lot
                 </button>
@@ -4971,8 +5400,8 @@
     <div class="flow-alert-card" id="flowAlertCard" onclick="event.stopPropagation()">
         <div class="flow-alert-celebration-icon" id="flowAlertCelebrationIcon" style="display: none;">
             <svg class="checkmark-svg" viewBox="0 0 52 52">
-                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
             </svg>
         </div>
         <div class="flow-alert-head">
@@ -4982,7 +5411,8 @@
         <p class="flow-alert-message" id="flowAlertMessage"></p>
         <div class="flow-alert-actions" id="flowAlertActions">
             <button type="button" class="flow-alert-ok" onclick="confirmFlowAlert()">OK</button>
-            <button type="button" class="flow-alert-next" id="flowAlertNextBtn" onclick="confirmFlowAlertNext()" style="display:none;">Next</button>
+            <button type="button" class="flow-alert-next" id="flowAlertNextBtn" onclick="confirmFlowAlertNext()"
+                style="display:none;">Next</button>
         </div>
         <div class="flow-alert-progress-bar" id="flowAlertProgressBar" style="display: none;"></div>
     </div>
@@ -4992,7 +5422,8 @@
     <div class="eligibility-next-modal" onclick="event.stopPropagation()">
         <div class="eligibility-next-header">
             <h3 class="eligibility-next-title">Eligibility Evaluation Checklist</h3>
-            <p class="eligibility-next-subtitle" id="eligibilityNextSubtitle">Review each check, then mark Passed or Failed.</p>
+            <p class="eligibility-next-subtitle" id="eligibilityNextSubtitle">Review each check, then mark Passed or
+                Failed.</p>
         </div>
         <div class="eligibility-next-body">
             <div id="eligibilityNextChecklist"></div>
@@ -5000,7 +5431,8 @@
         </div>
         <div class="eligibility-next-footer">
             <button type="button" class="eligibility-next-back" onclick="backToPrecheckAlert()">Back</button>
-            <button type="button" class="eligibility-next-close" id="eligibilityNextBtn" onclick="openSituationCertificationModal()">Next</button>
+            <button type="button" class="eligibility-next-close" id="eligibilityNextBtn"
+                onclick="openSituationCertificationModal()">Next</button>
         </div>
     </div>
 </div>
@@ -5009,33 +5441,44 @@
     <div class="eligibility-next-modal" style="max-width: 42rem;" onclick="event.stopPropagation()">
         <div class="eligibility-next-header">
             <h3 class="eligibility-next-title">Applicant Situation Certification</h3>
-            <p class="eligibility-next-subtitle" id="situationCertificationSubtitle">Review applicant situation and continue certification path.</p>
+            <p class="eligibility-next-subtitle" id="situationCertificationSubtitle">Review applicant situation and
+                continue certification path.</p>
         </div>
         <div class="eligibility-next-body">
             <div id="situationCertificationContent"></div>
         </div>
         <div class="eligibility-next-footer">
-            <button type="button" class="eligibility-next-back" onclick="backToEligibilityChecklistModal()">Back</button>
-            <button type="button" class="eligibility-next-close" id="markSituationCertifiedBtn" onclick="markSituationCertifiedFromModal()">Mark Situation Certified</button>
-            <button type="button" class="eligibility-next-close" onclick="closeSituationCertificationModal()">Close</button>
+            <button type="button" class="eligibility-next-back"
+                onclick="backToEligibilityChecklistModal()">Back</button>
+            <button type="button" class="eligibility-next-close" id="markSituationCertifiedBtn"
+                onclick="markSituationCertifiedFromModal()">Mark Situation Certified</button>
+            <button type="button" class="eligibility-next-close"
+                onclick="closeSituationCertificationModal()">Close</button>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay m2-field-photo-gallery-overlay" id="m2FieldPhotoGalleryModal" role="dialog" aria-modal="true" aria-labelledby="m2FieldPhotoGalleryTitle" onclick="m2CloseSituationFieldPhotoGallery(event)" aria-hidden="true">
+<div class="modal-overlay m2-field-photo-gallery-overlay" id="m2FieldPhotoGalleryModal" role="dialog" aria-modal="true"
+    aria-labelledby="m2FieldPhotoGalleryTitle" onclick="m2CloseSituationFieldPhotoGallery(event)" aria-hidden="true">
     <div class="m2-field-photo-carousel-panel" onclick="event.stopPropagation();">
         <div class="m2-field-photo-carousel-head">
             <div class="m2-field-photo-carousel-head-main">
                 <h3 class="m2-field-photo-carousel-title" id="m2FieldPhotoGalleryTitle">Site photographs</h3>
-                <p class="m2-field-photo-carousel-sub" id="m2FieldPhotoGallerySubtitle">Field verification — supporting evidence</p>
+                <p class="m2-field-photo-carousel-sub" id="m2FieldPhotoGallerySubtitle">Field verification — supporting
+                    evidence</p>
             </div>
             <span class="m2-field-photo-carousel-counter" id="m2FieldPhotoGalleryCounter"></span>
-            <button type="button" class="m2-field-photo-carousel-x" onclick="m2CloseSituationFieldPhotoGallery()" aria-label="Close gallery">✕</button>
+            <button type="button" class="m2-field-photo-carousel-x" onclick="m2CloseSituationFieldPhotoGallery()"
+                aria-label="Close gallery">✕</button>
         </div>
         <div class="m2-field-photo-carousel-stage">
-            <button type="button" class="m2-field-photo-carousel-nav m2-field-photo-carousel-nav--prev" id="m2FieldPhotoGalleryPrev" aria-label="Previous photo" onclick="event.stopPropagation(); m2FieldPhotoGalleryStep(-1);">‹</button>
+            <button type="button" class="m2-field-photo-carousel-nav m2-field-photo-carousel-nav--prev"
+                id="m2FieldPhotoGalleryPrev" aria-label="Previous photo"
+                onclick="event.stopPropagation(); m2FieldPhotoGalleryStep(-1);">‹</button>
             <img id="m2FieldPhotoGalleryImg" src="" alt="Site photograph" />
-            <button type="button" class="m2-field-photo-carousel-nav m2-field-photo-carousel-nav--next" id="m2FieldPhotoGalleryNext" aria-label="Next photo" onclick="event.stopPropagation(); m2FieldPhotoGalleryStep(1);">›</button>
+            <button type="button" class="m2-field-photo-carousel-nav m2-field-photo-carousel-nav--next"
+                id="m2FieldPhotoGalleryNext" aria-label="Next photo"
+                onclick="event.stopPropagation(); m2FieldPhotoGalleryStep(1);">›</button>
         </div>
     </div>
 </div>
@@ -5047,28 +5490,39 @@
             <p class="eligibility-next-subtitle">Provide a reason before saving this failed decision.</p>
         </div>
         <div class="eligibility-next-body">
-            <label for="eligibilityFailReasonInput" style="display:block;font-size:0.75rem;font-weight:700;color:#334155;margin-bottom:0.4rem;">Failure reason</label>
-            <textarea id="eligibilityFailReasonInput" rows="4" placeholder="Example: Submitted certificate is expired and does not match current applicant profile." style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;resize:vertical;"></textarea>
-            <label style="display:flex;align-items:flex-start;gap:0.45rem;margin-top:0.55rem;font-size:0.72rem;color:#334155;line-height:1.35;cursor:pointer;">
+            <label for="eligibilityFailReasonInput"
+                style="display:block;font-size:0.75rem;font-weight:700;color:#334155;margin-bottom:0.4rem;">Failure
+                reason</label>
+            <textarea id="eligibilityFailReasonInput" rows="4"
+                placeholder="Example: Submitted certificate is expired and does not match current applicant profile."
+                style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;resize:vertical;"></textarea>
+            <label
+                style="display:flex;align-items:flex-start;gap:0.45rem;margin-top:0.55rem;font-size:0.72rem;color:#334155;line-height:1.35;cursor:pointer;">
                 <input type="checkbox" id="eligibilityFailNotifySms" checked style="margin-top:0.12rem;flex-shrink:0;">
-                <span>Send SMS to the applicant using the failure reason above (requires a valid PH mobile number on file).</span>
+                <span>Send SMS to the applicant using the failure reason above (requires a valid PH mobile number on
+                    file).</span>
             </label>
-            <div id="eligibilityFailReasonError" style="display:none;color:#b91c1c;font-size:0.72rem;margin-top:0.4rem;"></div>
+            <div id="eligibilityFailReasonError"
+                style="display:none;color:#b91c1c;font-size:0.72rem;margin-top:0.4rem;"></div>
         </div>
         <div class="eligibility-next-footer">
-            <button type="button" class="eligibility-next-back" onclick="closeEligibilityFailReasonModal()">Cancel</button>
-            <button type="button" class="eligibility-next-close" onclick="submitEligibilityFailedReason()">Save Failed Decision</button>
+            <button type="button" class="eligibility-next-back"
+                onclick="closeEligibilityFailReasonModal()">Cancel</button>
+            <button type="button" class="eligibility-next-close" onclick="submitEligibilityFailedReason()">Save Failed
+                Decision</button>
         </div>
     </div>
 </div>
 
-<input type="file" id="m2RequirementFileInput" accept="image/*,application/pdf,.pdf" tabindex="-1" aria-hidden="true" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;">
+<input type="file" id="m2RequirementFileInput" accept="image/*,application/pdf,.pdf" tabindex="-1" aria-hidden="true"
+    style="position:absolute;width:0;height:0;opacity:0;pointer-events:none;">
 
 <!-- Premium Hover Card Popover Template -->
 <div id="applicantHoverCard" class="applicant-hover-card">
     <div class="hover-card-arrow"></div>
     <div class="hover-card-banner">
-        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
+        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo"
+            style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
     </div>
     <div class="hover-card-header">
         <div class="hover-card-avatar" id="hcAvatar">—</div>
@@ -5094,7 +5548,8 @@
             <span class="hover-card-label">Birth Date</span>
             <span class="hover-card-value" id="hcDob">—</span>
         </div>
-        <div class="hover-card-meta-row" id="hcDispRow" style="display: none; margin-top: 0.35rem; align-items: center;">
+        <div class="hover-card-meta-row" id="hcDispRow"
+            style="display: none; margin-top: 0.35rem; align-items: center;">
             <span class="hover-card-label">Situation Status</span>
             <span id="hcDispBadge"></span>
         </div>
@@ -5114,7 +5569,7 @@
     // Page-level state
     const position = '{{ request.user.position }}';
     const MODULE2_PROCEED_TO_FORM_QUEUE_URL = '{% url "applications:proceed_to_form_queue" request.user.position %}';
-    const MODULE2_CAN_DWT_SCAN = {{ permissions.can_verify_documents|yesno:"true,false" }};
+    const MODULE2_CAN_DWT_SCAN = {{ permissions.can_verify_documents| yesno: "true,false" }};
     const MODULE2_INTAKE_UPLOAD_SCAN_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
     let flowAlertOnConfirm = null;
     let flowAlertOnNext = null;
@@ -5631,9 +6086,9 @@
         const actionsRow = `
             <div class="m2-elig-actions m2-sit-actions">
                 ${docUrl
-            ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>`
-            : ''
-                }
+                ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>`
+                : ''
+            }
                 ${sitUploadHtml}
                 ${sitScanControlHtml}
                 ${viewFieldPhotosHtml}
@@ -6135,16 +6590,16 @@
             const actionsRow = `
                 <div class="m2-elig-actions">
                     ${docUrl
-                ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>`
-                : ''
-                    }
+                    ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>`
+                    : ''
+                }
                     ${eligUploadHtml}
                     ${scanControlHtml}
                     ${entry.is_reviewable
-                ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}Mark Passed</button>
+                    ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}Mark Passed</button>
                             <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}Mark Failed</button>`
-                : ''
-                    }
+                    : ''
+                }
                 </div>`;
             return `
                 <div class="${cardToneClass}">
@@ -6660,7 +7115,7 @@
             // Populate card
             hcName.textContent = fullName;
             hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
-            
+
             // Client-side slicing safety for UUIDs and long transaction IDs
             let displayTx = txId;
             if (displayTx.startsWith('APP-')) {
@@ -6716,7 +7171,7 @@
 
             // Position card
             const rect = nameSpan.getBoundingClientRect();
-            
+
             // Temporarily display to measure height
             hoverCard.style.display = 'block';
             const cardWidth = hoverCard.offsetWidth || 290;
