@@ -4164,6 +4164,33 @@
         padding-right: 0.35rem !important;
     }
 
+    /* Total List Summary Chip Card */
+    .summary-chip-card {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.42rem 0.75rem;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+        border-radius: 0.6rem;
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #1e3a8a;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .summary-chip-card--emerald {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border-color: #6ee7b7 !important;
+        border-left-color: #059669 !important;
+    }
+    .summary-chip-card--emerald svg {
+        color: #047857 !important;
+    }
+    .summary-chip-card--emerald p:first-of-type {
+        color: #047857 !important;
+    }
+    .summary-chip-card--emerald p:last-of-type {
+        color: #065f46 !important;
+    }
+
     /* Slim widths — redistributed without Situation Status column */
     .applications-table.compact-table .col-applicant   { width: 22% !important; }
     .applications-table.compact-table .col-encoded     { width: 15% !important; min-width: 6.5rem; }
@@ -4673,18 +4700,37 @@
         </div>
     </div>
 
-    <!-- Controls Bar (intake-style compact row) -->
+    <!-- Controls Bar (TOTAL LIST badge + Search Box) -->
     <div class="controls-bar"
         style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <form method="get" class="search-box" id="evaluationsSearchForm" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+        <!-- Total Count Badge -->
+        <div class="summary-chip-card summary-chip-card--emerald">
+            <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">
+                    Total List</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="evaluationsTotalCount">{{ total_records|default:page_obj.paginator.count|default:applicants_data|length }}</p>
+            </div>
+        </div>
+
+        <!-- Search Box -->
+        <form method="get" class="search-box" id="evaluationsSearchForm"
+            style="flex: 1; min-width: 200px; position: relative; display: flex;">
             {% if filter_stage and filter_stage != 'all' %}<input type="hidden" name="stage" value="{{ filter_stage }}">{% endif %}
-            <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
+            <svg class="search-icon"
+                style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="search" name="search" id="searchInput" placeholder="Name, ref #, barangay..." value="{{ search }}"
-                autocomplete="off"
+            <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..."
+                id="searchInput" value="{{ search|default:'' }}" autocomplete="off"
                 style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
             <button type="submit"
                 style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
@@ -4692,19 +4738,6 @@
                 Search
             </button>
         </form>
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-            {% if permissions.can_generate_form %}
-            <a href="{% url 'applications:ready_for_form_queue' request.user.position %}"
-                style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.5rem 0.85rem;background:#1e40af;color:#fff;border-radius:0.5rem;font-size:0.74rem;font-weight:700;text-decoration:none;border:1px solid #1e3a8a;white-space:nowrap;box-shadow:0 1px 2px rgba(15,23,42,0.08); transition: background 0.2s ease;"
-                onmouseover="this.style.background='#1e3a8a'" onmouseout="this.style.background='#1e40af'"
-                title="Routed Proceed-to-Form queue: Generate Form or continue print-and-sign until Fully Approved">
-                Go to Form
-                {% if ready_for_form_queue_count > 0 %}
-                <span style="background:rgba(255,255,255,0.28);padding:0.1rem 0.42rem;border-radius:9999px;font-size:0.66rem;line-height:1;">{{ ready_for_form_queue_count }}</span>
-                {% endif %}
-            </a>
-            {% endif %}
-        </div>
     </div>
 
     <!-- Applications Table (headers always visible; empty state is one tbody row, intake-style) -->
