@@ -4754,7 +4754,8 @@
                                       data-tx-id="APP-{{ data.applicant.id|slice:":8" }}..."
                                       data-ref-code="{{ data.applicant.reference_number|default:'' }}"
                                       data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
-                                      data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ data.applicant.full_name }}</span>
+                                      data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                      data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
                             </div>
                             <!-- Removed redundant Transaction and Reference tags to maintain clean aesthetics -->
                             {% if data.blacklist_blocked %}
@@ -5088,6 +5089,10 @@
         <div class="hover-card-meta-row">
             <span class="hover-card-label">Birth Date</span>
             <span class="hover-card-value" id="hcDob">—</span>
+        </div>
+        <div class="hover-card-meta-row" id="hcDispRow" style="display: none; margin-top: 0.35rem; align-items: center;">
+            <span class="hover-card-label">Situation</span>
+            <span id="hcDispBadge"></span>
         </div>
     </div>
     <div class="hover-card-footer">
@@ -6624,6 +6629,8 @@
         const hcRefRow = document.getElementById('hcRefRow');
         const hcBrgy = document.getElementById('hcBrgy');
         const hcDob = document.getElementById('hcDob');
+        const hcDispRow = document.getElementById('hcDispRow');
+        const hcDispBadge = document.getElementById('hcDispBadge');
 
         let hideTimeout;
 
@@ -6673,6 +6680,35 @@
             }
             hcBrgy.textContent = barangay;
             hcDob.textContent = dob;
+
+            const dispReason = nameSpan.dataset.dispReason || '';
+            if (dispReason && hcDispRow && hcDispBadge) {
+                let badgeClass = '';
+                let badgeText = '';
+                if (dispReason === 'danger_zone') {
+                    badgeClass = 'priority-hsl-badge option-a';
+                    badgeText = 'Danger Zone';
+                } else if (dispReason === 'ejected') {
+                    badgeClass = 'priority-hsl-badge option-b';
+                    badgeText = 'Ejected';
+                } else if (dispReason === 'relocated') {
+                    badgeClass = 'priority-hsl-badge option-c';
+                    badgeText = 'Relocated';
+                } else if (dispReason === 'not_abc') {
+                    badgeClass = 'priority-hsl-badge option-d';
+                    badgeText = 'Other';
+                }
+
+                if (badgeText) {
+                    hcDispBadge.className = badgeClass;
+                    hcDispBadge.textContent = badgeText;
+                    hcDispRow.style.display = 'flex';
+                } else {
+                    hcDispRow.style.display = 'none';
+                }
+            } else if (hcDispRow) {
+                hcDispRow.style.display = 'none';
+            }
 
             // Position card
             const rect = nameSpan.getBoundingClientRect();
