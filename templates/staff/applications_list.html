@@ -5157,28 +5157,21 @@
                 <tr data-applicant-id="{{ data.applicant.id }}"
                     data-has-application="{% if data.form_generated %}1{% else %}0{% endif %}"
                     data-displacement-reason="{{ data.applicant.displacement_reason|default:'' }}"
-                    class="scroll-animate-left" {% if data.blacklist_blocked %}style="background:#fef2f2;" {% endif %}>
-                    <td class="col-num" style="font-weight:700;color:#1e293b;">{{
-                        page_obj.start_index|add:forloop.counter0 }}</td>
+                    class="scroll-animate-left" {% if data.blacklist_blocked %}style="background:#fef2f2;"{% endif %}>
+                    <td class="col-num" style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="complainant-cell-info"
-                            style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
-                            <div class="complainant-name-card"
-                                style="display: inline-flex; align-items: center; gap: 0.45rem;">
-                                <span
-                                    class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
-                                    style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
-                                    data-full-name="{{ data.applicant.full_name }}"
-                                    data-tx-id="APP-{{ data.applicant.id|slice:" :8" }}..."
-                                    data-ref-code="{{ data.applicant.reference_number|default:'' }}"
-                                    data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
-                                    data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
-                                    data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{
-                                    data.applicant.full_name }}</span>
+                        <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                            <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
+                                <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
+                                      style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                                      data-full-name="{{ data.applicant.full_name }}"
+                                      data-tx-id="APP-{{ data.applicant.id|slice:":8" }}..."
+                                      data-ref-code="{{ data.applicant.reference_number|default:'' }}"
+                                      data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
+                                      data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                      data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
                             </div>
-                            {% if data.applicant.displacement_reason == 'danger_zone' or
-                            data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason ==
-                            'relocated' or data.applicant.displacement_reason == 'not_abc' %}
+                            {% if data.applicant.displacement_reason == 'danger_zone' or data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason == 'relocated' or data.applicant.displacement_reason == 'not_abc' %}
                             <div class="demographic-meta-row" style="margin-top: 0.15rem;">
                                 {% if data.applicant.displacement_reason == 'danger_zone' %}
                                 <span class="priority-hsl-badge option-a">Danger Zone</span>
@@ -5194,8 +5187,7 @@
                             <!-- Removed redundant Transaction and Reference tags to maintain clean aesthetics -->
                             {% if data.blacklist_blocked %}
                             <div style="margin-top: 0.15rem; display: flex; align-items: center; gap: 0.25rem;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    style="width: 0.75rem; height: 0.75rem; color: #ef4444; flex-shrink:0;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #ef4444; flex-shrink:0;">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <line x1="12" y1="8" x2="12" y2="12"></line>
                                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -5203,10 +5195,7 @@
                                 <span style="font-size:0.5625rem;color:#b91c1c;font-weight:700;">
                                     Blacklist blocked
                                     {% if data.blacklist_source %}
-                                    <span
-                                        class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}"
-                                        style="font-size: 0.5rem; padding: 0.05rem 0.2rem;">{{ data.blacklist_source
-                                        }}</span>
+                                    <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}" style="font-size: 0.5rem; padding: 0.05rem 0.2rem;">{{ data.blacklist_source }}</span>
                                     {% endif %}
                                 </span>
                             </div>
@@ -5216,37 +5205,28 @@
                     <td class="col-encoded">
                         <div class="date-cell-stack">
                             <div class="date-main">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
                                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                     <line x1="16" y1="2" x2="16" y2="6"></line>
                                     <line x1="8" y1="2" x2="8" y2="6"></line>
                                     <line x1="3" y1="10" x2="21" y2="10"></line>
                                 </svg>
-                                <span>{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"M d,
-                                    Y" }}</span>
+                                <span>{{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"M d, Y" }}</span>
                             </div>
                             <div class="date-sub">
-                                {{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"g:i A" }} ·
-                                <span style="font-weight: 600; color: #475569;">{{ data.proceededAgo|default:"—"
-                                    }}</span>
+                                {{ data.applicant.module2_handoff_at|default:data.applicant.created_at|date:"g:i A" }} · <span style="font-weight: 600; color: #475569;">{{ data.proceededAgo|default:"—" }}</span>
                             </div>
                         </div>
                     </td>
                     <td class="col-staff">
                         {% if data.staff_user %}
-                        <div class="m2-staff-row"
-                            title="{{ data.staff_name }}{% if data.staff_role %} · {{ data.staff_role }}{% endif %}">
-                            <div
-                                class="handled-by-avatar {% if data.staff_position_key == 'second_member' %}second-member{% elif data.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">
-                                {{ data.staff_initials }}</div>
+                        <div class="m2-staff-row" title="{{ data.staff_name }}{% if data.staff_role %} · {{ data.staff_role }}{% endif %}">
+                            <div class="handled-by-avatar {% if data.staff_position_key == 'second_member' %}second-member{% elif data.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ data.staff_initials }}</div>
                             <div class="m2-staff-row__meta">
                                 <div>{{ data.staff_name }}</div>
                                 <div>{{ data.staff_role }}</div>
-                                {% if data.applicant.registered_by_id and data.applicant.module2_handoff_by_id and
-                                data.applicant.registered_by_id != data.applicant.module2_handoff_by_id %}
-                                <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;"
-                                    title="Original Module 1 encoding staff">
+                                {% if data.applicant.registered_by_id and data.applicant.module2_handoff_by_id and data.applicant.registered_by_id != data.applicant.module2_handoff_by_id %}
+                                <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;" title="Original Module 1 encoding staff">
                                     <strong>Encoded by:</strong> {{ data.applicant.registered_by.get_full_name }}
                                 </div>
                                 {% endif %}
@@ -5261,23 +5241,17 @@
                             {% if data.m2_evaluator.blacklist_blocked %}
                             <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
                             {% elif data.form_generated %}
-                            <span
-                                class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{
-                                data.current_stage }}</span>
+                            <span class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage }}</span>
                             {% elif not data.m2_evaluator.required_docs_complete %}
                             <span class="m2-readiness-chip pending">Docs Incomplete</span>
-                            {% elif data.m2_evaluator.situation_docs_required and not
-                            data.m2_evaluator.situation_docs_ready %}
+                            {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
                             <span class="m2-readiness-chip pending">Needs Situation Docs</span>
                             {% elif data.m2_evaluator.certification_status == 'pending' %}
                             <span class="m2-readiness-chip pending">Pending Certification</span>
-                            {% elif data.m2_evaluator.field_evidence_required and
-                            data.m2_evaluator.field_evidence_status == 'missing' %}
+                            {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
                             <span class="m2-readiness-chip pending">Needs Field Evidence</span>
                             {% elif data.m2_evaluator.has_failed_checks %}
-                            <span class="m2-readiness-chip followup"
-                                title="One or more eligibility checks marked Failed — reviewer follow-up required.">Pending
-                                Follow-up</span>
+                            <span class="m2-readiness-chip followup" title="One or more eligibility checks marked Failed — reviewer follow-up required.">Pending Follow-up</span>
                             {% elif data.m2_evaluator.form_generation_ready %}
                             <span class="m2-readiness-chip ready">Ready for Form</span>
                             {% else %}
@@ -5569,7 +5543,7 @@
     // Page-level state
     const position = '{{ request.user.position }}';
     const MODULE2_PROCEED_TO_FORM_QUEUE_URL = '{% url "applications:proceed_to_form_queue" request.user.position %}';
-    const MODULE2_CAN_DWT_SCAN = {{ permissions.can_verify_documents| yesno: "true,false" }};
+    const MODULE2_CAN_DWT_SCAN = {{ permissions.can_verify_documents|yesno:"true,false" }};
     const MODULE2_INTAKE_UPLOAD_SCAN_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
     let flowAlertOnConfirm = null;
     let flowAlertOnNext = null;
