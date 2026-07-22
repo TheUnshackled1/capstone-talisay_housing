@@ -164,9 +164,9 @@ def document_filed_via_display(capture_method):
     """UI label for checklist rows (Uploaded vs Scanned)."""
     method = (capture_method or '').strip().lower()
     if method == Document.CAPTURE_UPLOAD:
-        return 'Uploaded'
+        return 'UPLOADED'
     if method == Document.CAPTURE_SCAN:
-        return 'Scanned'
+        return 'SCANNED'
     return ''
 
 

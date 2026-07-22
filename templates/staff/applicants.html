@@ -1533,6 +1533,9 @@
         color: #10b981;
         background: transparent;
         border-color: transparent;
+        text-transform: uppercase !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.04em !important;
     }
 
     #archiveRequirementsModal .req-scan-pending {
@@ -10016,11 +10019,11 @@
     /** Status column — Uploaded / Scanned (opens file when URL available). */
     function buildArchiveReqViewInnerHtml(row) {
         const latestFileUrl = String((row && row.latest_file_url) || '').trim();
-        const filedLabel = String((row && row.filed_via_label) || '').trim();
+        const filedLabel = String((row && row.filed_via_label) || '').trim().toUpperCase();
         if (!filedLabel && !latestFileUrl) {
             return '<span style="color:#94a3b8;font-size:0.75rem;display:inline-flex;justify-content:center;width:100%;">—</span>';
         }
-        const label = escapeHtml(filedLabel || 'On file');
+        const label = escapeHtml(filedLabel || 'SCANNED');
         const docTitle = escapeHtml(String((row && row.latest_file_name) || filedLabel || 'Document on file').trim());
         if (latestFileUrl) {
             const safeLatestFileUrl = escapeHtml(latestFileUrl);
