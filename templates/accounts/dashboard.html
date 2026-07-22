@@ -1740,9 +1740,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     }]
                 };
                 if (mode === 'donut') { config.options.cutout = '62%'; }
-                // Set maintainAspectRatio to false so it fits the restricted container height.
-                // Chart.js natively keeps doughnut/pie charts perfectly circular.
-                config.options.maintainAspectRatio = false;
+                config.options.maintainAspectRatio = true;
+                config.options.aspectRatio = 1;
                 // Disable native legend — we inject a custom wrappable HTML legend
                 config.options.plugins.legend.display = false;
                 config.options.plugins.tooltip.callbacks = {
@@ -1824,6 +1823,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
                 };
                 if (mode === 'donut') { config.options.cutout = '45%'; }
+                config.options.maintainAspectRatio = true;
+                config.options.aspectRatio = 1;
             }
         }
 
@@ -1835,24 +1836,36 @@ document.addEventListener('DOMContentLoaded', function () {
         var stale = canvasWrapForLegend.querySelector('.custom-html-legend');
         if (stale) stale.remove();
 
-        chartInstances[canvasId] = new Chart(canvas, config);
-
-        // After chart creation — inject custom HTML legend for pie / donut (single dataset)
+        // Prepare flex wrapper layout BEFORE canvas renders so Chart.js measures a proper square space
         if ((mode === 'pie' || mode === 'donut') && dataset.type === 'single') {
-            var labels = dataset.labels;
-
-            // Layout: make the wrapper a flex row so legend sits to the right.
-            // Chart.js now enforces aspectRatio:1, so it will draw a square by itself.
-            // We just need to make the canvas NOT stretch to 100% of the flex height.
             canvasWrapForLegend.style.display = 'flex';
             canvasWrapForLegend.style.alignItems = 'center';
+            canvasWrapForLegend.style.justifyContent = 'center';
             canvasWrapForLegend.style.overflow = 'visible';
-            // Let the canvas size itself (Chart.js will keep it square via aspectRatio:1).
-            // We constrain max-width to prevent Chart.js from infinitely growing the flex item.
             canvas.style.flex = '0 0 auto';
             canvas.style.maxWidth = '55%';
             canvas.style.maxHeight = '100%';
             canvas.style.minWidth = '0';
+        } else {
+            canvasWrapForLegend.style.display = '';
+            canvasWrapForLegend.style.alignItems = '';
+            canvasWrapForLegend.style.justifyContent = '';
+            canvasWrapForLegend.style.overflow = '';
+            canvas.style.flex = '';
+            canvas.style.maxWidth = '';
+            canvas.style.maxHeight = '';
+            canvas.style.minWidth = '';
+        }
+
+        chartInstances[canvasId] = new Chart(canvas, config);
+
+        if (mode === 'pie' || mode === 'donut') {
+            chartInstances[canvasId].resize();
+        }
+
+        // Inject custom HTML legend for pie / donut (single dataset)
+        if ((mode === 'pie' || mode === 'donut') && dataset.type === 'single') {
+            var labels = dataset.labels;
 
             var legendEl = document.createElement('div');
             legendEl.className = 'custom-html-legend';
@@ -1880,10 +1893,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 ].join(';') + ';';
 
                 var txt = document.createElement('span');
-                // Trim label: if it has ' — ' only show the part before it
-                var displayLbl = lbl.indexOf(' — ') !== -1 ? lbl.split(' — ')[0].trim() : lbl;
-                // Convert to title case: capitalize first letter of each word
-                displayLbl = displayLbl.toLowerCase().split(' ').map(function(s) { return s.charAt(0).toUpperCase() + s.substring(1); }).join(' ');
+                var displayLbl = String(lbl || '');
+                if (displayLbl.indexOf(' — ') !== -1) {
+                    displayLbl = displayLbl.split(' — ')[0].trim();
+                } else if (displayLbl.indexOf(' - ') !== -1 && /^option\s+[a-d]/i.test(displayLbl)) {
+                    displayLbl = displayLbl.split(' - ')[0].trim();
+                }
+
+                var acronyms = ['CDRRMO', 'ISF', 'COMELEC', 'GK', 'ID', 'PHP', 'SMS', 'M2', 'M1', 'M4', 'CDRRM'];
+                displayLbl = displayLbl.split(' ').map(function(word) {
+                    var cleanWord = word.replace(/[^a-zA-Z0-9]/g, '');
+                    if (acronyms.indexOf(cleanWord.toUpperCase()) >= 0) {
+                        return word.replace(cleanWord, cleanWord.toUpperCase());
+                    }
+                    if (word === word.toUpperCase() && word.length > 1) {
+                        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    }
+                    if (word.length > 0) {
+                        return word.charAt(0).toUpperCase() + word.slice(1);
+                    }
+                    return word;
+                }).join(' ');
+
                 txt.textContent = displayLbl;
                 txt.style.cssText = [
                     'font-size:0.7rem', 'color:#475569', 'line-height:1.35',
