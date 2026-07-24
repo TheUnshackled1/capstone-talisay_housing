@@ -2615,14 +2615,35 @@
         }
     }
 
+    #eligibilityNextModal,
+    #situationCertificationModal {
+        position: fixed;
+        top: 0;
+        left: 250px;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(4px);
+        z-index: 1050;
+    }
+
+    @media (max-width: 768px) {
+        #eligibilityNextModal,
+        #situationCertificationModal {
+            left: 0;
+        }
+    }
+
     .eligibility-next-modal {
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 1rem;
-        width: min(96vw, 1080px);
+        width: min(95%, 1060px);
         max-height: 94vh;
-        margin-left: 250px;
-        /* Offset for the left sidebar */
+        margin: 0 auto;
         display: flex;
         flex-direction: column;
         box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28);
@@ -2631,7 +2652,7 @@
 
     .eligibility-next-header {
         position: relative;
-        padding: 0.65rem 1.25rem 0.55rem;
+        padding: 0.75rem 1.25rem 0.65rem;
         background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
         border-bottom: 3px solid #b45309;
         box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
@@ -2677,9 +2698,10 @@
     }
 
     .eligibility-next-body {
-        padding: 0.45rem 0.75rem;
+        padding: 0.55rem 0.85rem;
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
         overflow-y: auto;
+        overflow-x: hidden;
         flex: 1;
     }
 
