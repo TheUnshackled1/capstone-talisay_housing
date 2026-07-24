@@ -5762,7 +5762,7 @@
         try {
             await m2AcquireImageWithDwt({ selectSource: true });
             await m2UploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, docCode);
-            await openSituationCertificationModal();
+            await fetchEligibilitySnapshot(applicantId);
             showFlowAlert('Scan saved to the document vault.', 'Scan complete', null, 'success');
         } catch (error) {
             showFlowAlert((error && error.message) ? error.message : 'Unable to complete scan.');
@@ -5845,7 +5845,7 @@
             );
         } else if (ctx.mode === 'situation' && ctx.docKey) {
             busyBtn = document.querySelector(
-                '#situationCertificationModal button.m2-elig-intake-upload-btn[data-intake-doc-key="' + ctx.docKey.replace(/"/g, '') + '"]'
+                '#eligibilityNextModal button.m2-elig-intake-upload-btn[data-intake-doc-key="' + ctx.docKey.replace(/"/g, '') + '"]'
             );
         }
         let oldHtml = '';
@@ -5866,11 +5866,7 @@
             if (!data || !data.success) {
                 throw new Error((data && data.error) ? data.error : 'Upload failed.');
             }
-            if (ctx.mode === 'eligibility') {
-                await fetchEligibilitySnapshot(ctx.applicantId);
-            } else {
-                await openSituationCertificationModal();
-            }
+            await fetchEligibilitySnapshot(ctx.applicantId);
             showFlowAlert('File saved to the document vault.', 'Upload complete', null, 'success');
         } catch (err) {
             showFlowAlert(err.message || 'Upload failed.');
@@ -6474,6 +6470,17 @@
         if (!listEl || !docEvidenceEl) return;
         lastEligibilitySnapshot = snapshot || null;
 
+        const subtitle = document.getElementById('eligibilityNextSubtitle');
+        const applicantName = snapshot?.applicant?.full_name || lastPrecheckApplicantName || '';
+        const situation = snapshot?.situation || {};
+        const sc = snapshot?.situation_certification || {};
+        if (subtitle) {
+            const optLabel = situation.option ? `${situation.option} · ${situation.title || ''}` : '';
+            subtitle.textContent = applicantName
+                ? `Applicant: ${applicantName}${optLabel ? ' (' + optLabel + ')' : ''}`
+                : 'Applicant: —';
+        }
+
         const checks = snapshot?.checks || {};
         const gates = snapshot?.gates || {};
         const entries = [
@@ -6491,31 +6498,39 @@
         const undecidedChecks = entries.filter((entry) => {
             const d = getManualDecision(entry.key);
             if (d && (d.status === 'passed' || d.status === 'failed')) return false; // manually decided
-            // Voter cert is optional — if the backend already resolved it as passed
-            // (profile voter flag = Yes), treat it as auto-passed so it does not block Next.
             if (entry.key === 'voter' && entry.status === 'passed') return false;
             return true;
         });
-        const warningBanner = undecidedChecks.length
-            ? `<div class="m2-elig-banner m2-elig-banner--pending"><strong>${undecidedChecks.length} pending</strong> — mark Passed or Failed on each card to enable Next.</div>`
+
+        const sitChecks = Array.isArray(sc.checks) ? sc.checks : [];
+        const isWalkInInfo = !!sc.walk_in_informational;
+        const sitMissingCount = isWalkInInfo ? 0 : sitChecks.filter(ch => !ch.done).length;
+
+        const totalPendingCount = undecidedChecks.length + sitMissingCount;
+
+        const warningBanner = totalPendingCount > 0
+            ? `<div class="m2-elig-banner m2-elig-banner--pending"><strong>${totalPendingCount} pending</strong> — mark Passed or Failed on each card and complete situation requirements to enable Complete Evaluation.</div>`
             : (failedChecks.length
                 ? `<div class="m2-elig-banner m2-elig-banner--fail"><strong>${failedChecks.length} failed</strong> — record stays <strong>Pending Follow-up</strong> until failed items are Passed again (blocks Ready for Form).</div>`
                 : '');
 
         const nextBtn = document.getElementById('eligibilityNextBtn');
         if (nextBtn) {
-            const shouldDisable = undecidedChecks.length > 0;
-            nextBtn.disabled = shouldDisable;
-            if (shouldDisable) {
+            const canComplete = totalPendingCount === 0;
+            nextBtn.textContent = 'Complete Evaluation';
+            nextBtn.disabled = !canComplete;
+            if (!canComplete) {
                 nextBtn.setAttribute('disabled', 'disabled');
+                nextBtn.onclick = null;
             } else {
                 nextBtn.removeAttribute('disabled');
+                nextBtn.onclick = markSituationCertifiedFromModal;
             }
-            nextBtn.style.opacity = undecidedChecks.length > 0 ? '0.6' : '1';
-            nextBtn.style.cursor = undecidedChecks.length > 0 ? 'not-allowed' : 'pointer';
-            nextBtn.title = undecidedChecks.length > 0
-                ? `Mark all checks first (${undecidedChecks.length} remaining)`
-                : '';
+            nextBtn.style.opacity = canComplete ? '1' : '0.6';
+            nextBtn.style.cursor = canComplete ? 'pointer' : 'not-allowed';
+            nextBtn.title = canComplete
+                ? 'Complete evaluation and record applicant eligibility'
+                : `Complete all requirements first (${totalPendingCount} remaining)`;
         }
 
         const buildCheckCardHtml = (entry) => {
@@ -6533,7 +6548,6 @@
             const hasManualStatus = manualStatus === 'passed' || manualStatus === 'failed';
             const manualLabel = manualStatus === 'passed' ? 'Passed' : (manualStatus === 'failed' ? 'Failed' : '');
             const evidenceHtml = formatM2EvidenceHtml(entry.evidence);
-            // Voter card: auto-pass when profile confirms voter and cert is optional
             const isVoterAutoPassed = entry.key === 'voter' && entry.status === 'passed' && !hasManualStatus;
             const chipHtml = hasManualStatus
                 ? `<span class="eligibility-check-chip ${manualStatus}">${manualLabel}</span>`
@@ -6589,14 +6603,31 @@
             `;
         };
 
-        const checkCards = entries.map((entry) => buildCheckCardHtml(entry)).join('');
+        const coreCheckCards = entries.map((entry) => buildCheckCardHtml(entry)).join('');
+
+        let situationCardsHtml = '';
+        if (isWalkInInfo) {
+            situationCardsHtml = `
+                <div class="m2-elig-card m2-elig-card--compact m2-elig-card--pass">
+                    <div class="m2-elig-card-head">
+                        <h4 class="m2-elig-card-title">Applicant Situation (${escapeHtml(situation.option || 'Option D')})</h4>
+                        <span class="eligibility-check-chip passed">Auto-passed</span>
+                    </div>
+                    <div class="m2-elig-card-reason">No situation-specific uploads required for Option D.</div>
+                </div>`;
+        } else if (sitChecks.length > 0) {
+            situationCardsHtml = sitChecks.map((c, idx) => {
+                return buildM2SituationCertCardHtml(c, idx, sitChecks, sc, false);
+            }).join('');
+        }
 
         docEvidenceEl.innerHTML = '';
         listEl.innerHTML = `
             <div class="m2-elig-outer-card" style="padding: 0.75rem;">
                 ${warningBanner}
                 <div class="m2-elig-grid">
-                    ${checkCards}
+                    ${coreCheckCards}
+                    ${situationCardsHtml}
                 </div>
             </div>
         `;
