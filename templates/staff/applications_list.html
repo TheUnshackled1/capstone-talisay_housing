@@ -2830,61 +2830,86 @@
         border: 1px solid #cbd5e1;
     }
 
-    /* Module 2 eligibility checklist cards — compact grid layout */
-    .m2-elig-grid {
+    /* Module 2 eligibility checklist cards — two-row layout (4 cards row 1, 3 cards row 2) */
+    .m2-elig-grid-row1 {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 0.65rem;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .m2-elig-grid-row2 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+
+    @media (max-width: 960px) {
+        .m2-elig-grid-row1,
+        .m2-elig-grid-row2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .m2-elig-grid-row1,
+        .m2-elig-grid-row2 {
+            grid-template-columns: 1fr;
+        }
     }
 
     .m2-elig-card--compact {
-        padding: 0.5rem 0.65rem;
+        padding: 0.45rem 0.55rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .m2-elig-card--compact .m2-elig-card-head {
-        gap: 0.35rem;
-        margin-bottom: 0.35rem;
+        gap: 0.25rem;
+        margin-bottom: 0.25rem;
     }
 
     .m2-elig-card--compact .m2-elig-card-title {
-        font-size: 0.8rem;
+        font-size: 0.76rem;
+        line-height: 1.25;
     }
 
     .m2-elig-card--compact .m2-elig-card-reason {
-        font-size: 0.75rem;
-        margin-bottom: 0.4rem;
+        font-size: 0.7rem;
+        margin-bottom: 0.35rem;
     }
 
     .m2-elig-card--compact .eligibility-check-chip {
-        font-size: 0.6rem;
-        padding: 0.15rem 0.4rem;
+        font-size: 0.58rem;
+        padding: 0.12rem 0.35rem;
     }
 
     .m2-elig-card--compact .m2-elig-evidence-box {
-        padding: 0.4rem 0.5rem;
-        margin-bottom: 0.5rem;
+        padding: 0.35rem 0.45rem;
+        margin-bottom: 0.45rem;
     }
 
     .m2-elig-card--compact .m2-ev-grid-row {
-        padding: 0.25rem 0;
-        font-size: 0.7rem;
+        padding: 0.2rem 0;
+        font-size: 0.66rem;
     }
 
     .m2-elig-card--compact .m2-elig-actions {
-        gap: 0.35rem;
+        gap: 0.25rem;
     }
 
     .m2-elig-card--compact .eligibility-decision-btn,
     .m2-elig-card--compact .m2-elig-upload-btn,
     .m2-elig-card--compact .m2-elig-scan-btn,
     .m2-elig-card--compact .eligibility-view-doc-btn {
-        padding: 0.25rem 0.45rem;
-        font-size: 0.7rem;
+        padding: 0.22rem 0.4rem;
+        font-size: 0.65rem;
     }
 
     .m2-elig-card--compact svg {
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
     }
 
     /* Module 2 eligibility checklist cards — readable hierarchy */
@@ -6603,7 +6628,11 @@
             `;
         };
 
-        const coreCheckCards = entries.map((entry) => buildCheckCardHtml(entry)).join('');
+        const firstRowEntries = entries.slice(0, 4);
+        const secondRowCoreEntries = entries.slice(4);
+
+        const firstRowCards = firstRowEntries.map((entry) => buildCheckCardHtml(entry)).join('');
+        const secondRowCoreCards = secondRowCoreEntries.map((entry) => buildCheckCardHtml(entry)).join('');
 
         let situationCardsHtml = '';
         if (isWalkInInfo) {
@@ -6621,13 +6650,17 @@
             }).join('');
         }
 
+        const secondRowCards = `${secondRowCoreCards}${situationCardsHtml}`;
+
         docEvidenceEl.innerHTML = '';
         listEl.innerHTML = `
             <div class="m2-elig-outer-card" style="padding: 0.75rem;">
                 ${warningBanner}
-                <div class="m2-elig-grid">
-                    ${coreCheckCards}
-                    ${situationCardsHtml}
+                <div class="m2-elig-grid-row1">
+                    ${firstRowCards}
+                </div>
+                <div class="m2-elig-grid-row2">
+                    ${secondRowCards}
                 </div>
             </div>
         `;
