@@ -2883,6 +2883,10 @@
         align-items: stretch;
     }
 
+    .m2-elig-grid-3col {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+
     @media (max-width: 960px) {
         .m2-elig-grid-row1,
         .m2-elig-grid-row2 {
@@ -6729,12 +6733,6 @@
             `;
         };
 
-        const firstRowEntries = entries.slice(0, 4);
-        const secondRowCoreEntries = entries.slice(4);
-
-        const firstRowCards = firstRowEntries.map((entry) => buildCheckCardHtml(entry)).join('');
-        const secondRowCoreCards = secondRowCoreEntries.map((entry) => buildCheckCardHtml(entry)).join('');
-
         let situationCardsHtml = '';
         if (isWalkInInfo) {
             situationCardsHtml = `
@@ -6751,16 +6749,29 @@
             }).join('');
         }
 
+        const totalSituationCards = isWalkInInfo ? 1 : sitChecks.length;
+        const totalCards = entries.length + totalSituationCards;
+
+        // Option A (7 cards): 4 in Row 1, 3 in Row 2. Options B, C, D (6 cards): 3 in Row 1, 3 in Row 2.
+        const firstRowCount = (totalCards === 6) ? 3 : 4;
+        const firstRowEntries = entries.slice(0, firstRowCount);
+        const secondRowCoreEntries = entries.slice(firstRowCount);
+
+        const firstRowCards = firstRowEntries.map((entry) => buildCheckCardHtml(entry)).join('');
+        const secondRowCoreCards = secondRowCoreEntries.map((entry) => buildCheckCardHtml(entry)).join('');
         const secondRowCards = `${secondRowCoreCards}${situationCardsHtml}`;
+
+        const row1GridClass = (totalCards === 6) ? 'm2-elig-grid-row1 m2-elig-grid-3col' : 'm2-elig-grid-row1';
+        const row2GridClass = 'm2-elig-grid-row2 m2-elig-grid-3col';
 
         docEvidenceEl.innerHTML = '';
         listEl.innerHTML = `
             <div class="m2-elig-outer-card" style="padding: 0.75rem;">
                 ${warningBanner}
-                <div class="m2-elig-grid-row1">
+                <div class="${row1GridClass}">
                     ${firstRowCards}
                 </div>
-                <div class="m2-elig-grid-row2">
+                <div class="${row2GridClass}">
                     ${secondRowCards}
                 </div>
             </div>
