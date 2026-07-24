@@ -2398,7 +2398,7 @@ def _situation_certification_gate(applicant):
                 'key': 'cdrrmo_cert_document',
                 'label': 'CDRRMO certification',
                 'detail': (
-                    'Vault slot: Upload or scan document type "CDRRMO Certification".'
+                    'Vault slot: CDRRMO Certification.'
                 ),
                 'done': bool(has_cdrrmo_doc),
                 'vault_document_type': 'cdrrmo_cert',
@@ -2407,8 +2407,7 @@ def _situation_certification_gate(applicant):
                 'key': 'field_site_photos',
                 'label': 'Site photographs',
                 'detail': (
-                    f"{field_photo_count} photo(s) on the applicant's CDRRMO field record. "
-                    'Field inspectors attach images when submitting field certification.'
+                    f"Field record: {field_photo_count} photo(s)."
                 ),
                 'done': field_photo_count >= 1,
             },
@@ -2604,7 +2603,7 @@ def eligibility_snapshot(request, position):
 
     checks = {
         'property': {
-            'title': 'Check Property Ownership',
+            'title': 'Property Ownership',
             'status': _status(bool(rules.get('property_ok')), pending=not property_evidence_ready),
             'reason': (
                 'No property in Talisay City.'
@@ -2612,13 +2611,13 @@ def eligibility_snapshot(request, position):
                 else 'Property ownership in Talisay City is flagged.'
             ),
             'evidence': [
-                f'Profile declaration: {"No property in Talisay City" if not applicant.has_property_in_talisay else "Has property in Talisay City"}',
-                f'Certificate of No Property: {_req_evidence_doc_label("R05")}',
+                f'Profile declaration: {"No property in Talisay City" if not applicant.has_property_in_talisay else "Has property"}',
+                f'No Property Cert: {_req_evidence_doc_label("R05")}',
             ],
             'view_document': _latest_doc_for_req('R05'),
         },
         'age_residency': {
-            'title': 'Check Age and Residency Requirements',
+            'title': 'Age and Residency Requirements',
             'status': _status(age_residency_ok, pending=(not age_known or not residency_evidence_ready)),
             'reason': (
                 f'Age {age_value}, Residency {rules.get("years_residing", 0)} years.'
@@ -2627,13 +2626,13 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile age: {age_value if age_known else "Missing"}',
-                f'Profile years residing: {rules.get("years_residing", 0)}',
-                f'Brgy. Certificate of Residency: {_req_evidence_doc_label("R01")}',
+                f'Years residing: {rules.get("years_residing", 0)}',
+                f'Residency Cert: {_req_evidence_doc_label("R01")}',
             ],
             'view_document': _latest_doc_for_req('R01'),
         },
         'income': {
-            'title': 'Check Income Details',
+            'title': 'Income Details',
             'status': _status(bool(rules.get('income_ok')), pending=not income_evidence_ready),
             'reason': (
                 f'Declared income ₱{applicant.monthly_income:,.2f}.'
@@ -2641,28 +2640,28 @@ def eligibility_snapshot(request, position):
                 else 'Monthly income not provided.'
             ),
             'evidence': [
-                f'Profile monthly income: {"₱" + format(applicant.monthly_income, ",.2f") if applicant.monthly_income is not None else "Missing"}',
-                f'Brgy. Certificate of Indigency: {_req_evidence_doc_label("R02")}',
+                f'Monthly income: {"₱" + format(applicant.monthly_income, ",.2f") if applicant.monthly_income is not None else "Missing"}',
+                f'Indigency Cert: {_req_evidence_doc_label("R02")}',
             ],
             'view_document': _latest_doc_for_req('R02'),
         },
         'household': {
-            'title': 'Check Household Composition',
+            'title': 'Household Composition',
             'status': _status(bool(rules.get('household_ok')), pending=not household_evidence_ready),
             'reason': (
-                'Household composition passes policy checks.'
+                'Household composition.'
                 if rules.get('household_ok')
                 else 'Household composition has a policy flag (e.g., live-in partner).'
             ),
             'evidence': [
-                f'Profile household size: {applicant.household_size if applicant.household_size is not None else "Missing"}',
-                f'Listed household size (computed): {rules.get("listed_household_size", "N/A")}',
+                f'Household size: {applicant.household_size if applicant.household_size is not None else "Missing"}',
+                f'Computed size: {rules.get("listed_household_size", "N/A")}',
                 f'Cedula: {_req_evidence_doc_label("R03")}',
             ],
             'view_document': _latest_doc_for_req('R03'),
         },
         'voter': {
-            'title': 'Check Registered voters',
+            'title': 'Registered voters',
             'status': _status(bool(rules.get('voter_ok')), pending=(not voter_value_known)),
             'reason': (
                 'Registered voter in Talisay City.'
@@ -2670,7 +2669,7 @@ def eligibility_snapshot(request, position):
                 else 'Not a registered voter in Talisay City.'
             ),
             'evidence': [
-                f'Voter certification (optional): {_req_evidence_doc_label("RVT")}',
+                f'Voter cert.: {_req_evidence_doc_label("RVT")}',
             ],
             'view_document': voter_doc_latest,
         },

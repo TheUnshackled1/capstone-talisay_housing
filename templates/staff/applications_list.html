@@ -2906,32 +2906,65 @@
     }
 
     .m2-elig-card--compact .m2-elig-evidence-box {
-        padding: 0.2rem 0.35rem;
-        margin-bottom: 0.25rem;
+        padding: 0.25rem 0.4rem;
+        margin-bottom: 0.35rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 4.2rem;
+        box-sizing: border-box;
     }
 
     .m2-elig-card--compact .m2-ev-grid-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding: 0.08rem 0;
-        font-size: 0.63rem;
+        font-size: 0.62rem;
         line-height: 1.2;
+        gap: 0.2rem;
+    }
+
+    .m2-elig-card--compact .m2-ev-grid-label {
+        font-weight: 500;
+        color: #475569;
+        white-space: nowrap;
+    }
+
+    .m2-elig-card--compact .m2-ev-grid-value {
+        font-weight: 600;
+        color: #0f172a;
+        text-align: right;
+        white-space: nowrap;
     }
 
     .m2-elig-card--compact .m2-elig-actions {
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.2rem;
+        margin-top: auto;
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .m2-elig-card--compact .m2-elig-doc-actions,
+    .m2-elig-card--compact .m2-elig-decision-actions {
+        display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.12rem;
-        flex-wrap: wrap;
-        margin-top: auto;
-        min-height: 24px;
+        gap: 0.2rem;
+        width: 100%;
     }
 
     .m2-elig-card--compact .eligibility-decision-btn,
     .m2-elig-card--compact .m2-elig-upload-btn,
     .m2-elig-card--compact .m2-elig-scan-btn,
     .m2-elig-card--compact .eligibility-view-doc-btn {
-        padding: 0.14rem 0.28rem;
-        font-size: 0.59rem;
+        padding: 0.16rem 0.35rem;
+        font-size: 0.62rem;
         min-height: 22px;
         white-space: nowrap;
     }
@@ -6115,16 +6148,21 @@
                 ? `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed active-pass" title="${escapeHtml(markPassedTitle)}"
                  onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')">${M2_PASS_SVG}Mark Passed</button>`
                 : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}">${M2_PASS_SVG}Mark Passed</button>`);
-        const actionsRow = `
-            <div class="m2-elig-actions m2-sit-actions">
-                ${docUrl
-                ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>`
-                : ''
-            }
+        const docActionsHtml = (docUrl || sitUploadHtml || sitScanControlHtml || viewFieldPhotosHtml)
+            ? `<div class="m2-elig-doc-actions">
+                ${docUrl ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>` : ''}
                 ${sitUploadHtml}
                 ${sitScanControlHtml}
                 ${viewFieldPhotosHtml}
-                ${markPassedButtonsHtml}
+               </div>`
+            : '';
+        const decisionActionsHtml = markPassedButtonsHtml
+            ? `<div class="m2-elig-decision-actions">${markPassedButtonsHtml}</div>`
+            : '';
+        const actionsRow = `
+            <div class="m2-elig-actions m2-sit-actions">
+                ${docActionsHtml}
+                ${decisionActionsHtml}
             </div>`;
         return `
             <div class="${cardClass}">
@@ -6637,19 +6675,23 @@
                 : (vaultUploadUrl
                     ? `<a class="m2-elig-upload-btn m2-replace-aware-link" href="${safeVaultUploadHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — upload a file">${M2_UPLOAD_SVG}Upload</a>`
                     : '');
-            const actionsRow = `
-                <div class="m2-elig-actions">
-                    ${docUrl
-                    ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>`
-                    : ''
-                }
+            const docActionsHtml = (docUrl || eligUploadHtml || scanControlHtml)
+                ? `<div class="m2-elig-doc-actions">
+                    ${docUrl ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>` : ''}
                     ${eligUploadHtml}
                     ${scanControlHtml}
-                    ${entry.is_reviewable
-                    ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}Mark Passed</button>
-                            <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}Mark Failed</button>`
-                    : ''
-                }
+                   </div>`
+                : '';
+            const decisionActionsHtml = entry.is_reviewable
+                ? `<div class="m2-elig-decision-actions">
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}Mark Passed</button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}Mark Failed</button>
+                   </div>`
+                : '';
+            const actionsRow = `
+                <div class="m2-elig-actions">
+                    ${docActionsHtml}
+                    ${decisionActionsHtml}
                 </div>`;
             return `
                 <div class="${cardToneClass}">
