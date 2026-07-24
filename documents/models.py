@@ -31,7 +31,7 @@ class Document(models.Model):
         ('house_sketch', 'Sketch of House Location'),
         (
             'voter_certification',
-            'Voter Certification (COMELEC / Barangay voter record)',
+            'Voter Certification',
         ),
         (
             'isf_situational_docs',

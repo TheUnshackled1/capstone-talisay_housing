@@ -698,7 +698,7 @@ def document_management(request, position):
                 ('house_sketch', 'Sketch of House Location'),
                 (
                     'voter_certification',
-                    'Voter certification (COMELEC / Barangay voter record)',
+                    'Voter Certification',
                 ),
             ]
         },

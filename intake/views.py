@@ -289,18 +289,12 @@ def _isf_situational_row_display_name(displacement_reason=''):
     """
     dr = (displacement_reason or '').strip()
     if dr == 'danger_zone':
-        return 'Option A — Resident of Danger Zone or Hazard Area — CDRRMO certification'
+        return 'Resident of Danger Zone or Hazard Area Follow-up'
     if dr == 'ejected':
-        return (
-            'Option B — Ejected or Evicted from Prior Residence — '
-            'ISF situational documentation'
-        )
+        return 'Ejected or Evicted from Prior Residence Follow-up'
     if dr == 'relocated':
-        return (
-            'Option C — Displaced by Government Project or Infrastructure — '
-            'ISF situational documentation'
-        )
-    return 'ISF situational documentation (Applicant Situation Options A, B, or C)'
+        return 'Displaced by Government Project or Infrastructure Follow-up'
+    return 'ISF situational documentation Follow-up'
 
 
 def _isf_situational_policy_tooltip(displacement_reason=''):
@@ -418,7 +412,7 @@ def _archive_requirement_scan_rows(requirements_group_a, scanned_types_set, disp
         latest_cdrrmo = latest_doc_by_type.get(CDRRMO_EXTRA_VAULT_DOC_TYPE, {})
         rows.append({
             'code': 'CDRRMO',
-            'name': 'Option A — Resident of Danger Zone or Hazard Area — CDRRMO certification',
+            'name': _isf_situational_row_display_name(dr),
             'policy_tooltip': _isf_situational_policy_tooltip(dr),
             'group_display': 'Group A - Applicant Requirements',
             # Follow-up only: displayed in checklist but does not affect baseline proceed gate.
@@ -1936,7 +1930,7 @@ def walkin_register(request, position):
             'doc_no_property': 'Certificate of No Property',
             'doc_2x2_picture': '2x2 Picture',
             'doc_sketch_location': 'Sketch of House Location',
-            'doc_voter_cert': 'Voter Certification (COMELEC / Barangay voter record)',
+            'doc_voter_cert': 'Voter Certification',
         }
 
         documents_submitted = {}
