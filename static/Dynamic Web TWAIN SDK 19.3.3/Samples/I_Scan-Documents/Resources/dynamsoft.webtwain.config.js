@@ -23,9 +23,9 @@ Dynamsoft.DWT.Containers = [{ WebTwainId: '', ContainerId: 'dwtcontrolContainer'
 //  decompile, disassemble, or modify the productKey .                             //
 /////////////////////////////////////////////////////////////////////////////////////
 /// If you need to use multiple keys on the same server, you can combine keys and write like this 
-/// Dynamsoft.DWT.ProductKey = 'key1;key2;key3';
+/// Dynamsoft.DWT.ProductKey = 't0198EQYAALQxSa0io9PGcQuw2Yi74vQrWZMOHP9IBF8aWco5Nhw/Hsb/UyH14T6FTJtjcuAJvlz1QxXt+d1dW4XmeZECu7bXnZMHOKW/U6i/EwOc/MhJNO2vmk7b7PO2CRyBeQfkuA4HgBJIazkBi/2O3hkygFuANABprQEtoLqLUHwui7d9Xmv634HWnDzAKf2dZUD6ODHAyY+cISBOybzDbtcUEJQ3JwO4BUgVwO9HdgkInQFuAVIFllOKOQNIRa065Q8iQjgu';
 /// To get a free trial, please visit https://www.dynamsoft.com/customer/license/trialLicense?product=dwt&utm_source=installer.
-Dynamsoft.DWT.ProductKey = 't0197EQYAAHDt8mGEUonQj8vZwGj1k33Swv/ucav5QCogyNsEgVK0RUWDsznWAG5VkznHyBcePjbI/qZaAeLnpMPZczu/+G3ryskOTm3vVGnvRAcnHzlF3turj6dttnnrBC7AuAG6X4cdQA7EtRyAyf5GrwwJwBqgFUBra0ANKO4iFJ958dbPc03vHWjJyQ5Obe/MA9LGiQ5OPnKGgDgv5hN2O8eAIL85CcAaoEUA/x/ZKSByBFgDtAhMhxQzAcQzFMlQvzXiN9I=';
+Dynamsoft.DWT.ProductKey = 't0198EQYAALQxSa0io9PGcQuw2Yi74vQrWZMOHP9IBF8aWco5Nhw/Hsb/UyH14T6FTJtjcuAJvlz1QxXt+d1dW4XmeZECu7bXnZMHOKW/U6i/EwOc/MhJNO2vmk7b7PO2CRyBeQfkuA4HgBJIazkBi/2O3hkygFuANABprQEtoLqLUHwui7d9Xmv634HWnDzAKf2dZUD6ODHAyY+cISBOybzDbtcUEJQ3JwO4BUgVwO9HdgkInQFuAVIFllOKOQNIRa065Q8iQjgu';
 
 ///
 //Dynamsoft.DWT.ResourcesPath = 'Resources';

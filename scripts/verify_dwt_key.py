@@ -2,9 +2,9 @@ import re
 from pathlib import Path
 
 EXPECTED = (
-    "t0197EQYAAHDt8mGEUonQj8vZwGj1k33Swv/ucav5QCogyNsEgVK0RUWDsznWAG5VkznHyBcePjbI/qZaAeLnpMPZczu/+G3ryskOTm3vVGnvRAcnHzlF3turj6dttnnrBC7AuAG6X4cdQA7EtRyAyf5GrwwJwBqgFUBra0ANKO4iFJ958dbPc03vHWjJyQ5Obe/MA9LGiQ5OPnKGgDgv5hN2O8eAIL85CcAaoEUA/x/ZKSByBFgDtAhMhxQzAcQzFMlQvzXiN9I="
+    "t0198EQYAALQxSa0io9PGcQuw2Yi74vQrWZMOHP9IBF8aWco5Nhw/Hsb/UyH14T6FTJtjcuAJvlz1QxXt+d1dW4XmeZECu7bXnZMHOKW/U6i/EwOc/MhJNO2vmk7b7PO2CRyBeQfkuA4HgBJIazkBi/2O3hkygFuANABprQEtoLqLUHwui7d9Xmv634HWnDzAKf2dZUD6ODHAyY+cISBOybzDbtcUEJQ3JwO4BUgVwO9HdgkInQFuAVIFllOKOQNIRa065Q8iQjgu"
 )
-OLD_PREFIX = "t0199EQYA"
+OLD_PREFIX = "t0197EQYA"
 ROOT = Path(__file__).resolve().parents[1] / "static" / "Dynamic Web TWAIN SDK 19.3.3"
 PROD = ROOT / "Resources" / "dynamsoft.webtwain.config.js"
 
