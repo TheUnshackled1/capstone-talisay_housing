@@ -2851,12 +2851,14 @@
         grid-template-columns: repeat(4, 1fr);
         gap: 0.38rem;
         margin-bottom: 0.38rem;
+        align-items: stretch;
     }
 
     .m2-elig-grid-row2 {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 0.38rem;
+        align-items: stretch;
     }
 
     @media (max-width: 960px) {
@@ -2874,10 +2876,12 @@
     }
 
     .m2-elig-card--compact {
-        padding: 0.3rem 0.4rem;
+        padding: 0.35rem 0.45rem;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        height: 100%;
+        box-sizing: border-box;
     }
 
     .m2-elig-card--compact .m2-elig-card-head {
@@ -2913,16 +2917,23 @@
     }
 
     .m2-elig-card--compact .m2-elig-actions {
-        gap: 0.18rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.12rem;
+        flex-wrap: wrap;
+        margin-top: auto;
+        min-height: 24px;
     }
 
     .m2-elig-card--compact .eligibility-decision-btn,
     .m2-elig-card--compact .m2-elig-upload-btn,
     .m2-elig-card--compact .m2-elig-scan-btn,
     .m2-elig-card--compact .eligibility-view-doc-btn {
-        padding: 0.16rem 0.32rem;
-        font-size: 0.61rem;
-        min-height: 24px;
+        padding: 0.14rem 0.28rem;
+        font-size: 0.59rem;
+        min-height: 22px;
+        white-space: nowrap;
     }
 
     .m2-elig-card--compact svg {
@@ -6089,7 +6100,7 @@
             ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View ${fieldPhotoUrls.length} photograph(s) in the viewer">${M2_VIEW_SVG}View</button>`
             : '';
         const evidenceHtml = formatM2EvidenceHtml(splitSituationDetailForEvidence(c.detail));
-        let cardClass = 'm2-elig-card';
+        let cardClass = 'm2-elig-card m2-elig-card--compact';
         if (ok) cardClass += ' m2-elig-card--pass';
         else cardClass += ' m2-elig-card--fail';
         const chipClass = ok ? 'passed' : 'failed';
