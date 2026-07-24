@@ -2396,7 +2396,7 @@ def _situation_certification_gate(applicant):
         checks = [
             {
                 'key': 'cdrrmo_cert_document',
-                'label': 'CDRRMO certification (uploaded or scanned)',
+                'label': 'CDRRMO certification',
                 'detail': (
                     'Separate vault slot: upload or scan as document type "CDRRMO Certification".'
                 ),
@@ -2405,11 +2405,10 @@ def _situation_certification_gate(applicant):
             },
             {
                 'key': 'field_site_photos',
-                'label': 'Site photographs (field verification)',
+                'label': 'Site photographs',
                 'detail': (
                     f"{field_photo_count} photo(s) on the applicant's CDRRMO field record. "
-                    'Field inspectors attach images when submitting field certification '
-                    '(Dashboard -> Field verification desk).'
+                    'Field inspectors attach images when submitting field certification.'
                 ),
                 'done': field_photo_count >= 1,
             },
@@ -2614,7 +2613,7 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile declaration: {"No property in Talisay City" if not applicant.has_property_in_talisay else "Has property in Talisay City"}',
-                f'R05 Certificate of No Property: {_req_evidence_doc_label("R05")}',
+                f'Certificate of No Property: {_req_evidence_doc_label("R05")}',
             ],
             'view_document': _latest_doc_for_req('R05'),
         },
@@ -2622,14 +2621,14 @@ def eligibility_snapshot(request, position):
             'title': 'Check Age and Residency Requirements',
             'status': _status(age_residency_ok, pending=(not age_known or not residency_evidence_ready)),
             'reason': (
-                f'Age {age_value}, residency {rules.get("years_residing", 0)} years (minimum {rules.get("min_years_residing_talisay", MODULE1_MIN_YEARS_RESIDING_TALISAY)}).'
+                f'Age {age_value}, Residency {rules.get("years_residing", 0)} years.'
                 if age_known
                 else 'Age is missing in profile.'
             ),
             'evidence': [
                 f'Profile age: {age_value if age_known else "Missing"}',
-                f'Profile years residing: {rules.get("years_residing", 0)} (minimum {rules.get("min_years_residing_talisay", MODULE1_MIN_YEARS_RESIDING_TALISAY)})',
-                f'R01 Brgy. Certificate of Residency: {_req_evidence_doc_label("R01")}',
+                f'Profile years residing: {rules.get("years_residing", 0)}',
+                f'Brgy. Certificate of Residency: {_req_evidence_doc_label("R01")}',
             ],
             'view_document': _latest_doc_for_req('R01'),
         },
@@ -2643,7 +2642,7 @@ def eligibility_snapshot(request, position):
             ),
             'evidence': [
                 f'Profile monthly income: {"₱" + format(applicant.monthly_income, ",.2f") if applicant.monthly_income is not None else "Missing"}',
-                f'R02 Brgy. Certificate of Indigency: {_req_evidence_doc_label("R02")}',
+                f'Brgy. Certificate of Indigency: {_req_evidence_doc_label("R02")}',
             ],
             'view_document': _latest_doc_for_req('R02'),
         },
@@ -2658,7 +2657,7 @@ def eligibility_snapshot(request, position):
             'evidence': [
                 f'Profile household size: {applicant.household_size if applicant.household_size is not None else "Missing"}',
                 f'Listed household size (computed): {rules.get("listed_household_size", "N/A")}',
-                f'R03 Cedula: {_req_evidence_doc_label("R03")}',
+                f'Cedula: {_req_evidence_doc_label("R03")}',
             ],
             'view_document': _latest_doc_for_req('R03'),
         },
@@ -2671,8 +2670,7 @@ def eligibility_snapshot(request, position):
                 else 'Not a registered voter in Talisay City.'
             ),
             'evidence': [
-                f'Profile voter flag: {"Yes" if applicant.is_registered_voter_talisay else "No"}',
-                f'Voter certification document (optional): {_req_evidence_doc_label("RVT")}',
+                f'Voter certification (optional): {_req_evidence_doc_label("RVT")}',
             ],
             'view_document': voter_doc_latest,
         },
