@@ -2415,8 +2415,7 @@ def _situation_certification_gate(applicant):
         base['checks'] = checks
         base['ready'] = all(c['done'] for c in checks)
         if not base['ready']:
-            missing = [c['label'] for c in checks if not c['done']]
-            base['blocking_summary'] = 'Complete before certifying: ' + '; '.join(missing) + '.'
+            base['blocking_summary'] = 'CDRRMO Certificate'
         return base
 
     if dr == 'ejected':
