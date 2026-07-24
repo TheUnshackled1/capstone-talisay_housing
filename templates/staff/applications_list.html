@@ -2887,6 +2887,18 @@
         grid-template-columns: repeat(3, 1fr) !important;
     }
 
+    .m2-elig-grid-2col-centered {
+        display: flex !important;
+        justify-content: center !important;
+        gap: 0.38rem !important;
+    }
+
+    .m2-elig-grid-2col-centered > * {
+        width: calc((100% - (2 * 0.38rem)) / 3) !important;
+        max-width: calc((100% - (2 * 0.38rem)) / 3) !important;
+        flex: 0 0 auto !important;
+    }
+
     @media (max-width: 960px) {
         .m2-elig-grid-row1,
         .m2-elig-grid-row2 {
@@ -6735,25 +6747,21 @@
 
         let situationCardsHtml = '';
         if (isWalkInInfo) {
-            situationCardsHtml = `
-                <div class="m2-elig-card m2-elig-card--compact m2-elig-card--pass">
-                    <div class="m2-elig-card-head">
-                        <h4 class="m2-elig-card-title">Applicant Situation (${escapeHtml(situation.option || 'Option D')})</h4>
-                        <span class="eligibility-check-chip passed">Auto-passed</span>
-                    </div>
-                    <div class="m2-elig-card-reason">No situation-specific uploads required for Option D.</div>
-                </div>`;
+            // Option D requires no situation-specific uploads; 5 core cards rendered.
+            situationCardsHtml = '';
         } else if (sitChecks.length > 0) {
             situationCardsHtml = sitChecks.map((c, idx) => {
                 return buildM2SituationCertCardHtml(c, idx, sitChecks, sc, false);
             }).join('');
         }
 
-        const totalSituationCards = isWalkInInfo ? 1 : sitChecks.length;
+        const totalSituationCards = isWalkInInfo ? 0 : sitChecks.length;
         const totalCards = entries.length + totalSituationCards;
 
-        // Option A (7 cards): 4 in Row 1, 3 in Row 2. Options B, C, D (6 cards): 3 in Row 1, 3 in Row 2.
-        const firstRowCount = (totalCards === 6) ? 3 : 4;
+        // Option A (7 cards): 4 in Row 1, 3 in Row 2.
+        // Options B & C (6 cards): 3 in Row 1, 3 in Row 2.
+        // Option D (5 cards): 3 in Row 1, 2 centered in Row 2.
+        const firstRowCount = (totalCards === 5 || totalCards === 6) ? 3 : 4;
         const firstRowEntries = entries.slice(0, firstRowCount);
         const secondRowCoreEntries = entries.slice(firstRowCount);
 
@@ -6761,8 +6769,8 @@
         const secondRowCoreCards = secondRowCoreEntries.map((entry) => buildCheckCardHtml(entry)).join('');
         const secondRowCards = `${secondRowCoreCards}${situationCardsHtml}`;
 
-        const row1GridClass = (totalCards === 6) ? 'm2-elig-grid-row1 m2-elig-grid-3col' : 'm2-elig-grid-row1';
-        const row2GridClass = 'm2-elig-grid-row2 m2-elig-grid-3col';
+        const row1GridClass = (totalCards === 5 || totalCards === 6) ? 'm2-elig-grid-row1 m2-elig-grid-3col' : 'm2-elig-grid-row1';
+        const row2GridClass = (totalCards === 5) ? 'm2-elig-grid-row2 m2-elig-grid-2col-centered' : 'm2-elig-grid-row2 m2-elig-grid-3col';
 
         docEvidenceEl.innerHTML = '';
         listEl.innerHTML = `
