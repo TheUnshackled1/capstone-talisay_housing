@@ -2425,19 +2425,14 @@ def _situation_certification_gate(applicant):
         base['checks'] = [{
             'key': 'option_b_supporting',
             'label': 'Supporting documentation',
-            'detail': (
-                f'{n} file(s) on record under ISF situational documentation '
-                '(Court Order).'
-            ),
+            'detail': f'{n} file(s) on record (Court Order).',
             'done': done,
             'files_count': n,
             'vault_document_type': 'isf_situational_docs',
         }]
         base['ready'] = done
         if not done:
-            base['blocking_summary'] = (
-                'Upload at least one supporting document (Court Order) as ISF situational documentation.'
-            )
+            base['blocking_summary'] = 'Supporting document required (Court Order).'
         return base
 
     if dr == 'relocated':
@@ -2447,19 +2442,14 @@ def _situation_certification_gate(applicant):
         base['checks'] = [{
             'key': 'option_c_supporting',
             'label': 'Supporting documentation',
-            'detail': (
-                f'{n} file(s) on record under ISF situational documentation '
-                '(Demand letter from legal office).'
-            ),
+            'detail': f'{n} file(s) on record (Demand Letter).',
             'done': done,
             'files_count': n,
             'vault_document_type': 'isf_situational_docs',
         }]
         base['ready'] = done
         if not done:
-            base['blocking_summary'] = (
-                'Upload at least one supporting document (Demand letter from legal office) as ISF situational documentation.'
-            )
+            base['blocking_summary'] = 'Supporting document required (Demand Letter).'
         return base
 
     return base
