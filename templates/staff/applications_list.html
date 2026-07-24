@@ -5600,7 +5600,7 @@
     let flowAlertOnNext = null;
     let lastPrecheckApplicantName = '';
     let lastPrecheckApplicantId = '';
-    let lastPrecheckMessage = 'Precheck passed: applicant is not blacklisted and may proceed to Eligibility Evaluation Checklist.';
+    let lastPrecheckMessage = 'No blacklist record found. The applicant may proceed to the Eligibility Evaluation Checklist.';
     let currentEligibilityApplicantId = '';
     let lastEligibilitySnapshot = null;
     const eligibilityManualDecisions = {};
@@ -6155,7 +6155,7 @@
 
         const isCelebration = !!(tone === 'success' || tone === 'proceed_success');
 
-        const isPrecheckNextStep = tone === 'success' && title === 'Evaluation Precheck' && typeof onNext === 'function';
+        const isPrecheckNextStep = tone === 'success' && (title === 'Evaluation Pre-check' || title === 'Evaluation Precheck') && typeof onNext === 'function';
 
         if (card) {
             card.classList.remove('success', 'proceed-success', 'flow-alert-card--celebration', 'flow-alert-card--precheck-next');
@@ -6964,7 +6964,7 @@
         closeEligibilityNextModal();
         showFlowAlert(
             lastPrecheckMessage,
-            'Evaluation Precheck',
+            'Evaluation Pre-check',
             null,
             'success',
             () => openEligibilityNextModal(lastPrecheckApplicantName, lastPrecheckApplicantId)
@@ -7023,8 +7023,8 @@
             const contentType = (response.headers.get('content-type') || '').toLowerCase();
             if (response.redirected || !contentType.includes('application/json')) {
                 showFlowAlert(
-                    'Session expired or access changed. Please log in again, then retry Evaluation Precheck.',
-                    'Evaluation Precheck'
+                    'Session expired or access changed. Please log in again, then retry Evaluation Pre-check.',
+                    'Evaluation Pre-check'
                 );
                 return;
             }
@@ -7032,7 +7032,7 @@
             if (!data.success) {
                 showFlowAlert(
                     data.error || `Precheck failed for ${applicantName || 'this applicant'}.`,
-                    'Evaluation Precheck'
+                    'Evaluation Pre-check'
                 );
                 // If blacklisted auto-disqualification happened, refresh the list.
                 if (String(data.error || '').toLowerCase().includes('blacklist')) {
@@ -7045,13 +7045,13 @@
             lastPrecheckMessage = data.message || `Precheck passed for ${applicantName || 'this applicant'}.`;
             showFlowAlert(
                 lastPrecheckMessage,
-                'Evaluation Precheck',
+                'Evaluation Pre-check',
                 null,
                 'success',
                 () => openEligibilityNextModal(applicantName, applicantId)
             );
         } catch (error) {
-            showFlowAlert('Precheck request failed: ' + error.message, 'Evaluation Precheck');
+            showFlowAlert('Precheck request failed: ' + error.message, 'Evaluation Pre-check');
         }
     }
 

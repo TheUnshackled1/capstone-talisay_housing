@@ -2346,7 +2346,7 @@ def evaluate_precheck(request, position):
 
     return JsonResponse({
         'success': True,
-        'message': 'Precheck passed: applicant is not blacklisted and may proceed to Eligibility Evaluation Checklist.',
+        'message': 'No blacklist record found. The applicant may proceed to the Eligibility Evaluation Checklist.',
     })
 
 
