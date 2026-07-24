@@ -6697,8 +6697,8 @@
         const renderChecklist = opts.renderChecklist !== false;
         const listEl = document.getElementById('eligibilityNextChecklist');
         const docEvidenceEl = document.getElementById('eligibilityNextDocEvidence');
-        if (!preserveContent) {
-            if (listEl) listEl.innerHTML = '';
+        if (!preserveContent && listEl && !listEl.children.length) {
+            listEl.innerHTML = '<div class="m2-elig-outer-card" style="padding:1rem;text-align:center;color:#64748b;font-size:0.8rem;">Loading evaluation checklist…</div>';
             if (docEvidenceEl) docEvidenceEl.innerHTML = '';
         }
         if (!applicantId) {
@@ -6904,10 +6904,7 @@
         const sitOpen = sit && sit.classList.contains('active');
         const eligOpen = elig && elig.classList.contains('active');
         if (!sitOpen && !eligOpen) return;
-        const onlySituation = sitOpen && !eligOpen;
-        const fetchOpts = onlySituation
-            ? { preserveContent: true, renderChecklist: false }
-            : {};
+        const fetchOpts = { preserveContent: true };
         const data = await fetchEligibilitySnapshot(id, fetchOpts);
         if (!data) return;
         if (sitOpen) {
