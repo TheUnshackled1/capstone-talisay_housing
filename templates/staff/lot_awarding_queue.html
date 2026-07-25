@@ -1654,7 +1654,7 @@
                         <th class="lawq-select-col" title="Select for bulk SMS"><span class="lawq-sr-only">Select</span>
                         </th>
                         <th>#</th>
-                        <th>Applicant</th>
+                        <th>Full Name</th>
                         <th class="lawq-col-sms" title="Lot-awarding coordination SMS sent from this queue">SMS</th>
                         <th class="rfq-col-priority"
                             title="Serve order: Option A first, then C, B, D; within each tier, earliest proceeded time in this queue">
@@ -1684,19 +1684,6 @@
                                           data-barangay="{{ row.applicant.barangay.name|default:'Not specified' }}"
                                           data-dob="{{ row.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ row.applicant.full_name }}</span>
                                 </div>
-                                {% if row.applicant.displacement_reason == 'danger_zone' or row.applicant.displacement_reason == 'ejected' or row.applicant.displacement_reason == 'relocated' or row.applicant.displacement_reason == 'not_abc' %}
-                                <div class="demographic-meta-row" style="margin-top: 0.15rem;">
-                                    {% if row.applicant.displacement_reason == 'danger_zone' %}
-                                    <span class="priority-hsl-badge option-a">Danger Zone</span>
-                                    {% elif row.applicant.displacement_reason == 'ejected' %}
-                                    <span class="priority-hsl-badge option-b">Ejected</span>
-                                    {% elif row.applicant.displacement_reason == 'relocated' %}
-                                    <span class="priority-hsl-badge option-c">Relocated</span>
-                                    {% elif row.applicant.displacement_reason == 'not_abc' %}
-                                    <span class="priority-hsl-badge option-d">Other</span>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
                             </div>
                             <div class="lawq-detail" style="margin-top: 0.35rem; display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem;">
                                 Signed form:
