@@ -273,10 +273,14 @@
      style it as part of the THA design system. -->
 <div class="rfq-confirm-overlay" id="rfqConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqConfirmTitle">
     <div class="rfq-confirm-card">
-        <div class="rfq-confirm-stripe" aria-hidden="true"></div>
-        <div class="rfq-confirm-body">
-            <p class="rfq-confirm-kicker">Application Form</p>
+        <div class="rfq-confirm-header">
+            <div class="tha-form-crest" aria-hidden="true" style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
+                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async" style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
+            </div>
+            <p class="rfq-confirm-kicker">APPLICATION FORM</p>
             <h3 class="rfq-confirm-title" id="rfqConfirmTitle">Generate application form?</h3>
+        </div>
+        <div class="rfq-confirm-body">
             <p class="rfq-confirm-message" id="rfqConfirmMessage">
                 The form will be generated for this applicant and an application number assigned.
             </p>
@@ -291,9 +295,14 @@
 <!-- Replace signed application (same pattern as Eligibility checklist) -->
 <div class="rfq-confirm-overlay" id="rfqReplaceDocOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqReplaceDocTitle" onclick="rfqCloseReplaceDocOverlay(event)">
     <div class="rfq-confirm-card" onclick="event.stopPropagation();">
-        <div class="rfq-confirm-stripe" aria-hidden="true"></div>
-        <div class="rfq-confirm-body rfq-replace-doc-body">
+        <div class="rfq-confirm-header">
+            <div class="tha-form-crest" aria-hidden="true" style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
+                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async" style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
+            </div>
+            <p class="rfq-confirm-kicker">DOCUMENT MANAGEMENT</p>
             <h3 class="rfq-confirm-title" id="rfqReplaceDocTitle">Replace existing document?</h3>
+        </div>
+        <div class="rfq-confirm-body rfq-replace-doc-body">
             <p class="rfq-replace-doc-lead">A signed application file is already on file for this applicant.</p>
             <div class="rfq-replace-doc-existing">
                 <div class="rfq-replace-doc-existing-label">Existing document on file</div>
@@ -334,34 +343,42 @@
                     0 16px 32px -8px rgba(15, 23, 42, 0.18);
         position: relative;
         overflow: hidden;
+        padding: 0;
     }
-    .rfq-confirm-stripe {
-        height: 4px;
-        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%);
-    }
-    .rfq-confirm-body {
-        padding: 1.25rem 1.5rem 0.85rem;
+    .rfq-confirm-header {
+        position: relative;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 1.25rem 1.5rem 1.1rem;
         text-align: center;
+        border-bottom: 3px solid #b45309;
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+        box-sizing: border-box;
     }
     .rfq-confirm-kicker {
-        margin: 0 0 0.45rem;
-        font-size: 0.62rem;
-        font-weight: 800;
-        letter-spacing: 0.16em;
+        margin: 0 0 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #047857;
+        color: #bae6fd;
     }
     .rfq-confirm-title {
-        margin: 0 0 0.5rem;
-        font-family: 'Inter', 'Segoe UI', sans-serif ;
-        font-size: 1.15rem;
+        margin: 0;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+        font-size: 1.125rem;
         font-weight: 700;
-        color: #0f172a;
+        color: #f8fafc;
         letter-spacing: -0.01em;
+    }
+    .rfq-confirm-body {
+        padding: 1.25rem 1.5rem;
+        text-align: center;
+        background: #ffffff;
     }
     .rfq-confirm-message {
         margin: 0;
-        font-size: 0.84rem;
+        font-size: 0.85rem;
         color: #475569;
         line-height: 1.5;
     }
@@ -936,8 +953,9 @@
         border: 1px solid #e2e8f0 !important;
     }
 
-    .rfq-confirm-stripe {
-        background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #475569 100%) !important;
+    .rfq-confirm-header {
+        background: #0f172a !important;
+        border-bottom: 3px solid #b45309 !important;
     }
 
     /* Premium Hover Card Popover CSS */
