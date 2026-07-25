@@ -9,6 +9,44 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/ready-for-form.css' %}">
 <style>
+    .rfq-shell.lawq-queue::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 4px !important;
+        background: linear-gradient(90deg, #047857 0%, #10b981 50%, #6ee7b7 100%) !important;
+        z-index: 1 !important;
+    }
+
+    /* Total List Summary Chip Card */
+    .summary-chip-card {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 0.42rem 0.75rem;
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+        border-radius: 0.6rem;
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #1e3a8a;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .summary-chip-card--emerald {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border-color: #6ee7b7 !important;
+        border-left-color: #059669 !important;
+    }
+
+    .summary-chip-card--emerald svg {
+        color: #047857 !important;
+    }
+
+    .summary-chip-card--emerald p:first-of-type {
+        color: #047857 !important;
+    }
+
     .lawq-chip {
         width: 100%;
         display: flex !important;
@@ -1505,28 +1543,48 @@
 {% block content %}
 <div class="rfq-shell lawq-queue">
     {% csrf_token %}
-    <div class="rfq-head">
-        <h1>Lot Awarding queue</h1>
+    <div class="rfq-head" style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.95rem; text-align: center;">
+        <h1 style="font-size: 1.02rem; font-weight: 700; color: #047857; margin: 0; letter-spacing: 0.04em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+            <span style="color:#10b981; font-size: 0.75rem;">●</span> Lot Awarding queue
+        </h1>
     </div>
 
-    <form method="get" action="" class="rfq-controls">
-        <div class="rfq-search-wrap">
-            <svg class="rfq-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                aria-hidden="true">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
+    <!-- Controls Bar (TOTAL LIST badge + Search Box + Send SMS) -->
+    <div class="controls-bar" style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+        <!-- Total Count Badge -->
+        <div class="summary-chip-card summary-chip-card--emerald">
+            <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            <input type="text" name="search" value="{{ search }}" class="rfq-search" placeholder="Name or reference #…"
-                aria-label="Search queue">
-            <button type="submit" class="rfq-btn-search">Search</button>
+            <div>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total List</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="lawqTotalCount">{{ page_obj.paginator.count|default:queue_total|default:queue_rows|length }}</p>
+            </div>
         </div>
-        {% if queue_total %}
-        <div class="lawq-controls-inline">
-            <button type="button" class="lawq-bulk-btn" id="lawqBulkSmsBtn" disabled>Send SMS</button>
-            <span id="lawqBulkCount" class="lawq-inline-selected">0 selected</span>
-        </div>
-        {% endif %}
-    </form>
+
+        <!-- Search Box & Send SMS Controls -->
+        <form method="get" action="" class="search-box" style="flex: 1; min-width: 200px; position: relative; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px; position: relative; display: flex;">
+                <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..." value="{{ search|default:'' }}" autocomplete="off" style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+                <button type="submit" style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+                    Search
+                </button>
+            </div>
+            {% if queue_total %}
+            <div class="lawq-controls-inline" style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                <button type="button" class="lawq-bulk-btn" id="lawqBulkSmsBtn" disabled>Send SMS</button>
+                <span id="lawqBulkCount" class="lawq-inline-selected">0 selected</span>
+            </div>
+            {% endif %}
+        </form>
+    </div>
 
     <div class="lawq-list-card">
         {% if queue_rows %}
