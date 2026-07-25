@@ -1,7 +1,7 @@
 {% extends 'accounts/staff/staff_base.html' %}
 {% load static %}
 
-{% block title %}Lot Awarding queue{% endblock %}
+{% block title %}Lot Awarding{% endblock %}
 
 {% block nav_applications %}{% endblock %}
 {% block nav_lot_awarding_queue %}active{% endblock %}
@@ -24,6 +24,7 @@
         text-align: center;
         box-sizing: border-box;
     }
+
     /* Stacked actions — avoids wide empty gap between message and button */
     .lawq-actions-inline {
         display: flex;
@@ -36,6 +37,7 @@
         width: 100%;
         max-width: 11rem;
     }
+
     .lawq-actions-inline .rfq-action-btn {
         width: 100%;
         min-height: 2.25rem;
@@ -56,6 +58,7 @@
         padding: 0.4rem 0.85rem;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
     }
+
     .lawq-action-emerald:hover {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         filter: none !important;
@@ -63,21 +66,25 @@
         box-shadow: 0 4px 14px rgba(5, 150, 105, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
         transform: translateY(-1px);
     }
+
     .lawq-action-emerald:focus-visible {
         outline: 2px solid #6ee7b7 !important;
         outline-offset: 2px;
     }
+
     @media (max-width: 640px) {
         .lawq-action-emerald {
             padding: 0.4rem 0.55rem;
         }
     }
+
     .lawq-actions-inline .lawq-muted {
         display: block;
         text-align: center;
         line-height: 1.35;
         padding: 0.1rem 0.15rem;
     }
+
     /* Override Ready-for-Form’s very wide Actions column on this page only */
     .lawq-queue .rfq-table th.rfq-col-actions,
     .lawq-queue .rfq-table td.rfq-col-actions {
@@ -87,14 +94,17 @@
         padding-left: 0.4rem !important;
         padding-right: 0.4rem !important;
     }
+
     .lawq-queue .rfq-table tbody td {
         vertical-align: middle !important;
     }
+
     .lawq-queue .rfq-table tbody td.lawq-applicant-cell {
         vertical-align: middle !important;
         padding-top: 0.55rem;
         padding-bottom: 0.55rem;
     }
+
     /* Lot Awarding column widths — select column shifts indices */
     .lawq-queue .rfq-table th.lawq-select-col,
     .lawq-queue .rfq-table td.lawq-select-col {
@@ -102,12 +112,14 @@
         min-width: 2.5rem !important;
         text-align: center !important;
     }
+
     .lawq-queue .rfq-table th:nth-child(2),
     .lawq-queue .rfq-table td:nth-child(2) {
         width: 2.5rem !important;
         min-width: 2.5rem !important;
         text-align: center !important;
     }
+
     .lawq-queue .rfq-table td.lawq-applicant-cell,
     .lawq-queue .rfq-table th:nth-child(3) {
         width: 22% !important;
@@ -115,16 +127,19 @@
         word-break: keep-all;
         overflow-wrap: break-word;
     }
+
     .lawq-queue .rfq-table .rfq-name {
         font-size: 0.78rem !important;
         line-height: 1.3;
     }
+
     .lawq-queue .rfq-table .lawq-detail {
         font-size: 0.62rem !important;
         line-height: 1.4;
         color: #64748b;
         margin-top: 0.25rem;
     }
+
     .lawq-queue .rfq-table th.lawq-col-sms,
     .lawq-queue .rfq-table td.lawq-col-sms {
         width: 5.75rem !important;
@@ -134,6 +149,7 @@
         padding-left: 0.35rem !important;
         padding-right: 0.35rem !important;
     }
+
     .lawq-sms-badge {
         display: inline-flex;
         flex-direction: column;
@@ -149,26 +165,31 @@
         max-width: 5.5rem;
         box-sizing: border-box;
     }
+
     .lawq-sms-badge--sent {
         background: #ecfdf5;
         color: #047857;
         border-color: #a7f3d0;
     }
+
     .lawq-sms-badge--none {
         background: #f8fafc;
         color: #64748b;
         border-color: #e2e8f0;
     }
+
     .lawq-sms-badge-count {
         font-size: 0.58rem;
         font-weight: 600;
         opacity: 0.92;
     }
+
     .lawq-queue .rfq-table th.rfq-col-priority,
     .lawq-queue .rfq-table td.rfq-col-priority {
         width: 14% !important;
         min-width: 9rem !important;
     }
+
     .lawq-queue .rfq-table th.rfq-col-proceeded,
     .lawq-queue .rfq-table td.rfq-col-proceeded {
         width: 9rem !important;
@@ -176,6 +197,7 @@
         white-space: normal;
         font-size: 0.66rem !important;
     }
+
     .lawq-queue .rfq-table th.rfq-col-proceeded-ago,
     .lawq-queue .rfq-table td.rfq-col-proceeded-ago {
         width: 5.5rem !important;
@@ -185,17 +207,20 @@
         padding-left: 0.4rem !important;
         padding-right: 0.4rem !important;
     }
+
     .lawq-queue .rfq-table th.rfq-col-status,
     .lawq-queue .rfq-table td.rfq-col-status {
         width: 7rem !important;
         min-width: 5.5rem !important;
     }
+
     .lawq-queue .lawq-chip {
         white-space: normal;
         line-height: 1.3;
         text-align: center;
         /* Base styles handle box fit */
     }
+
     /* One bordered block: bulk bar + table */
     .lawq-list-card {
         border: 1px solid #e2e8f0;
@@ -204,6 +229,7 @@
         margin-bottom: 0.65rem;
         background: #fff;
     }
+
     .lawq-list-card .lawq-bulk-bar {
         margin-bottom: 0;
         border: none;
@@ -211,34 +237,41 @@
         border-bottom: 1px solid #e2e8f0;
         background: #f8fafc;
     }
+
     .lawq-list-card .rfq-table-wrap {
         border: none;
         border-radius: 0;
     }
+
     .lawq-view-btn {
         background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
         color: #334155;
         border-color: #cbd5e1;
     }
+
     .lawq-muted {
         font-size: 0.67rem;
         color: #64748b;
         font-weight: 600;
     }
+
     .lawq-signed-link {
         color: #047857;
         font-weight: 700;
         text-decoration: underline;
         text-underline-offset: 2px;
     }
+
     .lawq-signed-link:hover {
         color: #065f46;
     }
+
     .lawq-detail {
         margin-top: 0.2rem;
         font-size: 0.68rem;
         color: #64748b;
     }
+
     .lawq-bulk-bar {
         display: flex;
         flex-wrap: wrap;
@@ -251,6 +284,7 @@
         border-radius: 0.55rem;
         font-size: 0.72rem;
     }
+
     .lawq-bulk-bar label {
         display: flex;
         align-items: center;
@@ -260,6 +294,7 @@
         cursor: pointer;
         user-select: none;
     }
+
     .lawq-bulk-btn {
         appearance: none;
         border: 1px solid #0e7490;
@@ -272,21 +307,25 @@
         cursor: pointer;
         white-space: nowrap;
     }
+
     .lawq-bulk-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
     }
+
     .lawq-select-col {
         width: 2.25rem;
         text-align: center;
         vertical-align: middle;
     }
+
     .lawq-select-col input {
         width: 1rem;
         height: 1rem;
         cursor: pointer;
         accent-color: #0891b2;
     }
+
     .lawq-sr-only {
         position: absolute;
         width: 1px;
@@ -298,6 +337,7 @@
         white-space: nowrap;
         border: 0;
     }
+
     .lawq-controls-inline {
         display: inline-flex;
         align-items: center;
@@ -317,9 +357,11 @@
         justify-content: center;
         padding: 1rem;
     }
+
     #lawqSmsModal.active {
         display: flex;
     }
+
     #lawqSmsModal .lawq-sms-modal-card {
         width: min(28rem, 100%);
         background: #fff;
@@ -331,6 +373,7 @@
         display: flex;
         flex-direction: column;
     }
+
     #lawqSmsModal .lawq-sms-modal-head {
         display: flex;
         justify-content: space-between;
@@ -340,6 +383,7 @@
         border-bottom: 1px solid #e5e7eb;
         background: linear-gradient(180deg, #ecfeff 0%, #f8fafc 100%);
     }
+
     #lawqSmsModal .lawq-sms-recipients {
         margin: 0;
         padding: 0.65rem 1.15rem;
@@ -351,13 +395,16 @@
         border-bottom: 1px solid #e2e8f0;
         list-style: none;
     }
+
     #lawqSmsModal .lawq-sms-recipients li {
         padding: 0.15rem 0;
         border-bottom: 1px solid #e2e8f0;
     }
+
     #lawqSmsModal .lawq-sms-recipients li:last-child {
         border-bottom: none;
     }
+
     #lawqSmsModal textarea.lawq-sms-body,
     #lawqSmsModal input.lawq-sms-orientation {
         width: 100%;
@@ -369,10 +416,12 @@
         box-sizing: border-box;
         font-family: inherit;
     }
+
     #lawqSmsModal textarea.lawq-sms-body {
         min-height: 6.5rem;
         resize: vertical;
     }
+
     #lawqSmsModal .lawq-sms-hint {
         font-size: 0.65rem;
         color: #64748b;
@@ -392,9 +441,11 @@
         justify-content: center;
         padding: 1rem;
     }
+
     #awardModal.active {
         display: flex;
     }
+
     #awardModal .lawq-award-modal-card {
         width: min(26rem, 100%);
         background: #fff;
@@ -406,6 +457,7 @@
         display: flex;
         flex-direction: column;
     }
+
     #awardModal .lawq-award-modal-head {
         display: flex;
         justify-content: space-between;
@@ -415,6 +467,7 @@
         border-bottom: 1px solid #e5e7eb;
         background: linear-gradient(180deg, #faf5ff 0%, #f8fafc 100%);
     }
+
     #awardModal .lawq-award-modal-title {
         margin: 0;
         font-size: 1.05rem;
@@ -422,6 +475,7 @@
         color: #0f172a;
         letter-spacing: -0.02em;
     }
+
     #awardModal .lawq-award-modal-sub {
         margin: 0.35rem 0 0 0;
         font-size: 0.875rem;
@@ -429,6 +483,7 @@
         color: #64748b;
         line-height: 1.35;
     }
+
     #awardModal .lawq-award-modal-head .modal-close {
         flex-shrink: 0;
         border: none;
@@ -441,14 +496,17 @@
         margin: -0.15rem -0.15rem 0 0;
         border-radius: 6px;
     }
+
     #awardModal .lawq-award-modal-head .modal-close:hover {
         color: #0f172a;
         background: rgba(15, 23, 42, 0.06);
     }
+
     #awardModal .lawq-award-body {
         padding: 1rem 1.15rem 1.05rem;
         border-bottom: 1px solid #e5e7eb;
     }
+
     #awardModal .lawq-award-label {
         display: block;
         font-size: 0.72rem;
@@ -458,6 +516,7 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }
+
     #awardModal .lawq-award-input {
         width: 100%;
         padding: 0.65rem 0.75rem;
@@ -468,22 +527,26 @@
         font-family: inherit;
         background: #fff;
     }
+
     #awardModal .lawq-award-input:focus {
         outline: none;
         border-color: #7c3aed;
         box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
     }
+
     #awardModal .lawq-award-divider {
         height: 0;
         border: none;
         border-top: 1px solid #e5e7eb;
         margin: 1rem 0 0.85rem;
     }
+
     #awardModal .lawq-award-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
     }
+
     #awardModal .lawq-award-footer {
         padding: 0.85rem 1.15rem;
         display: flex;
@@ -491,6 +554,7 @@
         gap: 0.5rem;
         background: #fafafa;
     }
+
     #awardModal .lawq-award-btn-cancel {
         padding: 0.55rem 1rem;
         background: #fff;
@@ -502,9 +566,11 @@
         cursor: pointer;
         font-family: inherit;
     }
+
     #awardModal .lawq-award-btn-cancel:hover {
         background: #f8fafc;
     }
+
     #awardModal .lawq-award-btn-submit {
         padding: 0.55rem 1rem;
         background: #7c3aed;
@@ -516,23 +582,28 @@
         cursor: pointer;
         font-family: inherit;
     }
+
     #awardModal .lawq-award-btn-submit:hover {
         background: #6d28d9;
     }
+
     #awardModal .lawq-award-btn-submit:disabled {
         opacity: 0.5;
         cursor: not-allowed;
     }
+
     #awardModal .award-lot-vacant-hint {
         font-size: 0.68rem;
         color: #64748b;
         margin: 0 0 0.55rem 0;
         line-height: 1.45;
     }
+
     #awardModal .award-lot-vacant-hint a {
         color: #6d28d9;
         font-weight: 600;
     }
+
     #awardModal .award-lot-vacant-empty {
         font-size: 0.76rem;
         color: #b45309;
@@ -543,6 +614,7 @@
         margin: 0;
         line-height: 1.4;
     }
+
     #awardModal select.award-vacant-select {
         cursor: pointer;
     }
@@ -557,6 +629,7 @@
         backdrop-filter: blur(4px) !important;
         -webkit-backdrop-filter: blur(4px) !important;
     }
+
     #awardModal .lawq-award-modal-card {
         border: 1px solid #cbd5e1 !important;
         border-radius: 16px !important;
@@ -567,9 +640,11 @@
         overflow: hidden !important;
         padding: 0 !important;
     }
+
     #awardModal .lawq-award-modal-card::before {
         display: none !important;
     }
+
     #awardModal .lawq-award-modal-head {
         position: relative !important;
         background: #0f172a !important;
@@ -580,6 +655,7 @@
         box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06) !important;
         box-sizing: border-box !important;
     }
+
     #awardModal .lawq-award-modal-title {
         font-family: 'Inter', 'Segoe UI', sans-serif !important;
         font-size: 1.125rem !important;
@@ -593,22 +669,37 @@
         margin: 0 !important;
         text-align: center !important;
     }
+
     #awardModal .lawq-award-modal-head .modal-close {
-        position: absolute; right: 0.85rem; top: 0.75rem; width: 2rem; height: 2rem;
-        display: flex; align-items: center; justify-content: center; font-size: 1rem;
-        line-height: 1; color: #94a3b8; background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; cursor: pointer;
+        position: absolute;
+        right: 0.85rem;
+        top: 0.75rem;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        line-height: 1;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        cursor: pointer;
         transition: background 0.15s, color 0.15s;
     }
+
     #awardModal .lawq-award-modal-head .modal-close:hover {
-        background: rgba(255,255,255,0.16) !important;
+        background: rgba(255, 255, 255, 0.16) !important;
         color: #ffffff !important;
     }
+
     #awardModal .lawq-award-body {
         background: #ffffff !important;
         padding: 1.5rem 1.75rem 1.75rem !important;
         text-align: center !important;
     }
+
     #awardModal .lawq-award-label {
         font-size: 0.72rem !important;
         font-weight: 800 !important;
@@ -622,9 +713,11 @@
         text-transform: uppercase !important;
         text-align: center !important;
     }
+
     #awardModal .lawq-award-label::before {
         display: none !important;
     }
+
     #awardModal .lawq-award-input {
         border: 1px solid #cbd5e1 !important;
         border-radius: 10px !important;
@@ -636,6 +729,7 @@
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
         box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.02) !important;
     }
+
     #awardModal select.lawq-award-input {
         width: 100% !important;
         appearance: none !important;
@@ -649,14 +743,17 @@
         text-align: center !important;
         text-align-last: center !important;
     }
+
     #awardModal .lawq-award-input:hover:not(:disabled) {
         border-color: #94a3b8 !important;
     }
+
     #awardModal .lawq-award-input:focus {
         outline: none !important;
         border-color: #10b981 !important;
         box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
     }
+
     #awardModal .award-lot-vacant-hint {
         font-size: 0.78rem !important;
         color: #064e3b !important;
@@ -668,16 +765,22 @@
         padding: 0.75rem 1rem !important;
         text-align: center !important;
     }
+
     #awardModal .award-lot-vacant-hint a {
         color: #047857 !important;
         font-weight: 700 !important;
         text-decoration: underline !important;
         text-underline-offset: 2px !important;
     }
+
     #awardModal .award-lot-vacant-hint a:hover {
         color: #065f46 !important;
     }
-    #awardModal .award-lot-vacant-hint strong { color: #0f172a; }
+
+    #awardModal .award-lot-vacant-hint strong {
+        color: #0f172a;
+    }
+
     #awardModal .award-lot-vacant-empty {
         background: #fef2f2 !important;
         border: 1px solid #fca5a5 !important;
@@ -690,6 +793,7 @@
         font-weight: 500 !important;
         text-align: center !important;
     }
+
     #awardModal .lawq-award-footer {
         background: #f8fafc !important;
         border-top: 1px solid #e2e8f0 !important;
@@ -698,6 +802,7 @@
         justify-content: center !important;
         gap: 0.75rem !important;
     }
+
     #awardModal .lawq-award-btn-cancel {
         background: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
@@ -710,12 +815,14 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         cursor: pointer !important;
     }
+
     #awardModal .lawq-award-btn-cancel:hover {
         background: #f8fafc !important;
         border-color: #94a3b8 !important;
         color: #0f172a !important;
         transform: translateY(-1px) !important;
     }
+
     #awardModal .lawq-award-btn-submit {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         border: 1px solid #047857 !important;
@@ -732,14 +839,17 @@
         gap: 0.45rem !important;
         cursor: pointer !important;
     }
+
     #awardModal .lawq-award-btn-submit:hover:not(:disabled) {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35) !important;
         transform: translateY(-1px) !important;
     }
+
     #awardModal .lawq-award-btn-submit:active:not(:disabled) {
         transform: translateY(0) !important;
     }
+
     #awardModal .lawq-award-btn-submit:disabled {
         background: #e2e8f0 !important;
         color: #94a3b8 !important;
@@ -764,6 +874,7 @@
         top: 0 !important;
         z-index: 2 !important;
     }
+
     .lawq-queue .rfq-table th {
         background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.22) !important;
@@ -776,11 +887,13 @@
         flex-direction: column !important;
         gap: 0.35rem !important;
     }
+
     .complainant-name-card {
         display: flex !important;
         align-items: center !important;
         gap: 0.45rem !important;
     }
+
     .complainant-name {
         font-size: 0.8rem !important;
         font-weight: 700 !important;
@@ -788,6 +901,7 @@
         letter-spacing: -0.01em !important;
         line-height: 1.25 !important;
     }
+
     .complainant-meta {
         display: inline-flex !important;
         align-items: center !important;
@@ -796,6 +910,7 @@
         color: #64748b !important;
         font-weight: 500 !important;
     }
+
     .complainant-ref-code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
         font-weight: 600 !important;
@@ -806,6 +921,7 @@
         font-size: 0.7rem !important;
         border: 1px solid #e2e8f0 !important;
     }
+
     .case-number-badge {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
         font-weight: 700 !important;
@@ -816,10 +932,22 @@
         font-size: 0.7rem !important;
         border: 1px solid #bfdbfe !important;
     }
-    .complainant-name.option-a { color: #b91c1c !important; }
-    .complainant-name.option-b { color: #b45309 !important; }
-    .complainant-name.option-c { color: #047857 !important; }
-    .complainant-name.option-d { color: #475569 !important; }
+
+    .complainant-name.option-a {
+        color: #b91c1c !important;
+    }
+
+    .complainant-name.option-b {
+        color: #b45309 !important;
+    }
+
+    .complainant-name.option-c {
+        color: #047857 !important;
+    }
+
+    .complainant-name.option-d {
+        color: #475569 !important;
+    }
 
     /* Date column vertical stack */
     .date-cell-stack {
@@ -828,6 +956,7 @@
         gap: 0.25rem !important;
         align-items: center !important;
     }
+
     .date-main {
         font-size: 0.78rem !important;
         font-weight: 600 !important;
@@ -836,18 +965,20 @@
         align-items: center !important;
         gap: 0.3rem !important;
     }
+
     .date-sub {
         font-size: 0.68rem !important;
         color: #64748b !important;
         font-weight: 500 !important;
     }
-    
+
     /* Soft HSL Status Chips */
     .lawq-chip.ready-awarding {
         background: #dcfce7 !important;
         border-color: #bbf7d0 !important;
         color: #15803d !important;
     }
+
     .rfq-status-pulse {
         width: 6px !important;
         height: 6px !important;
@@ -857,12 +988,24 @@
         animation: rfq-status-pulse-anim 1.5s infinite ease-in-out !important;
         flex-shrink: 0 !important;
     }
+
     @keyframes rfq-status-pulse-anim {
-        0% { opacity: 0.4; transform: scale(0.8); }
-        50% { opacity: 1; transform: scale(1.2); }
-        100% { opacity: 0.4; transform: scale(0.8); }
+        0% {
+            opacity: 0.4;
+            transform: scale(0.8);
+        }
+
+        50% {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        100% {
+            opacity: 0.4;
+            transform: scale(0.8);
+        }
     }
-    
+
     /* Soft HSL Priority Stacks */
     .rfq-priority-stack {
         display: inline-flex !important;
@@ -876,18 +1019,65 @@
         gap: 0.15rem !important;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
     }
-    .rfq-priority-stack.stack-option-a { background: #fee2e2 !important; border-color: #fca5a5 !important; }
-    .rfq-priority-stack.stack-option-a .rfq-priority-tier { color: #991b1b !important; font-weight: 800 !important; }
-    .rfq-priority-stack.stack-option-a .rfq-priority-name { color: #7f1d1d !important; }
-    .rfq-priority-stack.stack-option-b { background: #ffedd5 !important; border-color: #fdba74 !important; }
-    .rfq-priority-stack.stack-option-b .rfq-priority-tier { color: #9a3412 !important; font-weight: 800 !important; }
-    .rfq-priority-stack.stack-option-b .rfq-priority-name { color: #7c2d12 !important; }
-    .rfq-priority-stack.stack-option-c { background: #dcfce7 !important; border-color: #86efac !important; }
-    .rfq-priority-stack.stack-option-c .rfq-priority-tier { color: #065f46 !important; font-weight: 800 !important; }
-    .rfq-priority-stack.stack-option-c .rfq-priority-name { color: #064e3b !important; }
-    .rfq-priority-stack.stack-option-d, .rfq-priority-stack.stack-option-unknown { background: #f1f5f9 !important; border-color: #cbd5e1 !important; }
-    .rfq-priority-stack.stack-option-d .rfq-priority-tier, .rfq-priority-stack.stack-option-unknown .rfq-priority-tier { color: #475569 !important; font-weight: 800 !important; }
-    .rfq-priority-stack.stack-option-d .rfq-priority-name, .rfq-priority-stack.stack-option-unknown .rfq-priority-name { color: #334155 !important; }
+
+    .rfq-priority-stack.stack-option-a {
+        background: #fee2e2 !important;
+        border-color: #fca5a5 !important;
+    }
+
+    .rfq-priority-stack.stack-option-a .rfq-priority-tier {
+        color: #991b1b !important;
+        font-weight: 800 !important;
+    }
+
+    .rfq-priority-stack.stack-option-a .rfq-priority-name {
+        color: #7f1d1d !important;
+    }
+
+    .rfq-priority-stack.stack-option-b {
+        background: #ffedd5 !important;
+        border-color: #fdba74 !important;
+    }
+
+    .rfq-priority-stack.stack-option-b .rfq-priority-tier {
+        color: #9a3412 !important;
+        font-weight: 800 !important;
+    }
+
+    .rfq-priority-stack.stack-option-b .rfq-priority-name {
+        color: #7c2d12 !important;
+    }
+
+    .rfq-priority-stack.stack-option-c {
+        background: #dcfce7 !important;
+        border-color: #86efac !important;
+    }
+
+    .rfq-priority-stack.stack-option-c .rfq-priority-tier {
+        color: #065f46 !important;
+        font-weight: 800 !important;
+    }
+
+    .rfq-priority-stack.stack-option-c .rfq-priority-name {
+        color: #064e3b !important;
+    }
+
+    .rfq-priority-stack.stack-option-d,
+    .rfq-priority-stack.stack-option-unknown {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .rfq-priority-stack.stack-option-d .rfq-priority-tier,
+    .rfq-priority-stack.stack-option-unknown .rfq-priority-tier {
+        color: #475569 !important;
+        font-weight: 800 !important;
+    }
+
+    .rfq-priority-stack.stack-option-d .rfq-priority-name,
+    .rfq-priority-stack.stack-option-unknown .rfq-priority-name {
+        color: #334155 !important;
+    }
 
     /* Premium Hover Card Popover CSS */
     .applicant-hover-card {
@@ -906,21 +1096,21 @@
         font-family: inherit;
         box-sizing: border-box;
     }
-    
+
     .applicant-hover-card.active {
         display: block;
         opacity: 1;
         transform: translateY(0) scale(1);
     }
-    
+
     .applicant-hover-card.position-below {
         transform: translateY(-8px) scale(0.97);
     }
-    
+
     .applicant-hover-card.position-below.active {
         transform: translateY(0) scale(1);
     }
-    
+
     .hover-card-arrow {
         position: absolute;
         width: 10px;
@@ -928,19 +1118,19 @@
         background: #ffffff;
         transform: rotate(45deg);
         box-shadow: -1px -1px 0 0 rgba(0, 0, 0, 0.03);
-        border-left: 1px solid rgba(0,0,0,0.04);
-        border-top: 1px solid rgba(0,0,0,0.04);
+        border-left: 1px solid rgba(0, 0, 0, 0.04);
+        border-top: 1px solid rgba(0, 0, 0, 0.04);
         top: -5px;
         left: calc(50% - 5px);
     }
-    
+
     .applicant-hover-card:not(.position-below) .hover-card-arrow {
         top: auto;
         bottom: -5px;
         transform: rotate(225deg);
-        box-shadow: 1px 1px 0 0 rgba(0,0,0,0.03);
+        box-shadow: 1px 1px 0 0 rgba(0, 0, 0, 0.03);
     }
-    
+
     .hover-card-header {
         display: flex;
         align-items: center;
@@ -949,7 +1139,7 @@
         padding-bottom: 0.6rem;
         margin-bottom: 0.6rem;
     }
-    
+
     .hover-card-avatar {
         width: 38px;
         height: 38px;
@@ -965,12 +1155,12 @@
         box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
         flex-shrink: 0;
     }
-    
+
     .hover-card-title-group {
         min-width: 0;
         flex: 1;
     }
-    
+
     .hover-card-name {
         font-size: 0.84rem;
         font-weight: 800;
@@ -980,7 +1170,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    
+
     .hover-card-tag {
         font-size: 0.62rem;
         font-weight: 600;
@@ -989,13 +1179,13 @@
         letter-spacing: 0.05em;
         margin-top: 0.05rem;
     }
-    
+
     .hover-card-body {
         display: flex;
         flex-direction: column;
         gap: 0.45rem;
     }
-    
+
     .hover-card-meta-row {
         display: flex;
         justify-content: space-between;
@@ -1003,18 +1193,18 @@
         gap: 1rem;
         font-size: 0.72rem;
     }
-    
+
     .hover-card-label {
         font-weight: 600;
         color: #64748b;
         font-size: 0.68rem;
     }
-    
+
     .hover-card-value {
         font-weight: 700;
         color: #1e293b;
     }
-    
+
     .hover-card-footer {
         border-top: 1px solid #f1f5f9;
         margin-top: 0.6rem;
@@ -1036,7 +1226,7 @@
         font-size: 0.7rem !important;
         border: 1px solid #bfdbfe !important;
     }
-    
+
     .complainant-ref-code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
         font-weight: 600 !important;
@@ -1054,6 +1244,7 @@
         backdrop-filter: blur(4px) !important;
         -webkit-backdrop-filter: blur(4px) !important;
     }
+
     #lawqSmsModal .lawq-sms-modal-card {
         border: 1px solid rgba(8, 145, 178, 0.25) !important;
         border-radius: 16px !important;
@@ -1075,13 +1266,17 @@
         text-align: center !important;
         position: relative !important;
     }
+
     #lawqSmsModal .lawq-sms-modal-head::after {
         content: '';
         position: absolute;
-        bottom: 0; left: 0; right: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
         height: 3px;
         background: linear-gradient(90deg, #0891b2 0%, #06b6d4 50%, #0891b2 100%);
     }
+
     /* Logo card in dark hero */
     #lawqSmsModal .lawq-sms-logo-wrap {
         display: inline-flex;
@@ -1093,11 +1288,13 @@
         margin-bottom: 0.9rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
+
     #lawqSmsModal .lawq-sms-logo-wrap img {
         height: 38px;
         width: auto;
         display: block;
     }
+
     /* Close button — positioned top-right inside dark hero */
     #lawqSmsModal .modal-close {
         position: absolute !important;
@@ -1119,10 +1316,12 @@
         transition: background 0.15s ease, color 0.15s ease !important;
         z-index: 2;
     }
+
     #lawqSmsModal .modal-close:hover {
         background: rgba(255, 255, 255, 0.16) !important;
         color: #ffffff !important;
     }
+
     /* Title & subtitle in hero */
     #lawqSmsModalTitle {
         font-size: 1.05rem !important;
@@ -1132,12 +1331,14 @@
         margin: 0 !important;
         display: block !important;
     }
+
     #lawqSmsModal .lawq-sms-hero-sub {
         margin: 0.2rem 0 0 !important;
         font-size: 0.72rem !important;
         color: #94a3b8 !important;
         letter-spacing: 0.02em !important;
     }
+
     /* Recipient count badge — shown in hero */
     #lawqSmsModal .lawq-sms-recipient-summary-badge {
         background: rgba(255, 255, 255, 0.08) !important;
@@ -1165,6 +1366,7 @@
         gap: 0.45rem !important;
         list-style: none !important;
     }
+
     #lawqSmsModal .lawq-sms-recipients li {
         background: #ffffff !important;
         border: 1px solid #cffafe !important;
@@ -1180,6 +1382,7 @@
         align-items: center !important;
         gap: 0.35rem !important;
     }
+
     #lawqSmsModal .lawq-sms-label {
         font-size: 0.72rem !important;
         font-weight: 800 !important;
@@ -1191,13 +1394,16 @@
         gap: 0.45rem !important;
         text-transform: uppercase !important;
     }
+
     #lawqSmsModal .lawq-sms-label::before {
         content: '';
-        width: 3px; height: 0.75rem;
+        width: 3px;
+        height: 0.75rem;
         border-radius: 2px;
         background: linear-gradient(180deg, #0891b2 0%, #0e7490 100%);
         display: inline-block;
     }
+
     #lawqSmsModal input.lawq-sms-orientation,
     #lawqSmsModal textarea.lawq-sms-body {
         border: 1px solid #cbd5e1 !important;
@@ -1210,12 +1416,14 @@
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
         box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.02) !important;
     }
+
     #lawqSmsModal input.lawq-sms-orientation:focus,
     #lawqSmsModal textarea.lawq-sms-body:focus {
         outline: none !important;
         border-color: #0891b2 !important;
         box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.15) !important;
     }
+
     #lawqSmsModal .lawq-sms-hint {
         font-size: 0.7rem !important;
         color: #64748b !important;
@@ -1223,6 +1431,7 @@
         margin-top: 0.4rem !important;
         margin-bottom: 0.95rem !important;
     }
+
     #lawqSmsModal .lawq-sms-footer {
         background: #f8fafc !important;
         border-top: 1px solid #e2e8f0 !important;
@@ -1231,6 +1440,7 @@
         justify-content: flex-end !important;
         gap: 0.75rem !important;
     }
+
     #lawqSmsModal .lawq-sms-btn-cancel {
         background: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
@@ -1243,12 +1453,14 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         cursor: pointer !important;
     }
+
     #lawqSmsModal .lawq-sms-btn-cancel:hover {
         background: #f8fafc !important;
         border-color: #94a3b8 !important;
         color: #0f172a !important;
         transform: translateY(-1px) !important;
     }
+
     #lawqSmsModal .lawq-sms-btn-submit {
         background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
         border: 1px solid #0891b2 !important;
@@ -1265,14 +1477,17 @@
         gap: 0.45rem !important;
         cursor: pointer !important;
     }
+
     #lawqSmsModal .lawq-sms-btn-submit:hover:not(:disabled) {
         background: linear-gradient(135deg, #0e7490 0%, #0a586e 100%) !important;
         box-shadow: 0 6px 16px rgba(8, 145, 178, 0.35) !important;
         transform: translateY(-1px) !important;
     }
+
     #lawqSmsModal .lawq-sms-btn-submit:active:not(:disabled) {
         transform: translateY(0) !important;
     }
+
     #lawqSmsModal .lawq-sms-btn-submit:disabled {
         background: #e2e8f0 !important;
         color: #94a3b8 !important;
@@ -1296,12 +1511,13 @@
 
     <form method="get" action="" class="rfq-controls">
         <div class="rfq-search-wrap">
-            <svg class="rfq-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <svg class="rfq-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="text" name="search" value="{{ search }}" class="rfq-search"
-                placeholder="Name or reference #…" aria-label="Search queue">
+            <input type="text" name="search" value="{{ search }}" class="rfq-search" placeholder="Name or reference #…"
+                aria-label="Search queue">
             <button type="submit" class="rfq-btn-search">Search</button>
         </div>
         {% if queue_total %}
@@ -1313,147 +1529,166 @@
     </form>
 
     <div class="lawq-list-card">
-    {% if queue_rows %}
-    <div class="lawq-bulk-bar" id="lawqBulkBar">
-        <label>
-            <input type="checkbox" id="lawqSelectAll" title="Select all rows on this page" aria-label="Select all on this page">
-            Select all on page
-        </label>
-    </div>
-    {% endif %}
-    <div class="rfq-table-wrap">
-        <table class="rfq-table">
-            <thead>
-                <tr>
-                    <th class="lawq-select-col" title="Select for bulk SMS"><span class="lawq-sr-only">Select</span></th>
-                    <th>#</th>
-                    <th>Applicant</th>
-                    <th class="lawq-col-sms" title="Lot-awarding coordination SMS sent from this queue">SMS</th>
-                    <th class="rfq-col-priority" title="Serve order: Option A first, then C, B, D; within each tier, earliest proceeded time in this queue">Queue priority</th>
-                    <th class="rfq-col-proceeded" style="width: 14rem !important;">Proceeded Date &amp; Time</th>
-                    <th class="rfq-col-status">Status</th>
-                    <th class="rfq-col-actions">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in queue_rows %}
-                <tr data-application-id="{{ row.application.id }}">
-                    <td class="lawq-select-col">
-                        <input type="checkbox" class="lawq-app-check" value="{{ row.application.id }}"
-                            data-applicant-name="{{ row.applicant.full_name|escape }}"
-                            aria-label="Select {{ row.applicant.full_name }}">
-                    </td>
-                    <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                    <td class="lawq-applicant-cell">
-                        <div class="complainant-cell-info">
-                            <div class="complainant-name-card">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                                <span class="complainant-name applicant-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" 
-                                      style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer;"
-                                      data-full-name="{{ row.applicant.full_name }}"
-                                      data-tx-id="APP-{{ row.applicant.id|slice:":8" }}..."
-                                      data-ref-code="{{ row.applicant.reference_number|default:'' }}"
-                                      data-barangay="{{ row.applicant.barangay.name|default:'Not specified' }}"
-                                      data-dob="{{ row.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ row.applicant.full_name }}</span>
+        {% if queue_rows %}
+        <div class="lawq-bulk-bar" id="lawqBulkBar">
+            <label>
+                <input type="checkbox" id="lawqSelectAll" title="Select all rows on this page"
+                    aria-label="Select all on this page">
+                Select all on page
+            </label>
+        </div>
+        {% endif %}
+        <div class="rfq-table-wrap">
+            <table class="rfq-table">
+                <thead>
+                    <tr>
+                        <th class="lawq-select-col" title="Select for bulk SMS"><span class="lawq-sr-only">Select</span>
+                        </th>
+                        <th>#</th>
+                        <th>Applicant</th>
+                        <th class="lawq-col-sms" title="Lot-awarding coordination SMS sent from this queue">SMS</th>
+                        <th class="rfq-col-priority"
+                            title="Serve order: Option A first, then C, B, D; within each tier, earliest proceeded time in this queue">
+                            Queue priority</th>
+                        <th class="rfq-col-proceeded" style="width: 14rem !important;">Proceeded Date &amp; Time</th>
+                        <th class="rfq-col-status">Status</th>
+                        <th class="rfq-col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in queue_rows %}
+                    <tr data-application-id="{{ row.application.id }}">
+                        <td class="lawq-select-col">
+                            <input type="checkbox" class="lawq-app-check" value="{{ row.application.id }}"
+                                data-applicant-name="{{ row.applicant.full_name|escape }}"
+                                aria-label="Select {{ row.applicant.full_name }}">
+                        </td>
+                        <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td class="lawq-applicant-cell">
+                            <div class="complainant-cell-info">
+                                <div class="complainant-name-card">
+                                    <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5"
+                                        style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <span
+                                        class="complainant-name applicant-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
+                                        style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer;"
+                                        data-full-name="{{ row.applicant.full_name }}"
+                                        data-tx-id="APP-{{ row.applicant.id|slice:" :8" }}..."
+                                        data-ref-code="{{ row.applicant.reference_number|default:'' }}"
+                                        data-barangay="{{ row.applicant.barangay.name|default:'Not specified' }}"
+                                        data-dob="{{ row.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{
+                                        row.applicant.full_name }}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="lawq-detail" style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
-                            Signed form:
-                            {% if row.signed_form_on_file %}
-                            <a href="{{ row.signed_form_vault_url }}" class="lawq-signed-link" title="View uploaded documents for this applicant">On file</a>
-                            {% else %}
-                            <strong style="color:#b91c1c;">Missing</strong>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td class="lawq-col-sms">
-                        {% if row.lot_awarding_sms_count %}
-                        <span class="lawq-sms-badge lawq-sms-badge--sent"
-                            {% if row.lot_awarding_sms_last_at %}title="Last sent {{ row.lot_awarding_sms_last_at|date:'M d, Y h:i A' }}"{% endif %}>
-                            <span>Sent</span>
-                            <span class="lawq-sms-badge-count">×{{ row.lot_awarding_sms_count }}</span>
-                        </span>
-                        {% else %}
-                        <span class="lawq-sms-badge lawq-sms-badge--none" title="No lot-awarding SMS logged yet">Not sent</span>
-                        {% endif %}
-                    </td>
-                    <td class="rfq-col-priority">
-                        <div class="rfq-priority-stack {% if row.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif row.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif row.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif row.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
-                            {% if row.applicant.displacement_reason == 'danger_zone' %}
-                            <span class="rfq-priority-tier">1 · Option A</span>
-                            {% elif row.applicant.displacement_reason == 'relocated' %}
-                            <span class="rfq-priority-tier">2 · Option C</span>
-                            {% elif row.applicant.displacement_reason == 'ejected' %}
-                            <span class="rfq-priority-tier">3 · Option B</span>
-                            {% elif row.applicant.displacement_reason == 'not_abc' %}
-                            <span class="rfq-priority-tier">4 · Option D</span>
-                            {% else %}
-                            <span class="rfq-priority-tier rfq-priority-tier--muted">—</span>
-                            {% endif %}
-                            <span class="rfq-priority-name">{{ row.applicant.get_displacement_reason_display }}</span>
-                        </div>
-                    </td>
-                    <td class="rfq-col-proceeded">
-                        {% if row.routed_at %}
-                        <div class="date-cell-stack">
-                            <div class="date-main">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                                </svg>
-                                <span>{{ row.routed_at|date:"M d, Y" }}</span>
+                            <div class="lawq-detail"
+                                style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
+                                Signed form:
+                                {% if row.signed_form_on_file %}
+                                <a href="{{ row.signed_form_vault_url }}" class="lawq-signed-link"
+                                    title="View uploaded documents for this applicant">On file</a>
+                                {% else %}
+                                <strong style="color:#b91c1c;">Missing</strong>
+                                {% endif %}
                             </div>
-                            <div class="date-sub">
-                                {{ row.routed_at|date:"h:i A" }} · <span style="font-weight: 600; color: #475569;">{{ row.routedAgo|default:"—" }}</span>
-                            </div>
-                        </div>
-                        {% else %}
-                        <span class="rfq-proceeded-missing">—</span>
-                        {% endif %}
-                    </td>
-                    <td class="rfq-col-status">
-                        <span class="lawq-chip ready-awarding">
-                            <span class="rfq-status-pulse" style="margin-right: 0.3rem;"></span>
-                            {{ row.status_label }}
-                        </span>
-                    </td>
-                    <td class="rfq-col-actions">
-                        <div class="lawq-actions-inline">
-                            {% if row.can_award_lot %}
-                            <button type="button" class="rfq-action-btn lawq-action-emerald"
-                                onclick="openAwardModal('{{ row.application.id }}', '{{ row.applicant.full_name|escapejs }}')">
-                                <svg class="rfq-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path d="M3 11l9-8 9 8"/>
-                                    <path d="M5 10v10h14V10"/>
-                                    <path d="M9 21V13h6v8"/>
-                                </svg>
-                                Award lot
-                            </button>
+                        </td>
+                        <td class="lawq-col-sms">
+                            {% if row.lot_awarding_sms_count %}
+                            <span class="lawq-sms-badge lawq-sms-badge--sent" {% if row.lot_awarding_sms_last_at
+                                %}title="Last sent {{ row.lot_awarding_sms_last_at|date:'M d, Y h:i A' }}" {% endif %}>
+                                <span>Sent</span>
+                                <span class="lawq-sms-badge-count">×{{ row.lot_awarding_sms_count }}</span>
+                            </span>
                             {% else %}
-                            <span class="lawq-muted">Lot awarding is restricted for your role.</span>
+                            <span class="lawq-sms-badge lawq-sms-badge--none" title="No lot-awarding SMS logged yet">Not
+                                sent</span>
                             {% endif %}
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="9" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
-                        {% if search %}
-                        No applicants in this queue match your search.
-                        {% else %}
-                        No applicants are currently in the lot-awarding queue. Route signed records from <strong>Ready for Form queue</strong> using <strong>Proceed to lot awarding</strong>.
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                        </td>
+                        <td class="rfq-col-priority">
+                            <div
+                                class="rfq-priority-stack {% if row.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif row.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif row.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif row.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
+                                {% if row.applicant.displacement_reason == 'danger_zone' %}
+                                <span class="rfq-priority-tier">1 · Option A</span>
+                                {% elif row.applicant.displacement_reason == 'relocated' %}
+                                <span class="rfq-priority-tier">2 · Option C</span>
+                                {% elif row.applicant.displacement_reason == 'ejected' %}
+                                <span class="rfq-priority-tier">3 · Option B</span>
+                                {% elif row.applicant.displacement_reason == 'not_abc' %}
+                                <span class="rfq-priority-tier">4 · Option D</span>
+                                {% else %}
+                                <span class="rfq-priority-tier rfq-priority-tier--muted">—</span>
+                                {% endif %}
+                                <span class="rfq-priority-name">{{ row.applicant.get_displacement_reason_display
+                                    }}</span>
+                            </div>
+                        </td>
+                        <td class="rfq-col-proceeded">
+                            {% if row.routed_at %}
+                            <div class="date-cell-stack">
+                                <div class="date-main">
+                                    <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5"
+                                        style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    <span>{{ row.routed_at|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="date-sub">
+                                    {{ row.routed_at|date:"h:i A" }} · <span
+                                        style="font-weight: 600; color: #475569;">{{ row.routedAgo|default:"—" }}</span>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="rfq-proceeded-missing">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="rfq-col-status">
+                            <span class="lawq-chip ready-awarding">
+                                <span class="rfq-status-pulse" style="margin-right: 0.3rem;"></span>
+                                {{ row.status_label }}
+                            </span>
+                        </td>
+                        <td class="rfq-col-actions">
+                            <div class="lawq-actions-inline">
+                                {% if row.can_award_lot %}
+                                <button type="button" class="rfq-action-btn lawq-action-emerald"
+                                    onclick="openAwardModal('{{ row.application.id }}', '{{ row.applicant.full_name|escapejs }}')">
+                                    <svg class="rfq-action-btn-icon" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path d="M3 11l9-8 9 8" />
+                                        <path d="M5 10v10h14V10" />
+                                        <path d="M9 21V13h6v8" />
+                                    </svg>
+                                    Award lot
+                                </button>
+                                {% else %}
+                                <span class="lawq-muted">Lot awarding is restricted for your role.</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9"
+                            style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                            {% if search %}
+                            No applicants in this queue match your search.
+                            {% else %}
+                            No applicants are currently in the lot-awarding queue. Route signed records from
+                            <strong>Ready for Form queue</strong> using <strong>Proceed to lot awarding</strong>.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     <div class="rfq-pagination table-pagination">
         <span class="table-pagination-info">
@@ -1462,13 +1697,15 @@
         </span>
         <div class="table-pagination-controls">
             {% if page_obj.has_previous %}
-            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+            <a class="btn-page"
+                href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
             {% else %}
             <span class="btn-page is-disabled">Prev</span>
             {% endif %}
             <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
-            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            <a class="btn-page"
+                href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
             {% else %}
             <span class="btn-page is-disabled">Next</span>
             {% endif %}
@@ -1488,7 +1725,8 @@
             <h2 id="lawqSmsModalTitle">Send Bulk SMS</h2>
             <p class="lawq-sms-hero-sub">Talisay City Housing Authority &middot; Lot Awarding Queue</p>
             <div class="lawq-sms-recipient-summary-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:0.85rem; height:0.85rem; flex-shrink:0;" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    style="width:0.85rem; height:0.85rem; flex-shrink:0;" aria-hidden="true">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -1513,7 +1751,8 @@
                 <label for="lawqSmsMessageText" class="lawq-sms-label">Message</label>
                 <textarea id="lawqSmsMessageText" class="lawq-sms-body" maxlength="900" required
                     placeholder="Type the SMS text for the selected applicants…"></textarea>
-                <p class="lawq-sms-hint">Minimum 10 characters. Each applicant receives this text with their <strong>full name</strong> appended. Delivery is logged under the staff SMS workflow.</p>
+                <p class="lawq-sms-hint">Minimum 10 characters. Each applicant receives this text with their
+                    <strong>full name</strong> appended. Delivery is logged under the staff SMS workflow.</p>
             </div>
         </div>
 
@@ -1522,7 +1761,8 @@
                 Cancel
             </button>
             <button type="button" id="lawqSmsConfirmBtn" class="lawq-sms-btn-submit">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:0.95rem; height:0.95rem; flex-shrink:0;" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    style="width:0.95rem; height:0.95rem; flex-shrink:0;" aria-hidden="true">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
@@ -1535,14 +1775,19 @@
 <div class="modal-overlay" id="awardModal" role="dialog" aria-modal="true" aria-labelledby="lawqAwardModalTitle">
     <div class="lawq-award-modal-card" onclick="event.stopPropagation();">
         <div class="lawq-award-modal-head">
-            <div class="tha-form-crest" aria-hidden="true" style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
-                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async" style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
+            <div class="tha-form-crest" aria-hidden="true"
+                style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
+                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async"
+                    style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
             </div>
-            <div style="font-size: 0.72rem; font-weight: 700; color: #bae6fd; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.35rem; text-align: center;">Housing Lot Awarding</div>
+            <div
+                style="font-size: 0.72rem; font-weight: 700; color: #bae6fd; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.35rem; text-align: center;">
+                Housing Lot Awarding</div>
             <h2 class="lawq-award-modal-title" id="lawqAwardModalTitle">
                 <span>Award Housing Lot</span>
             </h2>
-            <p class="lawq-award-applicant-subtitle" style="margin: 0.4rem 0 0; font-size: 0.8125rem; font-weight: 600; color: #cbd5e1; letter-spacing: 0.02em; text-align: center;">
+            <p class="lawq-award-applicant-subtitle"
+                style="margin: 0.4rem 0 0; font-size: 0.8125rem; font-weight: 600; color: #cbd5e1; letter-spacing: 0.02em; text-align: center;">
                 Applicant: <span id="awardModalName" style="color: #ffffff; font-weight: 700;"></span>
             </p>
             <button type="button" class="modal-close" onclick="closeAwardModal()" aria-label="Close">&times;</button>
@@ -1554,9 +1799,10 @@
             </div>
             <div class="lawq-award-footer">
                 <button type="button" class="lawq-award-btn-cancel" onclick="closeAwardModal()">Cancel</button>
-                <button type="submit" class="lawq-award-btn-submit" id="awardLotSubmitBtn"
-                    {% if not vacant_units_by_site %}disabled{% endif %}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:0.95rem; height:0.95rem; flex-shrink:0;" aria-hidden="true">
+                <button type="submit" class="lawq-award-btn-submit" id="awardLotSubmitBtn" {% if not
+                    vacant_units_by_site %}disabled{% endif %}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        style="width:0.95rem; height:0.95rem; flex-shrink:0;" aria-hidden="true">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
@@ -1572,7 +1818,8 @@
 <div id="applicantHoverCard" class="applicant-hover-card">
     <div class="hover-card-arrow"></div>
     <div class="hover-card-banner">
-        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
+        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo"
+            style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
     </div>
     <div class="hover-card-header">
         <div class="hover-card-avatar" id="hcAvatar">—</div>
@@ -1809,7 +2056,7 @@
             });
             const data = await response.json();
             if (data.success) {
-                lawqShowAlert(data.message || 'Lot awarded successfully.', 'Award Lot', function() {
+                lawqShowAlert(data.message || 'Lot awarded successfully.', 'Award Lot', function () {
                     location.reload();
                 }, 'success');
             } else {
@@ -1904,7 +2151,7 @@
             // Populate card
             hcName.textContent = fullName;
             hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
-            
+
             // Client-side slicing safety for UUIDs and long transaction IDs
             let displayTx = txId;
             if (displayTx.startsWith('APP-')) {
@@ -1931,7 +2178,7 @@
 
             // Position card
             const rect = nameSpan.getBoundingClientRect();
-            
+
             // Temporarily display to measure height
             hoverCard.style.display = 'block';
             const cardWidth = hoverCard.offsetWidth || 290;
