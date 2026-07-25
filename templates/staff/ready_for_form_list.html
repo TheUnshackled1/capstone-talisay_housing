@@ -77,14 +77,10 @@
                 <tr data-applicant-id="{{ data.applicant.id }}">
                     <td class="col-num" style="font-weight:700;color:#1e293b;text-align:center;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="complainant-cell-info">
-                            <div class="complainant-name-card">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
+                        <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                            <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
                                 <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" 
-                                      style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer;"
+                                      style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
                                       data-full-name="{{ data.applicant.full_name }}"
                                       data-tx-id="APP-{{ data.applicant.id|slice:":8" }}..."
                                       data-ref-code="{{ data.applicant.reference_number|default:'' }}"
@@ -92,6 +88,19 @@
                                       data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                                       data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
                             </div>
+                            {% if data.applicant.displacement_reason == 'danger_zone' or data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason == 'relocated' or data.applicant.displacement_reason == 'not_abc' %}
+                            <div class="demographic-meta-row" style="margin-top: 0.15rem;">
+                                {% if data.applicant.displacement_reason == 'danger_zone' %}
+                                <span class="priority-hsl-badge option-a">Danger Zone</span>
+                                {% elif data.applicant.displacement_reason == 'ejected' %}
+                                <span class="priority-hsl-badge option-b">Ejected</span>
+                                {% elif data.applicant.displacement_reason == 'relocated' %}
+                                <span class="priority-hsl-badge option-c">Relocated</span>
+                                {% elif data.applicant.displacement_reason == 'not_abc' %}
+                                <span class="priority-hsl-badge option-d">Other</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
                         </div>
                     </td>
                     <td class="rfq-col-priority col-priority">
@@ -502,6 +511,60 @@
 
     .summary-chip-card--emerald p:first-of-type {
         color: #047857 !important;
+    }
+
+    .applicant-name {
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1.3;
+    }
+
+    .applicant-name.option-a {
+        color: #b91c1c !important;
+    }
+
+    .applicant-name.option-b {
+        color: #b45309 !important;
+    }
+
+    .applicant-name.option-c {
+        color: #047857 !important;
+    }
+
+    .applicant-name.option-d {
+        color: #475569 !important;
+    }
+
+    /* Force Left Alignment for Applicant / Full Name column cells */
+    .rfq-table td.col-applicant,
+    .rfq-table td:nth-child(2) {
+        text-align: left !important;
+    }
+
+    .rfq-table td.col-applicant .complainant-cell-info,
+    .rfq-table td:nth-child(2) .complainant-cell-info {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        text-align: left !important;
+        width: 100% !important;
+    }
+
+    .rfq-table td.col-applicant .complainant-name-card,
+    .rfq-table td:nth-child(2) .complainant-name-card {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+    }
+
+    .rfq-table td.col-applicant .demographic-meta-row,
+    .rfq-table td:nth-child(2) .demographic-meta-row {
+        display: flex !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
     }
 
     .rfq-table-wrap {
