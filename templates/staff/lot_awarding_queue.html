@@ -1586,7 +1586,7 @@
         style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.95rem; text-align: center;">
         <h1
             style="font-size: 1.02rem; font-weight: 700; color: #047857; margin: 0; letter-spacing: 0.04em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-            Lot Awarding queue
+            Lot Awarding
         </h1>
     </div>
 
@@ -1674,21 +1674,27 @@
                         </td>
                         <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                         <td class="lawq-applicant-cell col-applicant" style="text-align: left;">
-                            <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
-                                <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-                                    <span class="complainant-name applicant-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
-                                          style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
-                                          data-full-name="{{ row.applicant.full_name }}"
-                                          data-tx-id="APP-{{ row.applicant.id|slice:':8' }}..."
-                                          data-ref-code="{{ row.applicant.reference_number|default:'' }}"
-                                          data-barangay="{{ row.applicant.barangay.name|default:'Not specified' }}"
-                                          data-dob="{{ row.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ row.applicant.full_name }}</span>
+                            <div class="complainant-cell-info"
+                                style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                                <div class="complainant-name-card"
+                                    style="display: inline-flex; align-items: center; gap: 0.45rem;">
+                                    <span
+                                        class="complainant-name applicant-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
+                                        style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                                        data-full-name="{{ row.applicant.full_name }}"
+                                        data-tx-id="APP-{{ row.applicant.id|slice:':8' }}..."
+                                        data-ref-code="{{ row.applicant.reference_number|default:'' }}"
+                                        data-barangay="{{ row.applicant.barangay.name|default:'Not specified' }}"
+                                        data-dob="{{ row.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{
+                                        row.applicant.full_name }}</span>
                                 </div>
                             </div>
-                            <div class="lawq-detail" style="margin-top: 0.35rem; display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem;">
+                            <div class="lawq-detail"
+                                style="margin-top: 0.35rem; display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem;">
                                 Signed form:
                                 {% if row.signed_form_on_file %}
-                                <a href="{{ row.signed_form_vault_url }}" class="lawq-signed-link" title="View uploaded documents for this applicant">On file</a>
+                                <a href="{{ row.signed_form_vault_url }}" class="lawq-signed-link"
+                                    title="View uploaded documents for this applicant">On file</a>
                                 {% else %}
                                 <strong style="color:#b91c1c;">Missing</strong>
                                 {% endif %}
