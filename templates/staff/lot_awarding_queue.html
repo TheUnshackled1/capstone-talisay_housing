@@ -47,6 +47,45 @@
         color: #047857 !important;
     }
 
+    .applicant-name {
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1.3;
+    }
+
+    .applicant-name.option-a {
+        color: #b91c1c !important;
+    }
+
+    .applicant-name.option-b {
+        color: #b45309 !important;
+    }
+
+    .applicant-name.option-c {
+        color: #047857 !important;
+    }
+
+    .applicant-name.option-d {
+        color: #475569 !important;
+    }
+
+    /* Force Left Alignment for Applicant cell */
+    .rfq-table td.lawq-applicant-cell,
+    .rfq-table td.col-applicant {
+        text-align: left !important;
+    }
+
+    .rfq-table td.lawq-applicant-cell .complainant-cell-info,
+    .rfq-table td.col-applicant .complainant-cell-info {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        text-align: left !important;
+        width: 100% !important;
+    }
+
     .lawq-chip {
         width: 100%;
         display: flex !important;
@@ -1543,37 +1582,49 @@
 {% block content %}
 <div class="rfq-shell lawq-queue">
     {% csrf_token %}
-    <div class="rfq-head" style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.95rem; text-align: center;">
-        <h1 style="font-size: 1.02rem; font-weight: 700; color: #047857; margin: 0; letter-spacing: 0.04em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
-            <span style="color:#10b981; font-size: 0.75rem;">●</span> Lot Awarding queue
+    <div class="rfq-head"
+        style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.95rem; text-align: center;">
+        <h1
+            style="font-size: 1.02rem; font-weight: 700; color: #047857; margin: 0; letter-spacing: 0.04em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+            Lot Awarding queue
         </h1>
     </div>
 
     <!-- Controls Bar (TOTAL LIST badge + Search Box + Send SMS) -->
-    <div class="controls-bar" style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+    <div class="controls-bar"
+        style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
         <!-- Total Count Badge -->
         <div class="summary-chip-card summary-chip-card--emerald">
-            <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 3-3.87"></path>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <div>
-                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total List</p>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">
+                    Total List</p>
                 <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="lawqTotalCount">{{ page_obj.paginator.count|default:queue_total|default:queue_rows|length }}</p>
             </div>
         </div>
 
         <!-- Search Box & Send SMS Controls -->
-        <form method="get" action="" class="search-box" style="flex: 1; min-width: 200px; position: relative; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <form method="get" action="" class="search-box"
+            style="flex: 1; min-width: 200px; position: relative; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px; position: relative; display: flex;">
-                <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg class="search-icon"
+                    style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
-                <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..." value="{{ search|default:'' }}" autocomplete="off" style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
-                <button type="submit" style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+                <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..."
+                    value="{{ search|default:'' }}" autocomplete="off"
+                    style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+                <button type="submit"
+                    style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
+                    onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
                     Search
                 </button>
             </div>
@@ -1622,32 +1673,35 @@
                                 aria-label="Select {{ row.applicant.full_name }}">
                         </td>
                         <td style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                        <td class="lawq-applicant-cell">
-                            <div class="complainant-cell-info">
-                                <div class="complainant-name-card">
-                                    <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2.5"
-                                        style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                        <circle cx="12" cy="7" r="4"></circle>
-                                    </svg>
-                                    <span
-                                        class="complainant-name applicant-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
-                                        style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer;"
-                                        data-full-name="{{ row.applicant.full_name }}"
-                                        data-tx-id="APP-{{ row.applicant.id|slice:" :8" }}..."
-                                        data-ref-code="{{ row.applicant.reference_number|default:'' }}"
-                                        data-barangay="{{ row.applicant.barangay.name|default:'Not specified' }}"
-                                        data-dob="{{ row.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{
-                                        row.applicant.full_name }}</span>
+                        <td class="lawq-applicant-cell col-applicant" style="text-align: left;">
+                            <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                                <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
+                                    <span class="complainant-name applicant-name {% if row.applicant.displacement_reason == 'danger_zone' %}option-a{% elif row.applicant.displacement_reason == 'ejected' %}option-b{% elif row.applicant.displacement_reason == 'relocated' %}option-c{% elif row.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
+                                          style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                                          data-full-name="{{ row.applicant.full_name }}"
+                                          data-tx-id="APP-{{ row.applicant.id|slice:':8' }}..."
+                                          data-ref-code="{{ row.applicant.reference_number|default:'' }}"
+                                          data-barangay="{{ row.applicant.barangay.name|default:'Not specified' }}"
+                                          data-dob="{{ row.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ row.applicant.full_name }}</span>
                                 </div>
+                                {% if row.applicant.displacement_reason == 'danger_zone' or row.applicant.displacement_reason == 'ejected' or row.applicant.displacement_reason == 'relocated' or row.applicant.displacement_reason == 'not_abc' %}
+                                <div class="demographic-meta-row" style="margin-top: 0.15rem;">
+                                    {% if row.applicant.displacement_reason == 'danger_zone' %}
+                                    <span class="priority-hsl-badge option-a">Danger Zone</span>
+                                    {% elif row.applicant.displacement_reason == 'ejected' %}
+                                    <span class="priority-hsl-badge option-b">Ejected</span>
+                                    {% elif row.applicant.displacement_reason == 'relocated' %}
+                                    <span class="priority-hsl-badge option-c">Relocated</span>
+                                    {% elif row.applicant.displacement_reason == 'not_abc' %}
+                                    <span class="priority-hsl-badge option-d">Other</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
                             </div>
-                            <div class="lawq-detail"
-                                style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
+                            <div class="lawq-detail" style="margin-top: 0.35rem; display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem;">
                                 Signed form:
                                 {% if row.signed_form_on_file %}
-                                <a href="{{ row.signed_form_vault_url }}" class="lawq-signed-link"
-                                    title="View uploaded documents for this applicant">On file</a>
+                                <a href="{{ row.signed_form_vault_url }}" class="lawq-signed-link" title="View uploaded documents for this applicant">On file</a>
                                 {% else %}
                                 <strong style="color:#b91c1c;">Missing</strong>
                                 {% endif %}
@@ -1808,7 +1862,8 @@
                 <textarea id="lawqSmsMessageText" class="lawq-sms-body" maxlength="900" required
                     placeholder="Type the SMS text for the selected applicants…"></textarea>
                 <p class="lawq-sms-hint">Minimum 10 characters. Each applicant receives this text with their
-                    <strong>full name</strong> appended. Delivery is logged under the staff SMS workflow.</p>
+                    <strong>full name</strong> appended. Delivery is logged under the staff SMS workflow.
+                </p>
             </div>
         </div>
 
