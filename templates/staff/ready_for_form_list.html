@@ -15,8 +15,10 @@
 {% block content %}
 <div class="rfq-shell">
     {% csrf_token %}
-    <div class="rfq-head" style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.95rem; text-align: center; flex-direction: column;">
-        <h1 style="font-size: 1.02rem; font-weight: 700; color: #047857; margin: 0; letter-spacing: 0.04em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+    <div class="rfq-head"
+        style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.95rem; text-align: center; flex-direction: column;">
+        <h1
+            style="font-size: 1.02rem; font-weight: 700; color: #047857; margin: 0; letter-spacing: 0.04em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
             <span style="color:#10b981; font-size: 0.75rem;">●</span> Ready for Form queue
         </h1>
         {% if from_source == 'applications_list' and selected_applicant_id %}
@@ -32,29 +34,39 @@
     </div>
 
     <!-- Controls Bar (TOTAL LIST badge + Search Box) -->
-    <div class="controls-bar" style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+    <div class="controls-bar"
+        style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
         <!-- Total Count Badge -->
         <div class="summary-chip-card summary-chip-card--emerald">
-            <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 3-3.87"></path>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <div>
-                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">Total List</p>
+                <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">
+                    Total List</p>
                 <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;">{{ page_obj.paginator.count|default:applicants_data|length }}</p>
             </div>
         </div>
 
         <!-- Search Box -->
-        <form method="get" action="" class="search-box" style="flex: 1; min-width: 200px; position: relative; display: flex;">
-            <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <form method="get" action="" class="search-box"
+            style="flex: 1; min-width: 200px; position: relative; display: flex;">
+            <svg class="search-icon"
+                style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..." value="{{ search|default:'' }}" autocomplete="off" style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
-            <button type="submit" style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+            <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..."
+                value="{{ search|default:'' }}" autocomplete="off"
+                style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+            <button type="submit"
+                style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
                 Search
             </button>
         </form>
@@ -65,8 +77,10 @@
             <thead>
                 <tr>
                     <th class="col-num">#</th>
-                    <th class="col-applicant">Applicant</th>
-                    <th class="rfq-col-priority col-priority" title="Serve order: Option A first, then C, B, D; within each tier, earliest routing time first">Queue priority</th>
+                    <th class="col-applicant">Full Name</th>
+                    <th class="rfq-col-priority col-priority"
+                        title="Serve order: Option A first, then C, B, D; within each tier, earliest routing time first">
+                        Queue priority</th>
                     <th class="rfq-col-proceeded col-encoded">Proceeded Time</th>
                     <th class="rfq-col-status col-status">Status</th>
                     <th class="rfq-col-actions col-actions">Actions</th>
@@ -77,16 +91,19 @@
                 <tr data-applicant-id="{{ data.applicant.id }}">
                     <td class="col-num" style="font-weight:700;color:#1e293b;text-align:center;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
-                            <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-                                <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}" 
-                                      style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
-                                      data-full-name="{{ data.applicant.full_name }}"
-                                      data-tx-id="APP-{{ data.applicant.id|slice:":8" }}..."
-                                      data-ref-code="{{ data.applicant.reference_number|default:'' }}"
-                                      data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
-                                      data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
-                                      data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
+                        <div class="complainant-cell-info"
+                            style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                            <div class="complainant-name-card"
+                                style="display: inline-flex; align-items: center; gap: 0.45rem;">
+                                <span
+                                    class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
+                                    style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                                    data-full-name="{{ data.applicant.full_name }}"
+                                    data-tx-id="APP-{{ data.applicant.id|slice:':8' }}..."
+                                    data-ref-code="{{ data.applicant.reference_number|default:'' }}"
+                                    data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
+                                    data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                    data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
                             </div>
                             {% if data.applicant.displacement_reason == 'danger_zone' or data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason == 'relocated' or data.applicant.displacement_reason == 'not_abc' %}
                             <div class="demographic-meta-row" style="margin-top: 0.15rem;">
@@ -104,7 +121,8 @@
                         </div>
                     </td>
                     <td class="rfq-col-priority col-priority">
-                        <div class="rfq-priority-stack {% if data.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif data.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif data.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif data.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
+                        <div
+                            class="rfq-priority-stack {% if data.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif data.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif data.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif data.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
                             {% if data.applicant.displacement_reason == 'danger_zone' %}
                             <span class="rfq-priority-tier">1 · Option A</span>
                             {% elif data.applicant.displacement_reason == 'relocated' %}
@@ -123,7 +141,8 @@
                         {% if data.form_queue_routed_at %}
                         <div class="date-cell-stack">
                             <div class="date-main">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
                                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                     <line x1="16" y1="2" x2="16" y2="6"></line>
                                     <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -132,7 +151,8 @@
                                 <span>{{ data.form_queue_routed_at|date:"M d, Y" }}</span>
                             </div>
                             <div class="date-sub">
-                                {{ data.form_queue_routed_at|date:"g:i A" }} · <span style="font-weight: 600; color: #475569;">{{ data.routedAgo|default:"—" }}</span>
+                                {{ data.form_queue_routed_at|date:"g:i A" }} · <span
+                                    style="font-weight: 600; color: #475569;">{{ data.routedAgo|default:"—" }}</span>
                             </div>
                         </div>
                         {% else %}
@@ -146,7 +166,8 @@
                             Needs follow-up
                         </span>
                         {% elif data.application %}
-                        <span class="rfq-chip rfq-chip--status {% if data.application.status == 'draft' %}pending{% else %}ready{% endif %}"
+                        <span
+                            class="rfq-chip rfq-chip--status {% if data.application.status == 'draft' %}pending{% else %}ready{% endif %}"
                             title="{{ data.current_stage|escape }}">
                             {% if data.application.status == 'draft' %}
                             <span class="rfq-status-pulse"></span>
@@ -167,7 +188,8 @@
                             <button type="button" class="rfq-action-btn rfq-action-slot-1"
                                 title="Generate Form — Create the application PDF and number; then use Scan / Upload in this row for the signed form."
                                 onclick="generateFormFromQueue('{{ data.applicant.id }}')">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:0.75rem;height:0.75rem;flex-shrink:0;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    style="width:0.75rem;height:0.75rem;flex-shrink:0;">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                     <line x1="12" y1="18" x2="12" y2="12"></line>
@@ -176,15 +198,19 @@
                                 Generate Form
                             </button>
                             <span class="rfq-action-placeholder rfq-action-placeholder--scan rfq-action-slot-2"
-                                title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed scan/upload after PDF</span>
+                                title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed
+                                scan/upload after PDF</span>
                             <span class="rfq-action-placeholder rfq-action-slot-3"
                                 title="View opens the signed application file after it is scanned or uploaded (same as Eligibility checklist — preview only).">—</span>
                             {% elif data.application %}
                             <div class="rfq-action-slot-1 rfq-open-pdf-view-pair">
-                                <a class="rfq-action-btn generate-form-btn" href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}" target="_blank" rel="noopener"
+                                <a class="rfq-action-btn generate-form-btn"
+                                    href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                    target="_blank" rel="noopener"
                                     title="Open PDF — Opens the generated application form in a new tab (blank/filled PDF)."
                                     aria-label="Open application form PDF">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
                                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                                         <polyline points="15 3 21 3 21 9"></polyline>
                                         <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -193,11 +219,13 @@
                                 </a>
                                 {% if data.signed_application_view_url %}
                                 <a class="eligibility-view-doc-btn rfq-signed-application-view"
-                                    href="{{ data.signed_application_view_url }}"
-                                    target="_blank" rel="noopener noreferrer"
+                                    href="{{ data.signed_application_view_url }}" target="_blank"
+                                    rel="noopener noreferrer"
                                     title="Open signed application on file (read-only preview — same vault file as Scan/Upload)"
                                     aria-label="View signed application document">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
@@ -218,7 +246,9 @@
                                     onclick="rfqScanSignedApplication(this)"
                                     title="Scan — Capture from scanner (TWAIN); saves signed application to the document vault (stay on this page)."
                                     aria-label="Scan signed application from scanner">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
                                         <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
                                         <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
                                         <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
@@ -231,10 +261,10 @@
                             </div>
                             <button type="button"
                                 class="rfq-action-btn rfq-action-btn--proceed-awarding rfq-action-slot-3"
-                                onclick="proceedToLotAwardingQueue('{{ data.application.id }}')"
-                                {% if not data.signed_application_scan_present %}disabled aria-disabled="true"{% endif %}
+                                onclick="proceedToLotAwardingQueue('{{ data.application.id }}')" {% if not data.signed_application_scan_present %}disabled aria-disabled="true"{% endif %}
                                 title="{% if data.signed_application_scan_present %}Move this signed record to the lot-awarding queue{% else %}Upload or scan a signed application first — button stays disabled until the signed form is on file{% endif %}">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:0.75rem;height:0.75rem;flex-shrink:0;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    style="width:0.75rem;height:0.75rem;flex-shrink:0;">
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                                 Awarding
@@ -244,11 +274,12 @@
                             <span class="rfq-actions-muted">Not ready for form yet</span>
                             {% if data.signed_application_view_url %}
                             <a class="eligibility-view-doc-btn rfq-signed-application-view rfq-action-slot-3"
-                                href="{{ data.signed_application_view_url }}"
-                                target="_blank" rel="noopener noreferrer"
+                                href="{{ data.signed_application_view_url }}" target="_blank" rel="noopener noreferrer"
                                 title="Open signed application on file (read-only preview)"
                                 aria-label="View signed application document">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
                                 </svg>
@@ -261,11 +292,14 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                    <td colspan="6"
+                        style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
                         {% if search %}
                         No applicants in this queue match your search.
                         {% else %}
-                        No one is on this routed queue. Use <strong>Proceed to Form</strong> from <a href="{% url 'applications:applications_list' request.user.position %}">Application &amp; Evaluation</a> when an applicant is ready, or finish evaluation steps there first.
+                        No one is on this routed queue. Use <strong>Proceed to Form</strong> from <a
+                            href="{% url 'applications:applications_list' request.user.position %}">Application &amp;
+                            Evaluation</a> when an applicant is ready, or finish evaluation steps there first.
                         {% endif %}
                     </td>
                 </tr>
@@ -280,13 +314,15 @@
         </span>
         <div class="table-pagination-controls">
             {% if page_obj.has_previous %}
-            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
+            <a class="btn-page"
+                href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
             {% else %}
             <span class="btn-page is-disabled">Prev</span>
             {% endif %}
             <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
-            <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            <a class="btn-page"
+                href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
             {% else %}
             <span class="btn-page is-disabled">Next</span>
             {% endif %}
@@ -294,16 +330,21 @@
     </div>
 </div>
 
-<div id="dwtcontrolContainer" style="width:0;height:0;overflow:hidden;position:absolute;left:-9999px;" aria-hidden="true"></div>
-<input type="file" id="rfqSignedApplicationFile" style="display:none" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
+<div id="dwtcontrolContainer" style="width:0;height:0;overflow:hidden;position:absolute;left:-9999px;"
+    aria-hidden="true"></div>
+<input type="file" id="rfqSignedApplicationFile" style="display:none"
+    accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain">
 
 <!-- Custom confirmation modal — replaces native confirm() so we can
      style it as part of the THA design system. -->
-<div class="rfq-confirm-overlay" id="rfqConfirmOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqConfirmTitle">
+<div class="rfq-confirm-overlay" id="rfqConfirmOverlay" role="dialog" aria-modal="true"
+    aria-labelledby="rfqConfirmTitle">
     <div class="rfq-confirm-card">
         <div class="rfq-confirm-header">
-            <div class="tha-form-crest" aria-hidden="true" style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
-                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async" style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
+            <div class="tha-form-crest" aria-hidden="true"
+                style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
+                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async"
+                    style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
             </div>
             <p class="rfq-confirm-kicker">APPLICATION FORM</p>
             <h3 class="rfq-confirm-title" id="rfqConfirmTitle">Generate application form?</h3>
@@ -321,11 +362,14 @@
 </div>
 
 <!-- Replace signed application (same pattern as Eligibility checklist) -->
-<div class="rfq-confirm-overlay" id="rfqReplaceDocOverlay" role="dialog" aria-modal="true" aria-labelledby="rfqReplaceDocTitle" onclick="rfqCloseReplaceDocOverlay(event)">
+<div class="rfq-confirm-overlay" id="rfqReplaceDocOverlay" role="dialog" aria-modal="true"
+    aria-labelledby="rfqReplaceDocTitle" onclick="rfqCloseReplaceDocOverlay(event)">
     <div class="rfq-confirm-card" onclick="event.stopPropagation();">
         <div class="rfq-confirm-header">
-            <div class="tha-form-crest" aria-hidden="true" style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
-                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async" style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
+            <div class="tha-form-crest" aria-hidden="true"
+                style="width: auto; max-width: min(100%, 16rem); height: 2.85rem; margin: 0 auto 0.625rem; border: 2px solid rgba(248, 250, 252, 0.95); border-radius: 0.375rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.2rem 0.5rem; box-sizing: border-box;">
+                <img src="{% static 'images/favicon.png' %}" alt="" decoding="async"
+                    style="height: 100%; max-height: 2.35rem; width: auto; object-fit: contain;">
             </div>
             <p class="rfq-confirm-kicker">DOCUMENT MANAGEMENT</p>
             <h3 class="rfq-confirm-title" id="rfqReplaceDocTitle">Replace existing document?</h3>
@@ -337,12 +381,15 @@
                 <div class="rfq-replace-doc-existing-name" id="rfqReplaceDocFileName">—</div>
             </div>
             <p class="rfq-replace-doc-note">
-                Replacing will update Document Management for this applicant and refresh this queue (same vault slot as Scan / Upload).
+                Replacing will update Document Management for this applicant and refresh this queue (same vault slot as
+                Scan / Upload).
             </p>
         </div>
         <div class="rfq-confirm-actions">
-            <button type="button" class="tha-btn tha-btn-secondary" onclick="rfqResolveReplaceDocConfirm(false)">No</button>
-            <button type="button" class="tha-btn tha-btn-success" onclick="rfqResolveReplaceDocConfirm(true)">Yes, replace</button>
+            <button type="button" class="tha-btn tha-btn-secondary"
+                onclick="rfqResolveReplaceDocConfirm(false)">No</button>
+            <button type="button" class="tha-btn tha-btn-success" onclick="rfqResolveReplaceDocConfirm(true)">Yes,
+                replace</button>
         </div>
     </div>
 </div>
@@ -361,18 +408,23 @@
         justify-content: center;
         padding: 1rem;
     }
-    .rfq-confirm-overlay.active { display: flex; }
+
+    .rfq-confirm-overlay.active {
+        display: flex;
+    }
+
     .rfq-confirm-card {
         width: min(28rem, 100%);
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 14px;
         box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4),
-                    0 16px 32px -8px rgba(15, 23, 42, 0.18);
+            0 16px 32px -8px rgba(15, 23, 42, 0.18);
         position: relative;
         overflow: hidden;
         padding: 0;
     }
+
     .rfq-confirm-header {
         position: relative;
         background: #0f172a;
@@ -383,6 +435,7 @@
         box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
         box-sizing: border-box;
     }
+
     .rfq-confirm-kicker {
         margin: 0 0 0.35rem;
         font-size: 0.72rem;
@@ -391,6 +444,7 @@
         text-transform: uppercase;
         color: #bae6fd;
     }
+
     .rfq-confirm-title {
         margin: 0;
         font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -399,17 +453,20 @@
         color: #f8fafc;
         letter-spacing: -0.01em;
     }
+
     .rfq-confirm-body {
         padding: 1.25rem 1.5rem;
         text-align: center;
         background: #ffffff;
     }
+
     .rfq-confirm-message {
         margin: 0;
         font-size: 0.85rem;
         color: #475569;
         line-height: 1.5;
     }
+
     .rfq-confirm-actions {
         display: flex;
         gap: 0.65rem;
@@ -418,15 +475,20 @@
         border-top: 1px solid #f1f5f9;
         background: #fafbfc;
     }
-    .rfq-confirm-actions .tha-btn { min-width: 8rem; }
+
+    .rfq-confirm-actions .tha-btn {
+        min-width: 8rem;
+    }
 
     .rfq-replace-doc-body {
         text-align: left;
     }
+
     .rfq-replace-doc-body .rfq-confirm-title {
         text-align: center;
         margin-bottom: 0.45rem;
     }
+
     .rfq-replace-doc-lead {
         margin: 0 0 0.65rem;
         font-size: 0.84rem;
@@ -434,6 +496,7 @@
         line-height: 1.45;
         text-align: center;
     }
+
     .rfq-replace-doc-existing {
         padding: 0.65rem 0.8rem;
         border: 1px solid #fde68a;
@@ -441,12 +504,14 @@
         border-radius: 0.55rem;
         margin-bottom: 0.65rem;
     }
+
     .rfq-replace-doc-existing-label {
         font-size: 0.72rem;
         font-weight: 700;
         color: #92400e;
         margin-bottom: 0.2rem;
     }
+
     .rfq-replace-doc-existing-name {
         font-size: 0.82rem;
         color: #334155;
@@ -454,6 +519,7 @@
         line-height: 1.35;
         word-break: break-word;
     }
+
     .rfq-replace-doc-note {
         margin: 0;
         font-size: 0.78rem;
@@ -679,22 +745,23 @@
     .complainant-cell-info {
         display: flex !important;
         flex-direction: column !important;
-        gap: 0.35rem !important;
-        align-items: center !important;
+        gap: 0.25rem !important;
+        align-items: flex-start !important;
         justify-content: center !important;
+        text-align: left !important;
     }
 
     .complainant-name-card {
-        display: flex !important;
+        display: inline-flex !important;
         align-items: center !important;
-        justify-content: center !important;
+        justify-content: flex-start !important;
         gap: 0.45rem !important;
+        text-align: left !important;
     }
 
     .complainant-name {
         font-size: 0.8rem !important;
         font-weight: 700 !important;
-        color: #0f172a !important;
         letter-spacing: -0.01em !important;
         line-height: 1.25 !important;
     }
@@ -730,10 +797,21 @@
         border: 1px solid #bfdbfe !important;
     }
 
-    .complainant-name.option-a { color: #b91c1c !important; }
-    .complainant-name.option-b { color: #b45309 !important; }
-    .complainant-name.option-c { color: #047857 !important; }
-    .complainant-name.option-d { color: #475569 !important; }
+    .complainant-name.option-a {
+        color: #b91c1c !important;
+    }
+
+    .complainant-name.option-b {
+        color: #b45309 !important;
+    }
+
+    .complainant-name.option-c {
+        color: #047857 !important;
+    }
+
+    .complainant-name.option-d {
+        color: #475569 !important;
+    }
 
     /* Soft HSL-scaped priority badge callouts */
     .rfq-priority-stack {
@@ -754,10 +832,12 @@
         background: #fee2e2 !important;
         border-color: #fca5a5 !important;
     }
+
     .rfq-priority-stack.stack-option-a .rfq-priority-tier {
         color: #991b1b !important;
         font-weight: 800 !important;
     }
+
     .rfq-priority-stack.stack-option-a .rfq-priority-name {
         color: #7f1d1d !important;
     }
@@ -767,10 +847,12 @@
         background: #dcfce7 !important;
         border-color: #86efac !important;
     }
+
     .rfq-priority-stack.stack-option-c .rfq-priority-tier {
         color: #065f46 !important;
         font-weight: 800 !important;
     }
+
     .rfq-priority-stack.stack-option-c .rfq-priority-name {
         color: #064e3b !important;
     }
@@ -780,10 +862,12 @@
         background: #ffedd5 !important;
         border-color: #fdba74 !important;
     }
+
     .rfq-priority-stack.stack-option-b .rfq-priority-tier {
         color: #9a3412 !important;
         font-weight: 800 !important;
     }
+
     .rfq-priority-stack.stack-option-b .rfq-priority-name {
         color: #7c2d12 !important;
     }
@@ -794,11 +878,13 @@
         background: #f1f5f9 !important;
         border-color: #cbd5e1 !important;
     }
+
     .rfq-priority-stack.stack-option-d .rfq-priority-tier,
     .rfq-priority-stack.stack-option-unknown .rfq-priority-tier {
         color: #475569 !important;
         font-weight: 800 !important;
     }
+
     .rfq-priority-stack.stack-option-d .rfq-priority-name,
     .rfq-priority-stack.stack-option-unknown .rfq-priority-name {
         color: #334155 !important;
@@ -830,19 +916,63 @@
     }
 
     @keyframes pulse-green {
-        0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); opacity: 0.75; }
-        70% { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); opacity: 1; }
-        100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); opacity: 0.75; }
+        0% {
+            transform: scale(0.85);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            opacity: 0.75;
+        }
+
+        70% {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(0.85);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            opacity: 0.75;
+        }
     }
+
     @keyframes pulse-blue {
-        0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); opacity: 0.75; }
-        70% { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0); opacity: 1; }
-        100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); opacity: 0.75; }
+        0% {
+            transform: scale(0.85);
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+            opacity: 0.75;
+        }
+
+        70% {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(0.85);
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+            opacity: 0.75;
+        }
     }
+
     @keyframes pulse-gold {
-        0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); opacity: 0.75; }
-        70% { transform: scale(1.15); box-shadow: 0 0 0 4px rgba(217, 119, 6, 0); opacity: 1; }
-        100% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); opacity: 0.75; }
+        0% {
+            transform: scale(0.85);
+            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4);
+            opacity: 0.75;
+        }
+
+        70% {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 4px rgba(217, 119, 6, 0);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(0.85);
+            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
+            opacity: 0.75;
+        }
     }
 
     /* Soft HSL Status Badges */
@@ -891,6 +1021,7 @@
         border-color: hsl(48, 96.5%, 84.3%) !important;
         color: hsl(37.9, 92.1%, 29.8%) !important;
     }
+
     .rfq-chip.followup::before {
         animation: pulse-gold 1.5s infinite ease-in-out !important;
     }
@@ -901,6 +1032,7 @@
         border-color: hsl(214.3, 31.8%, 91.4%) !important;
         color: hsl(215.4, 16.3%, 46.9%) !important;
     }
+
     .rfq-chip.pending::before {
         animation: pulse-blue 1.5s infinite ease-in-out !important;
     }
@@ -952,12 +1084,53 @@
         border: 1px solid #1e3a8a !important;
         background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important;
         color: #ffffff !important;
+        white-space: nowrap !important;
     }
 
     .rfq-action-btn.generate-form-btn:hover {
         background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22) !important;
         transform: translateY(-1.5px) scale(1.04) !important;
+    }
+
+    /* Open PDF + View Pair Container & Button Layout */
+    .rfq-open-pdf-view-pair {
+        grid-column: 1 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.25rem !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .rfq-open-pdf-view-pair > a,
+    .rfq-open-pdf-view-pair > .generate-form-btn,
+    .rfq-open-pdf-view-pair > .eligibility-view-doc-btn {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        padding: 0 0.25rem !important;
+        font-size: 0.58rem !important;
+        line-height: 1 !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.2rem !important;
+        min-height: 2.2rem !important;
+    }
+
+    .rfq-open-pdf-view-pair > a svg,
+    .rfq-open-pdf-view-pair > .generate-form-btn svg,
+    .rfq-open-pdf-view-pair > .eligibility-view-doc-btn svg {
+        width: 0.65rem !important;
+        height: 0.65rem !important;
+        flex-shrink: 0 !important;
     }
 
     /* View: Dark Blue Brand Gradient */
@@ -967,6 +1140,7 @@
         color: #ffffff !important;
         min-height: 2.2rem !important;
         border-radius: 0.6rem !important;
+        white-space: nowrap !important;
         transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease !important;
     }
 
@@ -1058,7 +1232,7 @@
 
     .rfq-confirm-card {
         border-radius: 16px !important;
-        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04) !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
         border: 1px solid #e2e8f0 !important;
     }
 
@@ -1084,21 +1258,21 @@
         font-family: inherit;
         box-sizing: border-box;
     }
-    
+
     .applicant-hover-card.active {
         display: block;
         opacity: 1;
         transform: translateY(0) scale(1);
     }
-    
+
     .applicant-hover-card.position-below {
         transform: translateY(-8px) scale(0.97);
     }
-    
+
     .applicant-hover-card.position-below.active {
         transform: translateY(0) scale(1);
     }
-    
+
     .hover-card-arrow {
         position: absolute;
         width: 10px;
@@ -1106,19 +1280,19 @@
         background: #ffffff;
         transform: rotate(45deg);
         box-shadow: -1px -1px 0 0 rgba(0, 0, 0, 0.03);
-        border-left: 1px solid rgba(0,0,0,0.04);
-        border-top: 1px solid rgba(0,0,0,0.04);
+        border-left: 1px solid rgba(0, 0, 0, 0.04);
+        border-top: 1px solid rgba(0, 0, 0, 0.04);
         top: -5px;
         left: calc(50% - 5px);
     }
-    
+
     .applicant-hover-card:not(.position-below) .hover-card-arrow {
         top: auto;
         bottom: -5px;
         transform: rotate(225deg);
-        box-shadow: 1px 1px 0 0 rgba(0,0,0,0.03);
+        box-shadow: 1px 1px 0 0 rgba(0, 0, 0, 0.03);
     }
-    
+
     .hover-card-header {
         display: flex;
         align-items: center;
@@ -1127,7 +1301,7 @@
         padding-bottom: 0.6rem;
         margin-bottom: 0.6rem;
     }
-    
+
     .hover-card-avatar {
         width: 38px;
         height: 38px;
@@ -1143,12 +1317,12 @@
         box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
         flex-shrink: 0;
     }
-    
+
     .hover-card-title-group {
         min-width: 0;
         flex: 1;
     }
-    
+
     .hover-card-name {
         font-size: 0.84rem;
         font-weight: 800;
@@ -1158,7 +1332,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    
+
     .hover-card-tag {
         font-size: 0.62rem;
         font-weight: 600;
@@ -1167,13 +1341,13 @@
         letter-spacing: 0.05em;
         margin-top: 0.05rem;
     }
-    
+
     .hover-card-body {
         display: flex;
         flex-direction: column;
         gap: 0.45rem;
     }
-    
+
     .hover-card-meta-row {
         display: flex;
         justify-content: space-between;
@@ -1181,18 +1355,18 @@
         gap: 1rem;
         font-size: 0.72rem;
     }
-    
+
     .hover-card-label {
         font-weight: 600;
         color: #64748b;
         font-size: 0.68rem;
     }
-    
+
     .hover-card-value {
         font-weight: 700;
         color: #1e293b;
     }
-    
+
     .hover-card-footer {
         border-top: 1px solid #f1f5f9;
         margin-top: 0.6rem;
@@ -1214,7 +1388,7 @@
         font-size: 0.7rem !important;
         border: 1px solid #bfdbfe !important;
     }
-    
+
     .complainant-ref-code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
         font-weight: 600 !important;
@@ -1356,7 +1530,7 @@
                                     return;
                                 }
                                 if (parsed && parsed.error) message = parsed.error;
-                            } catch (_err) {}
+                            } catch (_err) { }
                         }
                         reject(new Error(message));
                     }
@@ -1684,7 +1858,7 @@
             // Populate card
             hcName.textContent = fullName;
             hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
-            
+
             // Client-side slicing safety for UUIDs and long transaction IDs
             let displayTx = txId;
             if (displayTx.startsWith('APP-')) {
@@ -1740,7 +1914,7 @@
 
             // Position card
             const rect = nameSpan.getBoundingClientRect();
-            
+
             // Temporarily display to measure height
             hoverCard.style.display = 'block';
             const cardWidth = hoverCard.offsetWidth || 290;
@@ -1806,7 +1980,8 @@
 <div id="applicantHoverCard" class="applicant-hover-card">
     <div class="hover-card-arrow"></div>
     <div class="hover-card-banner">
-        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
+        <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo"
+            style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
     </div>
     <div class="hover-card-header">
         <div class="hover-card-avatar" id="hcAvatar">—</div>
@@ -1832,7 +2007,8 @@
             <span class="hover-card-label">Birth Date</span>
             <span class="hover-card-value" id="hcDob">—</span>
         </div>
-        <div class="hover-card-meta-row" id="hcDispRow" style="display: none; margin-top: 0.35rem; align-items: center;">
+        <div class="hover-card-meta-row" id="hcDispRow"
+            style="display: none; margin-top: 0.35rem; align-items: center;">
             <span class="hover-card-label">Situation</span>
             <span id="hcDispBadge"></span>
         </div>
