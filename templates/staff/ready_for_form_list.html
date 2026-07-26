@@ -163,7 +163,7 @@
                         {% if data.selected_out_of_queue %}
                         <span class="rfq-chip followup">
                             <span class="rfq-status-pulse"></span>
-                            Needs follow-up
+                            NEEDS FOLLOW-UP
                         </span>
                         {% elif data.application %}
                         <span
@@ -171,15 +171,15 @@
                             title="{{ data.current_stage|escape }}">
                             {% if data.application.status == 'draft' %}
                             <span class="rfq-status-pulse"></span>
-                            Waiting for Scanned Form
+                            WAITING
                             {% elif data.application.status == 'completed' %}
-                            Ready for awarding
+                            FOR AWARDING
                             {% else %}
-                            {{ data.current_stage }}
+                            {{ data.current_stage|upper }}
                             {% endif %}
                         </span>
                         {% else %}
-                        <span class="rfq-chip rfq-chip--status">Verified</span>
+                        <span class="rfq-chip rfq-chip--status">VERIFIED</span>
                         {% endif %}
                     </td>
                     <td class="rfq-col-actions col-actions">
