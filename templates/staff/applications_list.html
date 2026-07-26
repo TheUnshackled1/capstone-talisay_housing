@@ -7260,7 +7260,61 @@
                 return;
             }
         }
-        await proceedToFormQueue(currentEligibilityApplicantId);
+        showApplicationFormConfirmModal(currentEligibilityApplicantId);
+    }
+
+    function showApplicationFormConfirmModal(applicantId) {
+        const modal = document.getElementById('flowAlertModal');
+        const card = document.getElementById('flowAlertCard');
+        const titleEl = document.getElementById('flowAlertTitle');
+        const messageEl = document.getElementById('flowAlertMessage');
+        const actionsEl = document.getElementById('flowAlertActions');
+        const celIcon = document.getElementById('flowAlertCelebrationIcon');
+        const iconEl = document.getElementById('flowAlertIcon');
+
+        if (!modal || !titleEl || !messageEl) {
+            if (confirm('Proceed to lot awarding?\nThis will move the signed application from Ready for Form to the lot-awarding queue.')) {
+                proceedToFormQueue(applicantId);
+            }
+            return;
+        }
+
+        if (window.flowAlertCountdownTimeout) {
+            clearTimeout(window.flowAlertCountdownTimeout);
+            window.flowAlertCountdownTimeout = null;
+        }
+
+        titleEl.textContent = 'APPLICATION FORM';
+        messageEl.innerHTML = `
+            <div style="text-align: center; padding: 0.2rem 0;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 0 0 0.35rem 0;">Proceed to lot awarding?</h4>
+                <p style="font-size: 0.78rem; color: #475569; line-height: 1.45; margin: 0;">This will move the signed application from Ready for Form to the lot-awarding queue.</p>
+            </div>
+        `;
+
+        if (card) {
+            card.classList.remove('success', 'proceed-success', 'flow-alert-card--celebration', 'flow-alert-card--precheck-next');
+        }
+        if (celIcon) celIcon.style.display = 'none';
+        if (iconEl) iconEl.style.display = 'none';
+
+        if (actionsEl) {
+            actionsEl.innerHTML = `
+                <button type="button" class="btn btn-secondary" onclick="closeFlowAlert()" style="padding: 0.4rem 1.1rem; border-radius: 0.4rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; transition: all 0.15s ease;">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="executeApplicationFormProceed('${applicantId}')" style="padding: 0.4rem 1.25rem; border-radius: 0.4rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; border: 1px solid #059669; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25); transition: all 0.15s ease;">Proceed</button>
+            `;
+            actionsEl.style.display = 'flex';
+            actionsEl.style.gap = '0.65rem';
+            actionsEl.style.justifyContent = 'center';
+            actionsEl.style.marginTop = '0.75rem';
+        }
+
+        modal.classList.add('active');
+    }
+
+    async function executeApplicationFormProceed(applicantId) {
+        closeFlowAlert();
+        await proceedToFormQueue(applicantId);
     }
 
     async function proceedToFormQueue(applicantId) {
@@ -7284,15 +7338,17 @@
                 endpoint: MODULE2_PROCEED_TO_FORM_QUEUE_URL,
                 smsPlan,
             });
-            const nextUrl = `/applications/staff/${position}/ready-for-form/?applicant_id=${encodeURIComponent(applicantId)}&from=applications_list`;
             showFlowAlert(
-                data.message || 'Applicant moved to Ready for Form queue.',
-                'Proceed to Form Generation',
-                () => { window.location.href = nextUrl; },
+                data.message || 'Application form generated and applicant moved to Ready for Form queue.',
+                'APPLICATION FORM',
+                () => {
+                    closeEligibilityNextModal();
+                    window.location.reload();
+                },
                 'proceed_success'
             );
         } catch (error) {
-            showFlowAlert(error.message || 'Unable to proceed to Form Generation.', 'Proceed to Form Generation');
+            showFlowAlert(error.message || 'Unable to proceed to Form Generation.', 'APPLICATION FORM');
         }
     }
 
