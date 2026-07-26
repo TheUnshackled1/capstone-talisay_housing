@@ -6653,7 +6653,8 @@
         if (existingBtn) existingBtn.remove();
     }
 
-    function markApplicantRowFormGenerated(applicantId, applicationNumber) {
+    // markApplicantRowFormGenerated removed — dead code (row refreshed via window.location.reload)
+    function _markApplicantRowFormGenerated_REMOVED(applicantId, applicationNumber) {
         const id = String(applicantId || '').trim();
         if (!id) return;
         const row = document.querySelector(`tr[data-applicant-id="${id}"]`);
@@ -7256,28 +7257,7 @@
         if (ev.persisted) scheduleM2EligibilityOpenViewsRefresh();
     });
 
-    async function markSituationCertifiedFromModal() {
-        if (!currentEligibilityApplicantId) return;
-        const formData = new FormData();
-        formData.append('applicant_id', currentEligibilityApplicantId);
-        formData.append('notes', '');
-        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-        try {
-            const response = await fetch('{% url "applications:mark_situation_certified" request.user.position %}', {
-                method: 'POST',
-                body: formData,
-            });
-            const data = await response.json();
-            if (!data.success) throw new Error(data.error || 'Unable to mark situation certified.');
-            showFlowAlert('Situation certification completed successfully. You may now proceed with Application Form Generation.', 'Situation Certification', null, 'success');
-            await fetchEligibilitySnapshot(currentEligibilityApplicantId);
-            if (lastEligibilitySnapshot && lastEligibilitySnapshot.overall) {
-                updateApplicantRowEligibilityStatus(currentEligibilityApplicantId, lastEligibilitySnapshot.overall);
-            }
-        } catch (error) {
-            showFlowAlert(error.message || 'Unable to mark situation certified.');
-        }
-    }
+    // markSituationCertifiedFromModal removed — dead code (handled by handleProceedFromModal)
 
     function closeSituationCertificationModal(event) {
         if (event && event.target && event.target.id !== 'situationCertificationModal') return;
@@ -7310,27 +7290,6 @@
         window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}&page=1`;
     }
 
-    function handleStageChange() {
-        const stage = document.getElementById('stageFilter').value;
-        filterByStage(stage);
-    }
-
-    let searchTimeout;
-    function executeSearch() {
-        const form = document.getElementById('evaluationsSearchForm');
-        if (form) {
-            const pageInput = form.querySelector('input[name="page"]');
-            if (pageInput) pageInput.remove();
-            form.submit();
-            return;
-        }
-        const search = document.getElementById('searchInput')?.value || '';
-        const stage = document.getElementById('stageFilter')?.value
-            || new URLSearchParams(window.location.search).get('stage')
-            || 'all';
-        window.location.href = `?stage=${stage}&search=${encodeURIComponent(search)}&page=1`;
-    }
-
     document.getElementById('evaluationsSearchForm')?.addEventListener('submit', function () {
         const pageInput = this.querySelector('input[name="page"]');
         if (pageInput) pageInput.remove();
@@ -7338,7 +7297,10 @@
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            closeAwardModal();
+            // Only close awardModal when it is actually open
+            if (document.getElementById('awardModal')?.classList.contains('active')) {
+                closeAwardModal();
+            }
         }
     });
 
@@ -7508,11 +7470,11 @@
         document.getElementById('awardForm').reset();
     }
 
-    document.getElementById('awardModal').addEventListener('click', (e) => {
+    document.getElementById('awardModal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeAwardModal();
     });
 
-    document.getElementById('awardForm').addEventListener('submit', async (e) => {
+    document.getElementById('awardForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const formData = new FormData(e.target);
