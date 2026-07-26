@@ -3719,10 +3719,20 @@
         transition: all 0.2s ease;
     }
 
-    .eligibility-next-proceed:hover {
+    .eligibility-next-proceed:hover:not(:disabled) {
         background: linear-gradient(135deg, #059669 0%, #047857 100%);
         border-color: #065f46;
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .eligibility-next-proceed:disabled,
+    .eligibility-next-proceed[disabled] {
+        background: #f1f5f9 !important;
+        color: #94a3b8 !important;
+        border-color: #cbd5e1 !important;
+        cursor: not-allowed !important;
+        box-shadow: none !important;
+        opacity: 0.75 !important;
     }
 
     @media (max-width: 1024px) {
@@ -5549,7 +5559,7 @@
         <div class="eligibility-next-footer">
             <button type="button" class="eligibility-next-back" onclick="backToPrecheckAlert()">Back</button>
             <button type="button" class="eligibility-next-proceed" id="eligibilityProceedFormModalBtn"
-                style="display: none;"
+                disabled="disabled"
                 onclick="handleProceedFromModal()">
                 Proceed to Ready for Form queue
             </button>
@@ -6646,11 +6656,25 @@
 
         if (proceedFormBtn) {
             const canProceed = isFormReady && !overall.has_application;
-            proceedFormBtn.style.display = canProceed ? 'inline-flex' : 'none';
+            proceedFormBtn.style.display = 'inline-flex';
             if (canProceed) {
+                proceedFormBtn.removeAttribute('disabled');
+                proceedFormBtn.disabled = false;
+                proceedFormBtn.title = 'Proceed to Ready for Form queue and send reminder SMS';
                 proceedFormBtn.onclick = function() {
                     handleProceedFromModal();
                 };
+            } else {
+                proceedFormBtn.setAttribute('disabled', 'disabled');
+                proceedFormBtn.disabled = true;
+                proceedFormBtn.onclick = null;
+                if (failedChecks.length > 0) {
+                    proceedFormBtn.title = `Resolve failed requirements first (${failedChecks.length} failed)`;
+                } else if (totalPendingCount > 0) {
+                    proceedFormBtn.title = `Complete all requirements first (${totalPendingCount} remaining)`;
+                } else {
+                    proceedFormBtn.title = 'Application form already generated or requirements incomplete.';
+                }
             }
         }
 
