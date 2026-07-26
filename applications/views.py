@@ -1588,7 +1588,7 @@ def proceed_to_form_queue(request, position):
 
     return JsonResponse({
         'success': True,
-        'message': 'Applicant moved to Ready for Form queue.',
+        'message': 'Applicant moved to FORM GENERATION',
         'sms_plan': sms_plan_payload,
     })
 
