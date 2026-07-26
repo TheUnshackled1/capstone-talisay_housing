@@ -3017,9 +3017,9 @@ def mark_situation_certified(request, position):
         else:
             message = 'Applicant Situation certified. Marked Pending Follow-up due to failed eligibility check(s).'
     elif displacement_reason == 'not_abc':
-        message = 'Applicant Situation step completed and eligibility recorded.'
+        message = 'Situation certification completed successfully. You may now proceed with Application Form Generation.'
     else:
-        message = 'Applicant Situation certified and queue placement updated.'
+        message = 'Situation certification completed successfully. You may now proceed with Application Form Generation.'
 
     return JsonResponse({
         'success': True,

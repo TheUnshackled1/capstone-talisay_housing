@@ -6665,7 +6665,7 @@
             } else if (applicantId && window._lastCertifiedAlertApplicantId !== applicantId) {
                 window._lastCertifiedAlertApplicantId = applicantId;
                 showFlowAlert(
-                    'Applicant Situation step completed and eligibility recorded.',
+                    'Situation certification completed successfully. You may now proceed with Application Form Generation.',
                     'Situation Certification',
                     null,
                     'success'
@@ -7033,7 +7033,7 @@
             });
             const data = await response.json();
             if (!data.success) throw new Error(data.error || 'Unable to mark situation certified.');
-            showFlowAlert(data.message || 'Situation certified.', 'Situation Certification', null, 'success');
+            showFlowAlert('Situation certification completed successfully. You may now proceed with Application Form Generation.', 'Situation Certification', null, 'success');
             await fetchEligibilitySnapshot(currentEligibilityApplicantId);
             if (lastEligibilitySnapshot && lastEligibilitySnapshot.overall) {
                 updateApplicantRowEligibilityStatus(currentEligibilityApplicantId, lastEligibilitySnapshot.overall);
