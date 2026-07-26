@@ -3707,6 +3707,24 @@
         border-color: #1d4ed8;
     }
 
+    .eligibility-next-proceed {
+        border: 1px solid #047857;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        border-radius: 0.6rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .eligibility-next-proceed:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        border-color: #065f46;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
     @media (max-width: 1024px) {
         .eligibility-next-modal {
             margin-left: 0;
@@ -5402,14 +5420,6 @@
                                 </svg>
                                 Evaluate
                             </button>
-                            {% if 'generate_form' in data.user_actions %}
-                            <button type="button" class="action-btn action-btn--proceed-form"
-                                onclick="proceedToFormQueue('{{ data.applicant.id }}')"
-                                title="Routes to Ready for Form queue and sends the Go to Form reminder SMS if not already sent for this applicant.">
-                                Proceed to Ready for Form queue
-                            </button>
-                            {% endif %}
-
                             {% if 'award_lot' in data.user_actions %}
                             <button class="action-btn"
                                 style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important; color:#ffffff !important; border:1px solid #6d28d9 !important;"
@@ -5539,7 +5549,12 @@
         <div class="eligibility-next-footer">
             <button type="button" class="eligibility-next-back" onclick="backToPrecheckAlert()">Back</button>
             <button type="button" class="eligibility-next-close" id="eligibilityNextBtn"
-                onclick="openSituationCertificationModal()">Next</button>
+                onclick="markSituationCertifiedFromModal()">Complete Evaluation</button>
+            <button type="button" class="eligibility-next-proceed" id="eligibilityProceedFormModalBtn"
+                style="display: none;"
+                onclick="proceedToFormQueue(currentEligibilityApplicantId)">
+                Proceed to Ready for Form queue
+            </button>
         </div>
     </div>
 </div>
@@ -6420,33 +6435,8 @@
         if (!row) return;
         const actionsWrap = row.querySelector('.col-actions > div');
         if (!actionsWrap) return;
-        const hasApplication = String(row.dataset.hasApplication || '0') === '1';
-        const displacementReason = String(row.dataset.displacementReason || '').trim();
-        const allowedSituations = new Set(['danger_zone', 'ejected', 'relocated', 'not_abc']);
-
         const existingBtn = actionsWrap.querySelector(`button[onclick*="proceedToFormQueue('${id}')"]`);
-        const alreadyGenerated = !!(existingBtn && String(existingBtn.textContent || '').trim().toLowerCase() === 'form generated');
-        if (alreadyGenerated) return;
-
-        const canShowGenerate = !!(
-            overall
-            && overall.form_generation_ready
-            && !overall.blacklist_blocked
-            && !hasApplication
-            && allowedSituations.has(displacementReason)
-        );
-        if (!canShowGenerate) {
-            if (existingBtn) existingBtn.remove();
-            return;
-        }
-        if (existingBtn) return;
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'action-btn action-btn--proceed-form';
-        btn.textContent = 'Proceed to Ready for Form queue';
-        btn.setAttribute('onclick', `proceedToFormQueue('${id}')`);
-        actionsWrap.appendChild(btn);
+        if (existingBtn) existingBtn.remove();
     }
 
     function markApplicantRowFormGenerated(applicantId, applicationNumber) {
@@ -6653,6 +6643,10 @@
                 : '');
 
         const nextBtn = document.getElementById('eligibilityNextBtn');
+        const proceedFormBtn = document.getElementById('eligibilityProceedFormModalBtn');
+        const overall = snapshot?.overall || {};
+        const isFormReady = !!(overall.form_generation_ready || (totalPendingCount === 0 && failedChecks.length === 0));
+
         if (nextBtn) {
             const canComplete = totalPendingCount === 0;
             nextBtn.textContent = 'Complete Evaluation';
@@ -6669,6 +6663,17 @@
             nextBtn.title = canComplete
                 ? 'Complete evaluation and record applicant eligibility'
                 : `Complete all requirements first (${totalPendingCount} remaining)`;
+        }
+
+        if (proceedFormBtn) {
+            if (isFormReady && !overall.has_application) {
+                proceedFormBtn.style.display = 'inline-flex';
+                proceedFormBtn.onclick = function() {
+                    proceedToFormQueue(currentEligibilityApplicantId);
+                };
+            } else {
+                proceedFormBtn.style.display = 'none';
+            }
         }
 
         const buildCheckCardHtml = (entry) => {
