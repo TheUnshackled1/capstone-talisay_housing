@@ -6807,11 +6807,17 @@
                     <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}Mark Failed</button>
                    </div>`
                 : '';
-            const actionsRow = `
-                <div class="m2-elig-actions">
+            const actionsRow = (!docUrl && (eligUploadHtml || scanControlHtml) && entry.is_reviewable)
+                ? `<div class="m2-elig-actions m2-sit-actions">
+                    ${eligUploadHtml}
+                    ${scanControlHtml}
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}Mark</button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}Mark</button>
+                   </div>`
+                : `<div class="m2-elig-actions">
                     ${docActionsHtml}
                     ${decisionActionsHtml}
-                </div>`;
+                   </div>`;
             return `
                 <div class="${cardToneClass}">
                     <div class="m2-elig-card-head">
