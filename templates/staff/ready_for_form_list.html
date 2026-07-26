@@ -171,7 +171,7 @@
                             title="{{ data.current_stage|escape }}">
                             {% if data.application.status == 'draft' %}
                             <span class="rfq-status-pulse"></span>
-                            Awaiting signed scan
+                            Waiting for Scanned Form
                             {% elif data.application.status == 'completed' %}
                             Ready for awarding
                             {% else %}
@@ -179,13 +179,13 @@
                             {% endif %}
                         </span>
                         {% else %}
-                        <span class="rfq-chip rfq-chip--status">Ready + verified</span>
+                        <span class="rfq-chip rfq-chip--status">Verified</span>
                         {% endif %}
                     </td>
                     <td class="rfq-col-actions col-actions">
                         <div class="rfq-actions-inline">
                             {% if 'generate_form' in data.user_actions %}
-                            <button type="button" class="rfq-action-btn rfq-action-slot-1"
+                            <button type="button" class="rfq-action-btn rfq-action-slot-1 rfq-span-2"
                                 title="Generate Form — Create the application PDF and number; then use Scan / Upload in this row for the signed form."
                                 onclick="generateFormFromQueue('{{ data.applicant.id }}')">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -200,67 +200,61 @@
                             <span class="rfq-action-placeholder rfq-action-placeholder--scan rfq-action-slot-2"
                                 title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed
                                 scan/upload after PDF</span>
-                            <span class="rfq-action-placeholder rfq-action-slot-3"
-                                title="View opens the signed application file after it is scanned or uploaded (same as Eligibility checklist — preview only).">—</span>
+                            <span class="rfq-action-placeholder rfq-action-slot-3">—</span>
                             {% elif data.application %}
-                            <div class="rfq-action-slot-1 rfq-open-pdf-view-pair">
-                                <a class="rfq-action-btn generate-form-btn"
-                                    href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
-                                    target="_blank" rel="noopener"
-                                    title="Open PDF — Opens the generated application form in a new tab (blank/filled PDF)."
-                                    aria-label="Open application form PDF">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
-                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                        <polyline points="15 3 21 3 21 9"></polyline>
-                                        <line x1="10" y1="14" x2="21" y2="3"></line>
-                                    </svg>
-                                    Open PDF
-                                </a>
-                                {% if data.signed_application_view_url %}
-                                <a class="eligibility-view-doc-btn rfq-signed-application-view"
-                                    href="{{ data.signed_application_view_url }}" target="_blank"
-                                    rel="noopener noreferrer"
-                                    title="Open signed application on file (read-only preview — same vault file as Scan/Upload)"
-                                    aria-label="View signed application document">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    View
-                                </a>
-                                {% endif %}
-                            </div>
+                            <a class="rfq-action-btn generate-form-btn {% if not data.signed_application_view_url %}rfq-span-2{% endif %}"
+                                href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                target="_blank" rel="noopener"
+                                title="Open PDF — Opens the generated application form in a new tab (blank/filled PDF)."
+                                aria-label="Open application form PDF">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                                Open PDF
+                            </a>
+                            {% if data.signed_application_view_url %}
+                            <a class="eligibility-view-doc-btn rfq-signed-application-view"
+                                href="{{ data.signed_application_view_url }}" target="_blank"
+                                rel="noopener noreferrer"
+                                title="Open signed application on file (read-only preview — same vault file as Scan/Upload)"
+                                aria-label="View signed application document">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                View
+                            </a>
+                            {% endif %}
                             {% if data.application.status == 'draft' or data.application.status == 'completed' %}
-                            <div class="rfq-action-slot-2 rfq-vault-pair">
-                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
-                                    data-applicant-id="{{ data.applicant.id }}"
-                                    data-ref-label="{{ data.applicant.reference_number|default:'' }}"
-                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
-                                    data-application-id="{{ data.application.id }}"
-                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
-                                    data-has-existing-doc="{% if data.signed_application_scan_present %}1{% else %}0{% endif %}"
-                                    data-existing-doc-name="{{ data.signed_application_existing_file_label|escape }}"
-                                    onclick="rfqScanSignedApplication(this)"
-                                    title="Scan — Capture from scanner (TWAIN); saves signed application to the document vault (stay on this page)."
-                                    aria-label="Scan signed application from scanner">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
-                                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-                                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-                                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-                                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-                                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                                    </svg>
-                                    Scan
-                                </button>
-
-                            </div>
+                            <button type="button" class="rfq-action-btn rfq-action-btn--scan"
+                                data-applicant-id="{{ data.applicant.id }}"
+                                data-ref-label="{{ data.applicant.reference_number|default:'' }}"
+                                data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                data-application-id="{{ data.application.id }}"
+                                data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
+                                data-has-existing-doc="{% if data.signed_application_scan_present %}1{% else %}0{% endif %}"
+                                data-existing-doc-name="{{ data.signed_application_existing_file_label|escape }}"
+                                onclick="rfqScanSignedApplication(this)"
+                                title="Scan — Capture from scanner (TWAIN); saves signed application to the document vault (stay on this page)."
+                                aria-label="Scan signed application from scanner">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                    <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                                    <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                                    <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                                </svg>
+                                Scan
+                            </button>
                             <button type="button"
-                                class="rfq-action-btn rfq-action-btn--proceed-awarding rfq-action-slot-3"
+                                class="rfq-action-btn rfq-action-btn--proceed-awarding"
                                 onclick="proceedToLotAwardingQueue('{{ data.application.id }}')" {% if not data.signed_application_scan_present %}disabled aria-disabled="true"{% endif %}
                                 title="{% if data.signed_application_scan_present %}Move this signed record to the lot-awarding queue{% else %}Upload or scan a signed application first — button stays disabled until the signed form is on file{% endif %}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -271,9 +265,9 @@
                             </button>
                             {% endif %}
                             {% else %}
-                            <span class="rfq-actions-muted">Not ready for form yet</span>
+                            <span class="rfq-actions-muted rfq-span-2">Not ready for form yet</span>
                             {% if data.signed_application_view_url %}
-                            <a class="eligibility-view-doc-btn rfq-signed-application-view rfq-action-slot-3"
+                            <a class="eligibility-view-doc-btn rfq-signed-application-view"
                                 href="{{ data.signed_application_view_url }}" target="_blank" rel="noopener noreferrer"
                                 title="Open signed application on file (read-only preview)"
                                 aria-label="View signed application document">
