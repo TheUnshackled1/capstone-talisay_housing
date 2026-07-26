@@ -6654,6 +6654,25 @@
             }
         }
 
+        if (totalPendingCount === 0 && failedChecks.length === 0) {
+            const applicantId = snapshot?.applicant?.id || currentEligibilityApplicantId;
+            if (String(overall.certification_status || '') === 'pending' && !window._autoCertifyingMap?.[applicantId]) {
+                if (!window._autoCertifyingMap) window._autoCertifyingMap = {};
+                window._autoCertifyingMap[applicantId] = true;
+                markSituationCertifiedFromModal().finally(() => {
+                    if (window._autoCertifyingMap) delete window._autoCertifyingMap[applicantId];
+                });
+            } else if (applicantId && window._lastCertifiedAlertApplicantId !== applicantId) {
+                window._lastCertifiedAlertApplicantId = applicantId;
+                showFlowAlert(
+                    'Applicant Situation step completed and eligibility recorded.',
+                    'Situation Certification',
+                    null,
+                    'success'
+                );
+            }
+        }
+
         const buildCheckCardHtml = (entry) => {
             const manualDecision = getManualDecision(entry.key);
             const manualStatus = manualDecision ? manualDecision.status : '';
@@ -6829,6 +6848,7 @@
 
     function openEligibilityNextModal(applicantName, applicantId) {
         currentEligibilityApplicantId = applicantId || '';
+        window._lastCertifiedAlertApplicantId = null;
         const subtitle = document.getElementById('eligibilityNextSubtitle');
         if (subtitle) {
             subtitle.textContent = applicantName
