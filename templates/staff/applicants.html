@@ -5456,7 +5456,7 @@
             <button type="button" class="btn-modal primary" id="archiveProceedToEvaluationBtn"
                 onclick="proceedToEvaluationFromArchiveRequirements()" disabled
                 style="display: inline-flex; align-items: center; gap: 0.4rem;">
-                Proceed to Application &amp; Eligibility <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                Proceed to Applicant Evaluation &amp; Eligibility <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
@@ -10624,7 +10624,7 @@
         formData.append('promote_to_module2', '1');
         const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
         if (csrfEl) formData.append('csrfmiddlewaretoken', csrfEl.value);
-        logSmsDispatchPlan('Proceed to Application & Eligibility', {
+        logSmsDispatchPlan('Proceed to Applicant Evaluation & Eligibility', {
             applicantId: applicantId,
             referenceNumber: ref,
             promoteToModule2: true,
@@ -10646,7 +10646,7 @@
                         showBlacklistProceedBlockedModal(data, ref);
                         return;
                     }
-                    throw new Error(data.error || 'Unable to proceed to Application & Eligibility.');
+                    throw new Error(data.error || 'Unable to proceed to Applicant Evaluation & Eligibility.');
                 }
                 const nextUrl = `${evaluationApplicationsUrl}?applicant_id=${encodeURIComponent(applicantId)}&from=intake_scan_checklist&ref=${encodeURIComponent(ref)}`;
                 showNoticeModal({
@@ -10664,14 +10664,14 @@
             .catch(function (error) {
                 showNoticeModal({
                     title: 'Proceed Failed',
-                    message: error.message || 'Unable to proceed to Application & Eligibility.',
+                    message: error.message || 'Unable to proceed to Applicant Evaluation & Eligibility.',
                     type: 'error',
                 });
             })
             .finally(function () {
                 if (proceedBtn) {
                     proceedBtn.disabled = false;
-                    proceedBtn.innerHTML = originalHtml || 'Proceed to Application &amp; Eligibility <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+                    proceedBtn.innerHTML = originalHtml || 'Proceed to Applicant Evaluation &amp; Eligibility <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
                 }
             });
     }
