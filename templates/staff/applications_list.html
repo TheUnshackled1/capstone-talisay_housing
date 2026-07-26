@@ -2915,11 +2915,12 @@
 
     .m2-elig-card--compact {
         padding: 0.35rem 0.45rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        box-sizing: border-box;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        min-height: 13.2rem !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .m2-elig-card--compact .m2-elig-card-head {
@@ -2946,12 +2947,12 @@
     .m2-elig-card--compact .m2-elig-evidence-box {
         padding: 0.25rem 0.4rem;
         margin-bottom: 0.35rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-height: 4.2rem;
-        box-sizing: border-box;
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        min-height: 4.5rem !important;
+        box-sizing: border-box !important;
     }
 
     .m2-elig-card--compact .m2-ev-grid-row {
@@ -5623,7 +5624,7 @@
             <button type="button" class="eligibility-next-proceed" id="eligibilityProceedFormModalBtn"
                 disabled="disabled"
                 onclick="handleProceedFromModal()">
-                Proceed to Ready for Form queue
+                Proceed to Form Generation &rarr;
             </button>
         </div>
     </div>
@@ -6715,7 +6716,7 @@
             if (canProceed) {
                 proceedFormBtn.removeAttribute('disabled');
                 proceedFormBtn.disabled = false;
-                proceedFormBtn.title = 'Proceed to Ready for Form queue and send reminder SMS';
+                proceedFormBtn.title = 'Proceed to Form Generation and send reminder SMS';
                 proceedFormBtn.onclick = function() {
                     handleProceedFromModal();
                 };
@@ -7277,7 +7278,7 @@
                 throw new Error(data.error || 'Unable to proceed applicant to Ready for Form queue.');
             }
             const smsPlan = data.sms_plan || {};
-            console.info('[Proceed to Ready for Form queue SMS]', {
+            console.info('[Proceed to Form Generation SMS]', {
                 flow: 'proceed_to_form_queue',
                 applicantId: applicantId,
                 endpoint: MODULE2_PROCEED_TO_FORM_QUEUE_URL,
@@ -7286,12 +7287,12 @@
             const nextUrl = `/applications/staff/${position}/ready-for-form/?applicant_id=${encodeURIComponent(applicantId)}&from=applications_list`;
             showFlowAlert(
                 data.message || 'Applicant moved to Ready for Form queue.',
-                'Proceed to Ready for Form queue',
+                'Proceed to Form Generation',
                 () => { window.location.href = nextUrl; },
                 'proceed_success'
             );
         } catch (error) {
-            showFlowAlert(error.message || 'Unable to proceed to Ready for Form queue.', 'Proceed to Ready for Form queue');
+            showFlowAlert(error.message || 'Unable to proceed to Form Generation.', 'Proceed to Form Generation');
         }
     }
 
