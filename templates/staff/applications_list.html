@@ -5548,11 +5548,9 @@
         </div>
         <div class="eligibility-next-footer">
             <button type="button" class="eligibility-next-back" onclick="backToPrecheckAlert()">Back</button>
-            <button type="button" class="eligibility-next-close" id="eligibilityNextBtn"
-                onclick="markSituationCertifiedFromModal()">Complete Evaluation</button>
             <button type="button" class="eligibility-next-proceed" id="eligibilityProceedFormModalBtn"
                 style="display: none;"
-                onclick="proceedToFormQueue(currentEligibilityApplicantId)">
+                onclick="handleProceedFromModal()">
                 Proceed to Ready for Form queue
             </button>
         </div>
@@ -6642,37 +6640,17 @@
                 ? `<div class="m2-elig-banner m2-elig-banner--fail"><strong>${failedChecks.length} failed</strong> — record stays <strong>Pending Follow-up</strong> until failed items are Passed again (blocks Ready for Form).</div>`
                 : '');
 
-        const nextBtn = document.getElementById('eligibilityNextBtn');
         const proceedFormBtn = document.getElementById('eligibilityProceedFormModalBtn');
         const overall = snapshot?.overall || {};
         const isFormReady = !!(overall.form_generation_ready || (totalPendingCount === 0 && failedChecks.length === 0));
 
-        if (nextBtn) {
-            const canComplete = totalPendingCount === 0;
-            nextBtn.textContent = 'Complete Evaluation';
-            nextBtn.disabled = !canComplete;
-            if (!canComplete) {
-                nextBtn.setAttribute('disabled', 'disabled');
-                nextBtn.onclick = null;
-            } else {
-                nextBtn.removeAttribute('disabled');
-                nextBtn.onclick = markSituationCertifiedFromModal;
-            }
-            nextBtn.style.opacity = canComplete ? '1' : '0.6';
-            nextBtn.style.cursor = canComplete ? 'pointer' : 'not-allowed';
-            nextBtn.title = canComplete
-                ? 'Complete evaluation and record applicant eligibility'
-                : `Complete all requirements first (${totalPendingCount} remaining)`;
-        }
-
         if (proceedFormBtn) {
-            if (isFormReady && !overall.has_application) {
-                proceedFormBtn.style.display = 'inline-flex';
+            const canProceed = isFormReady && !overall.has_application;
+            proceedFormBtn.style.display = canProceed ? 'inline-flex' : 'none';
+            if (canProceed) {
                 proceedFormBtn.onclick = function() {
-                    proceedToFormQueue(currentEligibilityApplicantId);
+                    handleProceedFromModal();
                 };
-            } else {
-                proceedFormBtn.style.display = 'none';
             }
         }
 
@@ -7152,6 +7130,31 @@
         } catch (error) {
             showFlowAlert('Precheck request failed: ' + error.message, 'Evaluation Pre-check');
         }
+    }
+
+    async function handleProceedFromModal() {
+        if (!currentEligibilityApplicantId) return;
+        const snap = lastEligibilitySnapshot;
+        const overall = snap?.overall || {};
+        const isCertified = !!overall.form_generation_ready;
+        if (!isCertified) {
+            try {
+                const formData = new FormData();
+                formData.append('applicant_id', currentEligibilityApplicantId);
+                formData.append('notes', '');
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                const response = await fetch('{% url "applications:mark_situation_certified" request.user.position %}', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Unable to complete situation certification.');
+            } catch (error) {
+                showFlowAlert(error.message || 'Unable to mark situation certified.');
+                return;
+            }
+        }
+        await proceedToFormQueue(currentEligibilityApplicantId);
     }
 
     async function proceedToFormQueue(applicantId) {
