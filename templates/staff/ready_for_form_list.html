@@ -1584,26 +1584,8 @@
         );
     }
 
-    async function rfqPickSignedApplicationFile(btn) {
-        if (!btn) return;
-        const applicantId = String(btn.dataset.applicantId || '').trim();
-        if (!applicantId) {
-            rfqShowAlert('Missing applicant.', 'Upload', 'default');
-            return;
-        }
-        const hasExistingDoc = String(btn.dataset.hasExistingDoc || '0') === '1';
-        const existingDocName = String(btn.dataset.existingDocName || '').trim() || 'Signed application';
-        if (hasExistingDoc) {
-            const ok = await rfqConfirmReplaceExistingDocument(existingDocName);
-            if (!ok) return;
-        }
-        rfqFileUploadApplicantId = applicantId;
-        rfqFileUploadButtonEl = btn;
-        const inp = document.getElementById('rfqSignedApplicationFile');
-        if (!inp) return;
-        inp.value = '';
-        inp.click();
-    }
+    // rfqPickSignedApplicationFile removed — dead code (upload handled via rfqScanSignedApplication)
+
 
     // ---- Custom confirmation modal helpers ----
     function rfqShowConfirm(message, onOk, options) {
