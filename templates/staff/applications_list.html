@@ -7390,11 +7390,17 @@
                 const response = await fetch('{% url "applications:mark_situation_certified" request.user.position %}', {
                     method: 'POST',
                     body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 });
+                const contentType = (response.headers.get('content-type') || '').toLowerCase();
+                if (response.redirected || !contentType.includes('application/json')) {
+                    showFlowAlert('Session expired or access changed. Please log in again and retry.', 'ERROR');
+                    return;
+                }
                 const data = await response.json();
                 if (!data.success) throw new Error(data.error || 'Unable to complete situation certification.');
             } catch (error) {
-                showFlowAlert(error.message || 'Unable to mark situation certified.');
+                showFlowAlert(error.message || 'Unable to mark situation certified.', 'ERROR');
                 return;
             }
         }
@@ -7439,7 +7445,16 @@
             const response = await fetch(MODULE2_PROCEED_TO_FORM_QUEUE_URL, {
                 method: 'POST',
                 body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
+            if (response.redirected || !contentType.includes('application/json')) {
+                showFlowAlert(
+                    'Your session may have expired or access changed. Please log in again, then retry.',
+                    'ERROR'
+                );
+                return;
+            }
             const data = await response.json();
             if (!data.success) {
                 throw new Error(data.error || 'Unable to proceed applicant to Ready for Form queue.');
