@@ -1422,7 +1422,7 @@ def lot_awarding_queue(request, position):
         queue_rows.append({
             'application': app,
             'applicant': applicant,
-            'status_label': 'Ready for awarding',
+            'status_label': 'FOR AWARDING',
             'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '-',
             'routed_at': routed_dt,
             'routedAgo': _relative_time_ago(routed_dt),
