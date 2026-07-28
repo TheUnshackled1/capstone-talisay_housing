@@ -173,28 +173,26 @@
                     <td class="col-eligibility">
                         <div class="col-status-wrap">
                             {% if data.m2_evaluator.blacklist_blocked %}
-                            <span class="m2-readiness-chip blocked">Blocked - Blacklisted</span>
+                            <span class="m2-readiness-chip blocked">BLOCKED - BLACKLISTED</span>
                             {% elif data.form_generated %}
-                            <span class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage }}</span>
+                            <span class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage|upper }}</span>
                             {% elif not data.m2_evaluator.required_docs_complete %}
-                            <span class="m2-readiness-chip pending">Docs Incomplete</span>
+                            <span class="m2-readiness-chip pending">DOCS INCOMPLETE</span>
                             {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
-                            <span class="m2-readiness-chip pending">Needs Situation Docs</span>
+                            <span class="m2-readiness-chip pending">NEEDS SITUATION DOCS</span>
                             {% elif data.m2_evaluator.certification_status == 'pending' %}
-                            <span class="m2-readiness-chip pending">Pending Certification</span>
+                            <span class="m2-readiness-chip pending">PENDING CERTIFICATION</span>
                             {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
-                            <span class="m2-readiness-chip pending">Needs Field Evidence</span>
+                            <span class="m2-readiness-chip pending">NEEDS FIELD EVIDENCE</span>
                             {% elif data.m2_evaluator.has_failed_checks %}
-                            <span class="m2-readiness-chip followup" title="One or more eligibility checks marked Failed — reviewer follow-up required.">Pending Follow-up</span>
+                            <span class="m2-readiness-chip followup" title="One or more eligibility checks marked Failed — reviewer follow-up required.">PENDING FOLLOW-UP</span>
                             {% elif data.m2_evaluator.form_generation_ready %}
-                            <span class="m2-readiness-chip ready">Ready for Form</span>
+                            <span class="m2-readiness-chip ready">READY FOR FORM</span>
                             {% else %}
-                            <span class="m2-readiness-chip pending">Under Review</span>
+                            <span class="m2-readiness-chip pending">UNDER REVIEW</span>
                             {% endif %}
                             {% if data.form_generated %}
                             <div class="m2-readiness-hint">{{ data.application.application_number }}</div>
-                            {% elif data.m2_evaluator.readiness_hint %}
-                            <div class="m2-readiness-hint">{{ data.m2_evaluator.readiness_hint }}</div>
                             {% endif %}
                         </div>
                     </td>
