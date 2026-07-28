@@ -125,17 +125,17 @@
     .lawq-actions-inline {
         display: flex;
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
         justify-content: center;
         gap: 0.42rem;
         padding: 0.2rem 0;
         margin: 0 auto;
-        width: 100%;
-        max-width: 11rem;
+        width: auto;
     }
 
     .lawq-actions-inline .rfq-action-btn {
-        width: 100%;
+        width: auto !important;
+        min-width: 0 !important;
         min-height: 2.25rem;
         font-size: 0.6875rem;
         box-sizing: border-box;
@@ -145,6 +145,7 @@
        the row-primary action keeps a consistent look. Width is fluid for
        narrow viewports; the column also collapses gracefully on mobile. */
     body .rfq-shell .lawq-queue .rfq-table td.rfq-col-actions .lawq-action-emerald,
+    .lawq-queue .lawq-actions-inline .lawq-action-emerald,
     .lawq-action-emerald,
     button.lawq-action-emerald,
     .rfq-action-btn.lawq-action-emerald {
@@ -156,7 +157,7 @@
         letter-spacing: 0.04em !important;
         font-size: 0.65rem !important;
         gap: 0.35rem !important;
-        padding: 0.42rem 0.9rem !important;
+        padding: 0.42rem 1rem !important;
         border-radius: 9999px !important;
         box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08) !important;
         display: inline-flex !important;
@@ -167,8 +168,12 @@
         line-height: 1.2 !important;
         height: auto !important;
         min-height: 0 !important;
-        width: calc(100% - 0.5rem) !important;
-        max-width: 100% !important;
+        width: auto !important;
+        min-width: 0 !important;
+        flex: 0 0 auto !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        align-self: center !important;
     }
 
     body .rfq-shell .lawq-queue .rfq-table td.rfq-col-actions .lawq-action-emerald svg,
@@ -1857,6 +1862,7 @@
                             <div class="lawq-actions-inline">
                                 {% if row.can_award_lot %}
                                 <button type="button" class="rfq-action-btn lawq-action-emerald"
+                                    style="width: max-content !important; min-width: 0 !important; max-width: none !important;"
                                     onclick="openAwardModal('{{ row.application.id }}', '{{ row.applicant.full_name|escapejs }}')">
                                     <svg class="rfq-action-btn-icon" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="2" aria-hidden="true">
