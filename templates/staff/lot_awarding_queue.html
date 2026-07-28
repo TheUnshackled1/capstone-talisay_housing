@@ -86,20 +86,39 @@
         width: 100% !important;
     }
 
+    /* High-Fidelity Status Pill Badges - Matching Exact Component Image */
     .lawq-chip {
-        width: 100%;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        padding: 0.45rem 0.5rem !important;
-        border-radius: 4px !important;
-        font-size: 0.62rem !important;
-        font-weight: 700;
-        background: #ede9fe;
-        color: #5b21b6;
-        border: 1px solid #ddd6fe;
-        text-align: center;
-        box-sizing: border-box;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.35rem !important;
+        padding: 0.28rem 0.75rem !important;
+        border-radius: 9999px !important;
+        font-size: 0.65rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        border: 1.5px solid !important;
+        line-height: 1.2 !important;
+        text-align: center !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+        white-space: nowrap !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .lawq-chip::before {
+        content: '' !important;
+        width: 0.42rem !important;
+        height: 0.42rem !important;
+        border-radius: 50% !important;
+        background: currentColor !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 0 5px currentColor !important;
+        display: inline-block !important;
+        animation: status-dot-blink 1.5s infinite ease-in-out !important;
     }
 
     /* Stacked actions — avoids wide empty gap between message and button */
@@ -327,18 +346,7 @@
     }
 
     .lawq-queue .lawq-chip {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 0.2rem 0.35rem !important;
-        border-radius: 4px !important;
-        font-size: 0.58rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.01em !important;
-        line-height: 1.15 !important;
-        white-space: nowrap !important;
-        text-align: center !important;
-        text-transform: uppercase !important;
+        /* Removing conflicting overrides to maintain high-fidelity pill shape */
     }
 
     /* Col 8: Actions column — compact matching SMS */
@@ -1121,35 +1129,21 @@
 
     /* Soft HSL Status Chips */
     .lawq-chip.ready-awarding {
-        background: transparent !important;
-        border-color: transparent !important;
-        color: #15803d !important;
+        background: #e6f4ea !important;
+        border-color: #a8edd0 !important;
+        color: #006b3c !important;
     }
 
-    .rfq-status-pulse {
-        width: 6px !important;
-        height: 6px !important;
-        background-color: currentColor !important;
-        border-radius: 50% !important;
-        display: inline-block !important;
-        animation: rfq-status-pulse-anim 1.5s infinite ease-in-out !important;
-        flex-shrink: 0 !important;
-    }
-
-    @keyframes rfq-status-pulse-anim {
-        0% {
-            opacity: 0.4;
-            transform: scale(0.8);
-        }
-
-        50% {
+    @keyframes status-dot-blink {
+        0%, 100% {
             opacity: 1;
-            transform: scale(1.2);
+            transform: scale(1);
+            box-shadow: 0 0 5px currentColor;
         }
-
-        100% {
-            opacity: 0.4;
-            transform: scale(0.8);
+        50% {
+            opacity: 0.3;
+            transform: scale(0.7);
+            box-shadow: 0 0 1px currentColor;
         }
     }
 
@@ -1234,7 +1228,7 @@
 
     .rfq-priority-stack.stack-option-d .rfq-priority-name,
     .rfq-priority-stack.stack-option-unknown .rfq-priority-name {
-        color: #334155 !important;
+        display: none !important;
     }
 
     /* Premium Hover Card Popover CSS */
@@ -1833,7 +1827,6 @@
                         </td>
                         <td class="rfq-col-status">
                             <span class="lawq-chip ready-awarding">
-                                <span class="rfq-status-pulse" style="margin-right: 0.3rem;"></span>
                                 {{ row.status_label }}
                             </span>
                         </td>
