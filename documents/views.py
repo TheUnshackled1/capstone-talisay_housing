@@ -828,7 +828,7 @@ def document_management(request, position):
         app_obj = getattr(ap, 'application', None) if ap else None
         signed_item = {
             'type_key': 'signed_application',
-            'label': 'Physically signed THA application form (scan / upload)',
+            'label': 'Physically signed Application Form.',
             'group_label': 'Housing application (Module 2)',
             'on_file': signed_on_file,
             'view_url': signed_view_url,
