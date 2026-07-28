@@ -1986,18 +1986,35 @@
         </div>
         <form id="awardForm">
             <input type="hidden" name="application_id" id="awardApplicationId">
-            <div class="lawq-award-body">
+            <div class="lawq-award-body" id="awardFormBody">
                 {% include "staff/award_lot_vacant_fields.html" with show_award_notes_field=False %}
             </div>
-            <div class="lawq-award-footer">
+            
+            <div class="lawq-award-footer" id="awardFormFooter">
                 <button type="button" class="lawq-award-btn-cancel" onclick="closeAwardModal()">Cancel</button>
-                <button type="submit" class="lawq-award-btn-submit" id="awardLotSubmitBtn" {% if not vacant_units_by_site %}disabled{% endif %}>
+                <button type="button" class="lawq-award-btn-submit" id="awardLotReviewBtn" onclick="showAwardConfirm()" {% if not vacant_units_by_site %}disabled{% endif %}>
+                    <span>Save</span>
+                </button>
+            </div>
+
+            <!-- Custom Confirmation Step -->
+            <div class="lawq-award-body" id="awardConfirmBody" style="display: none; padding: 1.5rem 1rem; text-align: center;">
+                <p style="font-size: 0.95rem; font-weight: 500; color: #475569; margin: 0; line-height: 1.5;">
+                    Are you sure <br>
+                    Applicant: <strong id="confirmApplicantName" style="color: #0f172a; font-size: 1.05rem;"></strong> <br><br>
+                    will be assigned to: <br>
+                    <strong id="confirmUnitName" style="color: #059669; font-size: 1.05rem;"></strong>?
+                </p>
+            </div>
+            <div class="lawq-award-footer" id="awardConfirmFooter" style="display: none;">
+                <button type="button" class="lawq-award-btn-cancel" onclick="hideAwardConfirm()">Back</button>
+                <button type="submit" class="lawq-award-btn-submit" id="awardLotSubmitBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         style="width:0.95rem; height:0.95rem; flex-shrink:0;" aria-hidden="true">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
-                    <span>Award Lot</span>
+                    <span>Confirm & Award Lot</span>
                 </button>
             </div>
         </form>
@@ -2219,6 +2236,10 @@
     function openAwardModal(applicationId, applicantName) {
         document.getElementById('awardApplicationId').value = applicationId;
         document.getElementById('awardModalName').textContent = applicantName;
+        
+        // Strictly force the confirm step to hide (overriding any CSS !important)
+        hideAwardConfirm();
+        
         var overlay = document.getElementById('awardModal');
         overlay.classList.add('active');
         window.setTimeout(function () {
@@ -2227,9 +2248,38 @@
         }, 30);
     }
 
+    function showAwardConfirm() {
+        const unitSelect = document.getElementById('awardHousingUnit');
+        if (!unitSelect.value) {
+            lawqShowAlert('Please select a vacant unit first.', 'Notice', null, 'warning');
+            return;
+        }
+        
+        const applicantName = document.getElementById('awardModalName').textContent;
+        const selectedUnitText = unitSelect.options[unitSelect.selectedIndex].text;
+        
+        document.getElementById('confirmApplicantName').textContent = applicantName;
+        document.getElementById('confirmUnitName').textContent = selectedUnitText;
+        
+        document.getElementById('awardFormBody').style.display = 'none';
+        document.getElementById('awardFormFooter').style.setProperty('display', 'none', 'important');
+        
+        document.getElementById('awardConfirmBody').style.display = 'block';
+        document.getElementById('awardConfirmFooter').style.setProperty('display', 'flex', 'important');
+    }
+
+    function hideAwardConfirm() {
+        document.getElementById('awardConfirmBody').style.display = 'none';
+        document.getElementById('awardConfirmFooter').style.setProperty('display', 'none', 'important');
+        
+        document.getElementById('awardFormBody').style.display = 'block';
+        document.getElementById('awardFormFooter').style.setProperty('display', 'flex', 'important');
+    }
+
     function closeAwardModal() {
         document.getElementById('awardModal').classList.remove('active');
         document.getElementById('awardForm').reset();
+        hideAwardConfirm();
     }
 
     document.getElementById('awardModal').addEventListener('click', function (e) {
@@ -2238,16 +2288,6 @@
 
     document.getElementById('awardForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const applicantName = document.getElementById('awardModalName').textContent;
-        const unitSelect = document.getElementById('awardHousingUnit');
-        const selectedUnitText = unitSelect.options[unitSelect.selectedIndex].text;
-        
-        // Confirmation step before saving
-        const confirmMsg = `Are you sure Applicant: ${applicantName}\nwill be assigned to:\n${selectedUnitText}?`;
-        if (!confirm(confirmMsg)) {
-            return;
-        }
 
         const formData = new FormData(e.target);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
