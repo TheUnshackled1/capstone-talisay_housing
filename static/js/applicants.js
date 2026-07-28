@@ -4,6 +4,22 @@
    =================================================================== */
 
 // Auto-hide messages
+function getInputValue(id) {
+    const el = document.getElementById(id);
+    return el ? el.value : '';
+}
+function setInputValue(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = (val !== undefined && val !== null) ? val : '';
+}
+function setElementHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+}
+function getCsrfToken() {
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+}
     // Auto-hide messages after 5 seconds
     setTimeout(function () {
         document.querySelectorAll('[style*="position: fixed"][style*="top: 1rem"]').forEach(el => {
@@ -424,7 +440,7 @@
         }
 
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', applicantId);
 
         fetch('{% url "intake:delete_applicant" request.user.position %}', {
@@ -546,7 +562,6 @@
             if (Array.isArray(fresh.vaultDocumentTypes)) payload.vaultDocumentTypes = fresh.vaultDocumentTypes;
             return payload;
         } catch (_err) {
-            console.warn('Requirement scan refresh failed; using cached checklist.', _err);
             return payload;
         }
     }
@@ -857,7 +872,6 @@
             const uploadResult = await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
             const isSaved = await saveArchiveRequirementDoc(applicantId, docKey, true);
             if (!isSaved) {
-                console.warn('Checklist flag sync fallback failed after successful vault upload for', code);
             }
             const refreshed = await refreshApplicantRequirementScanPayload(payload);
             finalizeArchiveVaultSync(refreshed);
@@ -1206,15 +1220,6 @@
     }
 
     function logSmsDispatchPlan(flowName, details) {
-        const info = details || {};
-        console.info('[Intake SMS Plan]', {
-            flow: flowName,
-            endpoint: 'intake:proceed_to_applications',
-            note: 'Backend may send proceed_applicant_list or proceed_evaluation SMS (console or Semaphore per SMS_SERVICE). Check runserver output or SMSLog.',
-            applicantId: info.applicantId || '',
-            referenceNumber: info.referenceNumber || '',
-            promote_to_module2: !!info.promoteToModule2,
-        });
     }
 
     function proceedToEvaluationFromArchiveRequirements() {
@@ -1372,7 +1377,6 @@
                 // Backward-compatible checklist flag sync.
                 const isSaved = await saveArchiveRequirementDoc(applicantId, docKey, true);
                 if (!isSaved) {
-                    console.warn('Checklist flag sync fallback failed after successful vault upload for', code);
                 }
 
                 row.scanned = true;
@@ -1944,10 +1948,12 @@
         initializeTablePagination();
         const params = new URLSearchParams(window.location.search);
         if (params.get('q') && document.getElementById('searchInput')) {
-            document.getElementById('searchInput').value = params.get('q');
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = params.get('q') || '';
         }
         if (params.get('archive_q') && document.getElementById('archiveSearchInput')) {
-            document.getElementById('archiveSearchInput').value = params.get('archive_q');
+    const archiveSearchInput = document.getElementById('archiveSearchInput');
+    if (archiveSearchInput) archiveSearchInput.value = params.get('archive_q') || '';
         }
         filterTable(true);
     });
@@ -2157,7 +2163,6 @@
 
     function populateReviewModalFromApplicant(applicant) {
         if (!applicant) {
-            console.error('No applicant data for review modal');
             showFlowAlert('Error: No applicant data found.');
             return;
         }
@@ -2165,7 +2170,6 @@
 
         const modal = document.getElementById('reviewModal');
         if (!modal) {
-            console.error('Review modal element not found');
             showFlowAlert('Error: Modal not found in page.');
             return;
         }
@@ -2525,7 +2529,6 @@
 
         } else {
             // Unknown channel - show Channel C section as fallback with error message
-            console.warn('Unknown channel:', currentApplicant.channel);
             if (walkinSection) walkinSection.style.display = 'block';
         }
 
@@ -2553,9 +2556,6 @@
             reviewModalArchiveMode = false;
             populateReviewModalFromApplicant(applicantsData[index]);
         } catch (error) {
-            console.error('Error opening review modal:', error);
-            console.error('Stack trace:', error.stack);
-            console.error('Current applicant data:', currentApplicant);
             showFlowAlert('Error opening modal: ' + error.message + '\n\nCheck browser console (F12) for details.');
         }
     }
@@ -2575,7 +2575,6 @@
             reviewModalArchiveMode = true;
             populateReviewModalFromApplicant(applicant);
         } catch (error) {
-            console.error('Error opening archive review modal:', error);
             showFlowAlert('Error opening modal: ' + error.message);
         }
     }
@@ -2673,7 +2672,7 @@
     function markISFEligible(isfId) {
         // Use the same endpoint as walkin
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', isfId);
         formData.append('action', 'mark_eligible');
         formData.append('channel', 'A');
@@ -2768,7 +2767,7 @@
         if (!currentApplicant) return Promise.resolve(false);
 
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('channel', currentApplicant.channel);
         formData.append('action', 'update_doc');
@@ -2810,15 +2809,12 @@
                             currentApplicant.docVoterCert,
                         ].filter(Boolean).length;
                     }
-                    console.log('Document saved:', docKey, isChecked);
                     return true;
                 } else {
-                    console.error('Error saving document:', data.error);
                     return false;
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 return false;
             });
     }
@@ -3038,7 +3034,7 @@
 
         const formData = new FormData();
         formData.append('applicant_id', target.applicantId || target.id);
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         logSmsDispatchPlan('Proceed to LIST OF APPLICANTS', {
             applicantId: target.applicantId || target.id,
             referenceNumber: target.referenceNumber || '',
@@ -3093,7 +3089,6 @@
 
         const modal = document.getElementById('documentScanModal');
         if (!modal) {
-            console.error('Document scan modal not found');
             return;
         }
 
@@ -3296,7 +3291,6 @@
             applyScannedStateToApplicant(docKey);
             const isSaved = await saveDocumentStatus(docKey, true);
             if (!isSaved) {
-                console.warn('Checklist flag sync fallback failed after successful vault upload for', code);
             }
 
             const row = buttonEl.closest('tr');
@@ -3390,7 +3384,6 @@
                 applyScannedStateToApplicant(checkbox.dataset.docKey);
                 const isSaved = await saveDocumentStatus(checkbox.dataset.docKey, true);
                 if (!isSaved) {
-                    console.warn('Checklist flag sync fallback failed after successful vault upload for', checkbox.dataset.code || 'document');
                 }
 
                 checkbox.checked = true;
@@ -3411,7 +3404,6 @@
                 try { dwt.CloseSource(); } catch (_err) { }
             }
         } catch (error) {
-            console.error('Error scanning all documents:', error);
             showFlowAlert(error.message || 'Unable to scan all documents. Please try again.', 'Notice', null, 'warning');
         } finally {
             setDocumentScanButtonsBusy(false);
@@ -3559,7 +3551,7 @@
         formData.append('channel', 'B');
         formData.append('cdrrmo_status', newStatus);
         formData.append('cdrrmo_notes', cdrrmoNotes);
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
 
         fetch('{% url "intake:update_applicant" request.user.position %}', {
             method: 'POST',
@@ -3609,7 +3601,6 @@
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 showFlowAlert('Network error. Please try again.');
             });
     }
@@ -3692,14 +3683,15 @@
     }
 
     function closeDeadlineModal() {
-        document.getElementById('deadlineModal').style.display = 'none';
+    const deadlineModal = document.getElementById('deadlineModal');
+    if (deadlineModal) deadlineModal.style.display = 'none';
     }
 
     function setDocumentDeadline() {
         if (!currentApplicant) return;
 
-        const deadlineDate = document.getElementById('deadlineDate').value;
-        const deadlineTime = document.getElementById('deadlineTime').value;
+        const deadlineDate = getInputValue('deadlineDate');
+        const deadlineTime = getInputValue('deadlineTime');
 
         if (!deadlineDate || !deadlineTime) {
             showFlowAlert('Please select both date and time');
@@ -3711,7 +3703,7 @@
 
         // Send to backend
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('action', 'set_doc_deadline');
         formData.append('document_deadline', deadlineDateTime);
@@ -3742,13 +3734,14 @@
         if (currentApplicant.channel === 'A') {
             currentISFData = currentApplicant;
             populateISFModal(currentApplicant);
-            document.getElementById('isfReviewModal').classList.add('active');
+    const isfReviewModal = document.getElementById('isfReviewModal');
+    if (isfReviewModal) isfReviewModal.classList.add('active');
             return;
         }
 
         // For Channel B/C: Use AJAX to mark eligible
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('action', 'mark_eligible');
 
@@ -3794,25 +3787,25 @@
         if (!currentApplicant) return;
 
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('channel', currentApplicant.channel);
         formData.append('action', 'update');
 
         if (currentApplicant.channel === 'A') {
             // Channel A: Include landowner + ISF data
-            formData.append('submission_id', document.getElementById('reviewSubmissionId').value);
-            formData.append('landowner_name', document.getElementById('reviewLandownerName').value);
-            formData.append('landowner_phone', document.getElementById('reviewLandownerPhone').value);
-            formData.append('property_address', document.getElementById('reviewPropertyAddress').value);
-            formData.append('submission_barangay', document.getElementById('reviewSubmissionBarangay').value);
+            formData.append('submission_id', getInputValue('reviewSubmissionId'));
+            formData.append('landowner_name', getInputValue('reviewLandownerName'));
+            formData.append('landowner_phone', getInputValue('reviewLandownerPhone'));
+            formData.append('property_address', getInputValue('reviewPropertyAddress'));
+            formData.append('submission_barangay', getInputValue('reviewSubmissionBarangay'));
 
             // Get ISF field data from redesigned modal
-            formData.append('isf_name', document.getElementById('reviewFullNameA').value);
-            formData.append('isf_income', document.getElementById('reviewIncomeA').value);
-            formData.append('isf_household', document.getElementById('reviewHouseholdA').value);
-            formData.append('isf_years', document.getElementById('reviewYearsA').value);
-            formData.append('isf_barangay', document.getElementById('reviewBarangayA').value);
+            formData.append('isf_name', getInputValue('reviewFullNameA'));
+            formData.append('isf_income', getInputValue('reviewIncomeA'));
+            formData.append('isf_household', getInputValue('reviewHouseholdA'));
+            formData.append('isf_years', getInputValue('reviewYearsA'));
+            formData.append('isf_barangay', getInputValue('reviewBarangayA'));
 
             // Include Channel A document checklist
             document.querySelectorAll('#documentChecklistA input[type="checkbox"]').forEach(cb => {
@@ -3821,13 +3814,13 @@
 
         } else if (currentApplicant.channel === 'B') {
             // Channel B: Danger Zone applicant data
-            formData.append('full_name', document.getElementById('reviewFullNameB').value);
-            formData.append('barangay', document.getElementById('reviewBarangayB').value);
-            formData.append('monthly_income', document.getElementById('reviewIncomeB').value.replace(/,/g, ''));
-            formData.append('household_size', document.getElementById('reviewHouseholdB').value);
-            formData.append('years_residing', document.getElementById('reviewYearsB').value);
-            formData.append('phone_number', document.getElementById('reviewPhoneB').value);
-            formData.append('current_address', document.getElementById('reviewAddressB').value);
+            formData.append('full_name', getInputValue('reviewFullNameB'));
+            formData.append('barangay', getInputValue('reviewBarangayB'));
+            formData.append('monthly_income', getInputValue('reviewIncomeB').replace(/,/g, ''));
+            formData.append('household_size', getInputValue('reviewHouseholdB'));
+            formData.append('years_residing', getInputValue('reviewYearsB'));
+            formData.append('phone_number', getInputValue('reviewPhoneB'));
+            formData.append('current_address', getInputValue('reviewAddressB'));
             const dzTypeEl = document.getElementById('reviewDangerType');
             const dzLocEl = document.getElementById('reviewDangerLocation');
             formData.append('danger_zone_type', dzTypeEl ? dzTypeEl.value : '');
@@ -3839,13 +3832,13 @@
 
         } else {
             // Channel C: Regular walk-in applicant data
-            formData.append('full_name', document.getElementById('reviewFullName').value);
-            formData.append('barangay', document.getElementById('reviewBarangay').value);
-            formData.append('monthly_income', document.getElementById('reviewIncome').value.replace(/,/g, ''));
-            formData.append('household_size', document.getElementById('reviewHousehold').value);
-            formData.append('years_residing', document.getElementById('reviewYears').value);
-            formData.append('phone_number', document.getElementById('reviewPhone').value);
-            formData.append('current_address', document.getElementById('reviewAddress').value);
+            formData.append('full_name', getInputValue('reviewFullName'));
+            formData.append('barangay', getInputValue('reviewBarangay'));
+            formData.append('monthly_income', getInputValue('reviewIncome').replace(/,/g, ''));
+            formData.append('household_size', getInputValue('reviewHousehold'));
+            formData.append('years_residing', getInputValue('reviewYears'));
+            formData.append('phone_number', getInputValue('reviewPhone'));
+            formData.append('current_address', getInputValue('reviewAddress'));
 
         }
 
@@ -3883,7 +3876,7 @@
         }
 
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('channel', currentApplicant.channel);
 
@@ -4080,7 +4073,8 @@
         }
         // Total = applicant (1) + filled members
         const totalSize = 1 + filledCount;
-        document.getElementById('householdSize').value = totalSize;
+    const householdSizeInput = document.getElementById('householdSize');
+    if (householdSizeInput) householdSizeInput.value = totalSize;
     }
 
     function renderHouseholdMembers() {
@@ -4448,7 +4442,7 @@
     function submitAddApplicant(event) {
         event.preventDefault();
         const form = document.getElementById('addApplicantForm');
-        const channel = document.getElementById('channelInput').value;
+        const channel = getInputValue('channelInput');
 
         const sentenceCase = (str) => {
             if (!str) return str;
@@ -4875,7 +4869,7 @@
         closeRegistrationConfirmModal();
 
         let endpoint = '{% url "intake:walkin_register" request.user.position %}';
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfToken = getCsrfToken();
 
         fetch(endpoint, {
             method: 'POST',
@@ -4889,7 +4883,6 @@
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     return response.text().then(text => {
-                        console.error('Server error HTML:', text);
                         throw new Error('Server returned HTML instead of JSON. Check console for details.');
                     });
                 }
@@ -4916,7 +4909,6 @@
                         message: errorMsg,
                         type: 'error',
                     });
-                    console.error('Form submission error:', errorMsg);
                 }
             })
             .catch(error => {
@@ -4925,7 +4917,6 @@
                     message: error.message,
                     type: 'error',
                 });
-                console.error('Fetch error:', error);
             });
     }
 
@@ -4937,21 +4928,22 @@
         // Set header info
         document.getElementById('reviewName').textContent = applicant.fullName;
         document.getElementById('reviewReference').textContent = applicant.referenceNumber + ' · Reg. ' + applicant.dateRegistered;
-        document.getElementById('reviewApplicantId').value = applicant.id;
-        document.getElementById('reviewChannel').value = applicant.channel;
+        setInputValue('reviewApplicantId', applicant.id);
+        setInputValue('reviewChannel', applicant.channel);
 
         // Channel B (walk-in hazard pathway) — API may use 'B' or 'danger_zone'
         if (applicant.channel === 'danger_zone' || applicant.channel === 'B') {
-            document.getElementById('dangerZoneReviewSection').style.display = 'block';
+    const dangerZoneReviewSection = document.getElementById('dangerZoneReviewSection');
+    if (dangerZoneReviewSection) dangerZoneReviewSection.style.display = 'block';
 
             // Basic info
-            document.getElementById('reviewFullNameB').value = applicant.fullName;
-            document.getElementById('reviewBarangayB').value = applicant.barangay;
-            document.getElementById('reviewIncomeB').value = formatIncomeInputValue(applicant.monthlyIncome);
-            document.getElementById('reviewHouseholdB').value = applicant.householdSize;
-            document.getElementById('reviewYearsB').value = applicant.yearsResiding;
-            document.getElementById('reviewPhoneB').value = applicant.phoneNumber;
-            document.getElementById('reviewAddressB').value = applicant.currentAddress;
+            setInputValue('reviewFullNameB', applicant.fullName);
+            setInputValue('reviewBarangayB', applicant.barangay);
+            setInputValue('reviewIncomeB', formatIncomeInputValue(applicant.monthlyIncome));
+            setInputValue('reviewHouseholdB', applicant.householdSize);
+            setInputValue('reviewYearsB', applicant.yearsResiding);
+            setInputValue('reviewPhoneB', applicant.phoneNumber);
+            setInputValue('reviewAddressB', applicant.currentAddress);
             populateChannelBRegistrationMirror(applicant);
 
             // Update channel badge from hazard Yes/No (dangerZoneType set when Yes)
@@ -4986,7 +4978,7 @@
                 // User selected "Yes" - show danger zone details
                 if (dangerZoneInfoSection) dangerZoneInfoSection.style.display = 'block';
 
-                document.getElementById('reviewDangerType').value = applicant.dangerZoneType || '';
+                setInputValue('reviewDangerType', applicant.dangerZoneType || '');
 
                 // Set location field
                 const locationInput = document.querySelector('input[name="danger_zone_location"]');
@@ -5264,20 +5256,21 @@
         }
         currentISFData = applicantData;
         populateISFModal(applicantData);
-        document.getElementById('isfReviewModal').classList.add('active');
+    const isfReviewModal = document.getElementById('isfReviewModal');
+    if (isfReviewModal) isfReviewModal.classList.add('active');
     }
 
     function populateISFModal(data) {
         // Populate ISF modal fields with data
-        document.getElementById('isfId').value = data.applicantId || data.id;
+        setInputValue('isfId', data.applicantId || data.id);
         document.getElementById('isfRefNumber').textContent = (data.referenceNumber || '') + ' · Reg. ' + (data.dateRegistered || '');
         document.getElementById('isfFullName').textContent = data.fullName || '';
         document.getElementById('isfHousehold').textContent = (data.householdSize || 0) + ' members';
         document.getElementById('isfIncome').textContent = '₱' + (parseFloat(data.monthlyIncome || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         document.getElementById('isfYears').textContent = (data.yearsResiding || 0) + ' years';
-        document.getElementById('isfPhoneNumber').value = data.phoneNumber || '';
-        document.getElementById('isfBarangay').value = data.barangay || '';
-        document.getElementById('isfPropertyOwnership').value = '';
+        setInputValue('isfPhoneNumber', data.phoneNumber || '');
+        setInputValue('isfBarangay', data.barangay || '');
+        setInputValue('isfPropertyOwnership', '');
 
         // Show income warning if exceeds limit
         const incomeWarning = document.getElementById('isfIncomeWarning');
@@ -5288,8 +5281,9 @@
         }
 
         // Reset disqualify section
-        document.getElementById('isfDisqualifyGroup').style.display = 'none';
-        document.getElementById('isfDisqualifyReason').value = '';
+    const isfDisqualifyGroup = document.getElementById('isfDisqualifyGroup');
+    if (isfDisqualifyGroup) isfDisqualifyGroup.style.display = 'none';
+        setInputValue('isfDisqualifyReason', '');
         document.getElementById('isfApproveBtn').textContent = '✓ Mark as Eligible';
         document.getElementById('isfDisqualifyBtn').textContent = '✕ Mark as Disqualified';
 
@@ -5314,8 +5308,8 @@
         // Check all eligibility criteria
         const eligibilityChecks = {
             income: parseFloat(data.monthlyIncome || 0) <= 10000,
-            property: document.getElementById('isfPropertyOwnership').value === 'no',
-            propertySelected: document.getElementById('isfPropertyOwnership').value !== ''
+            property: getInputValue('isfPropertyOwnership') === 'no',
+            propertySelected: getInputValue('isfPropertyOwnership') !== ''
         };
 
         // Determine if Mark as Eligible button should be enabled
@@ -5349,7 +5343,8 @@
     }
 
     function closeISFModal() {
-        document.getElementById('isfReviewModal').classList.remove('active');
+    const isfReviewModal = document.getElementById('isfReviewModal');
+    if (isfReviewModal) isfReviewModal.classList.remove('active');
         // Reset edit mode
         const editSection = document.getElementById('isfEditSection');
         if (editSection) {
@@ -5369,10 +5364,10 @@
     }
 
     function submitISFReview(action) {
-        const isfId = document.getElementById('isfId').value;
-        const phoneNumber = document.getElementById('isfPhoneNumber').value;
-        const barangay = document.getElementById('isfBarangay').value;
-        const propertyOwnership = document.getElementById('isfPropertyOwnership').value;
+        const isfId = getInputValue('isfId');
+        const phoneNumber = getInputValue('isfPhoneNumber');
+        const barangay = getInputValue('isfBarangay');
+        const propertyOwnership = getInputValue('isfPropertyOwnership');
 
         // Prevent submission if Mark as Eligible button is disabled
         if (action === 'eligible' && document.getElementById('isfApproveBtn').disabled) {
@@ -5404,7 +5399,7 @@
 
         // Submit form via AJAX
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('phone_number', phoneClean); // Send digits only
         formData.append('barangay', barangay);
         formData.append('has_property_in_talisay', propertyOwnership);
@@ -5448,10 +5443,10 @@
 
             // Pre-fill with current values
             if (currentISFData) {
-                document.getElementById('isfEditIncome').value = currentISFData.monthly_income || '';
-                document.getElementById('isfEditHousehold').value = currentISFData.household_members || '';
-                document.getElementById('isfEditYears').value = currentISFData.years_residing || '';
-                document.getElementById('isfEditReason').value = '';
+                setInputValue('isfEditIncome', currentISFData.monthly_income || '');
+                setInputValue('isfEditHousehold', currentISFData.household_members || '');
+                setInputValue('isfEditYears', currentISFData.years_residing || '');
+                setInputValue('isfEditReason', '');
             }
         } else {
             // Exiting edit mode
@@ -5460,19 +5455,19 @@
             approveBtn.style.display = 'block';
             disqualifyBtn.style.display = 'block';
             // Clear edit fields
-            document.getElementById('isfEditIncome').value = '';
-            document.getElementById('isfEditHousehold').value = '';
-            document.getElementById('isfEditYears').value = '';
-            document.getElementById('isfEditReason').value = '';
+            setInputValue('isfEditIncome', '');
+            setInputValue('isfEditHousehold', '');
+            setInputValue('isfEditYears', '');
+            setInputValue('isfEditReason', '');
         }
     }
 
     function submitISFEdit() {
-        const isfId = document.getElementById('isfId').value;
-        const income = document.getElementById('isfEditIncome').value;
-        const household = document.getElementById('isfEditHousehold').value;
-        const years = document.getElementById('isfEditYears').value;
-        const reason = document.getElementById('isfEditReason').value;
+        const isfId = getInputValue('isfId');
+        const income = getInputValue('isfEditIncome');
+        const household = getInputValue('isfEditHousehold');
+        const years = getInputValue('isfEditYears');
+        const reason = getInputValue('isfEditReason');
 
         // Validation
         if (!reason.trim()) {
@@ -5500,7 +5495,7 @@
     }
 
     function submitFieldEdit(fieldName, newValue, editReason) {
-        const isfId = document.getElementById('isfId').value;
+        const isfId = getInputValue('isfId');
 
         // Remove commas from income before sending
         if (fieldName === 'monthly_income') {
@@ -5508,7 +5503,7 @@
         }
 
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('field_name', fieldName);
         formData.append('new_value', newValue);
         formData.append('edit_reason', editReason);
@@ -5562,8 +5557,8 @@
 
     // ===== CDRRMO VERIFICATION FUNCTIONS =====
     function approveCdrrmo() {
-        const staffNotes = document.getElementById('staffCdrrmoNotes').value;
-        const applicantId = document.getElementById('reviewApplicantId').value;
+        const staffNotes = getInputValue('staffCdrrmoNotes');
+        const applicantId = getInputValue('reviewApplicantId');
 
         if (!applicantId) {
             showFlowAlert('Error: No applicant selected');
@@ -5578,7 +5573,7 @@
         fetch('{% url "applications:update_cdrrmo_status" request.user.position %}', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': getCsrfToken()
             },
             body: formData
         })
@@ -5598,8 +5593,8 @@
     }
 
     function rejectCdrrmo() {
-        const staffNotes = document.getElementById('staffCdrrmoNotes').value;
-        const applicantId = document.getElementById('reviewApplicantId').value;
+        const staffNotes = getInputValue('staffCdrrmoNotes');
+        const applicantId = getInputValue('reviewApplicantId');
 
         if (!applicantId) {
             showFlowAlert('Error: No applicant selected');
@@ -5618,7 +5613,7 @@
         fetch('{% url "applications:update_cdrrmo_status" request.user.position %}', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': getCsrfToken()
             },
             body: formData
         })
@@ -5733,10 +5728,10 @@
             if (staffApprovalBox) staffApprovalBox.style.display = 'none';
             if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
             if (officeIntakeResultBox) officeIntakeResultBox.style.display = 'none';
-            document.getElementById('cdrrmoStatusText').innerHTML = `
+            setElementHtml('cdrrmoStatusText', `
                 <strong>Awaiting CDRRMO disposition</strong><br>
                 <span style="font-size: 0.75rem;">Either the field unit will submit an on-site verification report (with optional photographs), or intake will file official CDRRMO certification received at the THA office.${canModify ? ' Use <strong>Official CDRRMO certification — office receipt</strong> below when paperwork is on file.' : ''}</span>
-            `;
+            `);
         } else if (cdrrmoStatus === 'certified' || cdrrmoStatus === 'not_certified') {
             cdrrmoStatusBox.style.display = 'none';
 
@@ -5807,7 +5802,7 @@
         formData.append('decision', 'certified');
         formData.append('notes', notes);
         formData.append('office_receipt', '1');
-        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        formData.append('csrfmiddlewaretoken', getCsrfToken());
 
         fetch('{% url "applications:update_cdrrmo_certification" request.user.position %}', {
             method: 'POST',

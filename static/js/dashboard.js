@@ -281,7 +281,6 @@ async function copyToClipboard(text, successMessage = 'Copied!') {
         showNotification(successMessage, 'success');
         return true;
     } catch (err) {
-        console.error('Failed to copy:', err);
         showNotification('Failed to copy', 'error');
         return false;
     }

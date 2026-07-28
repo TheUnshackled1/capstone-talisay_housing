@@ -744,27 +744,6 @@
     }
 
     // markApplicantRowFormGenerated removed — dead code (row refreshed via window.location.reload)
-    function _markApplicantRowFormGenerated_REMOVED(applicantId, applicationNumber) {
-        const id = String(applicantId || '').trim();
-        if (!id) return;
-        const row = document.querySelector(`tr[data-applicant-id="${id}"]`);
-        if (!row) return;
-        row.dataset.hasApplication = '1';
-        const actionsCell = row.querySelector('.col-actions > div');
-        if (!actionsCell) return;
-
-        const generateBtn = actionsCell.querySelector(`button[onclick*="proceedToFormQueue('${id}')"]`);
-        if (generateBtn) {
-            generateBtn.disabled = true;
-            generateBtn.style.opacity = '0.7';
-            generateBtn.style.cursor = 'not-allowed';
-            generateBtn.textContent = 'Form Generated';
-            generateBtn.title = applicationNumber
-                ? `Application #${applicationNumber} has been generated.`
-                : 'Application form already generated.';
-        }
-    }
-
     async function saveEligibilityDecision(checkKey, status, failureReason, opts = {}) {
         const applicantId = currentEligibilityApplicantId;
         if (!applicantId || !checkKey) return null;
@@ -1524,12 +1503,6 @@
                 throw new Error(data.error || 'Unable to proceed applicant to Ready for Form queue.');
             }
             const smsPlan = data.sms_plan || {};
-            console.info('[Proceed to Form Generation SMS]', {
-                flow: 'proceed_to_form_queue',
-                applicantId: applicantId,
-                endpoint: MODULE2_PROCEED_TO_FORM_QUEUE_URL,
-                smsPlan,
-            });
             showFlowAlert(
                 'Applicant moved to FORM GENERATION',
                 'SUCCESS',
@@ -1546,9 +1519,11 @@
 
     // Lot Awarding Modal
     function openAwardModal(applicationId, applicantName) {
-        document.getElementById('awardApplicationId').value = applicationId;
+        const awardAppIdInput = document.getElementById('awardApplicationId');
+        if (awardAppIdInput) awardAppIdInput.value = applicationId;
         document.getElementById('awardModalName').textContent = applicantName;
-        document.getElementById('awardModal').classList.add('active');
+        const awardModalEl = document.getElementById('awardModal');
+        if (awardModalEl) awardModalEl.classList.add('active');
         window.setTimeout(function () {
             var sel = document.getElementById('awardHousingUnit');
             if (sel && !sel.disabled) sel.focus();
@@ -1556,7 +1531,8 @@
     }
 
     function closeAwardModal() {
-        document.getElementById('awardModal').classList.remove('active');
+        const awardModalEl = document.getElementById('awardModal');
+        if (awardModalEl) awardModalEl.classList.remove('active');
         document.getElementById('awardForm').reset();
     }
 
