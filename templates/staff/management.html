@@ -261,6 +261,24 @@
     }
 
     /* Premium Applicant Cell details */
+    .demographic-meta-card {
+        background: linear-gradient(185deg, #ffffff 0%, #f8fafc 100%) !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 0.6rem !important;
+        padding: 0.55rem 0.75rem !important;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-align: left;
+    }
+    .demographic-meta-card:hover {
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
+        transform: translateY(-1px);
+    }
+
     .applicant-cell-info {
         display: flex;
         flex-direction: column;
@@ -1869,29 +1887,31 @@
                     data-search="{{ applicant.full_name|lower }} {{ applicant.reference_number|default:''|lower }}{% if applicant.has_blacklist_record %} blacklisted{% endif %} {{ applicant.applicant_status_detail|default:''|lower }}">
                     <td class="col-num">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="applicant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
-                            <div class="applicant-name-card" style="display: flex; align-items: center; gap: 0.45rem; justify-content: flex-start;">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
-                                <span class="complainant-name applicant-name"
-                                      style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer; text-align: left;"
-                                      data-full-name="{{ applicant.full_name }}"
-                                      data-tx-id="APP-{{ applicant.id|slice:":8" }}..."
-                                      data-ref-code="{{ applicant.reference_number|default:'' }}"
-                                      data-barangay="{{ applicant.hover_location|default:'Not specified' }}"
-                                      data-dob="{% if applicant.date_of_birth %}{{ applicant.date_of_birth|date:'M d, Y' }}{% else %}Not specified{% endif %}">{{ applicant.full_name }}</span>
+                        <div class="demographic-meta-card">
+                            <div class="applicant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; text-align: left;">
+                                <div class="applicant-name-card" style="display: flex; align-items: center; gap: 0.45rem; justify-content: flex-start;">
+                                    <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem; flex-shrink: 0; color: #475569;">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <span class="complainant-name applicant-name"
+                                          style="font-size: 0.8rem; font-weight: 700; color: #0f172a; cursor: pointer; text-align: left;"
+                                          data-full-name="{{ applicant.full_name }}"
+                                          data-tx-id="APP-{{ applicant.id|slice:":8" }}..."
+                                          data-ref-code="{{ applicant.reference_number|default:'' }}"
+                                          data-barangay="{{ applicant.hover_location|default:'Not specified' }}"
+                                          data-dob="{% if applicant.date_of_birth %}{{ applicant.date_of_birth|date:'M d, Y' }}{% else %}Not specified{% endif %}">{{ applicant.full_name }}</span>
+                                </div>
+                                {% if applicant.applicant_status_detail %}
+                                <div style="display: flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; justify-content: flex-start;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0; color: #64748b;">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                        <polyline points="9 22 9 12 15 12 15 22"/>
+                                    </svg>
+                                    <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">{{ applicant.applicant_status_detail }}</span>
+                                </div>
+                                {% endif %}
                             </div>
-                            {% if applicant.applicant_status_detail %}
-                            <div style="display: flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; justify-content: flex-start;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width: 0.75rem; height: 0.75rem; flex-shrink: 0; color: #64748b;">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                                    <polyline points="9 22 9 12 15 12 15 22"/>
-                                </svg>
-                                <span style="font-size: 0.68rem; color: #64748b; font-weight: 500;">{{ applicant.applicant_status_detail }}</span>
-                            </div>
-                            {% endif %}
                         </div>
                     </td>
                     <td class="col-workflow-status">
