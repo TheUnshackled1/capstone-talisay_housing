@@ -2,32 +2,24 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q, Prefetch, Sum
+from django.db.models import Q, Prefetch
 from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.http import require_http_methods, require_POST
-from collections import defaultdict
 from functools import wraps
 import json
 import mimetypes
 import os
 from uuid import UUID
 from intake.models import Applicant
-from units.models import LotAward, MonitoringReport, Blacklist
-from applications.models import QueueEntry
-from applications.staff_pipeline_status import staff_pipeline_primary_detail
+from units.models import MonitoringReport
 from units.historical_beneficiary import (
     document_vault_applicant_q,
     is_historical_applicant,
 )
-from documents.models import (
-    Document,
-    DocumentBlob,
-    RequirementSubmission,
-)
-from applications.form_pipeline import applicant_has_signed_application_payload
+from documents.models import Document, DocumentBlob
 
 DOCUMENTS_MANAGEMENT_PER_PAGE = 10
 
