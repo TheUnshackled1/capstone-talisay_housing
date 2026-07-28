@@ -992,6 +992,32 @@
         margin-top: 0;
     }
 
+    /* Unified Card Container for All Vault Documents */
+    .vault-drawer-card-container {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    .vault-drawer-card-container .vault-drawer-row {
+        border: none !important;
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        padding: 0.6rem 0.85rem !important;
+        background: transparent !important;
+        transition: background-color 0.15s ease;
+    }
+    .vault-drawer-card-container .vault-drawer-row:last-child {
+        border-bottom: none !important;
+    }
+    .vault-drawer-card-container .vault-drawer-row:hover {
+        background-color: #f8fafc !important;
+        transform: none !important;
+    }
+
     /* DOCUMENT ROWS — compact */
     .vault-drawer-row {
         display: flex;
@@ -2939,15 +2965,11 @@ function openVaultDrawer(applicantId) {
     const listEl = document.getElementById('vaultDrawerChecklist');
     if (listEl) {
         listEl.innerHTML = '';
-        let lastGroup = null;
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'vault-drawer-card-container';
+        listEl.appendChild(cardContainer);
+
         (data.vault_checklist || []).forEach(function (item) {
-            if (item.group_label !== lastGroup) {
-                lastGroup = item.group_label;
-                const g = document.createElement('p');
-                g.className = 'vault-drawer-group-label';
-                g.textContent = item.group_label || '';
-                listEl.appendChild(g);
-            }
             const row = document.createElement('div');
             row.className = 'vault-drawer-row';
             const labelSpan = document.createElement('span');
@@ -2995,7 +3017,7 @@ function openVaultDrawer(applicantId) {
 
             row.appendChild(labelSpan);
             row.appendChild(actions);
-            listEl.appendChild(row);
+            cardContainer.appendChild(row);
         });
 
         const sit2 = data.situation;
@@ -3006,11 +3028,6 @@ function openVaultDrawer(applicantId) {
                 dmsg.textContent = sit2.option_d_message;
                 listEl.appendChild(dmsg);
             } else if (sit2.rows && sit2.rows.length) {
-                const sh = document.createElement('p');
-                sh.className = 'vault-drawer-group-label';
-                sh.style.marginTop = '0.9rem';
-                sh.textContent = 'Situation-specific';
-                listEl.appendChild(sh);
                 sit2.rows.forEach(function (sr) {
                     const srow = document.createElement('div');
                     srow.className = 'vault-drawer-row';
@@ -3051,7 +3068,7 @@ function openVaultDrawer(applicantId) {
                     });
                     srow.appendChild(lab);
                     srow.appendChild(sact);
-                    listEl.appendChild(srow);
+                    cardContainer.appendChild(srow);
                 });
             }
         }
