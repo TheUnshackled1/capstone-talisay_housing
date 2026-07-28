@@ -2250,6 +2250,17 @@
 
     document.getElementById('awardForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const applicantName = document.getElementById('awardModalName').textContent;
+        const unitSelect = document.getElementById('awardHousingUnit');
+        const selectedUnitText = unitSelect.options[unitSelect.selectedIndex].text;
+        
+        // Confirmation step before saving
+        const confirmMsg = `Are you sure Applicant: ${applicantName}\nwill be assigned to:\n${selectedUnitText}?`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
         const formData = new FormData(e.target);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
         try {
@@ -2260,7 +2271,7 @@
             const data = await response.json();
             if (data.success) {
                 lawqShowAlert(data.message || 'Lot awarded successfully.', 'Award Lot', function () {
-                    location.reload();
+                    window.location.href = '{% url "units:housing_units_monitoring" request.user.position %}';
                 }, 'success');
             } else {
                 lawqShowAlert(data.error || 'Failed to award lot.', 'Award Lot', null, 'default');
