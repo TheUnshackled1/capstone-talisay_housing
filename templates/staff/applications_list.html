@@ -94,7 +94,7 @@
                     class="scroll-animate-left" {% if data.blacklist_blocked %}style="background:#fef2f2;"{% endif %}>
                     <td class="col-num" style="font-weight:700;color:#1e293b;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                     <td class="col-applicant">
-                        <div class="complainant-cell-info" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
+                        <div class="demographic-meta-card" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem;">
                             <div class="complainant-name-card" style="display: inline-flex; align-items: center; gap: 0.45rem;">
                                 <span class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
                                       style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
@@ -118,7 +118,6 @@
                                 {% endif %}
                             </div>
                             {% endif %}
-                            <!-- Removed redundant Transaction and Reference tags to maintain clean aesthetics -->
                             {% if data.blacklist_blocked %}
                             <div style="margin-top: 0.15rem; display: flex; align-items: center; gap: 0.25rem;">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.75rem; height: 0.75rem; color: #ef4444; flex-shrink:0;">
@@ -126,8 +125,7 @@
                                     <line x1="12" y1="8" x2="12" y2="12"></line>
                                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                                 </svg>
-                                <span style="font-size:0.5625rem;color:#b91c1c;font-weight:700;">
-                                    Blacklist blocked
+                                <span style="font-size: 0.68rem; font-weight: 700; color: #dc2626;">Blacklist blocked
                                     {% if data.blacklist_source %}
                                     <span class="blacklist-source-chip {% if data.blacklist_source == 'Units Blacklist Entries' %}source-units{% else %}source-module1{% endif %}" style="font-size: 0.5rem; padding: 0.05rem 0.2rem;">{{ data.blacklist_source }}</span>
                                     {% endif %}
