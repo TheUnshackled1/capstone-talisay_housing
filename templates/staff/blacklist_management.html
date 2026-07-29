@@ -7,14 +7,14 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/applicants.css' %}">
-<link rel="stylesheet" href="{% static \'css/blacklist_management.css\' %}">
+<link rel="stylesheet" href="{% static 'css/blacklist_management.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="applicants-container applicants-container--list" id="blacklistSection" style="padding-top: 0.85rem;">
     <!-- Section Title -->
     <div class="bl-section-header-container">
-        <h3 class="section-title-list" class="bl-section-title-centered">
+        <h3 class="section-title-list bl-section-title-centered">
             REGISTERED BLACKLISTS
         </h3>
     </div>
@@ -35,12 +35,12 @@
         </div>
 
         <!-- Search Form -->
-        <form method="get" class="search-box" id="blacklistSearchForm" class="bl-search-form">
-            <svg class="search-icon" class="bl-search-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <form method="get" class="search-box bl-search-form" id="blacklistSearchForm">
+            <svg class="search-icon bl-search-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="search" name="search" placeholder="Name, ref #, barangay..." value="{{ search|default_if_none:\'\' }}" autocomplete="off" class="bl-search-input">
+            <input type="search" name="search" placeholder="Name, ref #, barangay..." value="{{ search|default_if_none:'' }}" autocomplete="off" class="bl-search-input">
             <button type="submit" class="bl-search-btn">
                 Search
             </button>
@@ -67,7 +67,7 @@
                     <td class="bl-counter-cell">{{ forloop.counter }}</td>
                     <td class="bl-valign-middle">
                         <div class="demographic-meta-card" class="bl-demographic-card-min">
-                            <span class="demographic-meta-name complainant-name applicant-name" class="bl-complainant-name-cursor"
+                            <span class="demographic-meta-name complainant-name applicant-name bl-complainant-name-cursor"
                                 data-full-name="{{ blacklist.applicant.full_name }}"
                                 data-tx-id="APP-{{ blacklist.applicant.id|default:'' }}"
                                 data-ref-code="{{ blacklist.applicant.reference_number|default:'' }}"
@@ -78,7 +78,7 @@
                         </div>
                     </td>
                     <td class="bl-valign-middle-center">
-                        <span class="pastel-status-pill status--blocked" class="bl-status-pill-small">
+                        <span class="pastel-status-pill status--blocked bl-status-pill-small">
                             <span class="pulse-dot"></span>
                             {{ blacklist.get_reason_display }}
                         </span>
@@ -248,13 +248,13 @@
                     </svg>
                     Staff Explanation & Narrative
                 </div>
-                <div class="bl-detail-value text-sm" id="mDetails" class="bl-modal-details-value"></div>
+                <div class="bl-detail-value text-sm bl-modal-details-value" id="mDetails"></div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="{% static \'js/blacklist_management.js\' %}"></script>
+<script src="{% static 'js/blacklist_management.js' %}"></script>
 
 <!-- Premium Hover Card Popover Template -->
 <div id="applicantHoverCard" class="applicant-hover-card">
