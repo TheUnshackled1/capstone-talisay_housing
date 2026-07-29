@@ -195,7 +195,7 @@
     }
 
     .documents-table tbody tr:nth-child(even) {
-        background: #f8fafc;
+        background: transparent;
     }
 
     .documents-table tbody tr:last-child td {
@@ -398,19 +398,20 @@
     /* Refined Status Badges */
     .dm-status-pill {
         display: inline-flex !important;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem;
-        padding: 0.35rem 0.8rem !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.35rem !important;
+        padding: 0.28rem 0.75rem !important;
         border-radius: 9999px !important;
-        font-size: 0.68rem !important;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-        line-height: 1.1;
-        border: 1px solid transparent;
-        box-sizing: border-box;
-        text-align: center;
+        font-size: 0.65rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        line-height: 1.2 !important;
+        border: 1.5px solid !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+        box-sizing: border-box !important;
+        text-align: center !important;
     }
 
     .dm-status-pill svg {
@@ -420,92 +421,43 @@
     }
 
     .dm-status--complete {
-        background: #ecfdf5 !important;
-        color: #047857 !important;
-        border-color: #d1fae5 !important;
+        background-color: hsl(145, 80%, 96%) !important;
+        color: hsl(145, 75%, 28%) !important;
+        border-color: hsl(145, 80%, 88%) !important;
     }
 
     .dm-status--partial {
-        background: #fffbeb !important;
-        color: #b45309 !important;
-        border-color: #fef3c7 !important;
+        background-color: hsl(35, 100%, 96%) !important;
+        color: hsl(35, 90%, 32%) !important;
+        border-color: hsl(35, 100%, 88%) !important;
     }
 
     .dm-status--pending {
-        background: #fef2f2 !important;
-        color: #991b1b !important;
-        border-color: #fecdd3 !important;
+        background-color: hsl(45, 100%, 94%) !important;
+        color: hsl(35, 90%, 30%) !important;
+        border-color: hsl(45, 100%, 82%) !important;
     }
 
     /* Pulsing Dots for Document Status */
-    .status-dot-active {
-        width: 0.45rem;
-        height: 0.45rem;
-        background-color: #10b981;
-        border-radius: 50%;
-        display: inline-block;
-        animation: pulse-green 2s infinite;
-        flex-shrink: 0;
-    }
-    .status-dot-partial {
-        width: 0.45rem;
-        height: 0.45rem;
-        background-color: #b45309;
-        border-radius: 50%;
-        display: inline-block;
-        animation: pulse-amber 2s infinite;
-        flex-shrink: 0;
-    }
-    .status-dot-pending {
-        width: 0.45rem;
-        height: 0.45rem;
-        background-color: #991b1b;
-        border-radius: 50%;
-        display: inline-block;
-        animation: pulse-rose 2s infinite;
-        flex-shrink: 0;
+    .status-dot-active, .status-dot-partial, .status-dot-pending {
+        width: 0.42rem !important;
+        height: 0.42rem !important;
+        border-radius: 50% !important;
+        background-color: currentColor !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 0 5px currentColor !important;
+        display: inline-block !important;
+        animation: pulse-dot-blink 1.5s infinite ease-in-out !important;
     }
 
-    @keyframes pulse-green {
-        0% {
-            transform: scale(0.9);
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+    @keyframes pulse-dot-blink {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 3px currentColor;
         }
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
-        }
-        100% {
-            transform: scale(0.9);
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-        }
-    }
-    @keyframes pulse-amber {
-        0% {
-            transform: scale(0.9);
-            box-shadow: 0 0 0 0 rgba(180, 83, 9, 0.6);
-        }
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 4px rgba(180, 83, 9, 0);
-        }
-        100% {
-            transform: scale(0.9);
-            box-shadow: 0 0 0 0 rgba(180, 83, 9, 0);
-        }
-    }
-    @keyframes pulse-rose {
-        0% {
-            transform: scale(0.9);
-            box-shadow: 0 0 0 0 rgba(153, 27, 27, 0.6);
-        }
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 4px rgba(153, 27, 27, 0);
-        }
-        100% {
-            transform: scale(0.9);
-            box-shadow: 0 0 0 0 rgba(153, 27, 27, 0);
+        50% {
+            opacity: 0.4;
+            box-shadow: 0 0 8px currentColor;
         }
     }
 
