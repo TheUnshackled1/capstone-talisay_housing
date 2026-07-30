@@ -372,56 +372,88 @@ button {
 }
 
 /* ==========================================
-   Sidebar — Collapse Toggle Button
+   Sidebar — Collapse Toggle Tab (Drawer Pull)
    ========================================== */
 .sidebar-toggle-btn {
     position: fixed;
     top: 50vh;
-    left: calc(var(--sidebar-width) - 13px);
+    /* Flush with the right edge of the sidebar */
+    left: calc(var(--sidebar-width) - 1px);
     transform: translateY(-50%);
-    width: 26px;
-    height: 26px;
-    background: #ffffff;
-    border: 2px solid var(--primary-800, #1a3a6b);
-    border-radius: 50%;
+
+    /* Pill tab shape — rounded on the right side only */
+    width: 18px;
+    height: 52px;
+    border-radius: 0 10px 10px 0;
+
+    /* Sidebar-matching gradient, slightly lighter to stand out */
+    background: linear-gradient(180deg, #2d5fa6 0%, #1e3d7d 100%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-left: none;
+
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 201;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    transition: left var(--transition-slow), background var(--transition-fast);
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3),
+                inset -1px 0 0 rgba(255,255,255,0.08);
+    transition: left var(--transition-slow),
+                width 180ms ease,
+                background 150ms ease,
+                box-shadow 150ms ease;
     padding: 0;
+    outline: none;
 }
 
+/* Hover: widen + brighten + strong glow */
 .sidebar-toggle-btn:hover {
-    background: #dbeafe;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    width: 30px;
+    background: linear-gradient(180deg, #4a8ce0 0%, #3562c4 100%);
+    box-shadow: 8px 0 28px rgba(74, 140, 224, 0.55),
+                4px 0 12px rgba(0, 0, 0, 0.4),
+                inset -1px 0 0 rgba(255,255,255,0.25);
+}
+
+/* Focus ring for accessibility */
+.sidebar-toggle-btn:focus-visible {
+    outline: 2px solid rgba(255,255,255,0.6);
+    outline-offset: 2px;
 }
 
 .sidebar-toggle-btn svg {
-    width: 13px;
-    height: 13px;
-    stroke: var(--primary-800, #1a3a6b);
+    width: 10px;
+    height: 18px;
+    stroke: rgba(255, 255, 255, 0.85);
+    stroke-width: 2.5px;
     flex-shrink: 0;
-    transition: transform var(--transition-slow);
+    transition: transform var(--transition-slow), stroke 150ms ease;
     display: block;
+    /* Push slightly toward right edge since border-left is removed */
+    margin-left: 3px;
 }
 
-/* When collapsed — move button left to match new sidebar edge */
+.sidebar-toggle-btn:hover svg {
+    stroke: #ffffff;
+}
+
+/* Collapsed — move tab to new sidebar edge */
 .sidebar-toggle-btn.is-collapsed {
-    left: calc(var(--sidebar-collapsed-width) - 13px);
+    left: calc(var(--sidebar-collapsed-width) - 1px);
 }
 
-/* Flip arrow when collapsed */
+/* Arrow flips to point right when collapsed */
 .sidebar-toggle-btn.is-collapsed svg {
     transform: rotate(180deg);
+    margin-left: 0;
+    margin-right: 3px;
 }
 
-/* Hide on mobile (sidebar is a full-screen overlay) */
+/* Hide on mobile (sidebar is full-screen overlay there) */
 @media (max-width: 768px) {
     .sidebar-toggle-btn { display: none; }
 }
+
 
 /* ==========================================
    Sidebar — Smooth Collapsed State
