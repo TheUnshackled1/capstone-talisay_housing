@@ -3,7 +3,7 @@
  * Staff Dashboard JavaScript
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize all components
     initSidebar();
     initSidebarCollapse();
@@ -14,12 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initScrollAnimations();
 });
 
-/* ─────────────────────────────────────────────
-   Sidebar Collapse Toggle (desktop icon-rail)
-───────────────────────────────────────────── */
 function initSidebarCollapse() {
-    var sidebar     = document.getElementById('sidebar');
-    var toggleBtn   = document.getElementById('sidebarToggleBtn');
+    var sidebar = document.getElementById('sidebar');
+    var toggleBtn = document.getElementById('sidebarToggleBtn');
     var mainContent = document.querySelector('.main-content');
     if (!sidebar || !toggleBtn) return;
 
@@ -31,7 +28,7 @@ function initSidebarCollapse() {
             toggleBtn.classList.add('is-collapsed');
             if (mainContent) mainContent.classList.add('sidebar-collapsed');
             // Force any open <details> dropdowns closed
-            sidebar.querySelectorAll('details[open]').forEach(function(d) {
+            sidebar.querySelectorAll('details[open]').forEach(function (d) {
                 d.removeAttribute('open');
             });
         } else {
@@ -39,15 +36,15 @@ function initSidebarCollapse() {
             toggleBtn.classList.remove('is-collapsed');
             if (mainContent) mainContent.classList.remove('sidebar-collapsed');
         }
-        try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch(e) {}
+        try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e) { }
     }
 
     // Restore saved preference
     try {
         if (localStorage.getItem(KEY) === '1') setCollapsed(true);
-    } catch(e) {}
+    } catch (e) { }
 
-    toggleBtn.addEventListener('click', function() {
+    toggleBtn.addEventListener('click', function () {
         setCollapsed(!sidebar.classList.contains('collapsed'));
     });
 }
@@ -78,7 +75,7 @@ function initSidebar() {
     }
 
     if (mobileMenuBtn && sidebar) {
-        mobileMenuBtn.addEventListener('click', function() {
+        mobileMenuBtn.addEventListener('click', function () {
             if (sidebar.classList.contains('open')) {
                 closeSidebar();
             } else {
@@ -93,15 +90,15 @@ function initSidebar() {
 
     // Auto-close drawer when nav-link clicked on mobile
     if (sidebar) {
-        sidebar.querySelectorAll('.nav-link, .logout-btn').forEach(function(link) {
-            link.addEventListener('click', function() {
+        sidebar.querySelectorAll('.nav-link, .logout-btn').forEach(function (link) {
+            link.addEventListener('click', function () {
                 if (window.innerWidth < 1024) closeSidebar();
             });
         });
     }
 
     // Close sidebar on escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
             closeSidebar();
             if (mobileMenuBtn) mobileMenuBtn.focus();
@@ -110,9 +107,9 @@ function initSidebar() {
 
     // Handle window resize — auto-close + clear body lock above breakpoint
     let resizeTimer;
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
+        resizeTimer = setTimeout(function () {
             if (window.innerWidth >= 1024) closeSidebar();
         }, 100);
     });
@@ -161,17 +158,17 @@ function initCurrentDate() {
  */
 function initAlerts() {
     const alerts = document.querySelectorAll('.alert[data-auto-dismiss]');
-    alerts.forEach(function(alert) {
+    alerts.forEach(function (alert) {
         const duration = parseInt(alert.dataset.autoDismiss) || 5000;
-        setTimeout(function() {
+        setTimeout(function () {
             dismissAlert(alert);
         }, duration);
     });
 
     // Add click to dismiss
     const dismissButtons = document.querySelectorAll('.alert-dismiss');
-    dismissButtons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
+    dismissButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
             const alert = btn.closest('.alert');
             if (alert) {
                 dismissAlert(alert);
@@ -183,7 +180,7 @@ function initAlerts() {
 function dismissAlert(alert) {
     alert.style.opacity = '0';
     alert.style.transform = 'translateY(-10px)';
-    setTimeout(function() {
+    setTimeout(function () {
         alert.remove();
     }, 300);
 }
@@ -193,7 +190,7 @@ function dismissAlert(alert) {
  */
 function initTooltips() {
     const tooltipTriggers = document.querySelectorAll('[data-tooltip]');
-    tooltipTriggers.forEach(function(trigger) {
+    tooltipTriggers.forEach(function (trigger) {
         trigger.addEventListener('mouseenter', showTooltip);
         trigger.addEventListener('mouseleave', hideTooltip);
         trigger.addEventListener('focus', showTooltip);
@@ -242,7 +239,7 @@ function hideTooltip(e) {
     const trigger = e.currentTarget;
     if (trigger._tooltip) {
         trigger._tooltip.style.opacity = '0';
-        setTimeout(function() {
+        setTimeout(function () {
             if (trigger._tooltip && trigger._tooltip.parentNode) {
                 trigger._tooltip.parentNode.removeChild(trigger._tooltip);
             }
@@ -289,7 +286,7 @@ function animateCounter(element, target, duration = 1000) {
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
-        const later = function() {
+        const later = function () {
             clearTimeout(timeout);
             func(...args);
         };
@@ -331,7 +328,7 @@ async function copyToClipboard(text, successMessage = 'Copied!') {
  */
 function showNotification(message, type = 'info', duration = 3000) {
     const container = document.getElementById('notificationContainer') || createNotificationContainer();
-    
+
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.innerHTML = `
@@ -370,12 +367,12 @@ function showNotification(message, type = 'info', duration = 3000) {
         cursor: pointer;
         padding: 0 0.25rem;
     `;
-    closeBtn.addEventListener('click', function() {
+    closeBtn.addEventListener('click', function () {
         removeNotification(notification);
     });
 
     if (duration > 0) {
-        setTimeout(function() {
+        setTimeout(function () {
             removeNotification(notification);
         }, duration);
     }
@@ -399,7 +396,7 @@ function removeNotification(notification) {
     notification.style.opacity = '0';
     notification.style.transform = 'translateX(100%)';
     notification.style.transition = 'all 0.3s ease';
-    setTimeout(function() {
+    setTimeout(function () {
         notification.remove();
     }, 300);
 }
@@ -461,17 +458,17 @@ function confirmAction(message, onConfirm, onCancel) {
     const cancelBtn = dialog.querySelector('.dialog-cancel');
     const confirmBtn = dialog.querySelector('.dialog-confirm');
 
-    cancelBtn.addEventListener('click', function() {
+    cancelBtn.addEventListener('click', function () {
         overlay.remove();
         if (onCancel) onCancel();
     });
 
-    confirmBtn.addEventListener('click', function() {
+    confirmBtn.addEventListener('click', function () {
         overlay.remove();
         if (onConfirm) onConfirm();
     });
 
-    overlay.addEventListener('click', function(e) {
+    overlay.addEventListener('click', function (e) {
         if (e.target === overlay) {
             overlay.remove();
             if (onCancel) onCancel();
@@ -499,19 +496,19 @@ document.head.appendChild(dialogStyle);
 function initScrollAnimations() {
     // Check for reduced motion preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
+
     if (prefersReducedMotion) {
         // Just show everything immediately
         document.querySelectorAll(
             '.scroll-animate, .scroll-animate-left, .scroll-animate-right, ' +
             '.scroll-animate-scale, .scroll-animate-fade, .scroll-animate-bounce, ' +
             '.scroll-animate-rotate, .scroll-animate-blur, .scroll-animate-card'
-        ).forEach(function(el) {
+        ).forEach(function (el) {
             el.classList.add('animate-in');
         });
         return;
     }
-    
+
     // Select all elements with scroll animation classes
     const animatedElements = document.querySelectorAll(
         '.scroll-animate, .scroll-animate-left, .scroll-animate-right, ' +
@@ -526,8 +523,8 @@ function initScrollAnimations() {
         threshold: 0.1 // 10% visible triggers animation
     };
 
-    const scrollObserver = new IntersectionObserver(function(entries, observer) {
-        entries.forEach(function(entry) {
+    const scrollObserver = new IntersectionObserver(function (entries, observer) {
+        entries.forEach(function (entry) {
             if (entry.isIntersecting) {
                 entry.target.classList.add('animate-in');
                 // Once animated, stop observing (one-time animation)
@@ -537,7 +534,7 @@ function initScrollAnimations() {
     }, observerOptions);
 
     // Observe each element
-    animatedElements.forEach(function(element) {
+    animatedElements.forEach(function (element) {
         scrollObserver.observe(element);
     });
 }
@@ -546,10 +543,10 @@ function initScrollAnimations() {
  * Initialize Sidebar Dropdown menus (auto-opens if active item is inside)
  */
 function initSidebarDropdowns() {
-    document.querySelectorAll('.sidebar-dropdown').forEach(function(dropdown) {
+    document.querySelectorAll('.sidebar-dropdown').forEach(function (dropdown) {
         const summary = dropdown.querySelector('summary');
         const content = dropdown.querySelector('.sidebar-dropdown-content');
-        
+
         // Auto-open on load if active item is inside
         if (dropdown.querySelector('.nav-link.active') || dropdown.querySelector('.nav-link[class*="active"]')) {
             dropdown.setAttribute('open', '');
@@ -559,26 +556,26 @@ function initSidebarDropdowns() {
 
         if (!summary || !content) return;
 
-        summary.addEventListener('click', function(e) {
+        summary.addEventListener('click', function (e) {
             e.preventDefault();
-            
+
             if (dropdown.hasAttribute('open')) {
                 // Animate closing
                 content.style.maxHeight = `${content.scrollHeight}px`;
                 content.style.opacity = '1';
                 content.style.transform = 'translateY(0) scaleY(1)';
-                
+
                 // Force reflow
                 content.offsetHeight;
-                
+
                 content.style.transition = 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)';
                 content.style.maxHeight = '0px';
                 content.style.opacity = '0';
                 content.style.transform = 'translateY(-10px) scaleY(0.95)';
-                
+
                 dropdown.classList.remove('open-animated');
-                
-                setTimeout(function() {
+
+                setTimeout(function () {
                     dropdown.removeAttribute('open');
                     content.removeAttribute('style');
                 }, 220);
@@ -586,21 +583,21 @@ function initSidebarDropdowns() {
                 // Open first
                 dropdown.setAttribute('open', '');
                 dropdown.classList.add('open-animated');
-                
+
                 content.style.maxHeight = '0px';
                 content.style.opacity = '0';
                 content.style.transform = 'translateY(-10px) scaleY(0.95)';
                 content.style.transformOrigin = 'top';
-                
+
                 // Force reflow
                 content.offsetHeight;
-                
+
                 content.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
                 content.style.maxHeight = `${content.scrollHeight}px`;
                 content.style.opacity = '1';
                 content.style.transform = 'translateY(0) scaleY(1)';
-                
-                setTimeout(function() {
+
+                setTimeout(function () {
                     content.removeAttribute('style');
                 }, 250);
             }

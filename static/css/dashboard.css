@@ -424,26 +424,60 @@ button {
 }
 
 /* ==========================================
-   Sidebar — Collapsed State
+   Sidebar — Smooth Collapsed State
    ========================================== */
+
+/* ── Step 1: add transitions to all text elements in their BASE state ── */
+.sidebar .logo-text,
+.sidebar .nav-section-title,
+.sidebar .nav-link > span,
+.sidebar details > summary > span,
+.sidebar .user-details,
+.sidebar .logout-btn > span {
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 200px;
+    opacity: 1;
+    transition: opacity 200ms ease, max-width 300ms ease, visibility 300ms ease;
+}
+
+/* Dropdown content slides up */
+.sidebar .sidebar-dropdown-content {
+    overflow: hidden;
+    max-height: 400px;
+    transition: max-height 300ms ease, opacity 200ms ease;
+    opacity: 1;
+}
+
+/* Nav-link layout transitions */
+.sidebar .nav-link,
+.sidebar details > summary {
+    transition: padding 300ms ease, gap 300ms ease, justify-content 300ms ease, background var(--transition-fast);
+}
+
+/* ── Step 2: collapsed state — fade out text, keep icons ── */
 .sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
 }
 
-/* Hide all text labels and section titles */
+/* Fade and shrink all text labels */
 .sidebar.collapsed .logo-text,
 .sidebar.collapsed .nav-section-title,
-.sidebar.collapsed .nav-link span:not(.nav-icon),
-.sidebar.collapsed .user-details,
-.sidebar.collapsed .logout-btn span,
+.sidebar.collapsed .nav-link > span,
 .sidebar.collapsed details > summary > span,
-.sidebar.collapsed details[open] > .sidebar-dropdown-content {
-    display: none;
+.sidebar.collapsed .user-details,
+.sidebar.collapsed .logout-btn > span {
+    max-width: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
-/* Force dropdowns closed when collapsed */
-.sidebar.collapsed details[open] {
-    open: false;
+/* Collapse dropdown content instantly when sidebar collapses */
+.sidebar.collapsed .sidebar-dropdown-content {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Center nav-link icons */
@@ -460,16 +494,18 @@ button {
     gap: 0;
 }
 
-/* Remove arrow from summary when collapsed */
+/* Hide dropdown chevron arrow in collapsed mode */
 .sidebar.collapsed details > summary::after,
 .sidebar.collapsed details > summary > svg.dropdown-arrow {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* Center user avatar block */
 .sidebar.collapsed .user-info {
     justify-content: center;
     padding: 0.5rem;
+    transition: padding 300ms ease, gap 300ms ease;
     gap: 0;
 }
 
@@ -485,6 +521,7 @@ button {
     display: flex;
     justify-content: center;
     padding: 1.25rem 0;
+    transition: padding 300ms ease;
 }
 
 /* Shift main content when sidebar collapses */
