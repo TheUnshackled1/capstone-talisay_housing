@@ -37,8 +37,8 @@ function getCsrfToken() {
 
     const FIRST_REVIEW_INDEX = applicantsData.length > 0 ? 0 : -1;
     const canModify = (document.getElementById('canModifyFlag')?.value || 'false') === 'true';
-    const duplicatePreviewUrl = '{% url "intake:duplicate_preview" request.user.position %}';
-    const evaluationApplicationsUrl = '{% url "applications:applications_list" request.user.position %}';
+    const duplicatePreviewUrl = window.APPLICANTS_CONFIG.duplicatePreviewUrl;
+    const evaluationApplicationsUrl = window.APPLICANTS_CONFIG.evaluationApplicationsUrl;
     const DOC_KEY_TO_APPLICANT_PROP = {
         doc_brgy_residency: 'docBrgyResidency',
         doc_brgy_indigency: 'docBrgyIndigency',
@@ -61,8 +61,8 @@ function getCsrfToken() {
         doc_cdrrmo: 'cdrrmo_cert',
         doc_isf_situational: 'isf_situational_docs',
     };
-    const APPLICANT_REQUIREMENT_SCAN_STATUS_URL = '{% url "intake:applicant_requirement_scan_status" request.user.position %}';
-    const REMOVE_SCANNED_REQUIREMENT_URL = '{% url "intake:remove_scanned_requirement" request.user.position %}';
+    const APPLICANT_REQUIREMENT_SCAN_STATUS_URL = window.APPLICANTS_CONFIG.applicantRequirementScanStatusUrl;
+    const REMOVE_SCANNED_REQUIREMENT_URL = window.APPLICANTS_CONFIG.removeScannedRequirementUrl;
     const IHSMS_VAULT_SYNC_KEY = 'ihsms_vault_doc_sync';
     const IHSMS_VAULT_SYNC_BC = 'ihsms_vault_doc_sync_bc';
     let DWTObject = null;
@@ -174,7 +174,7 @@ function getCsrfToken() {
                 const safeApplicantId = encodeURIComponent(applicantId || '');
                 const safeDocKey = encodeURIComponent(docKey || '');
                 const safeDocCode = encodeURIComponent(docCode || '');
-                const uploadUrl = `{% url "intake:upload_scanned_requirement" request.user.position %}?applicant_id=${safeApplicantId}&doc_key=${safeDocKey}&doc_code=${safeDocCode}&capture_method=scan`;
+                const uploadUrl = `${window.APPLICANTS_CONFIG.uploadScannedRequirementUrl}?applicant_id=${safeApplicantId}&doc_key=${safeDocKey}&doc_code=${safeDocCode}&capture_method=scan`;
                 const fileName = `${(referenceNumber || 'applicant')}_${docCode || 'scan'}.png`;
 
                 dwt.HTTPUpload(
@@ -443,7 +443,7 @@ function getCsrfToken() {
         formData.append('csrfmiddlewaretoken', getCsrfToken());
         formData.append('applicant_id', applicantId);
 
-        fetch('{% url "intake:delete_applicant" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.deleteApplicantUrl, {
             method: 'POST',
             body: formData
         })
@@ -944,7 +944,7 @@ function getCsrfToken() {
         formData.append('file', file);
         formData.append('capture_method', 'upload');
 
-        const uploadUrl = '{% url "intake:upload_scanned_requirement" request.user.position %}';
+        const uploadUrl = window.APPLICANTS_CONFIG.uploadScannedRequirementUrl;
         const uploadBtn = document.querySelector(
             '#archiveRequirementsModal button.archive-req-upload-btn[data-archive-upload-code="' + ctx.code + '"]'
         );
@@ -1158,7 +1158,7 @@ function getCsrfToken() {
         }
     }
 
-    const blacklistRegistryUrl = '{% url "units:blacklist_management" request.user.position %}';
+    const blacklistRegistryUrl = window.APPLICANTS_CONFIG.blacklistRegistryUrl;
 
     function showBlacklistProceedBlockedModal(payload, applicantRef) {
         closeArchiveRequirementsModal();
@@ -1277,7 +1277,7 @@ function getCsrfToken() {
             promoteToModule2: true,
         });
 
-        fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.proceedToApplicationsUrl, {
             method: 'POST',
             body: formData
         })
@@ -1334,7 +1334,7 @@ function getCsrfToken() {
         formData.append('action', 'update_doc');
         formData.append(docKey, isChecked);
 
-        return fetch('{% url "intake:update_applicant" request.user.position %}', {
+        return fetch(window.APPLICANTS_CONFIG.updateApplicantUrl, {
             method: 'POST',
             body: formData
         })
@@ -2677,7 +2677,7 @@ function getCsrfToken() {
         formData.append('action', 'mark_eligible');
         formData.append('channel', 'A');
 
-        fetch('{% url "intake:update_eligibility" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateEligibilityUrl, {
             method: 'POST',
             body: formData
         })
@@ -2777,7 +2777,7 @@ function getCsrfToken() {
             formData.append('submission_id', currentApplicant.submissionId);
         }
 
-        return fetch('{% url "intake:update_applicant" request.user.position %}', {
+        return fetch(window.APPLICANTS_CONFIG.updateApplicantUrl, {
             method: 'POST',
             body: formData
         })
@@ -3044,7 +3044,7 @@ function getCsrfToken() {
 
         archiveProceedInFlight = true;
 
-        fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.proceedToApplicationsUrl, {
             method: 'POST',
             body: formData
         })
@@ -3553,7 +3553,7 @@ function getCsrfToken() {
         formData.append('cdrrmo_notes', cdrrmoNotes);
         formData.append('csrfmiddlewaretoken', getCsrfToken());
 
-        fetch('{% url "intake:update_applicant" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateApplicantUrl, {
             method: 'POST',
             body: formData
         })
@@ -3708,7 +3708,7 @@ function getCsrfToken() {
         formData.append('action', 'set_doc_deadline');
         formData.append('document_deadline', deadlineDateTime);
 
-        fetch('{% url "intake:update_eligibility" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateEligibilityUrl, {
             method: 'POST',
             body: formData
         })
@@ -3745,7 +3745,7 @@ function getCsrfToken() {
         formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
         formData.append('action', 'mark_eligible');
 
-        fetch('{% url "intake:update_eligibility" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateEligibilityUrl, {
             method: 'POST',
             body: formData
         })
@@ -3842,7 +3842,7 @@ function getCsrfToken() {
 
         }
 
-        fetch('{% url "intake:update_applicant" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateApplicantUrl, {
             method: 'POST',
             body: formData
         })
@@ -3884,7 +3884,7 @@ function getCsrfToken() {
             formData.append('submission_id', currentApplicant.submissionId);
         }
 
-        fetch('{% url "intake:proceed_to_applications" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.proceedToApplicationsUrl, {
             method: 'POST',
             body: formData
         })
@@ -3894,7 +3894,7 @@ function getCsrfToken() {
                     showFlowAlert('Applicant archived successfully. Redirecting to Archives...', 'Success', null, 'success');
                     closeReviewModal();
                     setTimeout(function () {
-                        window.location.href = '{% url "intake:archive_list" request.user.position %}';
+                        window.location.href = window.APPLICANTS_CONFIG.archiveListUrl;
                     }, 1200);
                 } else {
                     showFlowAlert('Error: ' + (data.error || 'Unknown error'));
@@ -4868,7 +4868,7 @@ function getCsrfToken() {
         // Close the confirm modal immediately
         closeRegistrationConfirmModal();
 
-        let endpoint = '{% url "intake:walkin_register" request.user.position %}';
+        let endpoint = window.APPLICANTS_CONFIG.walkinRegisterUrl;
         const csrfToken = getCsrfToken();
 
         fetch(endpoint, {
@@ -5570,7 +5570,7 @@ function getCsrfToken() {
         formData.append('decision', 'approved');
         formData.append('staff_notes', staffNotes);
 
-        fetch('{% url "applications:update_cdrrmo_status" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateCdrrmoStatusUrl, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCsrfToken()
@@ -5610,7 +5610,7 @@ function getCsrfToken() {
         formData.append('decision', 'rejected');
         formData.append('staff_notes', staffNotes);
 
-        fetch('{% url "applications:update_cdrrmo_status" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateCdrrmoStatusUrl, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCsrfToken()
@@ -5804,7 +5804,7 @@ function getCsrfToken() {
         formData.append('office_receipt', '1');
         formData.append('csrfmiddlewaretoken', getCsrfToken());
 
-        fetch('{% url "applications:update_cdrrmo_certification" request.user.position %}', {
+        fetch(window.APPLICANTS_CONFIG.updateCdrrmoCertificationUrl, {
             method: 'POST',
             body: formData,
         })
