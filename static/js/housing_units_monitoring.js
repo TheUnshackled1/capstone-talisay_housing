@@ -1,6 +1,6 @@
 let currentUnitId = null;
 let currentUnitDetail = null;
-const MODULE5_CASES_LIST_URL = '{% if request.user.position == "second_member" or request.user.position == "fourth_member" %}{% url "accounts:second_member_cases" %}{% else %}{% url "accounts:field_cases" %}{% endif %}';
+const MODULE5_CASES_LIST_URL = window.HOUSING_CONFIG.casesListUrl;
 
 function module5CaseOpenUrl(caseId) {
     if (!caseId) return MODULE5_CASES_LIST_URL;
@@ -258,7 +258,7 @@ function closeCreateSiteModal() {
     if (err) { err.style.display = 'none'; err.textContent = ''; }
 }
 
-{% if can_create_relocation_site %}
+if (window.HOUSING_CONFIG.canCreateSite) {
 document.getElementById('createSiteForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     const errEl = document.getElementById('createSiteFormError');
@@ -276,7 +276,7 @@ document.getElementById('createSiteForm')?.addEventListener('submit', async func
     errEl.style.display = 'none';
     btn.disabled = true;
     try {
-        const res = await fetch('{% url "units:create_relocation_site" request.user.position %}', {
+        const res = await fetch(window.HOUSING_CONFIG.createSiteUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body.toString(),
@@ -296,7 +296,7 @@ document.getElementById('createSiteForm')?.addEventListener('submit', async func
         btn.disabled = false;
     }
 });
-{% endif %}
+}
 
 function openAddUnitModal(blockNumber, lotNumber, polygonIndex) {
     const m = document.getElementById('addUnitModal');
@@ -313,10 +313,10 @@ function openAddUnitModal(blockNumber, lotNumber, polygonIndex) {
     if (!hasPrefill) {
         const f = document.getElementById('addUnitForm');
         if (f) f.reset();
-        {% if all_sites|length <= 1 %}
+        if (window.HOUSING_CONFIG.singleSiteMode) {
         const hid = document.getElementById('addUnitSiteId');
         if (hid && hid.type === 'hidden') hid.value = '{{ site.id }}';
-        {% endif %}
+        }
         if (polyIdxEl) {
             polyIdxEl.value = (polygonIndex != null && polygonIndex !== '')
                 ? String(polygonIndex) : '';
@@ -345,13 +345,13 @@ function closeAddUnitModal() {
     if (polyIdxEl) polyIdxEl.value = '';
     const err = document.getElementById('addUnitFormError');
     if (err) { err.style.display = 'none'; err.textContent = ''; }
-    {% if all_sites|length <= 1 %}
+    if (window.HOUSING_CONFIG.singleSiteMode) {
     const hid = document.getElementById('addUnitSiteId');
     if (hid && hid.type === 'hidden') hid.value = '{{ site.id }}';
-    {% endif %}
+    }
 }
 
-{% if can_add_housing_unit %}
+if (window.HOUSING_CONFIG.canAddUnit) {
 async function linkUnitPlanPolygon(unitId, polygonIndex) {
     const csrfInput = document.querySelector('#addUnitForm input[name="csrfmiddlewaretoken"]')
         || document.querySelector('input[name="csrfmiddlewaretoken"]');
@@ -397,7 +397,7 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
     errEl.style.display = 'none';
     btn.disabled = true;
     try {
-        const res = await fetch('{% url "units:create_housing_unit" request.user.position %}', {
+        const res = await fetch(window.HOUSING_CONFIG.createUnitUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body.toString(),
@@ -460,7 +460,7 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
         btn.disabled = false;
     }
 });
-{% endif %}
+}
 
 function applyUnitInventoryActions(unit) {
     const editBtn = document.getElementById('editInventoryUnitBtn');
@@ -469,7 +469,7 @@ function applyUnitInventoryActions(unit) {
     if (delBtn) delBtn.style.display = unit && unit.can_delete_inventory ? 'inline-flex' : 'none';
 }
 
-{% if can_add_housing_unit %}
+if (window.HOUSING_CONFIG.canAddUnit) {
 function openEditUnitModal() {
     const unit = lastOpenedUnitPayload;
     if (!unit || !unit.can_edit_inventory) return;
@@ -565,7 +565,7 @@ async function deleteHousingUnit(unitId) {
         monitoringFlowAlert(ex.message || 'Network error.', 'Delete failed', 'default', null);
     }
 }
-{% endif %}
+}
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.getElementById('createSiteModal')?.style.display === 'flex') {
