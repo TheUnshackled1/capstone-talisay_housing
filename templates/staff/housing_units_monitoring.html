@@ -1,7 +1,7 @@
 {% extends 'accounts/staff/staff_base.html' %}
 {% load static %}
 
-{% block title %}Housing Unit & Occupancy Monitoring - THA{% endblock %}
+{% block title %}Housing Unit & Occupancy Monitoring{% endblock %}
 
 {% block nav_housing_monitoring %}active{% endblock %}
 
@@ -3223,7 +3223,7 @@
             </div>
             <div class="lotplan-zoom-controls">
                 <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-in" title="Zoom in" aria-label="Zoom in">＋</button>
-                <div class="lotplan-zoom-level" id="lotplan-zoom-level">50%</div>
+                <div class="lotplan-zoom-level" id="lotplan-zoom-level">75%</div>
                 <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
                 <button type="button" class="lotplan-zoom-btn lotplan-zoom-btn--reset" id="lotplan-zoom-reset" title="Reset zoom" aria-label="Reset zoom">FIT</button>
             </div>
@@ -5188,10 +5188,10 @@ function initLotPlanZoom() {
     const btnReset = document.getElementById('lotplan-zoom-reset');
     const levelEl  = document.getElementById('lotplan-zoom-level');
 
-    const MIN_ZOOM = 0.5;
+    const MIN_ZOOM = 0.75; // 75% standard minimum zoom
     const MAX_ZOOM = 4;   // 400%
     const ZOOM_STEP = 0.25;
-    const DEFAULT_ZOOM = 0.5;
+    const DEFAULT_ZOOM = 0.75;
 
     let scale = DEFAULT_ZOOM;
     let panX = 0;
@@ -5401,7 +5401,7 @@ function initLotPlanZoom() {
     });
 
     // --- Initial setup ---
-    // Apply the default zoom scale (50%) immediately
+    // Apply the default zoom scale (75%) immediately
     applyTransform();
 
     // Re-apply if the image loads after initialization (which changes offsetHeight)
