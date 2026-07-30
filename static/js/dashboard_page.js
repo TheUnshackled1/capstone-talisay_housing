@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return {
                     type: 'single',
                     labels: ['Unit Repossessed', 'Other Violations'],
-                    values: [blacklistCount, 0, 0, 0]
+                    values: [blacklistCount, 0]
                 };
             case 'chartFunnel':      return getSingleSeriesDataset('workflowFunnel');
             case 'chartCaseAging':   return getSingleSeriesDataset('caseAging');
