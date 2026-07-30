@@ -1,8 +1,8 @@
 const VAULT_MGMT_INTAKE_DWT_URL = window.MANAGEMENT_CONFIG.intakeDwtUrl;
-    const VAULT_DRAWER_CAN_INTAKE_SCAN = window.MANAGEMENT_CONFIG.canIntakeScan;
+const VAULT_DRAWER_CAN_INTAKE_SCAN = window.MANAGEMENT_CONFIG.canIntakeScan;
 
-    let VaultMgmtDWTObject = null;
-    let vaultDrawerPendingUploadContext = null;
+let VaultMgmtDWTObject = null;
+let vaultDrawerPendingUploadContext = null;
     if (window.Dynamsoft && window.Dynamsoft.DWT) {
         Dynamsoft.DWT.RegisterEvent('OnWebTwainReady', function () {
             VaultMgmtDWTObject = Dynamsoft.DWT.GetWebTwain('dwtcontrolContainer');
