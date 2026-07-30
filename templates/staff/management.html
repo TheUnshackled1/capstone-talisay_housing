@@ -10,6 +10,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+<link rel="stylesheet" href="{% static 'css/applicants.css' %}">
 <link rel="stylesheet" href="{% static 'css/management.css' %}">
 {% endblock %}
 
@@ -22,49 +23,39 @@
     📋 Redirected from Module 2 — document vault ready.
 </div>
 
-<div class="docs-shell">
+<div class="applicants-container applicants-container--list" style="padding-top: 0.85rem;">
     <!-- Page Header -->
-    <div style="position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 1.05rem; min-height: 2.5rem; flex-wrap: wrap; gap: 1rem;">
-        <div style="text-align: center; width: 100%;">
-            <h1 class="docs-page-title" style="margin: 0 !important; justify-content: center;">Document Management</h1>
-        </div>
+    <div style="display:flex; align-items:center; justify-content:center; margin:0 0 0.5rem 0; gap:0.75rem; flex-wrap:wrap;">
+        <h3 class="section-title-list" style="margin:0; font-size:0.95rem; font-weight:700; text-align: center;">
+            DOCUMENT MANAGEMENT
+        </h3>
     </div>
 
-    <!-- KPI cards -->
-    <div class="docs-kpis">
-        <form method="get" id="documentsSearchForm" class="docs-search-wrap" style="flex: 1; min-width: 200px; position: relative; display: flex; border: none; box-shadow: none; background: transparent; padding: 0;">
-            <div style="flex: 1; min-width: 200px; position: relative; display: flex; width: 100%;">
-                <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <input type="search" name="search" id="searchInput" value="{{ search_query|default:'' }}" placeholder="Search by applicant or document type…" autocomplete="off"
-                    style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease; background: #fff;">
-                <button type="submit"
-                    style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
-                    onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
-                    Search
-                </button>
-            </div>
-        </form>
+    <!-- Controls Bar with KPI Cards + Search + Barangay Filter -->
+    <div class="controls-bar" style="margin-bottom: 0.75rem; gap: 0.6rem;">
+        <!-- Total Documents KPI Card -->
         <div class="docs-kpi docs-kpi--total">
             <span class="docs-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             </span>
             <div>
                 <p class="docs-kpi-label">Total documents</p>
-                <p class="docs-kpi-value">{{ total_documents }}</p>
+                <p class="docs-kpi-value">{{ total_documents|default:"0" }}</p>
             </div>
         </div>
+
+        <!-- Applicants KPI Card -->
         <div class="docs-kpi docs-kpi--applicants" id="kpiApplicants" style="cursor: pointer;">
             <span class="docs-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </span>
             <div>
                 <p class="docs-kpi-label">Applicants</p>
-                <p class="docs-kpi-value">{{ total_applicants }}</p>
+                <p class="docs-kpi-value">{{ total_applicants|default:"0" }}</p>
             </div>
         </div>
+
+        <!-- Blacklisted KPI Card -->
         <div class="docs-kpi docs-kpi--disqualified" id="kpiBlacklisted" style="cursor: pointer;">
             <span class="docs-kpi-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -74,6 +65,37 @@
                 <p class="docs-kpi-value">{{ blacklisted_registry_count|default:"0" }}</p>
             </div>
         </div>
+
+        <!-- Search Box -->
+        <form method="get" class="search-box" id="documentsSearchForm"
+            style="flex: 1; min-width: 200px; position: relative; display: flex;">
+            <svg class="search-icon"
+                style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..."
+                id="searchInput" value="{{ search_query|default:'' }}" autocomplete="off"
+                style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+            <button type="submit"
+                style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
+                onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+                Search
+            </button>
+        </form>
+
+        {% if barangays %}
+        <!-- Barangay Filter -->
+        <select class="filter-select" id="filterBarangay" name="barangay" form="documentsSearchForm"
+            onchange="document.getElementById('documentsSearchForm')?.submit()">
+            <option value="all" {% if selected_barangay == 'all' or not selected_barangay %}selected{% endif %}>
+                All Barangays</option>
+            {% for brgy in barangays %}
+            <option value="{{ brgy }}" {% if selected_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
     </div>
 
 
