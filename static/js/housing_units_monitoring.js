@@ -153,7 +153,7 @@ async function submitUnitBeneficiarySms() {
         monitoringFlowAlert('Message must be at least 10 characters.', 'Send SMS', 'default', null);
         return;
     }
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     const prevLabel = submitBtn ? submitBtn.textContent : 'Send SMS';
     if (submitBtn) {
         submitBtn.disabled = true;
@@ -315,7 +315,7 @@ function openAddUnitModal(blockNumber, lotNumber, polygonIndex) {
         if (f) f.reset();
         if (window.HOUSING_CONFIG.singleSiteMode) {
         const hid = document.getElementById('addUnitSiteId');
-        if (hid && hid.type === 'hidden') hid.value = '{{ site.id }}';
+        if (hid && hid.type === 'hidden') hid.value = window.HOUSING_CONFIG.siteId;
         }
         if (polyIdxEl) {
             polyIdxEl.value = (polygonIndex != null && polygonIndex !== '')
@@ -347,7 +347,7 @@ function closeAddUnitModal() {
     if (err) { err.style.display = 'none'; err.textContent = ''; }
     if (window.HOUSING_CONFIG.singleSiteMode) {
     const hid = document.getElementById('addUnitSiteId');
-    if (hid && hid.type === 'hidden') hid.value = '{{ site.id }}';
+    if (hid && hid.type === 'hidden') hid.value = window.HOUSING_CONFIG.siteId;
     }
 }
 
@@ -358,7 +358,7 @@ async function linkUnitPlanPolygon(unitId, polygonIndex) {
     const body = new URLSearchParams();
     body.append('csrfmiddlewaretoken', (csrfInput && csrfInput.value) || getCookie('csrftoken') || '');
     body.append('plan_polygon_index', String(polygonIndex));
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     const res = await fetch(`/units/housing-units/${position}/${unitId}/link-plan-polygon/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -496,7 +496,7 @@ document.getElementById('editUnitForm')?.addEventListener('submit', async functi
     if (!unitId) return;
     const errEl = document.getElementById('editUnitFormError');
     const btn = document.getElementById('editUnitSubmitBtn');
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     const body = new URLSearchParams();
     const csrfInput = document.querySelector('#editUnitForm input[name="csrfmiddlewaretoken"]');
     body.append('csrfmiddlewaretoken', (csrfInput && csrfInput.value) || getCookie('csrftoken') || '');
@@ -543,7 +543,7 @@ function confirmDeleteHousingUnit() {
 }
 
 async function deleteHousingUnit(unitId) {
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     const body = new URLSearchParams();
     body.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
     try {
@@ -2348,7 +2348,7 @@ async function submitAddHouseholdMember(event) {
     const sexRadio = document.querySelector('input[name="hhAddSex"]:checked');
     const sex = sexRadio ? String(sexRadio.value || '').trim() : '';
     const ageVal = document.getElementById('hhAddAge') ? document.getElementById('hhAddAge').value : '';
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     if (!name) {
         monitoringFlowAlert('Enter the household member’s full name.', 'Reminder', 'default', null);
         return;
@@ -3039,7 +3039,7 @@ async function submitProgressAssessment(decision) {
             renderExplanationExtensionTaskCards(ext120);
             renderMonitoringHistoryRecord(buildMonitoringHistoryFromTasks(currentMonitoringTasks));
             if (data.housing_unit_on_file && currentUnitId) {
-                const position = '{{ request.user.position }}';
+                const position = window.HOUSING_CONFIG.userPosition;
                 fetch(`/units/housing-units/${position}/${encodeURIComponent(currentUnitId)}/details/`)
                     .then((r) => r.json())
                     .then((payload) => {
@@ -3055,7 +3055,7 @@ async function submitProgressAssessment(decision) {
             }
         }
         if (extensionMarkedFailed && currentUnitId) {
-            const position = '{{ request.user.position }}';
+            const position = window.HOUSING_CONFIG.userPosition;
             fetch(`/units/housing-units/${position}/${encodeURIComponent(currentUnitId)}/details/`)
                 .then((r) => r.json())
                 .then((payload) => {
@@ -3539,7 +3539,7 @@ async function saveExplanationLetterDeadline() {
         monitoringFlowAlert('Choose a deadline date and time.', 'Reminder', 'default', null);
         return;
     }
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     try {
         const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/explanation-letter/deadline/`, {
             method: 'POST',
@@ -3579,7 +3579,7 @@ async function uploadExplanationLetterFile(fileOverride) {
         monitoringFlowAlert('Choose a file to upload.', 'Reminder', 'default', null);
         return;
     }
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     const body = new FormData();
     body.append('letter_file', file);
     body.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
@@ -3693,7 +3693,7 @@ async function submitDisqualifyBeneficiary() {
         monitoringFlowAlert('Enter a blacklist reason (at least 10 characters).', 'Reminder', 'default', null);
         return;
     }
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     try {
         const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/disqualify-beneficiary/`, {
             method: 'POST',
@@ -3840,7 +3840,7 @@ async function submitDocumentValidation() {
     const notes = (document.getElementById('validateDocNotes') || {}).value || '';
     if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     try {
         const res = await fetch(`/units/housing-units/${position}/${currentUnitId}/lot-award/validate/`, {
             method: 'POST',
@@ -3865,7 +3865,7 @@ async function submitDocumentValidation() {
 
 function openUnitModal(unitId) {
     currentUnitId = unitId;
-    const position = '{{ request.user.position }}';
+    const position = window.HOUSING_CONFIG.userPosition;
     fetch(`/units/housing-units/${position}/${unitId}/details/`)
         .then(r => r.json())
         .then(data => {
