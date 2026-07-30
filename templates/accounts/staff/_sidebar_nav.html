@@ -89,7 +89,6 @@
         </a>
 
         <!-- Application Stage Dropdown — open if any sub-item is active -->
-        {% with app_stage_active=url_name|default:"" %}
         <details class="sidebar-dropdown {% if url_name == 'applicants_list' or url_name == 'applications_list' or url_name == 'ready_for_form_queue' or url_name == 'lot_awarding_queue' %}active{% endif %}"
             {% if url_name == 'applicants_list' or url_name == 'applications_list' or url_name == 'ready_for_form_queue' or url_name == 'lot_awarding_queue' %}open{% endif %}>
             <summary>
@@ -141,7 +140,6 @@
                 {% endif %}
             </div>
         </details>
-        {% endwith %}
 
         <!-- Housing Units -->
         <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="nav-link {% if url_name == 'housing_units_monitoring' or url_name == 'gk_masterlist' or url_name == 'caretaker_monitoring_dashboard' %}active{% endif %}">
