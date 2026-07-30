@@ -6,12 +6,52 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all components
     initSidebar();
+    initSidebarCollapse();
     initSidebarDropdowns();
     initCurrentDate();
     initAlerts();
     initTooltips();
     initScrollAnimations();
 });
+
+/* ─────────────────────────────────────────────
+   Sidebar Collapse Toggle (desktop icon-rail)
+───────────────────────────────────────────── */
+function initSidebarCollapse() {
+    var sidebar     = document.getElementById('sidebar');
+    var toggleBtn   = document.getElementById('sidebarToggleBtn');
+    var mainContent = document.querySelector('.main-content');
+    if (!sidebar || !toggleBtn) return;
+
+    var KEY = 'ihsms_sidebar_collapsed';
+
+    function setCollapsed(collapsed) {
+        if (collapsed) {
+            sidebar.classList.add('collapsed');
+            toggleBtn.classList.add('is-collapsed');
+            if (mainContent) mainContent.classList.add('sidebar-collapsed');
+            // Force any open <details> dropdowns closed
+            sidebar.querySelectorAll('details[open]').forEach(function(d) {
+                d.removeAttribute('open');
+            });
+        } else {
+            sidebar.classList.remove('collapsed');
+            toggleBtn.classList.remove('is-collapsed');
+            if (mainContent) mainContent.classList.remove('sidebar-collapsed');
+        }
+        try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch(e) {}
+    }
+
+    // Restore saved preference
+    try {
+        if (localStorage.getItem(KEY) === '1') setCollapsed(true);
+    } catch(e) {}
+
+    toggleBtn.addEventListener('click', function() {
+        setCollapsed(!sidebar.classList.contains('collapsed'));
+    });
+}
+
 
 /**
  * Sidebar Toggle for Mobile

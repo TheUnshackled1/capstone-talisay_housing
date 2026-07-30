@@ -4,7 +4,7 @@
     {% if user.position == 'field' or user.position == 'ronda' %}
     <!-- FIELD / RONDA — M1 Census/Verification, M4 Inspection, M5 Complaints -->
     <div class="nav-section">
-        <a href="{% url 'accounts:dashboard' %}" class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
+        <a href="{% url 'accounts:dashboard' %}" title="Dashboard" class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                 <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -15,7 +15,7 @@
         </a>
 
         <div class="nav-section-title">Intake (M1)</div>
-        <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link {% if url_name == 'applicants_list' %}active{% endif %}">
+        <a href="{% url 'intake:applicants_list' request.user.position %}" title="View Applicants" class="nav-link {% if url_name == 'applicants_list' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -23,7 +23,7 @@
             </svg>
             <span>View Applicants</span>
         </a>
-        <a href="#" class="nav-link">
+        <a href="#" title="Census Records" class="nav-link">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -33,7 +33,7 @@
             </svg>
             <span>Census Records</span>
         </a>
-        <a href="{% url 'accounts:dashboard_field' %}" class="nav-link">
+        <a href="{% url 'accounts:dashboard_field' %}" title="Field Verification Desk" class="nav-link">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                 <polyline points="22 4 12 14.01 9 11.01"/>
@@ -42,14 +42,14 @@
         </a>
 
         <div class="nav-section-title">Monitoring (M4)</div>
-        <a href="#" class="nav-link">
+        <a href="#" title="Site Inspection" class="nav-link">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
             </svg>
             <span>Site Inspection</span>
         </a>
-        <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="nav-link {% if url_name == 'housing_units_monitoring' %}active{% endif %}">
+        <a href="{% url 'units:housing_units_monitoring' request.user.position %}" title="Housing Units" class="nav-link {% if url_name == 'housing_units_monitoring' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
@@ -58,13 +58,13 @@
         </a>
 
         <div class="nav-section-title">Cases (M5)</div>
-        <a href="{% url 'cases:case_dashboard' request.user.position %}" class="nav-link {% if url_name == 'case_dashboard' %}active{% endif %}">
+        <a href="{% url 'cases:case_dashboard' request.user.position %}" title="All Complaints" class="nav-link {% if url_name == 'case_dashboard' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
             <span>All Complaints</span>
         </a>
-        <a href="{% url 'cases:case_dashboard' request.user.position %}?new_case=1" class="nav-link">
+        <a href="{% url 'cases:case_dashboard' request.user.position %}?new_case=1" title="Log New Complaint" class="nav-link">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
@@ -78,7 +78,7 @@
     <div class="nav-section">
 
         <!-- Dashboard -->
-        <a href="{% url 'accounts:dashboard' %}" class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
+        <a href="{% url 'accounts:dashboard' %}" title="Dashboard" class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                 <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -91,7 +91,7 @@
         <!-- Application Stage Dropdown — open if any sub-item is active -->
         <details class="sidebar-dropdown {% if url_name == 'applicants_list' or url_name == 'applications_list' or url_name == 'ready_for_form_queue' or url_name == 'lot_awarding_queue' %}active{% endif %}"
             {% if url_name == 'applicants_list' or url_name == 'applications_list' or url_name == 'ready_for_form_queue' or url_name == 'lot_awarding_queue' %}open{% endif %}>
-            <summary>
+            <summary title="Application Stage">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                     <polyline points="2 17 12 22 22 17"></polyline>
@@ -101,7 +101,7 @@
             </summary>
             <div class="sidebar-dropdown-content">
                 {% if user.position == 'second_member' or user.position == 'fourth_member' %}
-                <a href="{% url 'intake:applicants_list' request.user.position %}" class="nav-link {% if url_name == 'applicants_list' %}active{% endif %}">
+                <a href="{% url 'intake:applicants_list' request.user.position %}" title="Applicant Registration" class="nav-link {% if url_name == 'applicants_list' %}active{% endif %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="8.5" cy="7" r="4"/>
@@ -111,7 +111,7 @@
                     <span>Applicant Registration</span>
                 </a>
                 {% endif %}
-                <a href="{% url 'applications:applications_list' request.user.position %}" class="nav-link {% if url_name == 'applications_list' %}active{% endif %}">
+                <a href="{% url 'applications:applications_list' request.user.position %}" title="Evaluation & Eligibility" class="nav-link {% if url_name == 'applications_list' %}active{% endif %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                         <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
@@ -120,7 +120,7 @@
                     <span>Evaluation &amp; Eligibility</span>
                 </a>
                 {% if user.position == 'fourth_member' or user.position == 'second_member' %}
-                <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" class="nav-link {% if url_name == 'ready_for_form_queue' %}active{% endif %}">
+                <a href="{% url 'applications:ready_for_form_queue' request.user.position %}" title="Ready for Form Queue" class="nav-link {% if url_name == 'ready_for_form_queue' %}active{% endif %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
@@ -130,7 +130,7 @@
                     </svg>
                     <span>Ready for Form queue</span>
                 </a>
-                <a href="{% url 'applications:lot_awarding_queue' request.user.position %}" class="nav-link {% if url_name == 'lot_awarding_queue' %}active{% endif %}">
+                <a href="{% url 'applications:lot_awarding_queue' request.user.position %}" title="Ready for Awarding" class="nav-link {% if url_name == 'lot_awarding_queue' %}active{% endif %}">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="8" r="7"></circle>
                         <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
@@ -142,7 +142,7 @@
         </details>
 
         <!-- Housing Units -->
-        <a href="{% url 'units:housing_units_monitoring' request.user.position %}" class="nav-link {% if url_name == 'housing_units_monitoring' or url_name == 'gk_masterlist' or url_name == 'caretaker_monitoring_dashboard' %}active{% endif %}">
+        <a href="{% url 'units:housing_units_monitoring' request.user.position %}" title="Housing Units" class="nav-link {% if url_name == 'housing_units_monitoring' or url_name == 'gk_masterlist' or url_name == 'caretaker_monitoring_dashboard' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
@@ -151,7 +151,7 @@
         </a>
 
         <!-- Cases -->
-        <a href="{% url 'cases:case_dashboard' request.user.position %}" class="nav-link {% if url_name == 'case_dashboard' %}active{% endif %}">
+        <a href="{% url 'cases:case_dashboard' request.user.position %}" title="Cases" class="nav-link {% if url_name == 'case_dashboard' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                 <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
@@ -160,7 +160,7 @@
         </a>
 
         <!-- Documents -->
-        <a href="{% url 'documents:management' request.user.position %}" class="nav-link {% if url_name == 'management' %}active{% endif %}">
+        <a href="{% url 'documents:management' request.user.position %}" title="Documents" class="nav-link {% if url_name == 'management' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
@@ -169,7 +169,7 @@
 
         {% if user.position == 'second_member' or user.position == 'fourth_member' %}
         <!-- Blacklists -->
-        <a href="{% url 'units:blacklist_management' request.user.position %}" class="nav-link {% if url_name == 'blacklist_management' %}active{% endif %}">
+        <a href="{% url 'units:blacklist_management' request.user.position %}" title="Blacklists" class="nav-link {% if url_name == 'blacklist_management' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
                 <path d="M15.3 8.7a1 1 0 0 0-1.4 0L12 10.6l-1.9-1.9a1 1 0 0 0-1.4 1.4l1.9 1.9-1.9 1.9a1 1 0 0 0 1.4 1.4l1.9-1.9 1.9 1.9a1 1 0 0 0 1.4-1.4l-1.9-1.9 1.9-1.9a1 1 0 0 0 0-1.4z"/>
@@ -178,7 +178,7 @@
         </a>
 
         <!-- Archives -->
-        <a href="{% url 'intake:archive_list' request.user.position %}" class="nav-link {% if url_name == 'archive_list' %}active{% endif %}">
+        <a href="{% url 'intake:archive_list' request.user.position %}" title="Archives" class="nav-link {% if url_name == 'archive_list' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="21 8 21 21 3 21 3 8"/>
                 <rect x="1" y="3" width="22" height="5"/>
@@ -190,7 +190,7 @@
 
         {% if user.is_superuser or user.position == 'second_member' %}
         <!-- Admin Panel -->
-        <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
+        <a href="{% url 'admin:index' %}" title="Admin Panel" class="nav-link" target="_blank">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
