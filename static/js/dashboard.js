@@ -543,15 +543,22 @@ function initScrollAnimations() {
  * Initialize Sidebar Dropdown menus (auto-opens if active item is inside)
  */
 function initSidebarDropdowns() {
+    var sidebar = document.getElementById('sidebar');
+
     document.querySelectorAll('.sidebar-dropdown').forEach(function (dropdown) {
-        const summary = dropdown.querySelector('summary');
-        const content = dropdown.querySelector('.sidebar-dropdown-content');
+        var summary = dropdown.querySelector('summary');
+        var content = dropdown.querySelector('.sidebar-dropdown-content');
 
         // Auto-open on load if active item is inside
         if (dropdown.querySelector('.nav-link.active') || dropdown.querySelector('.nav-link[class*="active"]')) {
             dropdown.setAttribute('open', '');
             dropdown.classList.add('active');
             dropdown.classList.add('open-animated');
+            // Set height so animation starts correctly
+            if (content) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.style.opacity = '1';
+            }
         }
 
         if (!summary || !content) return;
@@ -559,49 +566,80 @@ function initSidebarDropdowns() {
         summary.addEventListener('click', function (e) {
             e.preventDefault();
 
+            // If sidebar is collapsed, expand it first, then open dropdown
+            if (sidebar && sidebar.classList.contains('collapsed')) {
+                var toggleBtn = document.getElementById('sidebarToggleBtn');
+                sidebar.classList.remove('collapsed');
+                if (toggleBtn) toggleBtn.classList.remove('is-collapsed');
+                var mainContent = document.querySelector('.main-content');
+                if (mainContent) mainContent.classList.remove('sidebar-collapsed');
+                try { localStorage.setItem('ihsms_sidebar_collapsed', '0'); } catch (ex) {}
+
+                // Open the dropdown after sidebar expands
+                setTimeout(function () {
+                    openDropdown(dropdown, content);
+                }, 310);
+                return;
+            }
+
             if (dropdown.hasAttribute('open')) {
-                // Animate closing
-                content.style.maxHeight = `${content.scrollHeight}px`;
-                content.style.opacity = '1';
-                content.style.transform = 'translateY(0) scaleY(1)';
-
-                // Force reflow
-                content.offsetHeight;
-
-                content.style.transition = 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)';
-                content.style.maxHeight = '0px';
-                content.style.opacity = '0';
-                content.style.transform = 'translateY(-10px) scaleY(0.95)';
-
-                dropdown.classList.remove('open-animated');
-
-                setTimeout(function () {
-                    dropdown.removeAttribute('open');
-                    content.removeAttribute('style');
-                }, 220);
+                closeDropdown(dropdown, content);
             } else {
-                // Open first
-                dropdown.setAttribute('open', '');
-                dropdown.classList.add('open-animated');
-
-                content.style.maxHeight = '0px';
-                content.style.opacity = '0';
-                content.style.transform = 'translateY(-10px) scaleY(0.95)';
-                content.style.transformOrigin = 'top';
-
-                // Force reflow
-                content.offsetHeight;
-
-                content.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
-                content.style.maxHeight = `${content.scrollHeight}px`;
-                content.style.opacity = '1';
-                content.style.transform = 'translateY(0) scaleY(1)';
-
-                setTimeout(function () {
-                    content.removeAttribute('style');
-                }, 250);
+                openDropdown(dropdown, content);
             }
         });
     });
+
+    function openDropdown(dropdown, content) {
+        dropdown.setAttribute('open', '');
+        dropdown.classList.add('open-animated');
+
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        content.style.transform = 'translateY(-10px) scaleY(0.95)';
+        content.style.transformOrigin = 'top';
+        content.style.overflow = 'hidden';
+
+        // Force reflow
+        content.offsetHeight;
+
+        content.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+        content.style.maxHeight = content.scrollHeight + 'px';
+        content.style.opacity = '1';
+        content.style.transform = 'translateY(0) scaleY(1)';
+
+        // After animation: keep maxHeight open, clear transition
+        setTimeout(function () {
+            content.style.transition = '';
+            content.style.transform = '';
+            // Keep maxHeight so it stays open
+        }, 260);
+    }
+
+    function closeDropdown(dropdown, content) {
+        // Snapshot current height for animation start
+        content.style.maxHeight = content.scrollHeight + 'px';
+        content.style.opacity = '1';
+        content.style.transform = 'translateY(0) scaleY(1)';
+        content.style.overflow = 'hidden';
+
+        // Force reflow
+        content.offsetHeight;
+
+        content.style.transition = 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)';
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        content.style.transform = 'translateY(-10px) scaleY(0.95)';
+
+        dropdown.classList.remove('open-animated');
+
+        setTimeout(function () {
+            dropdown.removeAttribute('open');
+            // Clear all inline styles after close is done
+            content.removeAttribute('style');
+        }, 230);
+    }
 }
+
+
 
