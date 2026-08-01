@@ -128,6 +128,19 @@ button {
     padding: 1.25rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #D4AF37; /* Match the gold line of the welcome banner */
 }
 
 .sidebar-logo {
@@ -2114,8 +2127,17 @@ button {
         display: none !important;
     }
     
-    /* Align welcome banner horizontally with sidebar header */
+    /* Make welcome banner a full-bleed top header */
     .welcome-banner {
-        margin-top: -2rem !important; /* Pulls banner up to negate .content-area padding-top */
+        margin-top: -2rem !important; /* Negate .content-area padding-top */
+        margin-left: -2rem !important;
+        margin-right: -2rem !important; 
+        border-radius: 0 !important;
+    }
+    
+    /* Equalize header heights for perfect horizontal alignment */
+    .sidebar-header,
+    .welcome-banner {
+        height: 130px !important;
     }
 }
