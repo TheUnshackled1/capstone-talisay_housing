@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     legend: {
                         position: 'right',
                         align: 'center',
+                        maxWidth: 140, // Force legend to roughly 35% of typical card width
                         labels: {
                             boxWidth: 10,
                             boxHeight: 10,
