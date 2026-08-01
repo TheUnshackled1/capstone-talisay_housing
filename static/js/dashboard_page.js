@@ -15,6 +15,37 @@
     el.textContent = h < 12 ? 'Good morning,' : h < 17 ? 'Good afternoon,' : 'Good evening,';
 })();
 
+// ── Number Counter Animation ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    var statValues = document.querySelectorAll('.stat-value');
+    statValues.forEach(function (el) {
+        var targetStr = el.textContent.trim().replace(/,/g, '');
+        var target = parseInt(targetStr, 10);
+        if (isNaN(target)) return;
+
+        var startTimestamp = null;
+        var duration = 2000; // 1.2s animation
+
+        var step = function (timestamp) {
+            if (!startTimestamp) startTimestamp = timestamp;
+            var progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Ease out cubic
+            var easeProgress = 1 - Math.pow(1 - progress, 3);
+            var current = Math.floor(easeProgress * target);
+
+            el.textContent = current.toLocaleString();
+
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                el.textContent = target.toLocaleString();
+            }
+        };
+
+        window.requestAnimationFrame(step);
+    });
+});
+
 // ── Analytics Charts ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
     var el = document.getElementById('tha-analytics-charts');
@@ -75,27 +106,27 @@ document.addEventListener('DOMContentLoaded', function () {
                     labels: D.trend.labels,
                     datasets: [
                         { label: 'New applicants', values: D.trend.registrations || [], color: '#2F6FD6', fillOpacity: 0.12 },
-                        { label: 'Vault uploads',  values: D.trend.vaultUploads  || [], color: '#14B8A6', fillOpacity: 0.14 }
+                        { label: 'Vault uploads', values: D.trend.vaultUploads || [], color: '#14B8A6', fillOpacity: 0.14 }
                     ]
                 };
-            case 'chartApplicants':    return getSingleSeriesDataset('applicantsByStatus');
-            case 'chartChannels':      return getSingleSeriesDataset('channels');
-            case 'chartBarangays':     return getSingleSeriesDataset('topBarangays');
-            case 'chartApplications':  return getSingleSeriesDataset('applicationsByStatus');
-            case 'chartHousing':       return getSingleSeriesDataset('housingByStatus');
+            case 'chartApplicants': return getSingleSeriesDataset('applicantsByStatus');
+            case 'chartChannels': return getSingleSeriesDataset('channels');
+            case 'chartBarangays': return getSingleSeriesDataset('topBarangays');
+            case 'chartApplications': return getSingleSeriesDataset('applicationsByStatus');
+            case 'chartHousing': return getSingleSeriesDataset('housingByStatus');
             case 'chartISFPopulation': return getSingleSeriesDataset('isfPopulation');
-            case 'chartISFOverall':    return getSingleSeriesDataset('isfOverall');
+            case 'chartISFOverall': return getSingleSeriesDataset('isfOverall');
             case 'chartBlacklist':
                 return {
                     type: 'single',
                     labels: ['Unit Repossessed', 'Other Violations'],
                     values: [blacklistCount, 0]
                 };
-            case 'chartFunnel':      return getSingleSeriesDataset('workflowFunnel');
-            case 'chartCaseAging':   return getSingleSeriesDataset('caseAging');
-            case 'chartRequirements':return getSingleSeriesDataset('requirementsByStatus');
+            case 'chartFunnel': return getSingleSeriesDataset('workflowFunnel');
+            case 'chartCaseAging': return getSingleSeriesDataset('caseAging');
+            case 'chartRequirements': return getSingleSeriesDataset('requirementsByStatus');
             case 'chartCasesStatus': return getSingleSeriesDataset('casesByStatus');
-            case 'chartCasesType':   return getSingleSeriesDataset('casesByType');
+            case 'chartCasesType': return getSingleSeriesDataset('casesByType');
             default: return null;
         }
     }
@@ -308,9 +339,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
                 };
                 config.options.scales = {
-                    y:  { type: 'linear', position: 'left',  beginAtZero: true, title: { display: true, text: 'Applicants', font: { size: 10 } }, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } },
-                    y1: { type: 'linear', position: 'right', beginAtZero: true, title: { display: true, text: 'Uploads',    font: { size: 10 } }, grid: { drawOnChartArea: false }, ticks: { precision: 0 } },
-                    x:  { grid: { color: '#f8fafc' } }
+                    y: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: 'Applicants', font: { size: 10 } }, grid: { color: '#f1f5f9' }, ticks: { precision: 0 } },
+                    y1: { type: 'linear', position: 'right', beginAtZero: true, title: { display: true, text: 'Uploads', font: { size: 10 } }, grid: { drawOnChartArea: false }, ticks: { precision: 0 } },
+                    x: { grid: { color: '#f8fafc' } }
                 };
             } else if (mode === 'bar') {
                 config.type = 'bar';
@@ -693,8 +724,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var titleEl = card.querySelector('.rep-card-title');
-        var subEl   = card.querySelector('.rep-card-sub');
-        var header  = document.createElement('div');
+        var subEl = card.querySelector('.rep-card-sub');
+        var header = document.createElement('div');
         header.className = 'rep-card-header';
         var titleGroup = document.createElement('div');
         titleGroup.className = 'rep-card-title-group';
@@ -708,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function () {
             card.insertBefore(header, card.firstChild);
             var prev = card.previousElementSibling;
             if (prev && prev.classList.contains('rep-section')) {
-                var h2   = prev.querySelector('h2');
+                var h2 = prev.querySelector('h2');
                 var note = prev.querySelector('.rep-section-note');
                 if (h2) {
                     var pTitle = document.createElement('p');
