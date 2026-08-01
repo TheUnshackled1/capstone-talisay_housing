@@ -28,9 +28,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var blacklistCount = parseInt(bodyEl.getAttribute('data-blacklist-count') || '0', 10);
 
     var PALETTE = [
-        '#10b981', '#0ea5e9', '#7c3aed', '#f59e0b', '#dc2626', '#0891b2',
-        '#65a30d', '#4f46e5', '#0d9488', '#d97706', '#9333ea', '#e11d48',
-        '#22c55e', '#a855f7', '#f43f5e', '#06b6d4',
+        '#2F6FD6', // Blue
+        '#D4AF37', // Gold
+        '#14B8A6', // Teal
+        '#22C55E', // Green
+        '#64748B', // Slate
+        '#8B5CF6', '#F43F5E', '#0EA5E9', '#F59E0B', '#10B981'
     ];
 
     function hexToRgba(hex, alpha) {
@@ -71,8 +74,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     type: 'multi',
                     labels: D.trend.labels,
                     datasets: [
-                        { label: 'New applicants', values: D.trend.registrations || [], color: '#0ea5e9', fillOpacity: 0.12 },
-                        { label: 'Vault uploads',  values: D.trend.vaultUploads  || [], color: '#10b981', fillOpacity: 0.14 }
+                        { label: 'New applicants', values: D.trend.registrations || [], color: '#2F6FD6', fillOpacity: 0.12 },
+                        { label: 'Vault uploads',  values: D.trend.vaultUploads  || [], color: '#14B8A6', fillOpacity: 0.14 }
                     ]
                 };
             case 'chartApplicants':    return getSingleSeriesDataset('applicantsByStatus');
@@ -199,8 +202,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     datasets: [{
                         label: 'Count',
                         data: dataset.values,
-                        borderColor: '#10b981',
-                        backgroundColor: mode === 'area' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                        borderColor: '#2F6FD6',
+                        backgroundColor: mode === 'area' ? 'rgba(47, 111, 214, 0.15)' : 'transparent',
                         tension: 0.35,
                         fill: mode === 'area',
                         pointRadius: 4,
@@ -221,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     datasets: [{
                         label: 'Count',
                         data: dataset.values,
-                        backgroundColor: isHorizontal ? '#10b981' : dataset.labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; }),
+                        backgroundColor: isHorizontal ? '#14B8A6' : dataset.labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; }),
                         borderRadius: 4,
                         barThickness: dataset.labels.length > 8 ? 'flex' : 18
                     }]
