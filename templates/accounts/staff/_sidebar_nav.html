@@ -77,6 +77,7 @@
     <!-- DEFAULT — second_member, fourth_member, and all other staff roles -->
     <div class="nav-section">
 
+        <div class="nav-section-title">OVERVIEW</div>
         <!-- Dashboard -->
         <a href="{% url 'accounts:dashboard' %}" title="Dashboard" class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -88,6 +89,7 @@
             <span>Dashboard</span>
         </a>
 
+        <div class="nav-section-title">APPLICATIONS</div>
         <!-- Application Stage Dropdown — open if any sub-item is active -->
         <details class="sidebar-dropdown {% if url_name == 'applicants_list' or url_name == 'applications_list' or url_name == 'ready_for_form_queue' or url_name == 'lot_awarding_queue' %}active{% endif %}"
             {% if url_name == 'applicants_list' or url_name == 'applications_list' or url_name == 'ready_for_form_queue' or url_name == 'lot_awarding_queue' %}open{% endif %}>
@@ -141,15 +143,6 @@
             </div>
         </details>
 
-        <!-- Housing Units -->
-        <a href="{% url 'units:housing_units_monitoring' request.user.position %}" title="Housing Units" class="nav-link {% if url_name == 'housing_units_monitoring' or url_name == 'gk_masterlist' or url_name == 'caretaker_monitoring_dashboard' %}active{% endif %}">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            <span>Housing Units</span>
-        </a>
-
         <!-- Cases -->
         <a href="{% url 'cases:case_dashboard' request.user.position %}" title="Cases" class="nav-link {% if url_name == 'case_dashboard' %}active{% endif %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -166,6 +159,20 @@
             </svg>
             <span>Documents</span>
         </a>
+
+        <div class="nav-section-title">HOUSING</div>
+        <!-- Housing Units -->
+        <a href="{% url 'units:housing_units_monitoring' request.user.position %}" title="Housing Units" class="nav-link {% if url_name == 'housing_units_monitoring' or url_name == 'gk_masterlist' or url_name == 'caretaker_monitoring_dashboard' %}active{% endif %}">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Housing Units</span>
+        </a>
+
+        {% if user.position == 'second_member' or user.position == 'fourth_member' or user.is_superuser %}
+        <div class="nav-section-title">SYSTEM</div>
+        {% endif %}
 
         {% if user.position == 'second_member' or user.position == 'fourth_member' %}
         <!-- Blacklists -->
