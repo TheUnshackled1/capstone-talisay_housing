@@ -238,6 +238,7 @@ else:
     GOOGLE_OAUTH_ALLOWED_DOMAINS = ('gmail.com', 'talisayhousing.gov.ph', 'chmsu.edu.ph')
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_MESSAGES = True
 ACCOUNT_ADAPTER = 'accounts.adapters.THAAccountAdapter'
 ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['email', 'username*', 'password1*', 'password2*']
