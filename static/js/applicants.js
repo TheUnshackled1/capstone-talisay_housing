@@ -1012,7 +1012,17 @@ function getCsrfToken() {
         const totalAllNum = Number(totalAll) || 0;
         const scannedReqNum = Number(scannedRequired) || 0;
         const totalReqNum = Number(requiredTotal) || 0;
-        btn.textContent = 'Requirements ' + scannedAllNum + '/' + totalAllNum;
+        let blocks = '';
+        for (let i = 1; i <= 15; i++) {
+            if (i <= scannedAllNum) blocks += '█';
+            else if (i <= totalAllNum) blocks += '░';
+        }
+        btn.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+                <span style="letter-spacing: 1px; font-size: 0.6rem; line-height: 1; opacity: 0.95;">${blocks}</span>
+                <span style="font-weight: 700; font-size: 0.6rem; white-space: nowrap;">${scannedAllNum}/${totalAllNum}</span>
+            </div>
+        `;
         btn.title = 'Applicant requirement scan checklist — ' + scannedAllNum + ' of ' + totalAllNum + ' digitally filed';
         btn.classList.remove('btn-archive-docs--done', 'btn-archive-docs--partial', 'btn-archive-docs--none');
         if (totalReqNum > 0 && scannedReqNum >= totalReqNum) {

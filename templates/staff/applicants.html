@@ -612,7 +612,10 @@
                                 class="btn-archive-docs {% if row.requiredTotal > 0 and row.requiredScannedCount >= row.requiredTotal %}btn-archive-docs--done{% elif row.scannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
                                 onclick="openArchiveRequirementsModal(this)" data-reference="{{ row.referenceNumber }}"
                                 title="Applicant requirement scan checklist — {{ row.scannedCount }} of {{ row.requirementsTotal }} digitally filed">
-                                Requirements {{ row.scannedCount }}/{{ row.requirementsTotal }}
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+                                    <span style="letter-spacing: 1px; font-size: 0.6rem; line-height: 1; opacity: 0.95;">{% for i in '123456789012345'|make_list %}{% if forloop.counter <= row.scannedCount %}█{% elif forloop.counter <= row.requirementsTotal %}░{% endif %}{% endfor %}</span>
+                                    <span style="font-weight: 700; font-size: 0.6rem; white-space: nowrap;">{{ row.scannedCount }}/{{ row.requirementsTotal }}</span>
+                                </div>
                             </button>
                         </td>
                         <td class="applicants-archive-review-cell" style="vertical-align: middle; text-align: center;">
