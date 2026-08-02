@@ -2893,11 +2893,7 @@ function getCsrfToken() {
         const container = document.getElementById('eligibilityChecksB');
         if (!container) return;
 
-        const cdrrmoPass = isCdrrmoCertified(applicant.cdrrmoStatus);
-
         let html = '';
-
-        // Removed CDRRMO check text based on user request
 
         container.innerHTML = html;
     }
