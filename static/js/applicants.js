@@ -3932,7 +3932,18 @@ function getCsrfToken() {
 
     function openAddModal() {
         const modal = document.getElementById('addModal');
-        if (modal) modal.classList.add('active');
+        if (modal) {
+            modal.classList.add('active');
+            // Keep sidebar accessible — offset modal by current sidebar width
+            // Only apply on large screens (sidebar is transformed off-screen on mobile)
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && window.innerWidth >= 1024) {
+                const sidebarWidth = sidebar.getBoundingClientRect().width;
+                modal.style.left = sidebarWidth + 'px';
+            } else {
+                modal.style.left = '';
+            }
+        }
         /* Init Flatpickr after modal is painted (hidden-modal init breaks layout/positioning). */
         requestAnimationFrame(function () {
             requestAnimationFrame(function () {
