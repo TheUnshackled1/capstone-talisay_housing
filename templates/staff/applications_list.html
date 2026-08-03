@@ -214,7 +214,7 @@
                             {% if data.m2_evaluator.blacklist_blocked %}
                             <span class="m2-readiness-chip blocked">BLOCKED - BLACKLISTED</span>
                             {% elif data.form_generated %}
-                            <span class="m2-readiness-chip {% if data.application.status == 'draft' %}cert{% elif data.application.status == 'awarded' %}ready{% else %}ready{% endif %}">{{ data.current_stage|upper }}</span>
+                            <span class="m2-readiness-chip ready">{{ data.current_stage|upper }}</span>
                             {% elif not data.m2_evaluator.required_docs_complete %}
                             <span class="m2-readiness-chip needs-docs">DOCS INCOMPLETE</span>
                             {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
@@ -261,7 +261,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7"
+                    <td colspan="6"
                         style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
                         {% if search %}
                         No results match your search &ldquo;{{ search }}&rdquo;.
@@ -308,9 +308,7 @@
         <div class="modal-header">
             <div>
                 <h2>🏠 Award Lot</h2>
-                <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;" id="awardModalName">
-
-                </p>
+                <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;" id="awardModalName"></p>
             </div>
             <button class="modal-close" onclick="closeAwardModal()">&times;</button>
         </div>
@@ -548,6 +546,7 @@
     // Django-injected constants -- read by applications_list.js
     const position = '{{ request.user.position }}';
     const MODULE2_PROCEED_TO_FORM_QUEUE_URL = '{% url "applications:proceed_to_form_queue" request.user.position %}';
+
     const MODULE2_CAN_DWT_SCAN = {{ permissions.can_verify_documents|yesno:"true,false" }};
     const MODULE2_INTAKE_UPLOAD_SCAN_URL = '{% url "intake:upload_scanned_requirement" request.user.position %}';
     const MODULE2_CSRF_TOKEN = '{{ csrf_token }}';
