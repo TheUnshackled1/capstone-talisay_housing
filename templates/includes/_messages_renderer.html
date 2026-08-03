@@ -1,22 +1,35 @@
 {% if messages %}
     <!-- Load SweetAlert2 if we have messages -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     {% for message in messages %}
-        {% if 'Successfully signed in as' in message.message or 'Welcome back' in message.message or 'logged out' in message.message or 'signed out' in message.message %}
-            <!-- SweetAlert2 Auth Modal -->
+        {% if 'Successfully signed in as' in message.message or 'Welcome back' in message.message %}
+            <!-- SweetAlert2 Login Modal — shown on sign-in only -->
             <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'Welcome back!',
-                        text: '{{ message }}',
-                        icon: 'success',
-                        timer: 3000,
-                        timerProgressBar: true,
-                        showConfirmButton: false
-                    });
-                });
+                (function () {
+                    function _showLoginSwal() {
+                        if (typeof Swal === 'undefined') {
+                            setTimeout(_showLoginSwal, 100);
+                            return;
+                        }
+                        Swal.fire({
+                            title: 'Welcome back!',
+                            text: '{{ message|escapejs }}',
+                            icon: 'success',
+                            timer: 3000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        });
+                    }
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', _showLoginSwal);
+                    } else {
+                        _showLoginSwal();
+                    }
+                })();
             </script>
+        {% elif 'logged out' in message.message or 'signed out' in message.message %}
+            {# Logout confirmation — suppress silently, no popup on logout page #}
         {% else %}
             <!-- Standard Inline Alert -->
             <div class="alert alert-{{ message.tags }}" data-auto-dismiss="5000">
