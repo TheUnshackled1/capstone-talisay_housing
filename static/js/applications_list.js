@@ -543,11 +543,13 @@
         const viewSitDocBtnHtml = docUrl ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>` : '';
         const actionsRow = `
             <div class="m2-elig-actions m2-sit-actions">
-                ${viewSitDocBtnHtml}
-                ${sitUploadHtml}
-                ${sitScanControlHtml}
-                ${viewFieldPhotosHtml}
-                ${markPassedButtonsHtml}
+                <div class="m2-ev-toolbar">
+                    ${viewSitDocBtnHtml ? viewSitDocBtnHtml.replace('class="eligibility-view-doc-btn', 'class="m2-ev-toolbar-btn eligibility-view-doc-btn') : ''}
+                    ${sitUploadHtml ? sitUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-sit-action-upload m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-sit-action-upload m2-replace-aware-link') : ''}
+                    ${sitScanControlHtml ? sitScanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-sit-action-scan m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-sit-action-scan m2-replace-aware-link') : ''}
+                    ${viewFieldPhotosHtml ? viewFieldPhotosHtml.replace('class="eligibility-view-doc-btn', 'class="m2-ev-toolbar-btn eligibility-view-doc-btn') : ''}
+                    ${markPassedButtonsHtml ? markPassedButtonsHtml.replace('class="eligibility-decision-btn', 'class="m2-ev-toolbar-btn eligibility-decision-btn') : ''}
+                </div>
             </div>`;
         return `
             <div class="${cardClass}">
@@ -555,7 +557,7 @@
                     <h4 class="m2-elig-card-title">${escapeHtml(String(c.label || 'Requirement'))}</h4>
                     <span class="eligibility-check-chip ${chipClass}">${chipLabel}</span>
                 </div>
-                ${reasonLine ? `<div class="m2-elig-card-reason">${escapeHtml(reasonLine)}</div>` : ''}
+                ${reasonLine ? `<div class="m2-elig-card-reason">${ok ? '' : '&#x26A0; '}${escapeHtml(reasonLine)}</div>` : ''}
                 ${evidenceHtml}
                 ${actionsRow}
             </div>`;
@@ -1074,13 +1076,13 @@
                    </div>`
                 : '';
             const actionsRow = (!docUrl && (eligUploadHtml || scanControlHtml) && entry.is_reviewable)
-                ? `<div class="m2-elig-actions m2-sit-actions">
+                ? `<div class="m2-elig-actions">
                     <div class="m2-ev-toolbar">
                         ${eligUploadHtml ? eligUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-replace-aware-link') : ''}
                         ${scanControlHtml ? scanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-replace-aware-link') : ''}
+                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}&#x2713; Pass</button>
+                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}&#x2715; Fail</button>
                     </div>
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}&#x2713; Pass</button>
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}&#x2715; Fail</button>
                    </div>`
                 : `<div class="m2-elig-actions">
                     ${docActionsHtml}
