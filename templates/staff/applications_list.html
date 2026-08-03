@@ -27,9 +27,9 @@
         </div>
     </div>
 
-    <!-- Controls Bar (TOTAL LIST badge + Search Box) -->
+    <!-- Controls Bar (TOTAL LIST badge + Summary Cards + Search Box) -->
     <div class="controls-bar"
-        style="display: flex; gap: 0.75rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+        style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center; padding: 0.6rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
         <!-- Total Count Badge -->
         <div class="summary-chip-card summary-chip-card--emerald">
             <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
@@ -43,13 +43,51 @@
                 <p style="font-size: 0.625rem; color: #64748b; margin: 0; text-transform: uppercase; font-weight: 500;">
                     Total List</p>
                 <p style="font-size: 1.25rem; font-weight: 700; color: #047857; margin: 0;" id="evaluationsTotalCount">
-                    {{ total_records|default:page_obj.paginator.count|default:applicants_data|length }}</p>
+                    {{ page_obj.paginator.count }}</p>
             </div>
         </div>
 
+        <!-- Divider -->
+        <div style="width: 1px; height: 2.2rem; background: #e2e8f0; margin: 0 0.1rem;"></div>
+
+        <!-- Pending Review Card -->
+        <div style="display: flex; align-items: center; gap: 0.7rem; padding: 0.08rem 0.65rem; background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe; border-radius: 0.6rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04);">
+            <div>
+                <p style="font-size: 0.625rem; color: #1e40af; margin: 0; text-transform: uppercase; font-weight: 500;">Pending Review</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #1d4ed8; margin: 0;">{{ stage_counts.eligibility|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- Needs Docs Card -->
+        <div style="display: flex; align-items: center; gap: 0.7rem; padding: 0.08rem 0.65rem; background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #fcd34d; border-radius: 0.6rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04);">
+            <div>
+                <p style="font-size: 0.625rem; color: #92400e; margin: 0; text-transform: uppercase; font-weight: 500;">Needs Docs</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #d97706; margin: 0;">{{ stage_counts.document_gathering|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- Ready for Form Card -->
+        <div style="display: flex; align-items: center; gap: 0.7rem; padding: 0.08rem 0.65rem; background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-radius: 0.6rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04);">
+            <div>
+                <p style="font-size: 0.625rem; color: #166534; margin: 0; text-transform: uppercase; font-weight: 500;">Ready for Form</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #16a34a; margin: 0;">{{ ready_for_form_queue_count|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- Pending Certification Card -->
+        <div style="display: flex; align-items: center; gap: 0.7rem; padding: 0.08rem 0.65rem; background: linear-gradient(135deg, #faf5ff, #f3e8ff); border: 1px solid #d8b4fe; border-radius: 0.6rem; box-shadow: 0 1px 2px rgba(15,23,42,0.04);">
+            <div>
+                <p style="font-size: 0.625rem; color: #6b21a8; margin: 0; text-transform: uppercase; font-weight: 500;">Pending Cert.</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #7c3aed; margin: 0;">{{ stage_counts.awaiting_final_approval|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="width: 1px; height: 2.2rem; background: #e2e8f0; margin: 0 0.1rem;"></div>
+
         <!-- Search Box -->
         <form method="get" class="search-box" id="evaluationsSearchForm"
-            style="flex: 1; min-width: 200px; position: relative; display: flex;">
+            style="flex: 1; min-width: 180px; position: relative; display: flex;">
             {% if filter_stage and filter_stage != 'all' %}<input type="hidden" name="stage"
                 value="{{ filter_stage }}">{% endif %}
             <svg class="search-icon"
@@ -68,6 +106,7 @@
             </button>
         </form>
     </div>
+
 
     <!-- Applications Table (headers always visible; empty state is one tbody row, intake-style) -->
     <div class="applications-table-container">
