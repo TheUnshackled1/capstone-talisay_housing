@@ -545,8 +545,8 @@
             <div class="m2-elig-actions m2-sit-actions">
                 <div class="m2-ev-toolbar">
                     ${viewSitDocBtnHtml ? viewSitDocBtnHtml.replace('class="eligibility-view-doc-btn', 'class="m2-ev-toolbar-btn eligibility-view-doc-btn') : ''}
-                    ${sitUploadHtml ? sitUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-sit-action-upload m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-sit-action-upload m2-replace-aware-link') : ''}
-                    ${sitScanControlHtml ? sitScanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-sit-action-scan m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-sit-action-scan m2-replace-aware-link') : ''}
+                    ${sitUploadHtml ? sitUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn') : ''}
+                    ${sitScanControlHtml ? sitScanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn') : ''}
                     ${viewFieldPhotosHtml ? viewFieldPhotosHtml.replace('class="eligibility-view-doc-btn', 'class="m2-ev-toolbar-btn eligibility-view-doc-btn') : ''}
                     ${markPassedButtonsHtml ? markPassedButtonsHtml.replace('class="eligibility-decision-btn', 'class="m2-ev-toolbar-btn eligibility-decision-btn') : ''}
                 </div>
@@ -1080,8 +1080,8 @@
                     <div class="m2-ev-toolbar">
                         ${eligUploadHtml ? eligUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-replace-aware-link') : ''}
                         ${scanControlHtml ? scanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-replace-aware-link') : ''}
-                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}&#x2713; Pass</button>
-                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}&#x2715; Fail</button>
+                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
+                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x2715; Fail</button>
                     </div>
                    </div>`
                 : `<div class="m2-elig-actions">
