@@ -1071,8 +1071,8 @@
                 : '';
             const decisionActionsHtml = entry.is_reviewable
                 ? `<div class="m2-elig-decision-actions">
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}&#x2713; Pass</button>
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}&#x2715; Fail</button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x2715; Fail</button>
                    </div>`
                 : '';
             const actionsRow = (!docUrl && (eligUploadHtml || scanControlHtml) && entry.is_reviewable)
