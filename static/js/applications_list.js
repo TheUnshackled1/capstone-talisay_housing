@@ -936,8 +936,6 @@
 
         const totalPendingCount = undecidedChecks.length + sitMissingCount;
 
-
-
         // Short inline status label — absorbed into the chips bar
         const pendingLabel = totalPendingCount > 0
             ? `<span class="m2-summary-status-label m2-summary-status-label--pending">${totalPendingCount} requirement${totalPendingCount === 1 ? '' : 's'} pending</span>`
@@ -1122,7 +1120,7 @@
 
         const summaryChipsHtml = `<div class="m2-summary-chips">
             <span class="m2-summary-chip m2-summary-chip--passed">&#x2714; Passed <span class="m2-summary-chip__count">${passedChecks.length}</span></span>
-            <span class="m2-summary-chip m2-summary-chip--pending">&#x29D6; Pending <span class="m2-summary-chip__count">${undecidedChecks.length}</span></span>
+            <span class="m2-summary-chip m2-summary-chip--pending">&#x23F3; Pending <span class="m2-summary-chip__count">${undecidedChecks.length}</span></span>
             <span class="m2-summary-chip m2-summary-chip--failed">&#x2718; Failed <span class="m2-summary-chip__count">${failedChecks.length}</span></span>
             <span class="m2-summary-chip m2-summary-chip--missing">&#x26A0; Missing <span class="m2-summary-chip__count">${missingEvidenceChecks.length}</span></span>
             ${pendingLabel}
