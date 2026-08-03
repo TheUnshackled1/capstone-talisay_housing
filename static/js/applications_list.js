@@ -439,17 +439,45 @@
     function formatM2EvidenceHtml(lines) {
         const arr = (Array.isArray(lines) ? lines : []).map((e) => String(e || '').trim()).filter(Boolean);
         if (!arr.length) return '';
+
+        // Decorate status value with an icon badge
+        function statusBadge(val) {
+            const v = val.trim();
+            const vl = v.toLowerCase();
+            if (vl === 'scanned') {
+                return `<span class="m2-ev-status m2-ev-status--ok">&#x2714; Scanned</span>`;
+            }
+            if (vl === 'uploaded') {
+                return `<span class="m2-ev-status m2-ev-status--ok">&#x2714; Uploaded</span>`;
+            }
+            if (vl.startsWith('missing')) {
+                return `<span class="m2-ev-status m2-ev-status--miss">&#x26A0; Missing</span>`;
+            }
+            // Numeric values — bold, no badge
+            if (/^\d[\d,.\s]*$/.test(v) || /^₱/.test(v)) {
+                return `<span class="m2-ev-status m2-ev-status--num">${escapeHtml(v)}</span>`;
+            }
+            return `<span class="m2-ev-status m2-ev-status--neutral">${escapeHtml(v)}</span>`;
+        }
+
         const rows = arr.map((line) => {
             const colonIdx = line.indexOf(':');
             if (colonIdx > 0 && colonIdx < line.length - 1) {
                 const label = line.slice(0, colonIdx).trim();
                 const val = line.slice(colonIdx + 1).trim();
-                return `<div class="m2-ev-grid-row"><span class="m2-ev-grid-label">${escapeHtml(label)}</span><span class="m2-ev-grid-value">${escapeHtml(val)}</span></div>`;
+                return `<tr class="m2-ev-tr"><td class="m2-ev-td-label">${escapeHtml(label)}</td><td class="m2-ev-td-status">${statusBadge(val)}</td></tr>`;
             }
-            return `<div class="m2-ev-grid-row-full">${escapeHtml(line)}</div>`;
+            return `<tr class="m2-ev-tr"><td class="m2-ev-td-full" colspan="2">${escapeHtml(line)}</td></tr>`;
         }).join('');
-        return `<div class="m2-elig-evidence-box"><div class="m2-elig-evidence-label">Evidence</div>${rows}</div>`;
+
+        return `<div class="m2-elig-evidence-box">
+            <table class="m2-ev-table">
+                <thead><tr><th class="m2-ev-th">Evidence</th><th class="m2-ev-th m2-ev-th--status">Status</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
     }
+
 
     function splitSituationDetailForEvidence(detail) {
         const s = String(detail || '').trim();
