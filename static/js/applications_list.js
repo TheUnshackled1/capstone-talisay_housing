@@ -918,13 +918,32 @@
         const isWalkInInfo = !!sc.walk_in_informational;
         const sitMissingCount = isWalkInInfo ? 0 : sitChecks.filter(ch => !ch.done).length;
 
+
+        const passedChecks = entries.filter((entry) => {
+            const d = getManualDecision(entry.key);
+            if (d && d.status === 'passed') return true;
+            if (entry.key === 'voter' && entry.status === 'passed' && !(d && d.status === 'failed')) return true;
+            return false;
+        });
+        const missingEvidenceChecks = entries.filter((entry) => {
+            const d = getManualDecision(entry.key);
+            const isAutoPassed = entry.key === 'voter' && entry.status === 'passed' && !(d && d.status === 'failed');
+            if (isAutoPassed) return false;
+            const hasDoc = !!(entry && entry.view_document && entry.view_document.url);
+            const hasVault = !!(entry && entry.vault_upload_url);
+            return !hasDoc && !hasVault;
+        });
+
         const totalPendingCount = undecidedChecks.length + sitMissingCount;
 
-        const warningBanner = totalPendingCount > 0
-            ? `<div class="m2-elig-banner m2-elig-banner--pending"><strong>${totalPendingCount} requirement${totalPendingCount === 1 ? '' : 's'} pending.</strong> Complete the evaluation for each requirement by marking it Passed or Failed. Complete all required evidence to enable Complete Evaluation.</div>`
+
+
+        // Short inline status label — absorbed into the chips bar
+        const pendingLabel = totalPendingCount > 0
+            ? `<span class="m2-summary-status-label m2-summary-status-label--pending">${totalPendingCount} requirement${totalPendingCount === 1 ? '' : 's'} pending</span>`
             : (failedChecks.length
-                ? `<div class="m2-elig-banner m2-elig-banner--fail"><strong>${failedChecks.length} failed</strong> — record stays <strong>Pending Follow-up</strong> until failed items are Passed again (blocks Ready for Form).</div>`
-                : '');
+                ? `<span class="m2-summary-status-label m2-summary-status-label--fail">${failedChecks.length} failed &mdash; blocks Ready for Form</span>`
+                : `<span class="m2-summary-status-label m2-summary-status-label--ok">All requirements complete</span>`);
 
         const proceedFormBtn = document.getElementById('eligibilityProceedFormModalBtn');
         const overall = snapshot?.overall || {};
@@ -1080,10 +1099,39 @@
         const row1GridClass = (totalCards === 5 || totalCards === 6) ? 'm2-elig-grid-row1 m2-elig-grid-3col' : 'm2-elig-grid-row1';
         const row2GridClass = (totalCards === 5) ? 'm2-elig-grid-row2 m2-elig-grid-2col-centered' : 'm2-elig-grid-row2 m2-elig-grid-3col';
 
+        // Inject summary chips styles once
+        if (!document.getElementById('m2-summary-chips-style')) {
+            const s = document.createElement('style');
+            s.id = 'm2-summary-chips-style';
+            s.textContent = [
+                '.m2-summary-chips{display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;margin-bottom:0.6rem;}',
+                '.m2-summary-chip{display:inline-flex;align-items:center;gap:0.32rem;padding:0.2rem 0.6rem;border-radius:9999px;font-size:0.62rem;font-weight:700;letter-spacing:0.02em;border:1px solid;}',
+                '.m2-summary-chip__count{font-size:0.82rem;font-weight:800;line-height:1;}',
+                '.m2-summary-chip--passed{background:#dcfce7;border-color:#86efac;color:#166534;}',
+                '.m2-summary-chip--pending{background:#fef3c7;border-color:#fde68a;color:#92400e;}',
+                '.m2-summary-chip--failed{background:#fee2e2;border-color:#fca5a5;color:#991b1b;}',
+                '.m2-summary-chip--missing{background:#dbeafe;border-color:#93c5fd;color:#1e40af;}',
+                '.m2-summary-status-label{margin-left:auto;font-size:0.62rem;font-weight:600;padding:0.18rem 0.5rem;border-radius:0.35rem;}',
+                '.m2-summary-status-label--pending{color:#92400e;background:#fef3c7;border:1px solid #fde68a;}',
+                '.m2-summary-status-label--fail{color:#991b1b;background:#fee2e2;border:1px solid #fca5a5;}',
+                '.m2-summary-status-label--ok{color:#166534;background:#dcfce7;border:1px solid #86efac;}'
+            ].join('');
+            document.head.appendChild(s);
+        }
+
+
+        const summaryChipsHtml = `<div class="m2-summary-chips">
+            <span class="m2-summary-chip m2-summary-chip--passed">&#x2714; Passed <span class="m2-summary-chip__count">${passedChecks.length}</span></span>
+            <span class="m2-summary-chip m2-summary-chip--pending">&#x29D6; Pending <span class="m2-summary-chip__count">${undecidedChecks.length}</span></span>
+            <span class="m2-summary-chip m2-summary-chip--failed">&#x2718; Failed <span class="m2-summary-chip__count">${failedChecks.length}</span></span>
+            <span class="m2-summary-chip m2-summary-chip--missing">&#x26A0; Missing <span class="m2-summary-chip__count">${missingEvidenceChecks.length}</span></span>
+            ${pendingLabel}
+        </div>`;
+
         docEvidenceEl.innerHTML = '';
         listEl.innerHTML = `
             <div class="m2-elig-outer-card" style="padding: 0.75rem;">
-                ${warningBanner}
+                ${summaryChipsHtml}
                 <div class="${row1GridClass}">
                     ${firstRowCards}
                 </div>
@@ -1093,6 +1141,7 @@
             </div>
         `;
     }
+
 
     async function fetchEligibilitySnapshot(applicantId, opts = {}) {
         const preserveContent = !!opts.preserveContent;
