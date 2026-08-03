@@ -913,6 +913,7 @@
         lastEligibilitySnapshot = snapshot || null;
 
         const subtitle = document.getElementById('eligibilityNextSubtitle');
+        const chipsRow = document.getElementById('eligibilityNextInfoChips');
         const applicantName = snapshot?.applicant?.full_name || lastPrecheckApplicantName || '';
         const situation = snapshot?.situation || {};
         const sc = snapshot?.situation_certification || {};
@@ -922,6 +923,26 @@
                 ? `Applicant: ${applicantName}${sitTitle ? ' (' + sitTitle + ')' : ''}`
                 : 'Applicant: —';
         }
+        if (chipsRow) {
+            const ap = snapshot?.applicant || {};
+            const ref = (snapshot?.reference_number || '').trim();
+            const barangay = (ap.barangay || '').trim();
+            const dateReg = (ap.registered_at || '').trim();
+            const sitLabel = (situation.option || '').trim();
+            const staff = (ap.staff_name || '').trim();
+            const chip = (icon, text) => text
+                ? `<span class="m2-info-chip"><span class="m2-info-chip-icon">${icon}</span>${escapeHtml(text)}</span>`
+                : '';
+            chipsRow.innerHTML = [
+                chip('📋', ref ? `Ref #${ref}` : ''),
+                chip('📍', barangay),
+                chip('📅', dateReg),
+                chip('🏷', sitLabel),
+                chip('👤', staff ? `Staff: ${staff}` : ''),
+            ].filter(Boolean).join('');
+            chipsRow.style.display = chipsRow.innerHTML ? 'flex' : 'none';
+        }
+
 
         const checks = snapshot?.checks || {};
         const gates = snapshot?.gates || {};

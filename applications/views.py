@@ -2800,6 +2800,19 @@ def eligibility_snapshot(request, position):
         'success': True,
         'applicant_id': str(applicant.id),
         'reference_number': ((applicant.reference_number or '').strip() or str(applicant.pk)),
+        'applicant': {
+            'id': str(applicant.id),
+            'full_name': applicant.full_name or '',
+            'barangay': applicant.barangay.name if getattr(applicant, 'barangay', None) else '',
+            'registered_at': (
+                applicant.created_at.strftime('%b %d, %Y')
+                if getattr(applicant, 'created_at', None) else ''
+            ),
+            'staff_name': (
+                applicant.eligibility_checked_by.get_full_name()
+                if getattr(applicant, 'eligibility_checked_by', None) else ''
+            ),
+        },
         'auto_disqualified': bool(auto_disqualified),
         'checks': checks,
         'saved_decisions': saved_decisions,
