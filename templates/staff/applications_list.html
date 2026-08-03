@@ -212,22 +212,23 @@
                             {% if data.m2_evaluator.blacklist_blocked %}
                             <span class="m2-readiness-chip blocked">BLOCKED - BLACKLISTED</span>
                             {% elif data.form_generated %}
-                            <span class="m2-readiness-chip {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'awarded' %}followup{% else %}ready{% endif %}">{{ data.current_stage|upper }}</span>
+                            <span class="m2-readiness-chip {% if data.application.status == 'draft' %}cert{% elif data.application.status == 'awarded' %}ready{% else %}ready{% endif %}">{{ data.current_stage|upper }}</span>
                             {% elif not data.m2_evaluator.required_docs_complete %}
-                            <span class="m2-readiness-chip pending">DOCS INCOMPLETE</span>
+                            <span class="m2-readiness-chip needs-docs">DOCS INCOMPLETE</span>
                             {% elif data.m2_evaluator.situation_docs_required and not data.m2_evaluator.situation_docs_ready %}
-                            <span class="m2-readiness-chip pending">NEEDS SITUATION DOCS</span>
+                            <span class="m2-readiness-chip needs-docs">NEEDS SITUATION DOCS</span>
                             {% elif data.m2_evaluator.certification_status == 'pending' %}
-                            <span class="m2-readiness-chip pending">PENDING CERTIFICATION</span>
+                            <span class="m2-readiness-chip cert">PENDING CERTIFICATION</span>
                             {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
-                            <span class="m2-readiness-chip pending">NEEDS FIELD EVIDENCE</span>
+                            <span class="m2-readiness-chip needs-docs">NEEDS FIELD EVIDENCE</span>
                             {% elif data.m2_evaluator.has_failed_checks %}
-                            <span class="m2-readiness-chip followup" title="One or more eligibility checks marked Failed — reviewer follow-up required.">PENDING FOLLOW-UP</span>
+                            <span class="m2-readiness-chip review" title="One or more eligibility checks marked Failed — reviewer follow-up required.">PENDING FOLLOW-UP</span>
                             {% elif data.m2_evaluator.form_generation_ready %}
                             <span class="m2-readiness-chip ready">READY FOR FORM</span>
                             {% else %}
-                            <span class="m2-readiness-chip pending">UNDER REVIEW</span>
+                            <span class="m2-readiness-chip review">UNDER REVIEW</span>
                             {% endif %}
+
                             {% if data.form_generated %}
                             <div class="m2-readiness-hint">{{ data.application.application_number }}</div>
                             {% endif %}
