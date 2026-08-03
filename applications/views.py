@@ -2608,7 +2608,7 @@ def eligibility_snapshot(request, position):
                 else 'Property ownership in Talisay City is flagged.'
             ),
             'evidence': [
-                f'Profile declaration: {"No property in Talisay City" if not applicant.has_property_in_talisay else "Has property"}',
+                f'Profile declaration: {"No property" if not applicant.has_property_in_talisay else "Has property"}',
                 f'No Property Cert: {_req_evidence_doc_label("R05")}',
             ],
             'view_document': _latest_doc_for_req('R05'),
