@@ -977,9 +977,22 @@
         const overall = snapshot?.overall || {};
         const isFormReady = !!(overall.form_generation_ready || (totalPendingCount === 0 && failedChecks.length === 0));
 
+        // Progress label: X / Y Requirements Completed
+        const progressLabel = document.getElementById('eligibilityProgressLabel');
+        const totalChecks = entries.length + (isWalkInInfo ? 0 : sitChecks.length);
+        const completedChecks = passedChecks.length + (isWalkInInfo ? sitChecks.length : sitChecks.filter(ch => !!ch.done).length);
+        if (progressLabel) {
+            const allDone = totalPendingCount === 0 && failedChecks.length === 0;
+            progressLabel.textContent = allDone
+                ? `\u2714 All ${totalChecks} Requirements Completed`
+                : `${completedChecks} / ${totalChecks} Requirements Completed`;
+            progressLabel.classList.toggle('m2-progress-label--done', allDone);
+        }
+
         if (proceedFormBtn) {
             const canProceed = isFormReady && !overall.has_application;
             proceedFormBtn.style.display = 'inline-flex';
+            const wasReady = proceedFormBtn.classList.contains('m2-proceed--ready');
             if (canProceed) {
                 proceedFormBtn.removeAttribute('disabled');
                 proceedFormBtn.disabled = false;
@@ -987,10 +1000,17 @@
                 proceedFormBtn.onclick = function() {
                     handleProceedFromModal();
                 };
+                if (!wasReady) {
+                    // Trigger animation only on transition to ready
+                    proceedFormBtn.classList.remove('m2-proceed--ready');
+                    void proceedFormBtn.offsetWidth; // reflow to restart animation
+                    proceedFormBtn.classList.add('m2-proceed--ready');
+                }
             } else {
                 proceedFormBtn.setAttribute('disabled', 'disabled');
                 proceedFormBtn.disabled = true;
                 proceedFormBtn.onclick = null;
+                proceedFormBtn.classList.remove('m2-proceed--ready');
                 if (failedChecks.length > 0) {
                     proceedFormBtn.title = `Resolve failed requirements first (${failedChecks.length} failed)`;
                 } else if (totalPendingCount > 0) {
@@ -1000,6 +1020,7 @@
                 }
             }
         }
+
 
         if (totalPendingCount === 0 && failedChecks.length === 0) {
             const applicantId = snapshot?.applicant?.id || currentEligibilityApplicantId;
@@ -1039,7 +1060,7 @@
             const chipHtml = hasManualStatus
                 ? `<span class="eligibility-check-chip ${manualStatus}">${manualLabel}</span>`
                 : (isVoterAutoPassed
-                    ? `<span class="eligibility-check-chip passed" title="Auto-passed: voter certification is optional and profile confirms registered voter">Auto-passed</span>`
+                    ? `<span class="eligibility-check-chip auto-passed" title="Auto-passed: voter certification is optional and profile confirms registered voter">Auto-passed</span>`
                     : '');
             let cardToneClass = 'm2-elig-card m2-elig-card--compact';
             if (manualStatus === 'failed') cardToneClass += ' m2-elig-card--fail';

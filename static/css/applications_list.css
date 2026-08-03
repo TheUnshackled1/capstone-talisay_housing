@@ -3327,6 +3327,22 @@
         box-shadow: 0 1px 3px rgba(22, 163, 74, 0.15);
     }
 
+    /* Auto-passed chip — blue to signal system automation */
+    .eligibility-check-chip.auto-passed {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #93c5fd;
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.12);
+    }
+
+    #eligibilityNextChecklist .eligibility-check-chip.auto-passed,
+    #situationCertificationContent .eligibility-check-chip.auto-passed {
+        background: linear-gradient(180deg, #bfdbfe 0%, #93c5fd 100%);
+        color: #1e3a8a;
+        border-color: #60a5fa;
+        box-shadow: 0 1px 3px rgba(59, 130, 246, 0.18);
+    }
+
     #eligibilityNextChecklist .eligibility-check-chip.failed,
     #situationCertificationContent .eligibility-check-chip.failed {
         background: linear-gradient(180deg, #fecaca 0%, #fca5a5 100%);
@@ -3975,11 +3991,13 @@
         padding: 0.45rem 1rem;
         border-top: 1px solid #e2e8f0;
         display: flex;
+        align-items: center;
         justify-content: space-between;
         background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
         position: sticky;
         bottom: 0;
         z-index: 2;
+        position: relative;
     }
 
     .eligibility-next-back {
@@ -4040,6 +4058,50 @@
         cursor: not-allowed !important;
         box-shadow: none !important;
         opacity: 0.75 !important;
+        transform: none !important;
+    }
+
+    /* Proceed button smooth transition + ready animation */
+    .eligibility-next-proceed {
+        transition: background 0.35s ease, border-color 0.35s ease,
+                    box-shadow 0.35s ease, transform 0.2s ease, opacity 0.25s ease;
+    }
+
+    @keyframes m2-proceed-ready-pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+        60%  { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .eligibility-next-proceed.m2-proceed--ready {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        border-color: #047857 !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+        cursor: pointer !important;
+        animation: m2-proceed-ready-pulse 0.7s ease-out 0.1s both;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+    }
+
+    /* Progress label — absolutely centered in footer */
+    .m2-progress-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #94a3b8;
+        letter-spacing: 0.01em;
+        transition: color 0.3s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    .m2-progress-label.m2-progress-label--done {
+        color: #059669;
+        font-weight: 700;
     }
 
     @media (max-width: 1024px) {
