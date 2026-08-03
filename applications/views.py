@@ -2475,7 +2475,16 @@ def eligibility_snapshot(request, position):
     if not applicant_id:
         return JsonResponse({'success': False, 'error': 'Missing applicant_id.'}, status=400)
 
-    applicant = get_object_or_404(Applicant, id=applicant_id)
+    applicant = get_object_or_404(
+        Applicant.objects.select_related(
+            'barangay',
+            'eligibility_checked_by',
+            'form_queue_routed_by',
+            'module2_handoff_by',
+            'registered_by',
+        ),
+        id=applicant_id,
+    )
     handoff_error = _require_intake_archive(applicant)
     if handoff_error:
         return handoff_error
@@ -2803,14 +2812,26 @@ def eligibility_snapshot(request, position):
         'applicant': {
             'id': str(applicant.id),
             'full_name': applicant.full_name or '',
-            'barangay': applicant.barangay.name if getattr(applicant, 'barangay', None) else '',
+            'barangay': applicant.barangay.name if applicant.barangay_id and applicant.barangay else '',
             'registered_at': (
                 applicant.created_at.strftime('%b %d, %Y')
                 if getattr(applicant, 'created_at', None) else ''
             ),
-            'staff_name': (
-                applicant.eligibility_checked_by.get_full_name()
-                if getattr(applicant, 'eligibility_checked_by', None) else ''
+            'staff_name': next(
+                (
+                    name for name in (
+                        (u.get_full_name() or '').strip()
+                        for u in [
+                            getattr(applicant, 'eligibility_checked_by', None),
+                            getattr(applicant, 'form_queue_routed_by', None),
+                            getattr(applicant, 'module2_handoff_by', None),
+                            getattr(applicant, 'registered_by', None),
+                        ]
+                        if u
+                    )
+                    if name
+                ),
+                '',
             ),
         },
         'auto_disqualified': bool(auto_disqualified),
