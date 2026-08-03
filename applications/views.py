@@ -1071,9 +1071,8 @@ def applications_list(request, position):
     stage_counts = {
         'eligibility': applicants.filter(
             Q(application__isnull=True) | Q(application__status='draft')
-        ).filter(
-            requirement_submissions__status='verified'
         ).distinct().count(),
+
         'document_gathering': applicants.filter(
             application__isnull=True
         ).count(),
