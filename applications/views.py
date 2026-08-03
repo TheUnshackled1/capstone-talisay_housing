@@ -2414,7 +2414,12 @@ def _situation_certification_gate(applicant):
         base['checks'] = checks
         base['ready'] = all(c['done'] for c in checks)
         if not base['ready']:
-            base['blocking_summary'] = 'CDRRMO Certificate'
+            _missing_labels = []
+            if not has_cdrrmo_doc:
+                _missing_labels.append('CDRRMO Certificate')
+            if field_photo_count < 1:
+                _missing_labels.append('No Photos')
+            base['blocking_summary'] = ', '.join(_missing_labels) if _missing_labels else ''
         return base
 
     if dr == 'ejected':
