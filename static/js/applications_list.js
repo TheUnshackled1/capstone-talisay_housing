@@ -1061,10 +1061,10 @@
                     ? `<a class="m2-elig-upload-btn m2-replace-aware-link" href="${safeVaultUploadHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — upload a file">${M2_UPLOAD_SVG}Upload</a>`
                     : '');
             const docActionsHtml = (docUrl || eligUploadHtml || scanControlHtml)
-                ? `<div class="m2-elig-doc-actions">
-                    ${docUrl ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>` : ''}
-                    ${eligUploadHtml}
-                    ${scanControlHtml}
+                ? `<div class="m2-ev-toolbar">
+                    ${docUrl ? `<a class="m2-ev-toolbar-btn eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">&#x1F441; View</a>` : ''}
+                    ${eligUploadHtml ? eligUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-replace-aware-link') : ''}
+                    ${scanControlHtml ? scanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-replace-aware-link') : ''}
                    </div>`
                 : '';
             const decisionActionsHtml = entry.is_reviewable
@@ -1075,8 +1075,10 @@
                 : '';
             const actionsRow = (!docUrl && (eligUploadHtml || scanControlHtml) && entry.is_reviewable)
                 ? `<div class="m2-elig-actions m2-sit-actions">
-                    ${eligUploadHtml}
-                    ${scanControlHtml}
+                    <div class="m2-ev-toolbar">
+                        ${eligUploadHtml ? eligUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-replace-aware-link') : ''}
+                        ${scanControlHtml ? scanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-replace-aware-link') : ''}
+                    </div>
                     <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">${M2_PASS_SVG}Mark</button>
                     <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">${M2_FAIL_SVG}Mark</button>
                    </div>`
@@ -1084,6 +1086,7 @@
                     ${docActionsHtml}
                     ${decisionActionsHtml}
                    </div>`;
+
             return `
                 <div class="${cardToneClass}">
                     <div class="m2-elig-card-head">
