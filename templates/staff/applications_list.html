@@ -191,16 +191,18 @@
                     </td>
                     <td class="col-staff">
                         {% if data.staff_user %}
-                        <div class="m2-staff-row" title="{{ data.staff_name }}{% if data.staff_role %} · {{ data.staff_role }}{% endif %}">
-                            <div class="handled-by-avatar {% if data.staff_position_key == 'second_member' %}second-member{% elif data.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ data.staff_initials }}</div>
-                            <div class="m2-staff-row__meta">
-                                <div>{{ data.staff_name }}</div>
-                                <div>{{ data.staff_role }}</div>
-                                {% if data.applicant.registered_by_id and data.applicant.module2_handoff_by_id and data.applicant.registered_by_id != data.applicant.module2_handoff_by_id %}
-                                <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;" title="Original Module 1 encoding staff">
-                                    <strong>Encoded by:</strong> {{ data.applicant.registered_by.get_full_name }}
+                        <div class="staff-chip-wrap">
+                            <div class="m2-staff-row" title="{{ data.staff_name }}{% if data.staff_role %} · {{ data.staff_role }}{% endif %}">
+                                <div class="handled-by-avatar {% if data.staff_position_key == 'second_member' %}second-member{% elif data.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ data.staff_initials }}</div>
+                                <div class="m2-staff-row__meta">
+                                    <div>{{ data.staff_name }}</div>
+                                    <div>{{ data.staff_role }}</div>
+                                    {% if data.applicant.registered_by_id and data.applicant.module2_handoff_by_id and data.applicant.registered_by_id != data.applicant.module2_handoff_by_id %}
+                                    <div style="color:#475569;margin-top:0.2rem;font-size:0.5625rem;" title="Original Module 1 encoding staff">
+                                        <strong>Encoded by:</strong> {{ data.applicant.registered_by.get_full_name }}
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
                         {% else %}
