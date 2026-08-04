@@ -2773,6 +2773,13 @@ def blacklist_management(request, position):
         del query_params['page']
     pagination_query = query_params.urlencode()
 
+    # Active filter options derived from real Blacklist data
+    existing_reasons = list(Blacklist.objects.values_list('reason', flat=True).distinct())
+    reason_dict = dict(Blacklist.REASON_CHOICES)
+    active_reason_choices = [
+        (r, reason_dict.get(r, r)) for r in existing_reasons if r
+    ]
+
     from django.contrib.auth import get_user_model
     User = get_user_model()
     staff_users = User.objects.filter(
@@ -2786,7 +2793,7 @@ def blacklist_management(request, position):
         'reason_filter': reason_filter,
         'date_order': date_order,
         'staff_filter': staff_filter,
-        'reason_choices': Blacklist.REASON_CHOICES,
+        'reason_choices': active_reason_choices or Blacklist.REASON_CHOICES,
         'staff_users': staff_users,
         'pagination_query': pagination_query,
     }
