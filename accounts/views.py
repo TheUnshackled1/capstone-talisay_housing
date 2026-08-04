@@ -125,7 +125,7 @@ def login_view(request):
     else:
         form = LoginForm()
 
-    response = render(request, 'accounts/login.html', {
+    response = render(request, 'staff/login.html', {
         'form': form,
         'role': role,
         'role_display': role_display,

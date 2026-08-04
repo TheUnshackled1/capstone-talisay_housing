@@ -18,4 +18,4 @@ def home(request):
         'applications_count': applications_count,
     }
 
-    return render(request, 'index.html', context)
+    return render(request, 'staff/index.html', context)
