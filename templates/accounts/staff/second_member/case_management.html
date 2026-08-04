@@ -26,6 +26,18 @@
         text-align: center;
     }
 
+    .page-indicator {
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #ffffff;
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        border: 1px solid #1d4ed8;
+        border-radius: 0.5rem;
+        padding: 0.32rem 0.7rem;
+        letter-spacing: 0.02em;
+        box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+    }
+
     .monitoring-shell::before {
         content: '';
         position: absolute;
@@ -3755,7 +3767,7 @@
                 </svg>
                 <input type="text" id="searchInput" placeholder="Complainant, case #, description..."
                     value="{{ search_query }}">
-                <button type="button" class="cases-search-btn" onclick="applyCaseFilters()">Search</button>
+                <button type="button" class="cases-search-btn" onclick="applyCaseFilters()">🔍 Search</button>
             </div>
 
             <select id="typeFilter" class="cases-select filter-select">
@@ -3795,6 +3807,16 @@
                         {% include "accounts/field/includes/case_desk_unified_tbody.html" with show_time_ago=True can_delete_incident_logs=False %}
                     </tbody>
                 </table>
+            </div>
+            <div class="table-pagination" id="caseDeskPagination">
+                <div class="table-pagination-info" id="caseDeskPaginationInfo">
+                    Showing 1-{{ desk_rows|length }} of {{ desk_rows|length }}
+                </div>
+                <div class="table-pagination-controls">
+                    <button type="button" class="btn-page is-disabled" id="caseDeskPrevBtn" disabled>Prev</button>
+                    <span class="page-indicator" id="caseDeskPageIndicator">Page 1 of 1</span>
+                    <button type="button" class="btn-page is-disabled" id="caseDeskNextBtn" disabled>Next</button>
+                </div>
             </div>
         </div>
     </div>
