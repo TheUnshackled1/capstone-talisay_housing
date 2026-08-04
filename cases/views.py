@@ -286,10 +286,10 @@ def case_management_dashboard(request, position):
     case_templates = {
         'ronda': 'accounts/field/case_management.html',
         'field': 'accounts/field/case_management.html',
-        'second_member': 'accounts/staff/second_member/case_management.html',
-        'fourth_member': 'accounts/staff/second_member/case_management.html',
+        'second_member': 'staff/case_management.html',
+        'fourth_member': 'staff/case_management.html',
     }
-    template_name = case_templates.get(position, 'accounts/staff/second_member/case_management.html')
+    template_name = case_templates.get(position, 'staff/case_management.html')
 
     context = {
         **list_ctx,

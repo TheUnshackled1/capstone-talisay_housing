@@ -313,7 +313,7 @@ def dashboard_second_member(request):
         **analytics_data,
     }
 
-    return render(request, 'accounts/dashboard.html', context)
+    return render(request, 'staff/dashboard.html', context)
 
 
 def _report_month_bounds(year: int, month: int):
@@ -1323,7 +1323,7 @@ def dashboard_fourth_member(request):
         **analytics_data,
     }
 
-    return render(request, 'accounts/dashboard.html', context)
+    return render(request, 'staff/dashboard.html', context)
 
 
 @login_required
