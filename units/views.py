@@ -2696,6 +2696,9 @@ def blacklist_management(request, position):
             | models.Q(applicant__full_name__icontains=search_query)
             | models.Q(applicant__reference_number__icontains=search_query)
             | models.Q(applicant__barangay__name__icontains=search_query)
+            | models.Q(reason__icontains=search_query)
+            | models.Q(reason_details__icontains=search_query)
+            | models.Q(supporting_notes__icontains=search_query)
         )
 
     if reason_filter:
