@@ -1269,6 +1269,13 @@ def ready_for_form_queue(request, position):
 
     ready_queue_total = len(applicants_data)
 
+    queue_barangay_ids = {
+        a['applicant'].barangay_id
+        for a in applicants_data
+        if getattr(a['applicant'], 'barangay_id', None)
+    }
+    barangays = Barangay.objects.filter(id__in=queue_barangay_ids).order_by('name')
+
     selected_applicant_id = (request.GET.get('applicant_id') or '').strip()
     from_source = (request.GET.get('from') or '').strip()
     search = request.GET.get('search', '').strip()
@@ -1297,8 +1304,6 @@ def ready_for_form_queue(request, position):
             or search_lower in (a['applicant'].reference_number or '').lower()
             or search_lower in (getattr(getattr(a['applicant'], 'barangay', None), 'name', '') or '').lower()
         ]
-
-    barangays = Barangay.objects.all().order_by('name')
 
     selected_row_included = False
     selected_not_ready_reason = ''
