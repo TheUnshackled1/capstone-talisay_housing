@@ -1649,7 +1649,7 @@ def dashboard_field(request):
         'today_summary': today_summary,
         'today_summary_counts': today_summary_counts,
     }
-    return render(request, 'accounts/field/dashboard.html', context)
+    return render(request, 'field/dashboard.html', context)
 
 
 
