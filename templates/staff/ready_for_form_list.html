@@ -87,230 +87,232 @@
         </form>
     </div>
 
-    <div class="rfq-table-wrap">
-        <table class="rfq-table">
-            <thead>
-                <tr>
-                    <th class="col-num">#</th>
-                    <th class="col-applicant">Full Name</th>
-                    <th class="rfq-col-priority col-priority"
-                        title="Serve order: Option A first, then C, B, D; within each tier, earliest routing time first">
-                        Queue priority</th>
-                    <th class="rfq-col-proceeded col-encoded">Proceeded Time</th>
-                    <th class="rfq-col-status col-status">Status</th>
-                    <th class="rfq-col-actions col-actions">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for data in applicants_data %}
-                <tr data-applicant-id="{{ data.applicant.id }}">
-                    <td class="col-num" style="font-weight:700;color:#1e293b;text-align:center;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                    <td class="col-applicant">
-                        <div class="demographic-meta-card">
-                            <div class="complainant-name-card"
-                                style="display: inline-flex; align-items: center; gap: 0.45rem;">
-                                <span
-                                    class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
-                                    style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
-                                    data-full-name="{{ data.applicant.full_name }}"
-                                    data-tx-id="APP-{{ data.applicant.id|slice:':8' }}..."
-                                    data-ref-code="{{ data.applicant.reference_number|default:'' }}"
-                                    data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
-                                    data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
-                                    data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
-                            </div>
-                            {% if data.applicant.displacement_reason == 'danger_zone' or data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason == 'relocated' or data.applicant.displacement_reason == 'not_abc' %}
-                            <div class="demographic-meta-row" style="margin-top: 0.15rem;">
-                                {% if data.applicant.displacement_reason == 'danger_zone' %}
-                                <span class="priority-hsl-badge option-a">Danger Zone</span>
-                                {% elif data.applicant.displacement_reason == 'ejected' %}
-                                <span class="priority-hsl-badge option-b">Ejected</span>
-                                {% elif data.applicant.displacement_reason == 'relocated' %}
-                                <span class="priority-hsl-badge option-c">Relocated</span>
-                                {% elif data.applicant.displacement_reason == 'not_abc' %}
-                                <span class="priority-hsl-badge option-d">Other</span>
+    <div class="formal-table-card rfq-table-wrap">
+        <div class="formal-table-scroll">
+            <table class="formal-table compact applicants-table rfq-table">
+                <thead>
+                    <tr>
+                        <th class="col-num">#</th>
+                        <th class="col-applicant">Full Name</th>
+                        <th class="rfq-col-priority col-priority"
+                            title="Serve order: Option A first, then C, B, D; within each tier, earliest routing time first">
+                            Queue priority</th>
+                        <th class="rfq-col-proceeded col-encoded">Proceeded Time</th>
+                        <th class="rfq-col-status col-status">Status</th>
+                        <th class="rfq-col-actions col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in applicants_data %}
+                    <tr data-applicant-id="{{ data.applicant.id }}">
+                        <td class="col-num" style="font-weight:700;color:#1e293b;text-align:center;">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td class="col-applicant">
+                            <div class="demographic-meta-card">
+                                <div class="complainant-name-card"
+                                    style="display: inline-flex; align-items: center; gap: 0.45rem;">
+                                    <span
+                                        class="complainant-name applicant-name {% if data.applicant.displacement_reason == 'danger_zone' %}option-a{% elif data.applicant.displacement_reason == 'ejected' %}option-b{% elif data.applicant.displacement_reason == 'relocated' %}option-c{% elif data.applicant.displacement_reason == 'not_abc' %}option-d{% endif %}"
+                                        style="font-size: 0.8rem; font-weight: 700; cursor: pointer;"
+                                        data-full-name="{{ data.applicant.full_name }}"
+                                        data-tx-id="APP-{{ data.applicant.id|slice:':8' }}..."
+                                        data-ref-code="{{ data.applicant.reference_number|default:'' }}"
+                                        data-barangay="{{ data.applicant.barangay.name|default:'Not specified' }}"
+                                        data-dob="{{ data.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                        data-disp-reason="{{ data.applicant.displacement_reason|default:'' }}">{{ data.applicant.full_name }}</span>
+                                </div>
+                                {% if data.applicant.displacement_reason == 'danger_zone' or data.applicant.displacement_reason == 'ejected' or data.applicant.displacement_reason == 'relocated' or data.applicant.displacement_reason == 'not_abc' %}
+                                <div class="demographic-meta-row" style="margin-top: 0.15rem;">
+                                    {% if data.applicant.displacement_reason == 'danger_zone' %}
+                                    <span class="priority-hsl-badge option-a">Danger Zone</span>
+                                    {% elif data.applicant.displacement_reason == 'ejected' %}
+                                    <span class="priority-hsl-badge option-b">Ejected</span>
+                                    {% elif data.applicant.displacement_reason == 'relocated' %}
+                                    <span class="priority-hsl-badge option-c">Relocated</span>
+                                    {% elif data.applicant.displacement_reason == 'not_abc' %}
+                                    <span class="priority-hsl-badge option-d">Other</span>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
                             </div>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td class="rfq-col-priority col-priority">
-                        <div
-                            class="rfq-priority-stack {% if data.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif data.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif data.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif data.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
-                            {% if data.applicant.displacement_reason == 'danger_zone' %}
-                            <span class="rfq-priority-tier">1 · Option A</span>
-                            {% elif data.applicant.displacement_reason == 'relocated' %}
-                            <span class="rfq-priority-tier">2 · Option C</span>
-                            {% elif data.applicant.displacement_reason == 'ejected' %}
-                            <span class="rfq-priority-tier">3 · Option B</span>
-                            {% elif data.applicant.displacement_reason == 'not_abc' %}
-                            <span class="rfq-priority-tier">4 · Option D</span>
-                            {% else %}
-                            <span class="rfq-priority-tier rfq-priority-tier--muted">—</span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td class="rfq-col-proceeded col-encoded">
-                        {% if data.form_queue_routed_at %}
-                        <div class="date-cell-stack">
-                            <div class="date-main">
-                                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                                </svg>
-                                <span>{{ data.form_queue_routed_at|date:"M d, Y" }}</span>
+                        </td>
+                        <td class="rfq-col-priority col-priority">
+                            <div
+                                class="rfq-priority-stack {% if data.applicant.displacement_reason == 'danger_zone' %}stack-option-a{% elif data.applicant.displacement_reason == 'relocated' %}stack-option-c{% elif data.applicant.displacement_reason == 'ejected' %}stack-option-b{% elif data.applicant.displacement_reason == 'not_abc' %}stack-option-d{% else %}stack-option-unknown{% endif %}">
+                                {% if data.applicant.displacement_reason == 'danger_zone' %}
+                                <span class="rfq-priority-tier">1 · Option A</span>
+                                {% elif data.applicant.displacement_reason == 'relocated' %}
+                                <span class="rfq-priority-tier">2 · Option C</span>
+                                {% elif data.applicant.displacement_reason == 'ejected' %}
+                                <span class="rfq-priority-tier">3 · Option B</span>
+                                {% elif data.applicant.displacement_reason == 'not_abc' %}
+                                <span class="rfq-priority-tier">4 · Option D</span>
+                                {% else %}
+                                <span class="rfq-priority-tier rfq-priority-tier--muted">—</span>
+                                {% endif %}
                             </div>
-                            <div class="date-sub">
-                                {{ data.form_queue_routed_at|date:"g:i A" }} · <span
-                                    style="font-weight: 600; color: #475569;">{{ data.routedAgo|default:"—" }}</span>
+                        </td>
+                        <td class="rfq-col-proceeded col-encoded">
+                            {% if data.form_queue_routed_at %}
+                            <div class="date-cell-stack">
+                                <div class="date-main">
+                                    <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    <span>{{ data.form_queue_routed_at|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="date-sub">
+                                    {{ data.form_queue_routed_at|date:"g:i A" }} · <span
+                                        style="font-weight: 600; color: #475569;">{{ data.routedAgo|default:"—" }}</span>
+                                </div>
                             </div>
-                        </div>
-                        {% else %}
-                        <span class="rfq-proceeded-missing">—</span>
-                        {% endif %}
-                    </td>
-                    <td class="rfq-col-status col-status">
-                        {% if data.selected_out_of_queue %}
-                        <span class="rfq-chip followup">
-                            NEEDS FOLLOW-UP
-                        </span>
-                        {% elif data.application %}
-                        <span
-                            class="rfq-chip rfq-chip--status {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'completed' %}awarding{% else %}ready{% endif %}"
-                            title="{{ data.current_stage|escape }}">
-                            {% if data.application.status == 'draft' %}
-                            WAITING
-                            {% elif data.application.status == 'completed' %}
-                            FOR AWARDING
                             {% else %}
-                            {{ data.current_stage|upper }}
+                            <span class="rfq-proceeded-missing">—</span>
                             {% endif %}
-                        </span>
-                        {% else %}
-                        <span class="rfq-chip rfq-chip--status ready">VERIFIED</span>
-                        {% endif %}
-                    </td>
-                    <td class="rfq-col-actions col-actions">
-                        <div class="rfq-actions-inline">
-                            {% if 'generate_form' in data.user_actions %}
-                            <button type="button" class="rfq-action-btn rfq-action-slot-1 rfq-span-2"
-                                title="Generate Form — Create the application PDF and number; then use Scan / Upload in this row for the signed form."
-                                onclick="generateFormFromQueue('{{ data.applicant.id }}')">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    style="width:0.75rem;height:0.75rem;flex-shrink:0;">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                                </svg>
-                                Generate Form
-                            </button>
-                            <span class="rfq-action-placeholder rfq-action-placeholder--scan rfq-action-slot-2"
-                                title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed
-                                scan/upload after PDF</span>
-                            <span class="rfq-action-placeholder rfq-action-slot-3">—</span>
+                        </td>
+                        <td class="rfq-col-status col-status">
+                            {% if data.selected_out_of_queue %}
+                            <span class="rfq-chip followup">
+                                NEEDS FOLLOW-UP
+                            </span>
                             {% elif data.application %}
-                            <a class="rfq-action-btn generate-form-btn {% if not data.signed_application_view_url %}rfq-span-2{% endif %}"
-                                href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
-                                target="_blank" rel="noopener"
-                                title="Open PDF — Opens the generated application form in a new tab (blank/filled PDF)."
-                                aria-label="Open application form PDF">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
-                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                    <polyline points="15 3 21 3 21 9"></polyline>
-                                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                                </svg>
-                                Open PDF
-                            </a>
-                            {% if data.signed_application_view_url %}
-                            <a class="eligibility-view-doc-btn rfq-signed-application-view"
-                                href="{{ data.signed_application_view_url }}" target="_blank"
-                                rel="noopener noreferrer"
-                                title="Open signed application on file (read-only preview — same vault file as Scan/Upload)"
-                                aria-label="View signed application document">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" stroke-linejoin="round"
-                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                View
-                            </a>
-                            {% endif %}
-                            {% if data.application.status == 'draft' or data.application.status == 'completed' %}
-                            <button type="button" class="rfq-action-btn rfq-action-btn--scan"
-                                data-applicant-id="{{ data.applicant.id }}"
-                                data-ref-label="{{ data.applicant.reference_number|default:'' }}"
-                                data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
-                                data-application-id="{{ data.application.id }}"
-                                data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
-                                data-has-existing-doc="{% if data.signed_application_scan_present %}1{% else %}0{% endif %}"
-                                data-existing-doc-name="{{ data.signed_application_existing_file_label|escape }}"
-                                onclick="rfqScanSignedApplication(this)"
-                                title="Scan — Capture from scanner (TWAIN); saves signed application to the document vault (stay on this page)."
-                                aria-label="Scan signed application from scanner">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" stroke-linejoin="round"
-                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
-                                    <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-                                    <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-                                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-                                    <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-                                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                                </svg>
-                                Scan
-                            </button>
-                            <button type="button"
-                                class="rfq-action-btn rfq-action-btn--proceed-awarding"
-                                onclick="proceedToLotAwardingQueue('{{ data.application.id }}')" {% if not data.signed_application_scan_present %}disabled aria-disabled="true"{% endif %}
-                                title="{% if data.signed_application_scan_present %}Move this signed record to the lot-awarding queue{% else %}Upload or scan a signed application first — button stays disabled until the signed form is on file{% endif %}">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    style="width:0.75rem;height:0.75rem;flex-shrink:0;">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Awarding
-                            </button>
-                            {% endif %}
+                            <span
+                                class="rfq-chip rfq-chip--status {% if data.application.status == 'draft' %}pending{% elif data.application.status == 'completed' %}awarding{% else %}ready{% endif %}"
+                                title="{{ data.current_stage|escape }}">
+                                {% if data.application.status == 'draft' %}
+                                WAITING
+                                {% elif data.application.status == 'completed' %}
+                                FOR AWARDING
+                                {% else %}
+                                {{ data.current_stage|upper }}
+                                {% endif %}
+                            </span>
                             {% else %}
-                            <span class="rfq-actions-muted rfq-span-2">Not ready for form yet</span>
-                            {% if data.signed_application_view_url %}
-                            <a class="eligibility-view-doc-btn rfq-signed-application-view"
-                                href="{{ data.signed_application_view_url }}" target="_blank" rel="noopener noreferrer"
-                                title="Open signed application on file (read-only preview)"
-                                aria-label="View signed application document">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" stroke-linejoin="round"
-                                    style="width:0.7rem;height:0.7rem;flex-shrink:0;">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                View
-                            </a>
+                            <span class="rfq-chip rfq-chip--status ready">VERIFIED</span>
                             {% endif %}
+                        </td>
+                        <td class="rfq-col-actions col-actions">
+                            <div class="rfq-actions-inline">
+                                {% if 'generate_form' in data.user_actions %}
+                                <button type="button" class="rfq-action-btn rfq-action-slot-1 rfq-span-2"
+                                    title="Generate Form — Create the application PDF and number; then use Scan / Upload in this row for the signed form."
+                                    onclick="generateFormFromQueue('{{ data.applicant.id }}')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        style="width:0.75rem;height:0.75rem;flex-shrink:0;">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                                    </svg>
+                                    Generate Form
+                                </button>
+                                <span class="rfq-action-placeholder rfq-action-placeholder--scan rfq-action-slot-2"
+                                    title="Generate the application form first. Then this column shows scan / upload shortcuts to the document vault, like other rows.">Signed
+                                    scan/upload after PDF</span>
+                                <span class="rfq-action-placeholder rfq-action-slot-3">—</span>
+                                {% elif data.application %}
+                                <a class="rfq-action-btn generate-form-btn {% if not data.signed_application_view_url %}rfq-span-2{% endif %}"
+                                    href="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                    target="_blank" rel="noopener"
+                                    title="Open PDF — Opens the generated application form in a new tab (blank/filled PDF)."
+                                    aria-label="Open application form PDF">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                                    </svg>
+                                    Open PDF
+                                </a>
+                                {% if data.signed_application_view_url %}
+                                <a class="eligibility-view-doc-btn rfq-signed-application-view"
+                                    href="{{ data.signed_application_view_url }}" target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Open signed application on file (read-only preview — same vault file as Scan/Upload)"
+                                    aria-label="View signed application document">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    View
+                                </a>
+                                {% endif %}
+                                {% if data.application.status == 'draft' or data.application.status == 'completed' %}
+                                <button type="button" class="rfq-action-btn rfq-action-btn--scan"
+                                    data-applicant-id="{{ data.applicant.id }}"
+                                    data-ref-label="{{ data.applicant.reference_number|default:'' }}"
+                                    data-review-url="{% url 'applications:application_form_pdf' request.user.position data.applicant.id %}"
+                                    data-application-id="{{ data.application.id }}"
+                                    data-reference-number="{{ data.applicant.reference_number|default:''|escape }}"
+                                    data-has-existing-doc="{% if data.signed_application_scan_present %}1{% else %}0{% endif %}"
+                                    data-existing-doc-name="{{ data.signed_application_existing_file_label|escape }}"
+                                    onclick="rfqScanSignedApplication(this)"
+                                    title="Scan — Capture from scanner (TWAIN); saves signed application to the document vault (stay on this page)."
+                                    aria-label="Scan signed application from scanner">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                                    </svg>
+                                    Scan
+                                </button>
+                                <button type="button"
+                                    class="rfq-action-btn rfq-action-btn--proceed-awarding"
+                                    onclick="proceedToLotAwardingQueue('{{ data.application.id }}')" {% if not data.signed_application_scan_present %}disabled aria-disabled="true"{% endif %}
+                                    title="{% if data.signed_application_scan_present %}Move this signed record to the lot-awarding queue{% else %}Upload or scan a signed application first — button stays disabled until the signed form is on file{% endif %}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        style="width:0.75rem;height:0.75rem;flex-shrink:0;">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Awarding
+                                </button>
+                                {% endif %}
+                                {% else %}
+                                <span class="rfq-actions-muted rfq-span-2">Not ready for form yet</span>
+                                {% if data.signed_application_view_url %}
+                                <a class="eligibility-view-doc-btn rfq-signed-application-view"
+                                    href="{{ data.signed_application_view_url }}" target="_blank" rel="noopener noreferrer"
+                                    title="Open signed application on file (read-only preview)"
+                                    aria-label="View signed application document">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round"
+                                        style="width:0.7rem;height:0.7rem;flex-shrink:0;">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    View
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6"
+                            style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
+                            {% if search %}
+                            No applicants in this queue match your search.
+                            {% else %}
+                            No one is on this routed queue. Use <strong>Proceed to Form</strong> from <a
+                                href="{% url 'applications:applications_list' request.user.position %}">Application &amp;
+                                Evaluation</a> when an applicant is ready, or finish evaluation steps there first.
                             {% endif %}
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6"
-                        style="text-align:center;color:#64748b;font-size:0.75rem;padding:1.1rem 0.75rem;line-height:1.5;">
-                        {% if search %}
-                        No applicants in this queue match your search.
-                        {% else %}
-                        No one is on this routed queue. Use <strong>Proceed to Form</strong> from <a
-                            href="{% url 'applications:applications_list' request.user.position %}">Application &amp;
-                            Evaluation</a> when an applicant is ready, or finish evaluation steps there first.
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     <div class="rfq-pagination table-pagination">
         <span class="table-pagination-info">
