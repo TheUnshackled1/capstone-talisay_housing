@@ -53,23 +53,38 @@
             </div>
         </div>
 
-        <!-- Search Box -->
+        <!-- Search & Filter Form -->
         <form method="get" action="" class="search-box"
-            style="flex: 1; min-width: 200px; position: relative; display: flex;">
-            <svg class="search-icon"
-                style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..."
-                value="{{ search|default:'' }}" autocomplete="off"
-                style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
-            <button type="submit"
-                style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
-                onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
-                Search
-            </button>
+            style="flex: 1; min-width: 200px; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <select name="status" onchange="this.form.submit()" style="padding: 0.56rem 0.72rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none; background: white; color: #334155; font-weight: 500; cursor: pointer;">
+                <option value="all" {% if filter_status == 'all' %}selected{% endif %}>All Status</option>
+                <option value="verified" {% if filter_status == 'verified' %}selected{% endif %}>Verified</option>
+                <option value="waiting" {% if filter_status == 'waiting' %}selected{% endif %}>Waiting</option>
+                <option value="awarding" {% if filter_status == 'awarding' %}selected{% endif %}>For Awarding</option>
+                <option value="followup" {% if filter_status == 'followup' %}selected{% endif %}>Needs Follow-Up</option>
+            </select>
+            <select name="barangay" onchange="this.form.submit()" style="padding: 0.56rem 0.72rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none; background: white; color: #334155; font-weight: 500; cursor: pointer;">
+                <option value="all" {% if filter_barangay == 'all' %}selected{% endif %}>All Barangays</option>
+                {% for b in barangays %}
+                <option value="{{ b.id }}" {% if filter_barangay == b.id|stringformat:"s" or filter_barangay == b.name %}selected{% endif %}>{{ b.name }}</option>
+                {% endfor %}
+            </select>
+            <div style="flex: 1; min-width: 180px; position: relative; display: flex;">
+                <svg class="search-icon"
+                    style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..."
+                    value="{{ search|default:'' }}" autocomplete="off"
+                    style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+                <button type="submit"
+                    style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.35rem;"
+                    onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+                    🔍 Search
+                </button>
+            </div>
         </form>
     </div>
 

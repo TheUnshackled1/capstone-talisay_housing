@@ -15,7 +15,7 @@ from functools import wraps
 from urllib.parse import urlencode
 import logging
 from accounts.models import FIELD_DESK_POSITIONS
-from intake.models import Applicant, Archive, SMSLog as IntakeSMSLog
+from intake.models import Applicant, Archive, Barangay, SMSLog as IntakeSMSLog
 from intake import sms_workflow
 from documents.models import (
     Document,
@@ -1272,13 +1272,35 @@ def ready_for_form_queue(request, position):
     selected_applicant_id = (request.GET.get('applicant_id') or '').strip()
     from_source = (request.GET.get('from') or '').strip()
     search = request.GET.get('search', '').strip()
+    filter_status = request.GET.get('status', 'all').strip()
+    filter_barangay = request.GET.get('barangay', 'all').strip()
+
+    if filter_status == 'verified':
+        applicants_data = [a for a in applicants_data if not a.get('application') and not a.get('selected_out_of_queue')]
+    elif filter_status == 'waiting':
+        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft' and not a.get('selected_out_of_queue')]
+    elif filter_status == 'awarding':
+        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed' and not a.get('selected_out_of_queue')]
+    elif filter_status == 'followup':
+        applicants_data = [a for a in applicants_data if a.get('selected_out_of_queue')]
+
+    if filter_barangay and filter_barangay != 'all':
+        applicants_data = [
+            a for a in applicants_data
+            if str(getattr(getattr(a['applicant'], 'barangay', None), 'id', '')) == filter_barangay
+            or (getattr(getattr(a['applicant'], 'barangay', None), 'name', '') or '').lower() == filter_barangay.lower()
+        ]
+
     if search:
         search_lower = search.lower()
         applicants_data = [
             a for a in applicants_data
             if search_lower in a['applicant'].full_name.lower()
             or search_lower in (a['applicant'].reference_number or '').lower()
+            or search_lower in (getattr(getattr(a['applicant'], 'barangay', None), 'name', '') or '').lower()
         ]
+
+    barangays = Barangay.objects.all().order_by('name')
 
     selected_row_included = False
     selected_not_ready_reason = ''
@@ -1332,6 +1354,9 @@ def ready_for_form_queue(request, position):
         'page_obj': page_obj,
         'pagination_query': pagination_query,
         'search': search,
+        'filter_status': filter_status,
+        'filter_barangay': filter_barangay,
+        'barangays': barangays,
         'permissions': permissions,
         'user_position': request.user.position,
         'queue_total': ready_queue_total,
