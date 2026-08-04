@@ -2683,6 +2683,9 @@ def blacklist_management(request, position):
     Renders the blacklist ledger showing all permanently disqualified applicants.
     """
     search_query = request.GET.get('search', '').strip()
+    reason_filter = request.GET.get('reason', '').strip()
+    date_order = request.GET.get('date_order', 'newest').strip()
+    staff_filter = request.GET.get('staff', '').strip()
     
     queryset = Blacklist.objects.select_related('applicant', 'blacklisted_by')
     
@@ -2692,9 +2695,19 @@ def blacklist_management(request, position):
             | models.Q(applicant__last_name__icontains=search_query)
             | models.Q(applicant__full_name__icontains=search_query)
             | models.Q(applicant__reference_number__icontains=search_query)
+            | models.Q(applicant__barangay__name__icontains=search_query)
         )
+
+    if reason_filter:
+        queryset = queryset.filter(reason=reason_filter)
+
+    if staff_filter:
+        queryset = queryset.filter(blacklisted_by_id=staff_filter)
         
-    queryset = queryset.order_by('-blacklisted_at')
+    if date_order == 'oldest':
+        queryset = queryset.order_by('blacklisted_at')
+    else:
+        queryset = queryset.order_by('-blacklisted_at')
     
     import re
     # Clean and generate beautiful, highly readable administrative prose for all blacklist records
@@ -2747,18 +2760,35 @@ def blacklist_management(request, position):
             else:
                 item.formatted_details = "No additional staff remarks provided."
     
-    # We could add pagination here if needed, but keeping it simple for now
-    
     # Paginate — 10 records per page
     from django.core.paginator import Paginator
     paginator = Paginator(queryset, 10)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
+    # Build pagination query string preserving active filters
+    from urllib.parse import urlencode
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
+    pagination_query = query_params.urlencode()
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    staff_users = User.objects.filter(
+        blacklist_actions__isnull=False
+    ).distinct().order_by('first_name', 'last_name')
+
     context = {
         'blacklists': page_obj,
         'page_obj': page_obj,
         'search': search_query,
+        'reason_filter': reason_filter,
+        'date_order': date_order,
+        'staff_filter': staff_filter,
+        'reason_choices': Blacklist.REASON_CHOICES,
+        'staff_users': staff_users,
+        'pagination_query': pagination_query,
     }
     return render(request, 'staff/blacklist_management.html', context)
 

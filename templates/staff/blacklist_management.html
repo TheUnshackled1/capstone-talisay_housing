@@ -19,34 +19,75 @@
         </h3>
     </div>
 
-    <!-- Controls Bar -->
-    <div class="controls-bar" style="margin-bottom: 0.75rem;">
-        <!-- Total List KPI Chip Card -->
-        <div class="summary-chip-card summary-chip-card--rose" style="padding: 0.35rem 0.7rem; align-items: center;">
-            <svg style="width: 19px; height: 19px; color: #dc2626;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- Controls Bar (TOTAL BLACKLISTED badge + Search Box + Filters) -->
+    <div class="controls-bar"
+        style="display: flex; gap: 0.75rem; margin-bottom: 0.55rem; flex-wrap: wrap; align-items: center; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
+        
+        <!-- Total Count Badge -->
+        <div class="summary-chip-card summary-chip-card--rose" style="border: 1px solid #fecaca; background: #fef2f2; border-radius: 0.5rem; padding: 0.4rem 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg style="width: 20px; height: 20px; color: #dc2626;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="15" y1="9" x2="9" y2="15"></line>
                 <line x1="9" y1="9" x2="15" y2="15"></line>
             </svg>
-            <div style="line-height: 1.2;">
-                <p style="font-size: 0.6rem; color: #991b1b; margin: 0; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em;">TOTAL BLACKLISTED</p>
-                <p style="font-size: 1.15rem; font-weight: 700; color: #dc2626; margin: 0; display: flex; align-items: baseline; gap: 0.22rem;">
-                    {{ blacklists|length }}
-                    <span style="font-size: 0.68rem; font-weight: 500; color: #991b1b; text-transform: lowercase;">applicant{{ blacklists|length|pluralize }}</span>
+            <div>
+                <p style="font-size: 0.625rem; color: #991b1b; margin: 0; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em;">TOTAL BLACKLISTED</p>
+                <p style="font-size: 1.25rem; font-weight: 700; color: #dc2626; margin: 0; display: flex; align-items: baseline; gap: 0.25rem;">
+                    {{ page_obj.paginator.count|default:0 }}
+                    <span style="font-size: 0.7rem; font-weight: 500; color: #991b1b; text-transform: lowercase;">applicant{{ page_obj.paginator.count|pluralize }}</span>
                 </p>
             </div>
         </div>
 
-        <!-- Search Form -->
-        <form method="get" class="search-box bl-search-form" id="blacklistSearchForm">
-            <svg class="search-icon bl-search-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input type="search" name="search" placeholder="Name, ref #, barangay..." value="{{ search|default_if_none:'' }}" autocomplete="off" class="bl-search-input">
-            <button type="submit" class="bl-search-btn">
-                🔍 Search
-            </button>
+        <!-- Search & Filter Form -->
+        <form method="get" action="" class="search-box"
+            style="flex: 1; min-width: 200px; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 180px; position: relative; display: flex;">
+                <svg class="search-icon"
+                    style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="search" name="search" class="search-input" placeholder="Name, ref #, barangay..."
+                    value="{{ search|default:'' }}" autocomplete="off"
+                    style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+                <button type="submit"
+                    style="padding: 0 1.25rem; background: #dc2626; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.35rem;"
+                    onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">
+                    🔍 Search
+                </button>
+            </div>
+
+            <!-- Reason Filter -->
+            <select name="reason" onchange="this.form.submit()" style="padding: 0.56rem 0.72rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none; background: white; color: #334155; font-weight: 500; cursor: pointer;">
+                <option value="">Reason: All</option>
+                {% for key, label in reason_choices %}
+                <option value="{{ key }}" {% if reason_filter == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Date Filter -->
+            <select name="date_order" onchange="this.form.submit()" style="padding: 0.56rem 0.72rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none; background: white; color: #334155; font-weight: 500; cursor: pointer;">
+                <option value="newest" {% if date_order != 'oldest' %}selected{% endif %}>Date: Newest First</option>
+                <option value="oldest" {% if date_order == 'oldest' %}selected{% endif %}>Date: Oldest First</option>
+            </select>
+
+            <!-- Staff Filter -->
+            {% if staff_users %}
+            <select name="staff" onchange="this.form.submit()" style="padding: 0.56rem 0.72rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.78rem; outline: none; background: white; color: #334155; font-weight: 500; cursor: pointer;">
+                <option value="">Staff: All Handled</option>
+                {% for st in staff_users %}
+                <option value="{{ st.id }}" {% if staff_filter == st.id|stringformat:"s" %}selected{% endif %}>{{ st.get_full_name|default:st.username }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            {% if search or reason_filter or staff_filter or date_order == 'oldest' %}
+            <a href="?" class="btn-clear-filters" style="font-size: 0.75rem; color: #dc2626; font-weight: 600; text-decoration: none; padding: 0.56rem 0.75rem; border-radius: 0.5rem; background: #fef2f2; border: 1px solid #fecaca; display: inline-flex; align-items: center;" title="Clear active filters">
+                Clear
+            </a>
+            {% endif %}
         </form>
     </div>
 
@@ -165,13 +206,13 @@
         </span>
         <div class="bl-pagination-controls">
             {% if page_obj.has_previous %}
-                <a class="btn-bl-page" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Prev</a>
+                <a class="btn-bl-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
             {% else %}
                 <span class="btn-bl-page is-disabled">Prev</span>
             {% endif %}
             <span class="bl-page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
-                <a class="btn-bl-page" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                <a class="btn-bl-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
             {% else %}
                 <span class="btn-bl-page is-disabled">Next</span>
             {% endif %}
