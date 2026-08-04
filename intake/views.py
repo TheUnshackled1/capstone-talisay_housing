@@ -2164,6 +2164,8 @@ def archive_list(request, position):
         records.append({
             'id': str(archive.id),
             'dateTime': date_time_display,
+            'archivedDateOnly': local_archived_at.strftime('%b %d, %Y') if archive.archived_at else '—',
+            'archivedTimeOnly': local_archived_at.strftime('%I:%M %p') if archive.archived_at else '',
             'proceededAgo': _relative_time_ago(archive.archived_at) if archive.archived_at else '—',
             'handoffAt': handoff_at_detail,
             'referenceNumber': archive.reference_number_snapshot,
