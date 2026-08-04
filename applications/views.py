@@ -1276,13 +1276,11 @@ def ready_for_form_queue(request, position):
     filter_barangay = request.GET.get('barangay', 'all').strip()
 
     if filter_status == 'verified':
-        applicants_data = [a for a in applicants_data if not a.get('application') and not a.get('selected_out_of_queue')]
+        applicants_data = [a for a in applicants_data if not a.get('application')]
     elif filter_status == 'waiting':
-        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft' and not a.get('selected_out_of_queue')]
+        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft']
     elif filter_status == 'awarding':
-        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed' and not a.get('selected_out_of_queue')]
-    elif filter_status == 'followup':
-        applicants_data = [a for a in applicants_data if a.get('selected_out_of_queue')]
+        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed']
 
     if filter_barangay and filter_barangay != 'all':
         applicants_data = [
