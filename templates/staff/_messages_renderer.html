@@ -1,12 +1,13 @@
 {% if messages %}
 {% for message in messages %}
     {% if 'Successfully signed in as' in message.message or 'Welcome back' in message.message %}
-        <!-- SweetAlert2 Login Modal — shown on sign-in only -->
+        <!-- XSS-safe message payload — must be outside <script> block -->
+        {{ message.message|json_script:"_login_msg" }}
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
         <script>
             (function () {
-                var _msg = {{ message.message|json_script:"_" }}; // XSS-safe JSON
-                try { _msg = JSON.parse(document.getElementById('_').textContent); } catch(e) {}
+                var _msg = '';
+                try { _msg = JSON.parse(document.getElementById('_login_msg').textContent); } catch(e) {}
                 function _showLoginSwal() {
                     if (typeof Swal === 'undefined') { setTimeout(_showLoginSwal, 100); return; }
                     Swal.fire({
