@@ -1,24 +1,43 @@
 {% if messages %}
 {% for message in messages %}
     {% if 'Successfully signed in as' in message.message or 'Welcome back' in message.message %}
-        <!-- XSS-safe message payload — must be outside <script> block -->
+        <!-- XSS-safe message payload — MUST be outside <script> block (json_script emits its own <script> tag) -->
         {{ message.message|json_script:"_login_msg" }}
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
         <script>
             (function () {
+                /* Guard: only fire once even if this block is somehow rendered twice */
+                if (window._loginSwalFired) return;
+                window._loginSwalFired = true;
+
+                /* Read message safely from DOM element (never inline in JS) */
                 var _msg = '';
-                try { _msg = JSON.parse(document.getElementById('_login_msg').textContent); } catch(e) {}
+                try {
+                    var _el = document.getElementById('_login_msg');
+                    if (_el) _msg = JSON.parse(_el.textContent);
+                } catch(e) {}
+
+                /* Fallback text if JSON parse failed or element missing */
+                var _fallback = '{{ message|escapejs }}';
+
+                /* Retry until Swal is ready — max 30 attempts (~3 s) */
+                var _retries = 0;
                 function _showLoginSwal() {
-                    if (typeof Swal === 'undefined') { setTimeout(_showLoginSwal, 100); return; }
+                    if (typeof Swal === 'undefined') {
+                        if (++_retries > 30) return; /* Give up after 3 s */
+                        setTimeout(_showLoginSwal, 100);
+                        return;
+                    }
                     Swal.fire({
                         title: 'Welcome back!',
-                        text: typeof _msg === 'string' ? _msg : '{{ message|escapejs }}',
+                        text: typeof _msg === 'string' && _msg ? _msg : _fallback,
                         icon: 'success',
                         timer: 3000,
                         timerProgressBar: true,
                         showConfirmButton: false
                     });
                 }
+
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', _showLoginSwal);
                 } else {
