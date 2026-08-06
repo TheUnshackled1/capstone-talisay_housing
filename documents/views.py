@@ -636,6 +636,8 @@ def document_management(request, position):
             'household_members': applicant.household_member_count,
             'lot_assignment': lot_info,
             'doc_count': doc_count,
+            'missing_doc_count': max(0, 8 - doc_count),
+            'doc_pct_8': min(100, int((doc_count / 8) * 100)) if doc_count > 0 else 0,
             'total_docs': total_docs,
             'doc_percentage': int((doc_count / total_docs) * 100) if total_docs > 0 else 0,
             'phase_a_verified_docs': phase_a_verified_docs,

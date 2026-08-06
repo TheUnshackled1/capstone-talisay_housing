@@ -204,16 +204,38 @@
                     </td>
                     <td class="col-actions" style="vertical-align: middle;">
                         <div style="display:inline-flex; align-items:center; gap:0.3rem; position:relative;">
-                            <!-- Primary action -->
+                            <!-- Primary Action: Progress Indicator Button -->
                             <button type="button"
-                                class="dm-action-btn dm-action-btn--view"
+                                class="dm-prog-btn dm-prog-btn--{% if applicant.doc_count >= 8 %}complete{% elif applicant.doc_count > 0 %}partial{% else %}pending{% endif %}"
                                 data-applicant-id="{{ applicant.id }}"
                                 onclick="openVaultDrawer(this.dataset.applicantId)"
-                                title="Open document checklist for {{ applicant.full_name }}">
-                                <svg class="dm-action-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                                </svg>
-                                View Documents
+                                title="View document checklist for {{ applicant.full_name }}">
+                                
+                                <div class="dm-prog-left">
+                                    <div class="dm-prog-bar-track">
+                                        <div class="dm-prog-bar-fill" style="width: {{ applicant.doc_pct_8 }}%;"></div>
+                                    </div>
+                                    <div class="dm-prog-labels">
+                                        <span class="dm-prog-fraction">{{ applicant.doc_count }}/8</span>
+                                        <span class="dm-prog-status">
+                                            {% if applicant.doc_count >= 8 %}
+                                                Complete
+                                            {% elif applicant.doc_count > 0 %}
+                                                Missing {{ applicant.missing_doc_count }}
+                                            {% else %}
+                                                Missing 8
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="dm-prog-action-badge">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <span>View</span>
+                                </div>
                             </button>
                             <!-- ⋮ Overflow menu trigger -->
                             <div class="dm-overflow-wrap" style="position:relative;">

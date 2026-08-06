@@ -2024,4 +2024,169 @@
 .documents-table-container.is-loading .dm-table-spinner {
     display: block;
 }
+
+/* Progress Bar Action Button (Replaces plain View Documents button) */
+.dm-prog-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.42rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+    text-align: left;
+    min-width: 195px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.dm-prog-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dm-prog-btn:active {
+    transform: scale(0.98);
+}
+
+.dm-prog-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 105px;
+}
+
+.dm-prog-bar-track {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.dm-prog-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.dm-prog-labels {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    font-size: 0.68rem;
+    line-height: 1;
+}
+
+.dm-prog-fraction {
+    font-weight: 800;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.dm-prog-status {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.dm-prog-action-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.dm-prog-action-badge svg {
+    width: 0.78rem;
+    height: 0.78rem;
+}
+
+/* Variant: Complete (Green) */
+.dm-prog-btn--complete {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+.dm-prog-btn--complete:hover {
+    border-color: #86efac;
+    background: #dcfce7;
+}
+.dm-prog-btn--complete .dm-prog-bar-fill {
+    background: #16a34a;
+}
+.dm-prog-btn--complete .dm-prog-fraction {
+    color: #14532d;
+}
+.dm-prog-btn--complete .dm-prog-status {
+    color: #15803d;
+}
+.dm-prog-btn--complete .dm-prog-action-badge {
+    background: #15803d;
+    color: #ffffff;
+}
+.dm-prog-btn--complete:hover .dm-prog-action-badge {
+    background: #166534;
+}
+
+/* Variant: Partial / Missing (Amber/Orange) */
+.dm-prog-btn--partial {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+.dm-prog-btn--partial:hover {
+    border-color: #fcd34d;
+    background: #fef3c7;
+}
+.dm-prog-btn--partial .dm-prog-bar-fill {
+    background: #d97706;
+}
+.dm-prog-btn--partial .dm-prog-fraction {
+    color: #78350f;
+}
+.dm-prog-btn--partial .dm-prog-status {
+    color: #b45309;
+}
+.dm-prog-btn--partial .dm-prog-action-badge {
+    background: #d97706;
+    color: #ffffff;
+}
+.dm-prog-btn--partial:hover .dm-prog-action-badge {
+    background: #b45309;
+}
+
+/* Variant: Pending / Empty (Red) */
+.dm-prog-btn--pending {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+.dm-prog-btn--pending:hover {
+    border-color: #fca5a5;
+    background: #ffe4e4;
+}
+.dm-prog-btn--pending .dm-prog-bar-fill {
+    background: #ef4444;
+}
+.dm-prog-btn--pending .dm-prog-fraction {
+    color: #7f1d1d;
+}
+.dm-prog-btn--pending .dm-prog-status {
+    color: #dc2626;
+}
+.dm-prog-btn--pending .dm-prog-action-badge {
+    background: #dc2626;
+    color: #ffffff;
+}
+.dm-prog-btn--pending:hover .dm-prog-action-badge {
+    background: #b91c1c;
+}
 
