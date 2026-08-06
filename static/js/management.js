@@ -1569,4 +1569,85 @@ document.addEventListener('click', function(e) {
         closeAllVaultSvcMenus();
     }
 }, true);
+
+/* ─────────────────────────────────────────
+   SMOOTH FILTER TRANSITIONS
+   Fires on: ctrl-select change, tab click, search submit
+───────────────────────────────────────── */
+(function () {
+    'use strict';
+
+    function getTableContainer() {
+        return document.getElementById('documentsTableContainer');
+    }
+
+    function showLoadingState() {
+        var tc = getTableContainer();
+        if (tc) tc.classList.add('is-loading');
+        // Also dim the filter controls slightly
+        document.querySelectorAll('.ctrl-select').forEach(function (s) {
+            s.classList.add('is-changing');
+        });
+        document.querySelectorAll('.dm-filter-tab').forEach(function (a) {
+            a.style.pointerEvents = 'none';
+            a.style.opacity = '0.6';
+        });
+    }
+
+    // ── Dropdowns (ctrl-select) ──
+    document.querySelectorAll('.ctrl-select').forEach(function (sel) {
+        // Store original onchange so we can wrap it
+        var original = sel.onchange;
+        sel.onchange = null;
+        sel.addEventListener('change', function () {
+            showLoadingState();
+            // Small delay so the CSS transition renders before the page freeze
+            setTimeout(function () {
+                var form = document.getElementById('documentsSearchForm');
+                if (form) {
+                    form.submit();
+                } else if (original) {
+                    original.call(sel);
+                }
+            }, 120);
+        });
+    });
+
+    // ── Doc-status tab links ──
+    document.querySelectorAll('.dm-filter-tab').forEach(function (tab) {
+        tab.addEventListener('click', function (e) {
+            e.preventDefault();
+            var href = tab.getAttribute('href');
+            if (!href) return;
+            // Press scale — already done via CSS :active, but JS gives us
+            // fine-grained control before the navigate
+            tab.style.transform = 'scale(0.96)';
+            tab.style.opacity   = '0.75';
+            showLoadingState();
+            setTimeout(function () {
+                window.location.href = href;
+            }, 110);
+        });
+    });
+
+    // ── Search form submit ──
+    var searchForm = document.getElementById('documentsSearchForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function () {
+            showLoadingState();
+        });
+    }
+
+    // ── Page-out transition when navigating away (pagination, etc.) ──
+    document.querySelectorAll('.btn-page:not(.is-disabled)').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            var href = btn.getAttribute('href');
+            if (!href) return;
+            e.preventDefault();
+            showLoadingState();
+            setTimeout(function () { window.location.href = href; }, 100);
+        });
+    });
+
+}());
 

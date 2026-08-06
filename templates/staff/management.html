@@ -105,22 +105,26 @@
     <div style="display: flex; gap: 0.35rem; margin-bottom: 0.65rem; padding: 0 0.1rem; flex-wrap: wrap;">
         {% with sp=search_query sb=selected_barangay sf=stage_filter so=sort_order %}
         <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=all"
-            style="display:inline-flex; align-items:center; gap:0.35rem; padding: 0.38rem 0.9rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-decoration: none; transition: all 0.15s ease; border: 1px solid {% if doc_status_filter == 'all' or not doc_status_filter %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+            class="dm-filter-tab {% if doc_status_filter == 'all' or not doc_status_filter %}dm-filter-tab--active-green{% endif %}"
+            style="border-color: {% if doc_status_filter == 'all' or not doc_status_filter %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
             All
             <span style="background: {% if doc_status_filter == 'all' or not doc_status_filter %}#15803d; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.all }}</span>
         </a>
         <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=complete"
-            style="display:inline-flex; align-items:center; gap:0.35rem; padding: 0.38rem 0.9rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-decoration: none; transition: all 0.15s ease; border: 1px solid {% if doc_status_filter == 'complete' %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+            class="dm-filter-tab"
+            style="border-color: {% if doc_status_filter == 'complete' %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
             ✓ Complete
             <span style="background: {% if doc_status_filter == 'complete' %}#15803d; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.complete }}</span>
         </a>
         <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=partial"
-            style="display:inline-flex; align-items:center; gap:0.35rem; padding: 0.38rem 0.9rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-decoration: none; transition: all 0.15s ease; border: 1px solid {% if doc_status_filter == 'partial' %}#b45309; background: #fef3c7; color: #92400e;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+            class="dm-filter-tab"
+            style="border-color: {% if doc_status_filter == 'partial' %}#b45309; background: #fef3c7; color: #92400e;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
             ⚠ Incomplete
             <span style="background: {% if doc_status_filter == 'partial' %}#b45309; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.partial }}</span>
         </a>
         <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=pending"
-            style="display:inline-flex; align-items:center; gap:0.35rem; padding: 0.38rem 0.9rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-decoration: none; transition: all 0.15s ease; border: 1px solid {% if doc_status_filter == 'pending' %}#dc2626; background: #fef2f2; color: #7f1d1d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+            class="dm-filter-tab"
+            style="border-color: {% if doc_status_filter == 'pending' %}#dc2626; background: #fef2f2; color: #7f1d1d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
             ✗ Pending
             <span style="background: {% if doc_status_filter == 'pending' %}#dc2626; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.pending }}</span>
         </a>
@@ -129,7 +133,8 @@
 
 
     <!-- Documents List Table -->
-    <div class="documents-table-container">
+    <div class="documents-table-container" id="documentsTableContainer">
+        <div class="dm-table-spinner" id="dmTableSpinner"></div>
         <table class="documents-table">
             <thead>
                 <tr>
