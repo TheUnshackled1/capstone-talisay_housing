@@ -1596,19 +1596,12 @@ document.addEventListener('click', function(e) {
 
     // ── Dropdowns (ctrl-select) ──
     document.querySelectorAll('.ctrl-select').forEach(function (sel) {
-        // Store original onchange so we can wrap it
-        var original = sel.onchange;
-        sel.onchange = null;
         sel.addEventListener('change', function () {
             showLoadingState();
             // Small delay so the CSS transition renders before the page freeze
             setTimeout(function () {
                 var form = document.getElementById('documentsSearchForm');
-                if (form) {
-                    form.submit();
-                } else if (original) {
-                    original.call(sel);
-                }
+                if (form) form.submit();
             }, 120);
         });
     });

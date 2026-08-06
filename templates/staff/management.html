@@ -51,8 +51,6 @@
         <!-- Connected Search + Button -->
         <form method="get" id="documentsSearchForm" style="flex: 1; min-width: 200px; position: relative; display: flex;">
             {% if doc_status_filter and doc_status_filter != 'all' %}<input type="hidden" name="doc_status" value="{{ doc_status_filter }}">{% endif %}
-            {% if stage_filter and stage_filter != 'all' %}<input type="hidden" name="stage" value="{{ stage_filter }}">{% endif %}
-            {% if sort_order and sort_order != 'default' %}<input type="hidden" name="sort" value="{{ sort_order }}">{% endif %}
             <svg style="position: absolute; left: 0.72rem; top: 50%; transform: translateY(-50%); width: 0.9rem; height: 0.9rem; color: #94a3b8; z-index: 2; pointer-events:none;"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -71,8 +69,7 @@
 
         <!-- Barangay Filter -->
         {% if barangays %}
-        <select class="ctrl-select filter-select" id="filterBarangay" name="barangay" form="documentsSearchForm"
-            onchange="document.getElementById('documentsSearchForm')?.submit()">
+        <select class="ctrl-select filter-select" id="filterBarangay" name="barangay" form="documentsSearchForm">
             <option value="all" {% if selected_barangay == 'all' or not selected_barangay %}selected{% endif %}>All Barangays</option>
             {% for brgy in barangays %}
             <option value="{{ brgy }}" {% if selected_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
@@ -81,8 +78,7 @@
         {% endif %}
 
         <!-- Stage Filter -->
-        <select name="stage" form="documentsSearchForm" id="filterStage" class="ctrl-select"
-            onchange="document.getElementById('documentsSearchForm')?.submit()">
+        <select name="stage" form="documentsSearchForm" id="filterStage" class="ctrl-select">
             <option value="all" {% if stage_filter == 'all' or not stage_filter %}selected{% endif %}>All Stages</option>
             <option value="awarded" {% if stage_filter == 'awarded' %}selected{% endif %}>Awarded</option>
             <option value="ready_for_awarding" {% if stage_filter == 'ready_for_awarding' %}selected{% endif %}>Ready for Awarding</option>
@@ -91,8 +87,7 @@
         </select>
 
         <!-- Sort -->
-        <select name="sort" form="documentsSearchForm" id="filterSort" class="ctrl-select"
-            onchange="document.getElementById('documentsSearchForm')?.submit()">
+        <select name="sort" form="documentsSearchForm" id="filterSort" class="ctrl-select">
             <option value="default" {% if sort_order == 'default' or not sort_order %}selected{% endif %}>Sort: Default</option>
             <option value="name_asc" {% if sort_order == 'name_asc' %}selected{% endif %}>Name A → Z</option>
             <option value="name_desc" {% if sort_order == 'name_desc' %}selected{% endif %}>Name Z → A</option>
