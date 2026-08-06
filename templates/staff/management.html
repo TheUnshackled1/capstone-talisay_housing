@@ -277,12 +277,12 @@
     </div>
 
     {% if applicants_total %}
-    <div class="dm-pagination">
-        <span class="dm-pagination-info">
+    <div class="table-pagination" id="dmPagination">
+        <span class="table-pagination-info" id="dmPaginationInfo">
             {% if search_query %}Matching &ldquo;{{ search_query }}&rdquo; — {% endif %}
-            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ applicants_total }} applicant{{ applicants_total|pluralize }}
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ applicants_total }}
         </span>
-        <div class="dm-pagination-controls">
+        <div class="table-pagination-controls">
             {% if page_obj.has_previous %}
             <a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>
             {% else %}
