@@ -152,13 +152,47 @@
     }
     .table-pagination-controls { display: inline-flex; align-items: center; gap: 0.4rem; }
     .btn-page {
-        border: 1px solid #d1d5db; background: #fff; color: #334155;
-        border-radius: 6px; padding: 0.35rem 0.65rem; min-height: 28px;
-        font-size: 0.68rem; font-weight: 600; text-decoration: none;
-        transition: all 0.18s ease; cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border: none;
+        border-radius: 0.4rem;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        color: #ffffff;
+        font-size: 0.67rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 0.3rem 0.75rem;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        transition: all 0.15s ease;
+        text-decoration: none;
     }
-    .btn-page:hover { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; }
-    .page-indicator { font-weight: 600; color: #475569; font-size: 0.68rem; }
+    .btn-page:hover:not(.is-disabled) {
+        background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+    .btn-page.is-disabled {
+        background: #e2e8f0;
+        color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+        pointer-events: none;
+    }
+    .page-indicator {
+        font-size: 0.67rem;
+        font-weight: 700;
+        color: #ffffff;
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        border: 1px solid #1d4ed8;
+        border-radius: 0.5rem;
+        padding: 0.32rem 0.7rem;
+        letter-spacing: 0.02em;
+        box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+    }
 
     /* ── Staff avatar — matching Evaluation & Eligibility ── */
     .handled-by-avatar {
@@ -833,9 +867,9 @@
             {% if page_obj.paginator.count %}Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} archived record{{ page_obj.paginator.count|pluralize }}{% else %}Showing 0–0 of 0{% endif %}
         </span>
         <div class="table-pagination-controls">
-            {% if page_obj.has_previous %}<a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Prev</span>{% endif %}
+            {% if page_obj.has_previous %}<a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Prev</a>{% else %}<span class="btn-page is-disabled">Prev</span>{% endif %}
             <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% else %}<span class="btn-page" style="opacity:0.45; pointer-events:none;">Next</span>{% endif %}
+            {% if page_obj.has_next %}<a class="btn-page" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% else %}<span class="btn-page is-disabled">Next</span>{% endif %}
         </div>
     </div>
 </div>
