@@ -1588,7 +1588,7 @@ document.addEventListener('click', function(e) {
         document.querySelectorAll('.ctrl-select').forEach(function (s) {
             s.classList.add('is-changing');
         });
-        document.querySelectorAll('.dm-filter-tab').forEach(function (a) {
+        document.querySelectorAll('.dm-stage-link').forEach(function (a) {
             a.style.pointerEvents = 'none';
             a.style.opacity = '0.6';
         });
@@ -1606,8 +1606,8 @@ document.addEventListener('click', function(e) {
         });
     });
 
-    // ── Doc-status tab links ──
-    document.querySelectorAll('.dm-filter-tab').forEach(function (tab) {
+    // ── Doc-status & Stage tab links ──
+    document.querySelectorAll('.dm-stage-link').forEach(function (tab) {
         tab.addEventListener('click', function (e) {
             e.preventDefault();
             var href = tab.getAttribute('href');

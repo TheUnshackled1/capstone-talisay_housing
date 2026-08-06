@@ -31,99 +31,140 @@
         </h3>
     </div>
 
-    <!-- Controls Bar — matches FORM GENERATION frame style -->
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.7rem; padding: 0.6rem 0.85rem; margin-bottom: 0.65rem; display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center;">
-
-        <!-- KPI chip: Total Documents -->
-        <div class="docs-kpi docs-kpi--total" style="flex-shrink:0;">
-            <span class="docs-kpi-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </span>
-            <div>
-                <p class="docs-kpi-label">TOTAL DOCUMENTS</p>
-                <p class="docs-kpi-value" style="display:flex; align-items:baseline; gap:0.2rem;">{{ total_documents|default:"0" }}<span style="font-size:0.65rem; font-weight:500; color:#15803d; text-transform:lowercase;">file{{ total_documents|pluralize }}</span></p>
-            </div>
-        </div>
-
-        <!-- Divider -->
-        <div style="width:1px; height:1.8rem; background:#e2e8f0; flex-shrink:0;"></div>
-
-        <!-- Connected Search + Button -->
-        <form method="get" id="documentsSearchForm" style="flex: 1; min-width: 200px; position: relative; display: flex;">
+    <!-- Primary Navigation: Search & Stage Tabs -->
+    <div style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 0.65rem; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap;">
+        <!-- Search Bar -->
+        <form method="get" id="documentsSearchForm" style="flex: 0 0 320px; position: relative; display: flex; align-self: center;">
             {% if doc_status_filter and doc_status_filter != 'all' %}<input type="hidden" name="doc_status" value="{{ doc_status_filter }}">{% endif %}
+            {% if stage_filter and stage_filter != 'all' %}<input type="hidden" name="stage" value="{{ stage_filter }}">{% endif %}
             <svg style="position: absolute; left: 0.72rem; top: 50%; transform: translateY(-50%); width: 0.9rem; height: 0.9rem; color: #94a3b8; z-index: 2; pointer-events:none;"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
             <input type="search" name="search" class="search-input" id="searchInput"
-                placeholder="Search applicant, reference number, or document type..."
+                placeholder="Search applicants..."
                 value="{{ search_query|default:'' }}" autocomplete="off"
-                style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.2rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+                style="flex: 1; padding: 0.52rem 0.72rem 0.52rem 2.2rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
             <button type="submit"
-                style="padding: 0 1.2rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space:nowrap;"
+                style="padding: 0 0.9rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s ease; white-space:nowrap;"
                 onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
-                🔍 Search
+                Search
             </button>
         </form>
 
-        <!-- Barangay Filter -->
-        {% if barangays %}
-        <select class="ctrl-select filter-select" id="filterBarangay" name="barangay" form="documentsSearchForm">
-            <option value="all" {% if selected_barangay == 'all' or not selected_barangay %}selected{% endif %}>All Barangays</option>
-            {% for brgy in barangays %}
-            <option value="{{ brgy }}" {% if selected_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
-            {% endfor %}
-        </select>
-        {% endif %}
+        <!-- Stage Tabs -->
+        <div style="display: flex; gap: 1.2rem; overflow-x: auto; padding-bottom: 1px; margin-bottom: -1px; scrollbar-width: none; flex: 1;">
+            {% with sp=search_query sb=selected_barangay dsf=doc_status_filter so=sort_order %}
+            
+            <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if dsf and dsf != 'all' %}doc_status={{ dsf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}stage=all"
+               class="dm-stage-tab {% if stage_filter == 'all' or not stage_filter %}is-active{% endif %} dm-stage-link">
+                All <span class="tab-count">{{ stage_counts.all }}</span>
+            </a>
+            
+            <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if dsf and dsf != 'all' %}doc_status={{ dsf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}stage=awarded"
+               class="dm-stage-tab {% if stage_filter == 'awarded' %}is-active{% endif %} dm-stage-link">
+                Awarded <span class="tab-count">{{ stage_counts.awarded }}</span>
+            </a>
 
-        <!-- Stage Filter -->
-        <select name="stage" form="documentsSearchForm" id="filterStage" class="ctrl-select">
-            <option value="all" {% if stage_filter == 'all' or not stage_filter %}selected{% endif %}>All Stages</option>
-            <option value="awarded" {% if stage_filter == 'awarded' %}selected{% endif %}>Awarded</option>
-            <option value="ready_for_awarding" {% if stage_filter == 'ready_for_awarding' %}selected{% endif %}>Ready for Awarding</option>
-            <option value="blacklisted" {% if stage_filter == 'blacklisted' %}selected{% endif %}>Blacklisted</option>
-            <option value="archived" {% if stage_filter == 'archived' %}selected{% endif %}>Archived</option>
-        </select>
+            <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if dsf and dsf != 'all' %}doc_status={{ dsf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}stage=ready_for_awarding"
+               class="dm-stage-tab {% if stage_filter == 'ready_for_awarding' %}is-active{% endif %} dm-stage-link">
+                Ready for Awarding <span class="tab-count">{{ stage_counts.ready_for_awarding }}</span>
+            </a>
 
-        <!-- Sort -->
-        <select name="sort" form="documentsSearchForm" id="filterSort" class="ctrl-select">
-            <option value="default" {% if sort_order == 'default' or not sort_order %}selected{% endif %}>Sort: Default</option>
-            <option value="name_asc" {% if sort_order == 'name_asc' %}selected{% endif %}>Name A → Z</option>
-            <option value="name_desc" {% if sort_order == 'name_desc' %}selected{% endif %}>Name Z → A</option>
-            <option value="docs_most" {% if sort_order == 'docs_most' %}selected{% endif %}>Most Documents</option>
-            <option value="docs_least" {% if sort_order == 'docs_least' %}selected{% endif %}>Fewest Documents</option>
-        </select>
+            <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if dsf and dsf != 'all' %}doc_status={{ dsf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}stage=ready_for_form"
+               class="dm-stage-tab {% if stage_filter == 'ready_for_form' %}is-active{% endif %} dm-stage-link">
+                Ready for Form <span class="tab-count">{{ stage_counts.ready_for_form }}</span>
+            </a>
+
+            <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if dsf and dsf != 'all' %}doc_status={{ dsf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}stage=evaluation"
+               class="dm-stage-tab {% if stage_filter == 'evaluation' %}is-active{% endif %} dm-stage-link">
+                Evaluation <span class="tab-count">{{ stage_counts.evaluation }}</span>
+            </a>
+
+            <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if dsf and dsf != 'all' %}doc_status={{ dsf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}stage=blacklisted"
+               class="dm-stage-tab {% if stage_filter == 'blacklisted' %}is-active{% endif %} dm-stage-link">
+                Blacklisted <span class="tab-count">{{ stage_counts.blacklisted }}</span>
+            </a>
+
+            <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if dsf and dsf != 'all' %}doc_status={{ dsf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}stage=archived"
+               class="dm-stage-tab {% if stage_filter == 'archived' %}is-active{% endif %} dm-stage-link">
+                Archived <span class="tab-count">{{ stage_counts.archived }}</span>
+            </a>
+
+            {% endwith %}
+        </div>
     </div>
 
-    <!-- Document Status Filter Tabs -->
-    <div style="display: flex; gap: 0.35rem; margin-bottom: 0.65rem; padding: 0 0.1rem; flex-wrap: wrap;">
-        {% with sp=search_query sb=selected_barangay sf=stage_filter so=sort_order %}
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=all"
-            class="dm-filter-tab {% if doc_status_filter == 'all' or not doc_status_filter %}dm-filter-tab--active-green{% endif %}"
-            style="border-color: {% if doc_status_filter == 'all' or not doc_status_filter %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
-            All
-            <span style="background: {% if doc_status_filter == 'all' or not doc_status_filter %}#15803d; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.all }}</span>
-        </a>
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=complete"
-            class="dm-filter-tab"
-            style="border-color: {% if doc_status_filter == 'complete' %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
-            ✓ Complete
-            <span style="background: {% if doc_status_filter == 'complete' %}#15803d; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.complete }}</span>
-        </a>
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=partial"
-            class="dm-filter-tab"
-            style="border-color: {% if doc_status_filter == 'partial' %}#b45309; background: #fef3c7; color: #92400e;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
-            ⚠ Incomplete
-            <span style="background: {% if doc_status_filter == 'partial' %}#b45309; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.partial }}</span>
-        </a>
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=pending"
-            class="dm-filter-tab"
-            style="border-color: {% if doc_status_filter == 'pending' %}#dc2626; background: #fef2f2; color: #7f1d1d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
-            ✗ Pending
-            <span style="background: {% if doc_status_filter == 'pending' %}#dc2626; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.pending }}</span>
-        </a>
-        {% endwith %}
+    <!-- Secondary Navigation: KPI & Filters -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.7rem; padding: 0.6rem 0.85rem; margin-bottom: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; justify-content: space-between;">
+        
+        <!-- Left: KPI & Document Completeness Tabs -->
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+            <div class="docs-kpi docs-kpi--total" style="flex-shrink:0;">
+                <span class="docs-kpi-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </span>
+                <div>
+                    <p class="docs-kpi-label">TOTAL DOCUMENTS</p>
+                    <p class="docs-kpi-value" style="display:flex; align-items:baseline; gap:0.2rem;">{{ total_documents|default:"0" }}<span style="font-size:0.65rem; font-weight:500; color:#15803d; text-transform:lowercase;">file{{ total_documents|pluralize }}</span></p>
+                </div>
+            </div>
+            
+            <div style="width:1px; height:1.8rem; background:#e2e8f0; flex-shrink:0;"></div>
+            
+            <!-- Document Status Filter Tabs (Doc Completeness) -->
+            <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                {% with sp=search_query sb=selected_barangay sf=stage_filter so=sort_order %}
+                <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=all"
+                    class="dm-filter-tab dm-stage-link {% if doc_status_filter == 'all' or not doc_status_filter %}dm-filter-tab--active-green{% endif %}"
+                    style="border-color: {% if doc_status_filter == 'all' or not doc_status_filter %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+                    All
+                    <span style="background: {% if doc_status_filter == 'all' or not doc_status_filter %}#15803d; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.all }}</span>
+                </a>
+                <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=complete"
+                    class="dm-filter-tab dm-stage-link"
+                    style="border-color: {% if doc_status_filter == 'complete' %}#15803d; background: #dcfce7; color: #14532d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+                    ✓ Complete
+                    <span style="background: {% if doc_status_filter == 'complete' %}#15803d; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.complete }}</span>
+                </a>
+                <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=partial"
+                    class="dm-filter-tab dm-stage-link"
+                    style="border-color: {% if doc_status_filter == 'partial' %}#b45309; background: #fef3c7; color: #92400e;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+                    ⚠ Incomplete
+                    <span style="background: {% if doc_status_filter == 'partial' %}#b45309; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.partial }}</span>
+                </a>
+                <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=pending"
+                    class="dm-filter-tab dm-stage-link"
+                    style="border-color: {% if doc_status_filter == 'pending' %}#dc2626; background: #fef2f2; color: #7f1d1d;{% else %}#e2e8f0; background: white; color: #64748b;{% endif %}">
+                    ✗ Pending
+                    <span style="background: {% if doc_status_filter == 'pending' %}#dc2626; color: white;{% else %}#f1f5f9; color: #475569;{% endif %} font-size:0.6rem; font-weight:800; padding:0.05rem 0.42rem; border-radius:999px;">{{ doc_status_counts.pending }}</span>
+                </a>
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Right: Sort & Filter Dropdowns -->
+        <div style="display: flex; gap: 0.55rem; flex-wrap: wrap;">
+            <!-- Barangay Filter -->
+            {% if barangays %}
+            <select class="ctrl-select filter-select" id="filterBarangay" name="barangay" form="documentsSearchForm">
+                <option value="all" {% if selected_barangay == 'all' or not selected_barangay %}selected{% endif %}>All Barangays</option>
+                {% for brgy in barangays %}
+                <option value="{{ brgy }}" {% if selected_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <!-- Sort -->
+            <select name="sort" form="documentsSearchForm" id="filterSort" class="ctrl-select">
+                <option value="default" {% if sort_order == 'default' or not sort_order %}selected{% endif %}>Sort: Default</option>
+                <option value="name_asc" {% if sort_order == 'name_asc' %}selected{% endif %}>Name A → Z</option>
+                <option value="name_desc" {% if sort_order == 'name_desc' %}selected{% endif %}>Name Z → A</option>
+                <option value="docs_most" {% if sort_order == 'docs_most' %}selected{% endif %}>Most Documents</option>
+                <option value="docs_least" {% if sort_order == 'docs_least' %}selected{% endif %}>Fewest Documents</option>
+            </select>
+        </div>
     </div>
 
 
@@ -203,7 +244,7 @@
                         {% endif %}
                     </td>
                     <td class="col-actions" style="vertical-align: middle;">
-                        <div style="display:inline-flex; align-items:center; gap:0.3rem; position:relative;">
+                        <div style="display:inline-flex; align-items:center; gap:0.4rem; position:relative; width: 100%; justify-content: center;">
                             <!-- Primary Action: Progress Indicator Button -->
                             <button type="button"
                                 class="dm-prog-btn dm-prog-btn--{% if applicant.doc_count >= 8 %}complete{% elif applicant.doc_count > 0 %}partial{% else %}pending{% endif %}"

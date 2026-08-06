@@ -660,20 +660,29 @@ def document_management(request, position):
     # Final ordering: priority queue first (by position), then walk-in (by position), then no-queue.
     applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
 
-    # Compute doc_status tab counts BEFORE filtering so all tabs always show full counts
-    _complete_count = sum(1 for a in applicants_list if a['doc_count'] >= 8)
-    _partial_count  = sum(1 for a in applicants_list if 0 < a['doc_count'] < 8)
-    _pending_count  = sum(1 for a in applicants_list if a['doc_count'] == 0)
-    _all_count      = len(applicants_list)
-    doc_status_counts = {
-        'all':      _all_count,
-        'complete': _complete_count,
-        'partial':  _partial_count,
-        'pending':  _pending_count,
-    }
+    # Workflow status values from staff_pipeline_primary_detail():
+    _AWARDED_STATUSES = frozenset({
+        'Awarded lot', 'Housing Units', 'Historical beneficiary', 'Awarded — pending unit linkage',
+    })
+    _EVALUATION_STATUSES = frozenset({
+        'Evaluation & Eligibility', 'Applicant Registration',
+    })
 
-    # Capture full barangay list and upload choices BEFORE the doc_status slice
-    # so the dropdown and upload modal always show all applicants regardless of tab
+    def _stage_key(a):
+        ws = a.get('applicant_workflow_status') or ''
+        if a.get('has_blacklist_record') or ws == 'Blacklisted Beneficiaries registry':
+            return 'blacklisted'
+        if 'archived' in (a.get('status') or '').lower():
+            return 'archived'
+        if ws in _AWARDED_STATUSES:
+            return 'awarded'
+        if ws == 'Ready for Awarding':
+            return 'ready_for_awarding'
+        if ws == 'Ready for Form queue':
+            return 'ready_for_form'
+        return 'evaluation'
+
+    # Capture barangay list and upload choices from full list (before any Python-level filter)
     all_barangays = sorted(set(
         a['barangay'] for a in applicants_list if a.get('barangay') and a['barangay'] != 'N/A'
     ))
@@ -682,33 +691,36 @@ def document_management(request, position):
         for a in applicants_list
     ]
 
-    # Apply doc_status filter
+    # Compute stage_counts from FULL list (so tab badges show total per stage)
+    stage_counts = {
+        'all':               len(applicants_list),
+        'awarded':           sum(1 for a in applicants_list if _stage_key(a) == 'awarded'),
+        'ready_for_awarding': sum(1 for a in applicants_list if _stage_key(a) == 'ready_for_awarding'),
+        'ready_for_form':    sum(1 for a in applicants_list if _stage_key(a) == 'ready_for_form'),
+        'evaluation':        sum(1 for a in applicants_list if _stage_key(a) == 'evaluation'),
+        'blacklisted':       sum(1 for a in applicants_list if _stage_key(a) == 'blacklisted'),
+        'archived':          sum(1 for a in applicants_list if _stage_key(a) == 'archived'),
+    }
+
+    # Apply stage filter FIRST (primary navigation)
+    if stage_filter and stage_filter != 'all':
+        applicants_list = [a for a in applicants_list if _stage_key(a) == stage_filter]
+
+    # Compute doc_status_counts from stage-filtered list (badges reflect current stage)
+    doc_status_counts = {
+        'all':      len(applicants_list),
+        'complete': sum(1 for a in applicants_list if a['doc_count'] >= 8),
+        'partial':  sum(1 for a in applicants_list if 0 < a['doc_count'] < 8),
+        'pending':  sum(1 for a in applicants_list if a['doc_count'] == 0),
+    }
+
+    # Apply doc_status filter (secondary filter within the selected stage)
     if doc_status_filter == 'complete':
         applicants_list = [a for a in applicants_list if a['doc_count'] >= 8]
     elif doc_status_filter == 'partial':
         applicants_list = [a for a in applicants_list if 0 < a['doc_count'] < 8]
     elif doc_status_filter == 'pending':
         applicants_list = [a for a in applicants_list if a['doc_count'] == 0]
-
-    # Apply stage filter (Python-level filter on pre-computed workflow status)
-    # Workflow status values come from staff_pipeline_primary_detail():
-    #   'Awarded lot' | 'Housing Units' | 'Historical beneficiary' | 'Awarded — pending unit linkage'
-    #   'Ready for Awarding' | 'Ready for Form queue' | 'Blacklisted Beneficiaries registry'
-    _AWARDED_STATUSES = frozenset({
-        'Awarded lot', 'Housing Units', 'Historical beneficiary', 'Awarded — pending unit linkage',
-    })
-    if stage_filter and stage_filter != 'all':
-        if stage_filter == 'awarded':
-            applicants_list = [a for a in applicants_list if (a.get('applicant_workflow_status') or '') in _AWARDED_STATUSES]
-        elif stage_filter == 'ready_for_awarding':
-            applicants_list = [a for a in applicants_list if (a.get('applicant_workflow_status') or '') == 'Ready for Awarding']
-        elif stage_filter == 'blacklisted':
-            applicants_list = [a for a in applicants_list if a.get('has_blacklist_record') or (a.get('applicant_workflow_status') or '') == 'Blacklisted Beneficiaries registry']
-        elif stage_filter == 'archived':
-            # Applicants with 'archived' in their ORM status or Awarded lot (Housing Units stage)
-            applicants_list = [a for a in applicants_list if
-                'archived' in (a.get('status') or '').lower() or
-                (a.get('applicant_workflow_status') or '') in ('Housing Units', 'Historical beneficiary')]
 
     # Apply sort order
     if sort_order == 'name_asc':
@@ -950,6 +962,7 @@ def document_management(request, position):
         'doc_status_filter': doc_status_filter,
         'doc_status_counts': doc_status_counts,
         'stage_filter': stage_filter,
+        'stage_counts': stage_counts,
         'sort_order': sort_order,
         'barangays': all_barangays,
         'selected_barangay': selected_barangay,
