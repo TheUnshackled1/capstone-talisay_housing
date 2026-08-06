@@ -1426,3 +1426,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5200);
     }
 })();
+
+/* ── ⋮ Overflow menu helpers ── */
+function toggleDmOverflow(btn) {
+    const wrap = btn.closest('.dm-overflow-wrap');
+    const menu = wrap ? wrap.querySelector('.dm-overflow-menu') : null;
+    if (!menu) return;
+    const isOpen = menu.style.display !== 'none';
+    // Close all open menus first
+    closeDmOverflow();
+    if (!isOpen) {
+        menu.style.display = 'block';
+        btn.setAttribute('aria-expanded', 'true');
+    }
+}
+
+function closeDmOverflow() {
+    document.querySelectorAll('.dm-overflow-menu').forEach(function(m) {
+        m.style.display = 'none';
+    });
+    document.querySelectorAll('.dm-overflow-btn').forEach(function(b) {
+        b.setAttribute('aria-expanded', 'false');
+    });
+}
+
+/** Open upload modal pre-filled for a specific applicant row */
+function openUploadModalFor(applicantId) {
+    const row = document.querySelector('[data-applicant-id="' + applicantId + '"]');
+    const name = row ? (row.closest('tr')?.querySelector('.complainant-name')?.textContent?.trim() || '') : '';
+    openUploadModalForApplicant(applicantId, name);
+}
+
+// Close overflow when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.dm-overflow-wrap')) {
+        closeDmOverflow();
+    }
+}, true);

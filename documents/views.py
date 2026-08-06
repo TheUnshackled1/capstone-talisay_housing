@@ -457,6 +457,7 @@ def document_management(request, position):
     search_query = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all').strip()
     kpi_filter = request.GET.get('kpi_filter', '').strip()
+    doc_status_filter = request.GET.get('doc_status', 'all').strip()
     open_vault_deep_link = request.GET.get('open_vault') == '1'
 
     # Vault list scope: anyone on Intake "LIST OF APPLICATIONS" (has an Archive row) and/or
@@ -511,6 +512,11 @@ def document_management(request, position):
         if 'blacklist' in search_query.lower():
             search_q |= Q(blacklist_record__isnull=False)
         applicants_qs = applicants_qs.filter(search_q).distinct()
+
+    # Filter by barangay name
+    selected_barangay = request.GET.get('barangay', 'all').strip()
+    if selected_barangay and selected_barangay != 'all':
+        applicants_qs = applicants_qs.filter(barangay__name=selected_barangay)
 
     # Store unfiltered counts for statistics display (before KPI filter)
     base_applicants_qs = applicants_qs
@@ -649,6 +655,36 @@ def document_management(request, position):
 
     # Final ordering: priority queue first (by position), then walk-in (by position), then no-queue.
     applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
+
+    # Compute doc_status tab counts BEFORE filtering so all tabs always show full counts
+    _complete_count = sum(1 for a in applicants_list if a['doc_count'] >= 8)
+    _partial_count  = sum(1 for a in applicants_list if 0 < a['doc_count'] < 8)
+    _pending_count  = sum(1 for a in applicants_list if a['doc_count'] == 0)
+    _all_count      = len(applicants_list)
+    doc_status_counts = {
+        'all':      _all_count,
+        'complete': _complete_count,
+        'partial':  _partial_count,
+        'pending':  _pending_count,
+    }
+
+    # Capture full barangay list and upload choices BEFORE the doc_status slice
+    # so the dropdown and upload modal always show all applicants regardless of tab
+    all_barangays = sorted(set(
+        a['barangay'] for a in applicants_list if a.get('barangay') and a['barangay'] != 'N/A'
+    ))
+    all_upload_choices = [
+        {'id': a['id'], 'full_name': a['full_name']}
+        for a in applicants_list
+    ]
+
+    # Apply doc_status filter
+    if doc_status_filter == 'complete':
+        applicants_list = [a for a in applicants_list if a['doc_count'] >= 8]
+    elif doc_status_filter == 'partial':
+        applicants_list = [a for a in applicants_list if 0 < a['doc_count'] < 8]
+    elif doc_status_filter == 'pending':
+        applicants_list = [a for a in applicants_list if a['doc_count'] == 0]
 
     applicants_total = len(applicants_list)
     deep_link_applicant_id = (request.GET.get('applicant_id') or '').strip().lower()
@@ -867,19 +903,20 @@ def document_management(request, position):
     )
 
     context = {
-        'page_title': 'Document Management',
+        'page_title': 'Document Vault',
         'user_position': request.user.position,
         'applicants': page_applicants,
-        'applicants_upload_choices': [
-            {'id': a['id'], 'full_name': a['full_name']}
-            for a in applicants_list
-        ],
+        'applicants_upload_choices': all_upload_choices,
         'page_obj': page_obj,
         'pagination_query': pagination_query,
         'applicants_total': applicants_total,
         'doc_groups': doc_groups,
         'search_query': search_query,
         'status_filter': status_filter,
+        'doc_status_filter': doc_status_filter,
+        'doc_status_counts': doc_status_counts,
+        'barangays': all_barangays,
+        'selected_barangay': selected_barangay,
         'applicant_statuses': [
             ('all', 'All Applicants'),
             ('registered', 'Registered'),
