@@ -318,81 +318,174 @@ async function vaultDrawerHandleFileSelected(ev) {
     }
 }
 
+function vaultBuildServicesMenu(actionsEl, item, overrideGalleryUrls, overrideGalleryTitle) {
+    if (!actionsEl) return;
+
+    const typeKey     = item ? item.type_key : null;
+    const hideActions = item ? item.hide_add_file : true;
+    const docKey      = item ? item.intake_doc_key : null;
+    const docCode     = item ? item.intake_doc_code : null;
+    const onFile      = item ? !!item.on_file : false;
+    const viewUrl     = item ? item.view_url : null;
+    const viewUrls    = overrideGalleryUrls || (item ? item.view_urls : null);
+    const galleryTitle = overrideGalleryTitle || (item ? item.label : null);
+    const canInline   = VAULT_DRAWER_CAN_INTAKE_SCAN && docKey && docCode && !hideActions;
+
+    // Determine which actions are available
+    const hasView    = (onFile && viewUrl) || (viewUrls && viewUrls.length);
+    const hasUpload  = !hideActions && (canInline ? true : !!typeKey);
+    const hasScan    = !hideActions && (canInline ? true : !!typeKey);
+    const hasReplace = onFile && hasUpload;
+
+    if (!hasView && !hasUpload && !hasScan) return;
+
+    // --- Services ▼ button ---
+    const wrap = document.createElement('div');
+    wrap.className = 'vault-svc-wrap';
+    wrap.style.position = 'relative';
+    wrap.style.display  = 'inline-block';
+
+    const trigger = document.createElement('button');
+    trigger.type      = 'button';
+    trigger.className = 'vault-svc-btn';
+    trigger.innerHTML = 'Services <span style="font-size:0.65rem;">&#9660;</span>';
+    trigger.setAttribute('aria-haspopup', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        closeAllVaultSvcMenus();
+        const m = wrap._vaultSvcMenu;
+        if (m) {
+            // Use fixed positioning to escape overflow:hidden/auto scroll containers
+            const rect = trigger.getBoundingClientRect();
+            m.style.position = 'fixed';
+            m.style.top  = (rect.bottom + 4) + 'px';
+            m.style.right = (window.innerWidth - rect.right) + 'px';
+            m.style.left  = 'auto';
+            m.style.display = 'block';
+            trigger.setAttribute('aria-expanded', 'true');
+        }
+    });
+    wrap.appendChild(trigger);
+
+    // --- Dropdown menu (appended to body so it escapes overflow clips) ---
+    const menu = document.createElement('div');
+    menu.className    = 'vault-svc-menu';
+    menu.style.display = 'none';
+
+    function addItem(icon, label, onClick) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'vault-svc-item';
+        btn.innerHTML = icon + label;
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            closeAllVaultSvcMenus();
+            onClick();
+        });
+        menu.appendChild(btn);
+    }
+
+    const eyeSvg   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const upSvg    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+    const scanSvg  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>';
+    const repSvg   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+
+    if (hasView) {
+        addItem(eyeSvg, '\u00a0View', function () {
+            if (viewUrls && viewUrls.length) {
+                openVaultImageGallery(viewUrls, galleryTitle || 'Photos');
+            } else if (viewUrl) {
+                window.open(viewUrl, '_blank', 'noopener');
+            }
+        });
+    }
+
+    if (hasUpload) {
+        // Build a fake button element so we can reuse vaultDrawerTriggerUpload
+        const fakeBtn = document.createElement('button');
+        fakeBtn.dataset.vaultTypeKey    = typeKey || '';
+        fakeBtn.dataset.intakeDocKey    = docKey || '';
+        fakeBtn.dataset.intakeDocCode   = docCode || '';
+        fakeBtn.dataset.hasExistingDoc  = onFile ? '1' : '0';
+        fakeBtn.dataset.existingDocName = (item && item.label) || 'Document';
+        addItem(upSvg, '\u00a0Upload', function () {
+            if (canInline) {
+                vaultDrawerTriggerUpload(fakeBtn);
+            } else if (typeKey) {
+                vaultOpenUploadForMissingDoc(typeKey);
+            }
+        });
+    }
+
+    if (hasScan) {
+        const fakeScanBtn = document.createElement('button');
+        fakeScanBtn.dataset.vaultTypeKey    = typeKey || '';
+        fakeScanBtn.dataset.intakeDocKey    = docKey || '';
+        fakeScanBtn.dataset.intakeDocCode   = docCode || '';
+        fakeScanBtn.dataset.hasExistingDoc  = onFile ? '1' : '0';
+        fakeScanBtn.dataset.existingDocName = (item && item.label) || 'Document';
+        addItem(scanSvg, '\u00a0Scan', function () {
+            if (canInline) {
+                vaultDrawerTriggerScan(fakeScanBtn);
+            } else if (typeKey) {
+                vaultOpenScanForMissingDoc(typeKey);
+            }
+        });
+    }
+
+    if (hasReplace) {
+        const fakeRepBtn = document.createElement('button');
+        fakeRepBtn.dataset.vaultTypeKey    = typeKey || '';
+        fakeRepBtn.dataset.intakeDocKey    = docKey || '';
+        fakeRepBtn.dataset.intakeDocCode   = docCode || '';
+        fakeRepBtn.dataset.hasExistingDoc  = '1';
+        fakeRepBtn.dataset.existingDocName = (item && item.label) || 'Document';
+        const repItem = document.createElement('button');
+        repItem.type = 'button';
+        repItem.className = 'vault-svc-item vault-svc-item--replace';
+        repItem.innerHTML = repSvg + '\u00a0Replace';
+        repItem.addEventListener('click', function (e) {
+            e.stopPropagation();
+            closeAllVaultSvcMenus();
+            if (canInline) {
+                vaultDrawerTriggerUpload(fakeRepBtn);
+            } else if (typeKey) {
+                vaultOpenUploadForMissingDoc(typeKey);
+            }
+        });
+        menu.appendChild(repItem);
+    }
+
+    // Append menu to body so it escapes vault-drawer-scroll overflow:auto
+    document.body.appendChild(menu);
+    // Store reference for the click-outside closer
+    wrap._vaultSvcMenu = menu;
+    actionsEl.appendChild(wrap);
+}
+
 function vaultAppendDrawerDocActions(actionsEl, item) {
     if (!actionsEl || !item || item.is_monitoring_report) return;
-    const typeKey = item.type_key;
-    const hideActions = item.hide_add_file;
-    const docKey = item.intake_doc_key;
-    const docCode = item.intake_doc_code;
-    const canInline = VAULT_DRAWER_CAN_INTAKE_SCAN && docKey && docCode && !hideActions;
-
-    const uploadSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>';
-    const scanSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
-
-    if (item.on_file && item.view_url) {
-        vaultAppendViewButton(actionsEl, item.view_url, 'View');
-    } else if (item.on_file && item.view_urls && item.view_urls.length) {
-        vaultAppendGalleryViewButton(actionsEl, item.view_urls, item.label || 'Photos');
-    }
-
-    if (!docKey || hideActions) return;
-
-    if (canInline) {
-        const uploadBtn = document.createElement('button');
-        uploadBtn.type = 'button';
-        uploadBtn.className = 'vault-upload-btn';
-        uploadBtn.innerHTML = uploadSvg + 'Upload';
-        uploadBtn.dataset.vaultTypeKey = typeKey || '';
-        uploadBtn.dataset.intakeDocKey = docKey;
-        uploadBtn.dataset.intakeDocCode = docCode;
-        uploadBtn.dataset.hasExistingDoc = item.on_file ? '1' : '0';
-        uploadBtn.dataset.existingDocName = item.label || 'Document';
-        uploadBtn.title = 'Choose a file from this computer — saves to document vault';
-        uploadBtn.addEventListener('click', function () { vaultDrawerTriggerUpload(uploadBtn); });
-        actionsEl.appendChild(uploadBtn);
-
-        const scanBtn = document.createElement('button');
-        scanBtn.type = 'button';
-        scanBtn.className = 'vault-scan-btn dm-action-btn dm-action-btn--scan';
-        scanBtn.innerHTML = scanSvg + 'Scan';
-        scanBtn.dataset.vaultTypeKey = typeKey || '';
-        scanBtn.dataset.intakeDocKey = docKey;
-        scanBtn.dataset.intakeDocCode = docCode;
-        scanBtn.dataset.hasExistingDoc = item.on_file ? '1' : '0';
-        scanBtn.dataset.existingDocName = item.label || 'Document';
-        scanBtn.title = 'Scan with Dynamsoft (TWAIN) — saves to document vault';
-        scanBtn.addEventListener('click', function () { vaultDrawerTriggerScan(scanBtn); });
-        actionsEl.appendChild(scanBtn);
-    } else if (typeKey) {
-        const uploadBtn = document.createElement('button');
-        uploadBtn.type = 'button';
-        uploadBtn.className = 'vault-upload-btn';
-        uploadBtn.innerHTML = uploadSvg + 'Upload';
-        uploadBtn.dataset.vaultTypeKey = typeKey;
-        uploadBtn.addEventListener('click', function () { vaultOpenUploadForMissingDoc(typeKey); });
-        actionsEl.appendChild(uploadBtn);
-
-        const scanBtn = document.createElement('button');
-        scanBtn.type = 'button';
-        scanBtn.className = 'vault-scan-btn dm-action-btn dm-action-btn--scan';
-        scanBtn.innerHTML = scanSvg + 'Scan';
-        scanBtn.dataset.vaultTypeKey = typeKey;
-        scanBtn.addEventListener('click', function () { vaultOpenScanForMissingDoc(typeKey); });
-        actionsEl.appendChild(scanBtn);
-    }
+    vaultBuildServicesMenu(actionsEl, item);
 }
 
 function vaultAppendViewButton(actionsEl, viewUrl, label) {
     if (!actionsEl || !viewUrl) return;
-    const vBtn = document.createElement('button');
-    vBtn.type = 'button';
-    vBtn.className = 'vault-view-btn';
-    const viewSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-    vBtn.innerHTML = viewSvg + (label || 'View');
-    vBtn.addEventListener('click', function () {
-        window.open(viewUrl, '_blank', 'noopener');
+    // Wrap a simple view-only item in the Services menu
+    vaultBuildServicesMenu(actionsEl, {
+        on_file: true,
+        view_url: viewUrl,
+        label: label || 'View',
+        hide_add_file: true,
+        intake_doc_key: null,
+        intake_doc_code: null,
+        type_key: null,
     });
-    actionsEl.appendChild(vBtn);
+}
+
+function closeAllVaultSvcMenus() {
+    document.querySelectorAll('.vault-svc-menu').forEach(function (m) { m.style.display = 'none'; });
+    document.querySelectorAll('.vault-svc-btn').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
 }
 
 var vaultImageGalleryUrls = [];
@@ -474,16 +567,15 @@ function closeVaultImageGallery() {
 
 function vaultAppendGalleryViewButton(actionsEl, urls, title) {
     if (!actionsEl || !urls || !urls.length) return;
-    var vBtn = document.createElement('button');
-    vBtn.type = 'button';
-    vBtn.className = 'vault-view-btn';
-    const viewSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-    vBtn.innerHTML = viewSvg + 'View';
-    var ttl = title || 'Photos';
-    vBtn.addEventListener('click', function () {
-        openVaultImageGallery(urls, ttl);
-    });
-    actionsEl.appendChild(vBtn);
+    vaultBuildServicesMenu(actionsEl, {
+        on_file: true,
+        view_url: null,
+        label: title || 'Photos',
+        hide_add_file: true,
+        intake_doc_key: null,
+        intake_doc_code: null,
+        type_key: null,
+    }, urls, title);
 }
 
 function setMonitoringReportText(id, value) {
@@ -835,6 +927,13 @@ function closeVaultDrawer() {
         backdrop.classList.remove('is-open');
         backdrop.style.display = 'none';
     }
+    // Remove all body-level Services menus created by vaultBuildServicesMenu
+    closeAllVaultSvcMenus();
+    document.querySelectorAll('.vault-svc-menu').forEach(function(m) {
+        if (m.parentNode === document.body) {
+            document.body.removeChild(m);
+        }
+    });
     document.body.style.overflow = '';
     const params = new URLSearchParams(window.location.search);
     if (params.get('open_vault') === '1') {
@@ -1462,4 +1561,12 @@ document.addEventListener('click', function(e) {
     if (!e.target.closest('.dm-overflow-wrap')) {
         closeDmOverflow();
     }
-}, true);
+}, true);
+
+// Close vault Services menus when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.vault-svc-wrap')) {
+        closeAllVaultSvcMenus();
+    }
+}, true);
+

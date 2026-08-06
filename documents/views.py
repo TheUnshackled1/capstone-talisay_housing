@@ -458,6 +458,8 @@ def document_management(request, position):
     status_filter = request.GET.get('status', 'all').strip()
     kpi_filter = request.GET.get('kpi_filter', '').strip()
     doc_status_filter = request.GET.get('doc_status', 'all').strip()
+    stage_filter = request.GET.get('stage', 'all').strip()
+    sort_order = request.GET.get('sort', 'default').strip()
     open_vault_deep_link = request.GET.get('open_vault') == '1'
 
     # Vault list scope: anyone on Intake "LIST OF APPLICATIONS" (has an Archive row) and/or
@@ -685,6 +687,36 @@ def document_management(request, position):
         applicants_list = [a for a in applicants_list if 0 < a['doc_count'] < 8]
     elif doc_status_filter == 'pending':
         applicants_list = [a for a in applicants_list if a['doc_count'] == 0]
+
+    # Apply stage filter (Python-level filter on pre-computed workflow status)
+    # Workflow status values come from staff_pipeline_primary_detail():
+    #   'Awarded lot' | 'Housing Units' | 'Historical beneficiary' | 'Awarded — pending unit linkage'
+    #   'Ready for Awarding' | 'Ready for Form queue' | 'Blacklisted Beneficiaries registry'
+    _AWARDED_STATUSES = frozenset({
+        'Awarded lot', 'Housing Units', 'Historical beneficiary', 'Awarded — pending unit linkage',
+    })
+    if stage_filter and stage_filter != 'all':
+        if stage_filter == 'awarded':
+            applicants_list = [a for a in applicants_list if (a.get('applicant_workflow_status') or '') in _AWARDED_STATUSES]
+        elif stage_filter == 'ready_for_awarding':
+            applicants_list = [a for a in applicants_list if (a.get('applicant_workflow_status') or '') == 'Ready for Awarding']
+        elif stage_filter == 'blacklisted':
+            applicants_list = [a for a in applicants_list if a.get('has_blacklist_record') or (a.get('applicant_workflow_status') or '') == 'Blacklisted Beneficiaries registry']
+        elif stage_filter == 'archived':
+            # Applicants with 'archived' in their ORM status or Awarded lot (Housing Units stage)
+            applicants_list = [a for a in applicants_list if
+                'archived' in (a.get('status') or '').lower() or
+                (a.get('applicant_workflow_status') or '') in ('Housing Units', 'Historical beneficiary')]
+
+    # Apply sort order
+    if sort_order == 'name_asc':
+        applicants_list = sorted(applicants_list, key=lambda a: a['full_name'])
+    elif sort_order == 'name_desc':
+        applicants_list = sorted(applicants_list, key=lambda a: a['full_name'], reverse=True)
+    elif sort_order == 'docs_most':
+        applicants_list = sorted(applicants_list, key=lambda a: a['doc_count'], reverse=True)
+    elif sort_order == 'docs_least':
+        applicants_list = sorted(applicants_list, key=lambda a: a['doc_count'])
 
     applicants_total = len(applicants_list)
     deep_link_applicant_id = (request.GET.get('applicant_id') or '').strip().lower()
@@ -915,6 +947,8 @@ def document_management(request, position):
         'status_filter': status_filter,
         'doc_status_filter': doc_status_filter,
         'doc_status_counts': doc_status_counts,
+        'stage_filter': stage_filter,
+        'sort_order': sort_order,
         'barangays': all_barangays,
         'selected_barangay': selected_barangay,
         'applicant_statuses': [
