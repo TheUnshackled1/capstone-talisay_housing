@@ -52,17 +52,17 @@
         {% endif %}
     </td>
     <td>
-        <div class="date-cell-stack">
-            <div class="date-main">
-                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <span>{{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}</span>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width: 0.85rem; height: 0.85rem; color: #2563eb; flex-shrink: 0;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.25;">
+                <span style="font-size: 0.7rem; font-weight: 700; color: #1e293b; white-space: nowrap;">{{ case.received_at|date:"M d, Y" }}</span>
+                <span style="font-size: 0.62rem; color: #64748b; white-space: nowrap;">{{ case.received_at|time:"g:i A" }} · <strong style="color: #475569; font-weight: 600;">{{ case.received_at|naturaltime }}</strong></span>
             </div>
-            <div class="date-sub">{{ case.received_at|naturaltime }}</div>
         </div>
     </td>
     {% if show_time_ago %}
@@ -151,17 +151,17 @@
         {% endif %}
     </td>
     <td>
-        <div class="date-cell-stack">
-            <div class="date-main">
-                <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.8rem; height: 0.8rem; color: #3b82f6;">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <span>{{ log.logged_at|date:"M d, Y" }} · {{ log.logged_at|time:"g:i A" }}</span>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width: 0.85rem; height: 0.85rem; color: #7c3aed; flex-shrink: 0;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <div style="display: flex; flex-direction: column; text-align: left; line-height: 1.25;">
+                <span style="font-size: 0.7rem; font-weight: 700; color: #1e293b; white-space: nowrap;">{{ log.logged_at|date:"M d, Y" }}</span>
+                <span style="font-size: 0.62rem; color: #64748b; white-space: nowrap;">{{ log.logged_at|time:"g:i A" }} · <strong style="color: #475569; font-weight: 600;">{{ log.logged_at|naturaltime }}</strong></span>
             </div>
-            <div class="date-sub">{{ log.logged_at|naturaltime }}</div>
         </div>
     </td>
     {% if show_time_ago %}
