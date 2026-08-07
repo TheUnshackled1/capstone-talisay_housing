@@ -229,7 +229,8 @@
         box-shadow: 0 4px 14px rgba(109, 40, 217, 0.22);
     }
 
-    /* Resolved / settled-on-site — right side drawers */
+    /* Resolved / settled-on-site / pending-review — right side drawers */
+    #pendingCasesDrawer,
     #resolvedCasesDrawer,
     #settledIncidentsDrawer {
         display: none;
@@ -243,6 +244,7 @@
         align-items: stretch;
     }
 
+    #pendingCasesDrawer.is-open,
     #resolvedCasesDrawer.is-open,
     #settledIncidentsDrawer.is-open {
         display: flex;
@@ -282,12 +284,31 @@
         z-index: 2;
     }
 
+    .cases-pending-drawer-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ea580c 0%, #f97316 50%, #fdba74 100%);
+        z-index: 2;
+    }
+
     .cases-settled-drawer-head {
         background: linear-gradient(180deg, #f5f3ff 0%, #fff 100%);
     }
 
     .cases-settled-drawer-head h2 {
         color: #5b21b6;
+    }
+
+    .cases-pending-drawer-head {
+        background: linear-gradient(180deg, #fff7ed 0%, #fff 100%);
+    }
+
+    .cases-pending-drawer-head h2 {
+        color: #c2410c;
     }
     .cases-settled-drawer-item {
         display: block;
@@ -3914,6 +3935,23 @@
     </div>
 </div>
 
+<div id="pendingCasesDrawer" role="dialog" aria-modal="true" aria-labelledby="pendingCasesDrawerTitle"
+    onclick="closePendingCasesDrawer(event)">
+    <div class="cases-resolved-drawer-panel cases-pending-drawer-panel" onclick="event.stopPropagation();">
+        <div class="cases-resolved-drawer-head cases-pending-drawer-head">
+            <div>
+                <h2 id="pendingCasesDrawerTitle">Pending review cases</h2>
+                <p id="caseDeskPendingDrawerSubtitle">{{ status_counts.pending_review }} case{{ status_counts.pending_review|pluralize }} pending review</p>
+            </div>
+            <button type="button" class="cases-resolved-drawer-close" onclick="closePendingCasesDrawer()"
+                aria-label="Close">&times;</button>
+        </div>
+        <div class="cases-resolved-drawer-scroll" id="caseDeskPendingDrawerScroll">
+            {% include "field/case_desk_pending_drawer_inner.html" %}
+        </div>
+    </div>
+</div>
+
 <div class="monitoring-work-area">
     <div class="monitoring-work-stripe"></div>
     <div class="cases-list-section">
@@ -3955,7 +3993,8 @@
 
         <div class="cases-controls-bar">
             <!-- Total List -->
-            <div class="summary-chip-card summary-chip-card--emerald">
+            <button type="button" class="summary-chip-card summary-chip-card--emerald is-clickable" id="totalListKpiBtn"
+                onclick="setQuickStatusFilter('all')">
                 <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -3965,10 +4004,11 @@
                     <p>Total List</p>
                     <p id="caseDeskTotalCount">{{ desk_rows|length }}</p>
                 </div>
-            </div>
+            </button>
 
             <!-- Pending Review -->
-            <div class="summary-chip-card summary-chip-card--amber">
+            <button type="button" class="summary-chip-card summary-chip-card--amber is-clickable" id="pendingKpiBtn"
+                onclick="openPendingCasesDrawer()" aria-expanded="false" aria-controls="pendingCasesDrawer">
                 <svg style="width: 20px; height: 20px; color: #ea580c;" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="9" />
@@ -3979,7 +4019,7 @@
                     <p>Pending Review</p>
                     <p id="caseDeskKpiPending">{{ status_counts.pending_review|default:0 }}</p>
                 </div>
-            </div>
+            </button>
 
             <!-- Settled on-site -->
             <button type="button" class="summary-chip-card summary-chip-card--purple is-clickable" id="settledOnSiteKpiBtn"
@@ -5487,7 +5527,8 @@
 
     function anyCaseDeskDrawerOpen() {
         return document.getElementById('resolvedCasesDrawer')?.classList.contains('is-open')
-            || document.getElementById('settledIncidentsDrawer')?.classList.contains('is-open');
+            || document.getElementById('settledIncidentsDrawer')?.classList.contains('is-open')
+            || document.getElementById('pendingCasesDrawer')?.classList.contains('is-open');
     }
 
     function restoreCaseDeskBodyScroll() {
@@ -5499,7 +5540,35 @@
         }
     }
 
+    function openPendingCasesDrawer() {
+        closeResolvedCasesDrawer();
+        closeSettledIncidentsDrawer();
+        const drawer = document.getElementById('pendingCasesDrawer');
+        const btn = document.getElementById('pendingKpiBtn');
+        if (!drawer) return;
+        drawer.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        if (btn) {
+            btn.classList.add('is-active');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function closePendingCasesDrawer(e) {
+        if (e && e.target && e.target.id !== 'pendingCasesDrawer') return;
+        const drawer = document.getElementById('pendingCasesDrawer');
+        const btn = document.getElementById('pendingKpiBtn');
+        if (!drawer) return;
+        drawer.classList.remove('is-open');
+        if (btn) {
+            btn.classList.remove('is-active');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+        restoreCaseDeskBodyScroll();
+    }
+
     function openResolvedCasesDrawer() {
+        closePendingCasesDrawer();
         closeSettledIncidentsDrawer();
         const drawer = document.getElementById('resolvedCasesDrawer');
         const btn = document.getElementById('resolvedKpiBtn');
@@ -5526,6 +5595,7 @@
     }
 
     function openSettledIncidentsDrawer() {
+        closePendingCasesDrawer();
         closeResolvedCasesDrawer();
         const drawer = document.getElementById('settledIncidentsDrawer');
         const btn = document.getElementById('settledOnSiteKpiBtn');
@@ -5551,6 +5621,11 @@
         restoreCaseDeskBodyScroll();
     }
 
+    function openCaseFromPendingDrawer(caseId) {
+        closePendingCasesDrawer();
+        openCaseModal(caseId);
+    }
+
     function openCaseFromResolvedDrawer(caseId) {
         closeResolvedCasesDrawer();
         openCaseModal(caseId);
@@ -5558,6 +5633,7 @@
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            closePendingCasesDrawer();
             closeResolvedCasesDrawer();
             closeSettledIncidentsDrawer();
             closeCaseModal();

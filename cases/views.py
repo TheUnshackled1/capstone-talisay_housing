@@ -190,6 +190,14 @@ def _case_management_list_context(request, position):
         )
         resolved_cases = _apply_case_list_filters(resolved_cases, search_query, filter_type)
         resolved_cases = resolved_cases.order_by('-resolved_at', '-received_at')
+        pending_cases = (
+            Case.objects
+            .filter(status=wf.STATUS_PENDING_REVIEW)
+            .select_related(
+                'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+            )
+        )
+        pending_cases = _apply_case_list_filters(pending_cases, search_query, filter_type).order_by('-received_at')
     else:
         include_incident_logs = filter_status == 'all'
         desk_rows = _build_case_desk_rows(
@@ -212,10 +220,19 @@ def _case_management_list_context(request, position):
                 search_query,
                 filter_type,
             ).order_by('-resolved_at', '-received_at')
+        pending_cases = (
+            Case.objects
+            .filter(status=wf.STATUS_PENDING_REVIEW)
+            .select_related('received_by', 'complainant_applicant', 'subject_applicant')
+            .order_by('-received_at')
+        )
+        if search_query or filter_type != 'all':
+            pending_cases = _apply_case_list_filters(pending_cases, search_query, filter_type).order_by('-received_at')
 
     return {
         'cases': cases,
         'resolved_cases': resolved_cases,
+        'pending_cases': pending_cases,
         'status_counts': status_counts,
         'search_query': search_query,
         'filter_status': filter_status,
@@ -333,6 +350,11 @@ def case_desk_feed(request, position):
         ),
         'resolved_drawer': render_to_string(
             'field/case_desk_resolved_drawer_inner.html',
+            fragment_ctx,
+            request=request,
+        ),
+        'pending_drawer': render_to_string(
+            'field/case_desk_pending_drawer_inner.html',
             fragment_ctx,
             request=request,
         ),

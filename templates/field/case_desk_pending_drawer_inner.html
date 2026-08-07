@@ -1,0 +1,46 @@
+{% for case in pending_cases %}
+<button type="button" class="cases-resolved-drawer-item"
+    onclick="openCaseFromPendingDrawer('{{ case.id }}')">
+    <div class="cases-resolved-drawer-item-top">
+        <strong>{{ case.case_number }}</strong>
+        <span class="case-type-pill">{{ case.get_case_type_display }}</span>
+    </div>
+    <p class="cases-resolved-drawer-item-name">{{ case.complainant_name }}</p>
+    <span class="cases-resolved-drawer-complaints-filed">
+        Complaints filed: {% if case.complainant_applicant %}{{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+    </span>
+
+    <div class="cases-resolved-drawer-reported-block">
+        <span class="cases-resolved-drawer-reported-label">Reported party</span>
+        <span class="cases-resolved-drawer-reported-name">
+            {% if case.subject_applicant %}
+                {{ case.subject_applicant.full_name }}
+                {% if case.subject_applicant.active_unit_label and case.subject_applicant.active_unit_label != 'Not specified' %}
+                    · {{ case.subject_applicant.active_unit_label }}
+                {% endif %}
+            {% elif case.subject_name %}
+                {{ case.subject_name }}
+            {% else %}
+                —
+            {% endif %}
+        </span>
+        {% if case.subject_applicant %}
+        <span class="cases-resolved-drawer-complaints-received">
+            Complaints received: {{ case.subject_applicant.cases_against.count|add:case.subject_applicant.settled_incident_logs.count }}
+        </span>
+        {% endif %}
+    </div>
+
+    <p class="cases-resolved-drawer-item-date">
+        Filed {{ case.received_at|date:"M d, Y" }} · {{ case.received_at|time:"g:i A" }}
+    </p>
+    <div class="cases-resolved-drawer-item-actions">
+        <span class="btn-open-record">
+            {% if is_field_desk %}Open Record{% else %}View case{% endif %}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="flex-shrink:0;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+    </div>
+</button>
+{% empty %}
+<p class="cases-resolved-drawer-empty">No pending review cases.</p>
+{% endfor %}
