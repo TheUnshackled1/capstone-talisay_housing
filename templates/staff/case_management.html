@@ -869,25 +869,67 @@
         display: inline-flex;
         align-items: center;
         gap: 0.65rem;
-        padding: 0.5rem 0.85rem;
-        border: 1px solid #a7f3d0;
+        padding: 0.45rem 0.85rem;
+        border: 1px solid #cbd5e1;
         border-radius: 0.65rem;
-        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        font-family: inherit;
+        text-align: left;
+        box-sizing: border-box;
+        transition: all 0.18s ease;
     }
 
-    .summary-chip-card--emerald p:first-child {
+    button.summary-chip-card {
+        cursor: pointer;
+        outline: none;
+    }
+
+    button.summary-chip-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+    }
+
+    .summary-chip-card div p:first-child {
         font-size: 0.625rem;
         color: #64748b;
         margin: 0;
         text-transform: uppercase;
-        font-weight: 500;
+        font-weight: 600;
+        letter-spacing: 0.03em;
     }
 
-    .summary-chip-card--emerald p:last-child {
+    .summary-chip-card div p:last-child {
         font-size: 1.25rem;
-        font-weight: 700;
-        color: #047857;
+        font-weight: 800;
+        line-height: 1.1;
         margin: 0;
+    }
+
+    .summary-chip-card--emerald {
+        border-color: #a7f3d0;
+        background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+    }
+
+    .summary-chip-card--emerald div p:last-child {
+        color: #047857;
+    }
+
+    .summary-chip-card--amber {
+        border-color: #fed7aa;
+        background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+    }
+
+    .summary-chip-card--amber div p:last-child {
+        color: #c2410c;
+    }
+
+    .summary-chip-card--purple {
+        border-color: #ddd6fe;
+        background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
+    }
+
+    .summary-chip-card--purple div p:last-child {
+        color: #6d28d9;
     }
 
     .cases-search-box {
@@ -3838,49 +3880,6 @@
 {% block content %}
 {% csrf_token %}
 
-<div class="monitoring-kpis">
-    <div class="monitoring-kpi monitoring-kpi-open">
-        <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="9" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-        </div>
-        <div class="monitoring-kpi-text">
-            <h4>Pending Review</h4>
-            <div class="monitoring-kpi-number" id="caseDeskKpiPending">{{ status_counts.pending_review }}</div>
-        </div>
-    </div>
-
-    <button type="button" class="monitoring-kpi monitoring-kpi-settled is-clickable" id="settledOnSiteKpiBtn"
-        onclick="openSettledIncidentsDrawer()" aria-expanded="false" aria-controls="settledIncidentsDrawer">
-        <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        </div>
-        <div class="monitoring-kpi-text">
-            <h4>Settled on-site</h4>
-            <div class="monitoring-kpi-number" id="caseDeskKpiSettled">{{ settled_on_site_count }}</div>
-        </div>
-    </button>
-
-    <button type="button" class="monitoring-kpi monitoring-kpi-resolved is-clickable" id="resolvedKpiBtn"
-        onclick="openResolvedCasesDrawer()" aria-expanded="false" aria-controls="resolvedCasesDrawer">
-        <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M8 12l2.5 2.5L16 9" />
-            </svg>
-        </div>
-        <div class="monitoring-kpi-text">
-            <h4>Resolved</h4>
-            <div class="monitoring-kpi-number" id="caseDeskKpiResolved">{{ status_counts.resolved }}</div>
-        </div>
-    </button>
-</div>
-
 <div id="resolvedCasesDrawer" role="dialog" aria-modal="true" aria-labelledby="resolvedCasesDrawerTitle"
     onclick="closeResolvedCasesDrawer(event)">
     <div class="cases-resolved-drawer-panel" onclick="event.stopPropagation();">
@@ -3914,6 +3913,7 @@
         </div>
     </div>
 </div>
+
 <div class="monitoring-work-area">
     <div class="monitoring-work-stripe"></div>
     <div class="cases-list-section">
@@ -3954,6 +3954,7 @@
         </div>
 
         <div class="cases-controls-bar">
+            <!-- Total List -->
             <div class="summary-chip-card summary-chip-card--emerald">
                 <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2">
@@ -3965,6 +3966,47 @@
                     <p id="caseDeskTotalCount">{{ desk_rows|length }}</p>
                 </div>
             </div>
+
+            <!-- Pending Review -->
+            <div class="summary-chip-card summary-chip-card--amber">
+                <svg style="width: 20px; height: 20px; color: #ea580c;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <div>
+                    <p>Pending Review</p>
+                    <p id="caseDeskKpiPending">{{ status_counts.pending_review|default:0 }}</p>
+                </div>
+            </div>
+
+            <!-- Settled on-site -->
+            <button type="button" class="summary-chip-card summary-chip-card--purple is-clickable" id="settledOnSiteKpiBtn"
+                onclick="openSettledIncidentsDrawer()" aria-expanded="false" aria-controls="settledIncidentsDrawer">
+                <svg style="width: 20px; height: 20px; color: #7c3aed;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <p>Settled on-site</p>
+                    <p id="caseDeskKpiSettled">{{ settled_on_site_count|default:0 }}</p>
+                </div>
+            </button>
+
+            <!-- Resolved -->
+            <button type="button" class="summary-chip-card summary-chip-card--emerald is-clickable" id="resolvedKpiBtn"
+                onclick="openResolvedCasesDrawer()" aria-expanded="false" aria-controls="resolvedCasesDrawer">
+                <svg style="width: 20px; height: 20px; color: #059669;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M8 12l2.5 2.5L16 9" />
+                </svg>
+                <div>
+                    <p>Resolved</p>
+                    <p id="caseDeskKpiResolved">{{ status_counts.resolved|default:0 }}</p>
+                </div>
+            </button>
 
             <div class="cases-search-box">
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
