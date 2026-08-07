@@ -1030,6 +1030,124 @@
         white-space: nowrap;
     }
 
+    /* Quick Status Tabs (Gmail-style) */
+    .quick-status-tabs-wrapper {
+        margin-bottom: 0.85rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .quick-status-tabs {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 0;
+    }
+
+    .quick-status-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.5rem 0.95rem;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 0.5rem 0.5rem 0 0;
+        position: relative;
+        white-space: nowrap;
+        transition: all 0.18s ease;
+        text-decoration: none;
+    }
+
+    .quick-status-tab:hover {
+        color: #0f172a;
+        background: #f8fafc;
+    }
+
+    .quick-status-tab.is-active {
+        color: #0284c7;
+        font-weight: 700;
+        background: #f0f9ff;
+    }
+
+    .quick-status-tab.is-active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #0284c7;
+        border-radius: 3px 3px 0 0;
+    }
+
+    .quick-status-tab--pending.is-active {
+        color: #c2410c;
+        background: #fff7ed;
+    }
+    .quick-status-tab--pending.is-active::after {
+        background: #ea580c;
+    }
+
+    .quick-status-tab--under-review.is-active {
+        color: #1d4ed8;
+        background: #eff6ff;
+    }
+    .quick-status-tab--under-review.is-active::after {
+        background: #2563eb;
+    }
+
+    .quick-status-tab--settlement.is-active {
+        color: #047857;
+        background: #ecfdf5;
+    }
+    .quick-status-tab--settlement.is-active::after {
+        background: #10b981;
+    }
+
+    .quick-status-tab--resolved.is-active {
+        color: #15803d;
+        background: #f0fdf4;
+    }
+    .quick-status-tab--resolved.is-active::after {
+        background: #16a34a;
+    }
+
+    .quick-status-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.12rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        background: #e2e8f0;
+        color: #475569;
+        min-width: 1.3rem;
+    }
+
+    .quick-status-tab.is-active .quick-status-count {
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    .quick-status-tab--pending.is-active .quick-status-count {
+        color: #c2410c;
+    }
+    .quick-status-tab--under-review.is-active .quick-status-count {
+        color: #1d4ed8;
+    }
+    .quick-status-tab--settlement.is-active .quick-status-count {
+        color: #047857;
+    }
+    .quick-status-tab--resolved.is-active .quick-status-count {
+        color: #15803d;
+    }
+
     .cases-table .respondent-name-cell {
         font-weight: 600;
         color: #334155;
@@ -3805,6 +3923,40 @@
     <div class="cases-list-section">
         <h3 class="section-title-list">LIST OF CASES</h3>
 
+        <div class="quick-status-tabs-wrapper">
+            <div class="quick-status-tabs" role="tablist" aria-label="Filter by case status">
+                <button type="button" 
+                        class="quick-status-tab {% if filter_status == 'all' or not filter_status %}is-active{% endif %}"
+                        onclick="setQuickStatusFilter('all')">
+                    <span>All Cases</span>
+                </button>
+                <button type="button" 
+                        class="quick-status-tab quick-status-tab--pending {% if filter_status == 'pending_review' %}is-active{% endif %}"
+                        onclick="setQuickStatusFilter('pending_review')">
+                    <span>Pending Review</span>
+                    <span class="quick-status-count">{{ status_counts.pending_review|default:0 }}</span>
+                </button>
+                <button type="button" 
+                        class="quick-status-tab quick-status-tab--under-review {% if filter_status == 'under_review' %}is-active{% endif %}"
+                        onclick="setQuickStatusFilter('under_review')">
+                    <span>Under Review</span>
+                    <span class="quick-status-count">{{ status_counts.under_review|default:0 }}</span>
+                </button>
+                <button type="button" 
+                        class="quick-status-tab quick-status-tab--settlement {% if filter_status == 'mediation_monitoring' %}is-active{% endif %}"
+                        onclick="setQuickStatusFilter('mediation_monitoring')">
+                    <span>Settlement</span>
+                    <span class="quick-status-count">{{ status_counts.mediation_monitoring|default:0 }}</span>
+                </button>
+                <button type="button" 
+                        class="quick-status-tab quick-status-tab--resolved {% if filter_status == 'resolved' %}is-active{% endif %}"
+                        onclick="setQuickStatusFilter('resolved')">
+                    <span>Resolved</span>
+                    <span class="quick-status-count">{{ status_counts.resolved|default:0 }}</span>
+                </button>
+            </div>
+        </div>
+
         <div class="cases-controls-bar">
             <div class="summary-chip-card summary-chip-card--emerald">
                 <svg style="width: 20px; height: 20px; color: #047857;" viewBox="0 0 24 24" fill="none"
@@ -5231,6 +5383,23 @@
         if (!caseModalOpen && !newCaseModalOpen) {
             document.body.style.overflow = '';
         }
+    }
+
+    function setQuickStatusFilter(status) {
+        const url = new URL(window.location.href);
+        const q = document.getElementById('searchInput')?.value.trim() || '';
+        const t = document.getElementById('typeFilter')?.value || 'all';
+        if (q) url.searchParams.set('q', q);
+        else url.searchParams.delete('q');
+        if (t && t !== 'all') url.searchParams.set('type', t);
+        else url.searchParams.delete('type');
+        if (status && status !== 'all') {
+            url.searchParams.set('status', status);
+        } else {
+            url.searchParams.delete('status');
+        }
+        url.searchParams.delete('tab');
+        window.location.href = url.toString();
     }
 
     function applyCaseFilters() {
