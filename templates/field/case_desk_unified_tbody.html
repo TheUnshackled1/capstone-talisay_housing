@@ -5,7 +5,7 @@
 <tr data-case-id="{{ case.id }}" data-case-status="{{ case.status }}" data-desk-record-kind="case">
     <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
     <td>
-        <div class="complainant-cell-info">
+        <div class="complainant-cell-info" style="display: flex; flex-direction: column; gap: 0.25rem;">
             <div class="complainant-name-card applicant-name"
                  style="cursor: pointer;"
                  data-full-name="{{ case.complainant_name }}"
@@ -19,9 +19,14 @@
                 </svg>
                 <span class="complainant-name" title="{{ case.complainant_name }}">{{ case.complainant_name }}</span>
             </div>
-            <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; margin-top: 0.15rem; margin-left: 1.25rem;">
-                Complaints filed: {% if case.complainant_applicant %}{{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
-            </span>
+            <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.62rem; font-weight: 700; padding: 0.08rem 0.4rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap;">
+                    #{{ case.case_number }}
+                </span>
+                <span style="font-size: 0.62rem; color: #475569; font-weight: 500; background: #f8fafc; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #e2e8f0; white-space: nowrap;">
+                    Complaints filed: {% if case.complainant_applicant %}{{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+                </span>
+            </div>
         </div>
     </td>
     <td>
@@ -94,7 +99,7 @@
 <tr data-incident-log-id="{{ log.id }}" data-desk-record-kind="incident_log" class="cases-row--incident-log">
     <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
     <td>
-        <div class="complainant-cell-info">
+        <div class="complainant-cell-info" style="display: flex; flex-direction: column; gap: 0.25rem;">
             {% if log.complainant_applicant %}
             <span class="complainant-name applicant-name" 
                   style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
@@ -107,9 +112,14 @@
             {% else %}
             <span class="complainant-name" title="{{ row.incident_complainant_name }}">{{ row.incident_complainant_name|default:"—" }}</span>
             {% endif %}
-            <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; margin-top: 0.15rem;">
-                Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
-            </span>
+            <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; font-size: 0.62rem; font-weight: 700; padding: 0.08rem 0.4rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap;">
+                    #INC-{{ log.id }}
+                </span>
+                <span style="font-size: 0.62rem; color: #475569; font-weight: 500; background: #f8fafc; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #e2e8f0; white-space: nowrap;">
+                    Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+                </span>
+            </div>
         </div>
     </td>
     <td>
