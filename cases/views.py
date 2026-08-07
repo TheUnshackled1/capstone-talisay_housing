@@ -317,7 +317,7 @@ def case_desk_feed(request, position):
     list_ctx = _case_management_list_context(request, position)
     fragment_ctx = {
         **list_ctx,
-        'show_time_ago': position in wf.CASE_MONITOR_DESK_POSITIONS,
+        'show_time_ago': False,
         'can_delete_incident_logs': position in wf.FIELD_DESK_POSITIONS,
     }
     html = {
