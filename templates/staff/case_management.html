@@ -1046,37 +1046,37 @@
         width: 22%;
     }
 
-    /* col 3 — Reported Party (widened so names don't truncate) */
+    /* col 3 — Type */
     .cases-table th:nth-child(3),
     .cases-table td:nth-child(3) {
-        width: 21%;
-    }
-
-    /* col 4 — Filed Date & Time */
-    .cases-table th:nth-child(4),
-    .cases-table td:nth-child(4) {
-        width: 17%;
+        width: 12%;
         text-align: center;
     }
 
-    /* col 5 — Type */
+    /* col 4 — Reported Party */
+    .cases-table th:nth-child(4),
+    .cases-table td:nth-child(4) {
+        width: 20%;
+    }
+
+    /* col 5 — Filed Date & Time */
     .cases-table th:nth-child(5),
     .cases-table td:nth-child(5) {
-        width: 14%;
+        width: 17%;
         text-align: center;
     }
 
     /* col 6 — Status */
     .cases-table th:nth-child(6),
     .cases-table td:nth-child(6) {
-        width: 12%;
+        width: 14%;
         text-align: center;
     }
 
     /* col 7 — Action */
     .cases-table th:nth-child(7),
     .cases-table td:nth-child(7) {
-        width: 12%;
+        width: 13%;
         text-align: center;
     }
 
@@ -3934,9 +3934,9 @@
                         <tr>
                             <th>#</th>
                             <th>Complainant</th>
+                            <th>Type</th>
                             <th>Reported Party</th>
                             <th>Filed Date &amp; Time</th>
-                            <th>Type</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -3974,6 +3974,9 @@
                                 </div>
                             </td>
                             <td>
+                                <span class="case-type-badge case-type-badge--standard">{{ case.get_case_type_display }}</span>
+                            </td>
+                            <td>
                                 {% if case.subject_applicant %}
                                 <span class="respondent-name-cell applicant-name"
                                       style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
@@ -4005,9 +4008,6 @@
                                         <span style="font-size: 0.62rem; color: #64748b; white-space: nowrap;">{{ case.received_at|time:"g:i A" }} · <strong style="color: #475569; font-weight: 600;">{{ case.received_at|naturaltime }}</strong></span>
                                     </div>
                                 </div>
-                            </td>
-                            <td>
-                                <span class="case-type-badge case-type-badge--standard">{{ case.get_case_type_display }}</span>
                             </td>
                             <td>
                                 <span class="status-pill-flex status-pill-flex--{{ case.status }}" data-case-status-pill>
@@ -4057,6 +4057,9 @@
                                 </div>
                             </td>
                             <td>
+                                <span class="case-type-badge case-type-badge--standard">{{ log.get_case_type_display }}</span>
+                            </td>
+                            <td>
                                 {% if log.subject_applicant %}
                                 <span class="respondent-name-cell applicant-name"
                                       style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
@@ -4094,9 +4097,6 @@
                                         <span style="font-size: 0.62rem; color: #64748b; white-space: nowrap;">{{ log.logged_at|time:"g:i A" }} · <strong style="color: #475569; font-weight: 600;">{{ log.logged_at|naturaltime }}</strong></span>
                                     </div>
                                 </div>
-                            </td>
-                            <td>
-                                <span class="case-type-badge case-type-badge--standard">{{ log.get_case_type_display }}</span>
                             </td>
                             <td>
                                 <span class="status-pill-flex status-pill-flex--incident_log">Settled on-site</span>
