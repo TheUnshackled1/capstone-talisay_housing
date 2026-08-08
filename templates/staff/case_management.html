@@ -3947,22 +3947,17 @@
                         {% if row.kind == 'case' %}
                         {% with case=row.case %}
                         <tr data-case-id="{{ case.id }}" data-case-status="{{ case.status }}" data-desk-record-kind="case">
-                            <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
-                            <td>
-                                <div class="complainant-cell-info" style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    <div class="complainant-name-card applicant-name"
-                                         style="cursor: pointer;"
-                                         data-full-name="{{ case.complainant_name }}"
-                                         data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
-                                         data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-                                         data-barangay="{% if case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
-                                         data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
-                                        <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem;">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="12" cy="7" r="4"></circle>
-                                        </svg>
-                                        <span class="complainant-name" title="{{ case.complainant_name }}">{{ case.complainant_name }}</span>
-                                    </div>
+                            <td style="font-weight: 700; color: #1e293b; text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
+                            <td style="vertical-align: middle;">
+                                <div class="demographic-meta-card">
+                                    <span class="complainant-name applicant-name"
+                                          style="cursor: pointer;"
+                                          data-full-name="{{ case.complainant_name }}"
+                                          data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
+                                          data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
+                                          data-barangay="{% if case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+                                          data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                          title="{{ case.complainant_name }}">{{ case.complainant_name }}</span>
                                     <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
                                         <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.62rem; font-weight: 700; padding: 0.08rem 0.4rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap;">
                                             #{{ case.case_number }}
@@ -3973,29 +3968,33 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>
+                            <td style="vertical-align: middle; text-align: center;">
                                 <span class="case-type-badge case-type-badge--standard">{{ case.get_case_type_display }}</span>
                             </td>
-                            <td>
-                                {% if case.subject_applicant %}
-                                <span class="respondent-name-cell applicant-name"
-                                      style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
-                                      data-full-name="{{ case.subject_applicant.full_name }}"
-                                      data-tx-id="APP-{{ case.subject_applicant.id|slice:":8" }}..."
-                                      data-ref-code="{{ case.subject_applicant.reference_number|default:'' }}"
-                                      data-barangay="{% if case.subject_applicant and case.subject_applicant.active_unit_label != 'Not specified' %}{{ case.subject_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
-                                      data-dob="{{ case.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
-                                      title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
-                                <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
-                                    Complaints received: {{ case.subject_applicant.cases_against.count|add:case.subject_applicant.settled_incident_logs.count }}
-                                </span>
-                                {% elif case.subject_name %}
-                                <span class="respondent-name-cell" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
-                                {% else %}
-                                <span class="respondent-name-cell is-empty">—</span>
-                                {% endif %}
+                            <td style="vertical-align: middle;">
+                                <div class="demographic-meta-card">
+                                    {% if case.subject_applicant %}
+                                    <span class="complainant-name applicant-name"
+                                          style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                                          data-full-name="{{ case.subject_applicant.full_name }}"
+                                          data-tx-id="APP-{{ case.subject_applicant.id|slice:":8" }}..."
+                                          data-ref-code="{{ case.subject_applicant.reference_number|default:'' }}"
+                                          data-barangay="{% if case.subject_applicant and case.subject_applicant.active_unit_label != 'Not specified' %}{{ case.subject_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+                                          data-dob="{{ case.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                          title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                        <span style="font-size: 0.62rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #fecaca; white-space: nowrap;">
+                                            Complaints received: {{ case.subject_applicant.cases_against.count|add:case.subject_applicant.settled_incident_logs.count }}
+                                        </span>
+                                    </div>
+                                    {% elif case.subject_name %}
+                                    <span class="complainant-name" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
+                                    {% else %}
+                                    <span class="respondent-name-cell is-empty">—</span>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td>
+                            <td style="vertical-align: middle; text-align: center;">
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width: 0.85rem; height: 0.85rem; color: #2563eb; flex-shrink: 0;">
                                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -4009,7 +4008,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>
+                            <td style="vertical-align: middle; text-align: center;">
                                 <span class="status-pill-flex status-pill-flex--{{ case.status }}" data-case-status-pill>
                                     {% if case.status == 'resolved' %}
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 0.75rem; height: 0.75rem; color: #16a34a; flex-shrink: 0; margin-right: 0.15rem;">
@@ -4025,18 +4024,18 @@
                                     {{ case.get_status_display }}
                                 </span>
                             </td>
-                            <td>{% include "field/case_row_action_button.html" %}</td>
+                            <td style="vertical-align: middle; text-align: center;">{% include "field/case_row_action_button.html" %}</td>
                         </tr>
                         {% endwith %}
                         {% else %}
                         {% with log=row.incident_log %}
                         <tr data-incident-log-id="{{ log.id }}" data-desk-record-kind="incident_log" class="cases-row--incident-log">
-                            <td style="font-weight: 700; color: #1e293b;">{{ forloop.counter }}</td>
-                            <td>
-                                <div class="complainant-cell-info" style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <td style="font-weight: 700; color: #1e293b; text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
+                            <td style="vertical-align: middle;">
+                                <div class="demographic-meta-card">
                                     {% if log.complainant_applicant %}
                                     <span class="complainant-name applicant-name"
-                                          style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                                          style="cursor: pointer;"
                                           data-full-name="{{ row.incident_complainant_name }}"
                                           data-tx-id="APP-{{ log.complainant_applicant.id|slice:":8" }}..."
                                           data-ref-code="{{ log.complainant_applicant.reference_number|default:'' }}"
@@ -4056,35 +4055,39 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>
+                            <td style="vertical-align: middle; text-align: center;">
                                 <span class="case-type-badge case-type-badge--standard">{{ log.get_case_type_display }}</span>
                             </td>
-                            <td>
-                                {% if log.subject_applicant %}
-                                <span class="respondent-name-cell applicant-name"
-                                      style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
-                                      data-full-name="{{ row.incident_respondent_name }}"
-                                      data-tx-id="APP-{{ log.subject_applicant.id|slice:":8" }}..."
-                                      data-ref-code="{{ log.subject_applicant.reference_number|default:'' }}"
-                                      data-barangay="{% if log.subject_applicant.active_unit_label != 'Not specified' %}{{ log.subject_applicant.active_unit_label }}{% elif row.incident_respondent_unit_label %}{{ row.incident_respondent_unit_label }}{% else %}Not specified{% endif %}"
-                                      data-dob="{{ log.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
-                                      title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
-                                {% if row.incident_respondent_unit_label %}
-                                <span style="display: block; font-size: 0.7rem; color: #64748b; font-weight: 500; margin-top: 0.15rem;">{{ row.incident_respondent_unit_label }}</span>
-                                {% endif %}
-                                <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
-                                    Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
-                                </span>
-                                {% elif row.incident_respondent_name %}
-                                <span class="respondent-name-cell" title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
-                                {% if row.incident_respondent_unit_label %}
-                                <span style="display: block; font-size: 0.7rem; color: #64748b; font-weight: 500; margin-top: 0.15rem;">{{ row.incident_respondent_unit_label }}</span>
-                                {% endif %}
-                                {% else %}
-                                <span class="respondent-name-cell is-empty">—</span>
-                                {% endif %}
+                            <td style="vertical-align: middle;">
+                                <div class="demographic-meta-card">
+                                    {% if log.subject_applicant %}
+                                    <span class="complainant-name applicant-name"
+                                          style="cursor: pointer;"
+                                          data-full-name="{{ row.incident_respondent_name }}"
+                                          data-tx-id="APP-{{ log.subject_applicant.id|slice:":8" }}..."
+                                          data-ref-code="{{ log.subject_applicant.reference_number|default:'' }}"
+                                          data-barangay="{% if log.subject_applicant.active_unit_label != 'Not specified' %}{{ log.subject_applicant.active_unit_label }}{% elif row.incident_respondent_unit_label %}{{ row.incident_respondent_unit_label }}{% else %}Not specified{% endif %}"
+                                          data-dob="{{ log.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
+                                          title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
+                                    {% if row.incident_respondent_unit_label %}
+                                    <span style="display: block; font-size: 0.68rem; color: #64748b; font-weight: 500;">{{ row.incident_respondent_unit_label }}</span>
+                                    {% endif %}
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                        <span style="font-size: 0.62rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #fecaca; white-space: nowrap;">
+                                            Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
+                                        </span>
+                                    </div>
+                                    {% elif row.incident_respondent_name %}
+                                    <span class="complainant-name" title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
+                                    {% if row.incident_respondent_unit_label %}
+                                    <span style="display: block; font-size: 0.68rem; color: #64748b; font-weight: 500;">{{ row.incident_respondent_unit_label }}</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="respondent-name-cell is-empty">—</span>
+                                    {% endif %}
+                                </div>
                             </td>
-                            <td>
+                            <td style="vertical-align: middle; text-align: center;">
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width: 0.85rem; height: 0.85rem; color: #7c3aed; flex-shrink: 0;">
                                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -4098,10 +4101,10 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>
+                            <td style="vertical-align: middle; text-align: center;">
                                 <span class="status-pill-flex status-pill-flex--incident_log">Settled on-site</span>
                             </td>
-                            <td>
+                            <td style="vertical-align: middle; text-align: center;">
                                 <div class="case-desk-incident-actions">
                                     <button type="button" class="case-prior-open-link"
                                         onclick="viewSettledIncidentLog(this)"
