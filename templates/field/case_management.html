@@ -1489,7 +1489,11 @@
     }
 
     .cases-search-btn {
-        padding: 0 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.38rem;
+        padding: 0 1rem;
         background: #15803d;
         color: #fff;
         border: none;
@@ -1497,10 +1501,20 @@
         font-size: 0.78rem;
         font-weight: 600;
         cursor: pointer;
+        white-space: nowrap;
+        line-height: 1;
     }
 
     .cases-search-btn:hover {
         background: #166534;
+    }
+
+    .cases-select.filter-select {
+        max-width: 8.2rem;
+        padding: 0.54rem 1.6rem 0.54rem 0.65rem;
+        font-size: 0.75rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .cases-table.formal-table {
@@ -5100,7 +5114,13 @@
                 </svg>
                 <input type="text" id="searchInput" placeholder="Complainant, case #, description..."
                     value="{{ search_query }}">
-                <button type="button" class="cases-search-btn" onclick="applyCaseFilters()">🔍 Search</button>
+                <button type="button" class="cases-search-btn" onclick="applyCaseFilters()">
+                    <svg style="width: 0.85rem; height: 0.85rem; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <span>Search</span>
+                </button>
             </div>
 
             <!-- Select Type dropdown -->
