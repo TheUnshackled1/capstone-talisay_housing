@@ -3975,7 +3975,7 @@
                                 <div class="demographic-meta-card">
                                     {% if case.subject_applicant %}
                                     <span class="complainant-name applicant-name"
-                                          style="cursor: pointer; font-weight: 700; color: #1e3a8a;"
+                                          style="cursor: pointer;"
                                           data-full-name="{{ case.subject_applicant.full_name }}"
                                           data-tx-id="APP-{{ case.subject_applicant.id|slice:":8" }}..."
                                           data-ref-code="{{ case.subject_applicant.reference_number|default:'' }}"
@@ -3983,12 +3983,23 @@
                                           data-dob="{{ case.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                                           title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
                                     <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                        <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; font-size: 0.62rem; font-weight: 700; padding: 0.08rem 0.4rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap;">
+                                            #{{ case.case_number }}
+                                        </span>
                                         <span style="font-size: 0.62rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #fecaca; white-space: nowrap;">
                                             Complaints received: {{ case.subject_applicant.cases_against.count|add:case.subject_applicant.settled_incident_logs.count }}
                                         </span>
                                     </div>
                                     {% elif case.subject_name %}
                                     <span class="complainant-name" title="{{ case.subject_name }}">{{ case.subject_name }}</span>
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                        <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; font-size: 0.62rem; font-weight: 700; padding: 0.08rem 0.4rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap;">
+                                            #{{ case.case_number }}
+                                        </span>
+                                        <span style="font-size: 0.62rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #fecaca; white-space: nowrap;">
+                                            Complaints received: 1
+                                        </span>
+                                    </div>
                                     {% else %}
                                     <span class="respondent-name-cell is-empty">—</span>
                                     {% endif %}
@@ -4073,6 +4084,9 @@
                                     <span style="display: block; font-size: 0.68rem; color: #64748b; font-weight: 500;">{{ row.incident_respondent_unit_label }}</span>
                                     {% endif %}
                                     <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                        <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; font-size: 0.62rem; font-weight: 700; padding: 0.08rem 0.4rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap;">
+                                            #INC-{{ log.id }}
+                                        </span>
                                         <span style="font-size: 0.62rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #fecaca; white-space: nowrap;">
                                             Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
                                         </span>
@@ -4082,6 +4096,14 @@
                                     {% if row.incident_respondent_unit_label %}
                                     <span style="display: block; font-size: 0.68rem; color: #64748b; font-weight: 500;">{{ row.incident_respondent_unit_label }}</span>
                                     {% endif %}
+                                    <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                                        <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; font-size: 0.62rem; font-weight: 700; padding: 0.08rem 0.4rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap;">
+                                            #INC-{{ log.id }}
+                                        </span>
+                                        <span style="font-size: 0.62rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #fecaca; white-space: nowrap;">
+                                            Complaints received: 1
+                                        </span>
+                                    </div>
                                     {% else %}
                                     <span class="respondent-name-cell is-empty">—</span>
                                     {% endif %}
