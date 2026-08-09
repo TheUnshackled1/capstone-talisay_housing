@@ -36,7 +36,7 @@
     <!-- Controls Bar (TOTAL LIST badge + Search Box) -->
     <div class="controls-bar"
         style="display: flex; gap: 0.75rem; margin-bottom: 0.55rem; flex-wrap: wrap; align-items: center; padding: 0.5rem 0.75rem; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0.7rem;">
-        <!-- Total Count Badge -->
+        <!-- Summary Cards -->
         <div class="summary-chip-card summary-chip-card--blue is-clickable">
             <div class="summary-icon-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
@@ -47,7 +47,46 @@
             </div>
             <div>
                 <p>Total List</p>
-                <p>{{ page_obj.paginator.count|default:0 }}</p>
+                <p>{{ queue_total|default:0 }}</p>
+            </div>
+        </div>
+
+        <div class="summary-chip-card summary-chip-card--emerald is-clickable">
+            <div class="summary-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+            </div>
+            <div>
+                <p>Verified</p>
+                <p>{{ verified_count|default:0 }}</p>
+            </div>
+        </div>
+
+        <div class="summary-chip-card summary-chip-card--amber is-clickable">
+            <div class="summary-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <div>
+                <p>Waiting</p>
+                <p>{{ waiting_count|default:0 }}</p>
+            </div>
+        </div>
+
+        <div class="summary-chip-card summary-chip-card--purple is-clickable">
+            <div class="summary-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <div>
+                <p>For Awarding</p>
+                <p>{{ awarding_count|default:0 }}</p>
             </div>
         </div>
 

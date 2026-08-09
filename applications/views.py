@@ -1268,6 +1268,9 @@ def ready_for_form_queue(request, position):
     applicants_data = module2_ready_for_form_queue_rows(request.user)
 
     ready_queue_total = len(applicants_data)
+    verified_count = len([a for a in applicants_data if not a.get('application')])
+    waiting_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft'])
+    awarding_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed'])
 
     queue_barangay_ids = {
         a['applicant'].barangay_id
@@ -1363,6 +1366,9 @@ def ready_for_form_queue(request, position):
         'permissions': permissions,
         'user_position': request.user.position,
         'queue_total': ready_queue_total,
+        'verified_count': verified_count,
+        'waiting_count': waiting_count,
+        'awarding_count': awarding_count,
         'requirements': requirements,
         'group_a_requirements': group_a_requirements,
         'group_b_requirements': group_b_requirements,
