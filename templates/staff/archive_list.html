@@ -29,10 +29,7 @@
         border-radius: 0.75rem;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
     }
-    .summary-chip-card {
-        display: inline-flex; align-items: center; gap: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0;
-        border-radius: 0.52rem; padding: 0.42rem 0.58rem; white-space: nowrap;
-    }
+    /* Premium summary chip card styles moved below */
     .search-box { flex: 1 1 220px; min-width: 0; position: relative; display: flex; align-items: stretch; }
     .search-icon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); width: 0.9rem; height: 0.9rem; color: #94a3b8; z-index: 2; pointer-events: none; }
     .search-input {
@@ -503,14 +500,74 @@
     .section-title-archives::before {
         display: none !important;
     }
-    .summary-chip-card--amber {
-        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
-        border-color: #fcd34d !important;
-        border-left: 1px solid #fcd34d !important;
+    /* Premium Summary Chip Cards (Updated to match case_management.html) */
+    .summary-chip-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.35rem 0.65rem 0.35rem 0.35rem;
+        border-radius: 0.75rem;
+        font-family: inherit;
+        text-align: left;
+        box-sizing: border-box;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: #ffffff;
     }
-    .summary-chip-card--amber svg { color: #b45309 !important; }
-    .summary-chip-card--amber p:first-of-type { color: #b45309 !important; }
-    .summary-chip-card--amber p:last-of-type { color: #92400e !important; }
+
+    button.summary-chip-card, .summary-chip-card.is-clickable {
+        cursor: pointer;
+        outline: none;
+    }
+
+    .summary-chip-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    .summary-icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: 0.5rem;
+        flex-shrink: 0;
+        color: #ffffff;
+    }
+
+    .summary-chip-card div p:first-child {
+        font-size: 0.58rem !important;
+        color: #64748b;
+        margin: 0 0 0.1rem 0 !important;
+        text-transform: uppercase;
+        font-weight: 700 !important;
+        letter-spacing: 0.06em;
+    }
+
+    .summary-chip-card div p:last-child {
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    /* AMBER - Total Archived */
+    .summary-chip-card--amber {
+        background: #fff7ed !important;
+        border-color: #fed7aa !important;
+        border-left: 1px solid #fed7aa !important;
+    }
+    .summary-chip-card--amber .summary-icon-wrap {
+        background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
+        box-shadow: 0 2px 6px rgba(234,88,12,0.3);
+    }
+    .summary-chip-card--amber div p:last-child {
+        color: #9a3412 !important;
+    }
+    .summary-chip-card--amber div p:first-child {
+        color: #f97316 !important;
+    }
 
 
     .applicants-table th.col-action, .applicants-table td.col-action { text-align: center; }
@@ -749,13 +806,17 @@
     </div>
 
     <form class="controls-bar" method="get">
-        <div class="summary-chip-card summary-chip-card--amber">
-            <svg style="width: 20px; height: 20px; color: #b45309;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
+        <div class="summary-chip-card summary-chip-card--amber is-clickable">
+            <div class="summary-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
+                    <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                    <rect x="1" y="3" width="22" height="5"></rect>
+                    <line x1="10" y1="12" x2="14" y2="12"></line>
+                </svg>
+            </div>
             <div>
-                <p style="font-size: 0.625rem; color: #b45309; margin: 0; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em;">ARCHIVED RECORDS</p>
-                <p style="font-size: 1.25rem; font-weight: 700; color: #92400e; margin: 0; display: flex; align-items: baseline; gap: 0.25rem;">
+                <p>ARCHIVED RECORDS</p>
+                <p style="display: flex; align-items: baseline; gap: 0.25rem;">
                     {{ total_archived }}
                     <span style="font-size: 0.7rem; font-weight: 500; color: #b45309; text-transform: lowercase;">applicant{{ total_archived|pluralize }}</span>
                 </p>
