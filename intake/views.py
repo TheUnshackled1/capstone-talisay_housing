@@ -1665,6 +1665,10 @@ def applicants_list(request, position):
         if not a.get('module2HandedOff') and a.get('applicantStatus') != 'disqualified'
     ])
     
+    archive_complete_count = len([r for r in archive_records if r.get('requirementsStatusTier') == 'complete'])
+    archive_incomplete_count = len([r for r in archive_records if r.get('requirementsStatusTier') == 'incomplete'])
+    archive_pending_count = len([r for r in archive_records if r.get('requirementsStatusTier') == 'pending'])
+    
     context = {
         'page_title': 'ISF Registration',
         'user_position': request.user.position,
@@ -1682,6 +1686,9 @@ def applicants_list(request, position):
         },
         'archive_records': archive_records,
         'archive_records_total': len(archive_records),
+        'archive_complete_count': archive_complete_count,
+        'archive_incomplete_count': archive_incomplete_count,
+        'archive_pending_count': archive_pending_count,
         'archive_documents_modal': archive_documents_modal,
         'archive_review_modal': json.dumps(archive_review_modal),
         'active_list_q': active_list_q,
