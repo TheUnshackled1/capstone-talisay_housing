@@ -1100,22 +1100,7 @@ def applications_list(request, position):
         applicants_data.append(row)
     
     
-    # Filter by stage if requested
-    filter_stage = request.GET.get('stage', 'all')
-    if filter_stage != 'all':
-        stage_map = {
-            'eligibility': 'Eligibility',
-            'document_gathering': 'Document Gathering',
-            'form_released': 'Form Released',
-            'awaiting_final_approval': 'Awaiting final approval',
-            'fully_approved': 'Fully Approved',
-            'lot_awarded': 'Lot Awarded',
-        }
-        target_stage = stage_map.get(filter_stage)
-        if target_stage:
-            applicants_data = [a for a in applicants_data if a['current_stage'] == target_stage]
-
-    # Search filter (server-side across full list before pagination)
+    # 1. Search filter (server-side across full list before pagination)
     search = request.GET.get('search', '').strip()
     if search:
         search_lower = search.lower()
@@ -1139,7 +1124,7 @@ def applications_list(request, position):
 
         applicants_data = [a for a in applicants_data if _evaluation_row_matches(a)]
 
-    # Stage counts for summary cards (calculated strictly from visible table rows)
+    # 2. Stage counts for summary cards (calculated strictly from visible table rows after search, before stage filter)
     stage_counts = {
         'eligibility': len([a for a in applicants_data if a['current_stage'] == 'Eligibility']),
         'document_gathering': len([a for a in applicants_data if a['current_stage'] == 'Document Gathering']),
@@ -1148,6 +1133,21 @@ def applications_list(request, position):
         'fully_approved': len([a for a in applicants_data if a['current_stage'] == 'Fully Approved']),
         'lot_awarded': len([a for a in applicants_data if a['current_stage'] == 'Lot Awarded']),
     }
+
+    # 3. Filter by stage if requested
+    filter_stage = request.GET.get('stage', 'all')
+    if filter_stage != 'all':
+        stage_map = {
+            'eligibility': 'Eligibility',
+            'document_gathering': 'Document Gathering',
+            'form_released': 'Form Released',
+            'awaiting_final_approval': 'Awaiting final approval',
+            'fully_approved': 'Fully Approved',
+            'lot_awarded': 'Lot Awarded',
+        }
+        target_stage = stage_map.get(filter_stage)
+        if target_stage:
+            applicants_data = [a for a in applicants_data if a['current_stage'] == target_stage]
 
     paginator = Paginator(applicants_data, MODULE2_EVALUATIONS_LIST_PER_PAGE)
     page_number = request.GET.get('page', 1)
@@ -1269,20 +1269,7 @@ def ready_for_form_queue(request, position):
     filter_status = request.GET.get('status', 'all').strip()
     filter_barangay = request.GET.get('barangay', 'all').strip()
 
-    if filter_status == 'verified':
-        applicants_data = [a for a in applicants_data if not a.get('application')]
-    elif filter_status == 'waiting':
-        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft']
-    elif filter_status == 'awarding':
-        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed']
-
-    if filter_barangay and filter_barangay != 'all':
-        applicants_data = [
-            a for a in applicants_data
-            if str(getattr(getattr(a['applicant'], 'barangay', None), 'id', '')) == filter_barangay
-            or (getattr(getattr(a['applicant'], 'barangay', None), 'name', '') or '').lower() == filter_barangay.lower()
-        ]
-
+    # 1. Search filter
     if search:
         search_lower = search.lower()
         applicants_data = [
@@ -1292,11 +1279,28 @@ def ready_for_form_queue(request, position):
             or search_lower in (getattr(getattr(a['applicant'], 'barangay', None), 'name', '') or '').lower()
         ]
 
+    # 2. Barangay filter
+    if filter_barangay and filter_barangay != 'all':
+        applicants_data = [
+            a for a in applicants_data
+            if str(getattr(getattr(a['applicant'], 'barangay', None), 'id', '')) == filter_barangay
+            or (getattr(getattr(a['applicant'], 'barangay', None), 'name', '') or '').lower() == filter_barangay.lower()
+        ]
 
+    # 3. Calculate Counts for Summary Cards (post search/barangay, pre-status filter)
     ready_queue_total = len(applicants_data)
     verified_count = len([a for a in applicants_data if not a.get('application')])
     waiting_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft'])
     awarding_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed'])
+
+    # 4. Status filter
+    if filter_status == 'verified':
+        applicants_data = [a for a in applicants_data if not a.get('application')]
+    elif filter_status == 'waiting':
+        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft']
+    elif filter_status == 'awarding':
+        applicants_data = [a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed']
+
 
     selected_row_included = False
     selected_not_ready_reason = ''
