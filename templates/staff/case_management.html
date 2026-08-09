@@ -51,26 +51,34 @@
     .btn-page {
         display: inline-flex !important;
         align-items: center !important;
-        justify-content: center !important;
-        padding: 0.28rem 0.65rem !important;
+        gap: 0.3rem !important;
+        border: none !important;
         border-radius: 0.4rem !important;
-        background: #f1f5f9 !important;
-        color: #475569 !important;
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
         font-size: 0.67rem !important;
-        font-weight: 600 !important;
-        text-decoration: none !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.03em !important;
+        padding: 0.3rem 0.75rem !important;
         cursor: pointer !important;
-        border: 1px solid #cbd5e1 !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
         transition: all 0.15s ease !important;
     }
 
-    .btn-page.is-disabled, .btn-page:disabled {
-        opacity: 0.55 !important;
-        background: #f1f5f9 !important;
+    .btn-page:hover:not(:disabled) {
+        background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%) !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .btn-page:disabled,
+    .btn-page.is-disabled {
+        background: #f8fafc !important;
         color: #94a3b8 !important;
-        border-color: #e2e8f0 !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
         cursor: not-allowed !important;
-        pointer-events: none !important;
+        transform: none !important;
     }
 
     .page-indicator {
@@ -4216,7 +4224,7 @@
         </div>
         <div class="table-pagination" id="caseDeskPagination">
             <div class="table-pagination-info" id="caseDeskPaginationInfo">
-                Showing 1-{{ desk_rows|length }} of {{ desk_rows|length }}
+                Showing 1 - {{ desk_rows|length }} of {{ desk_rows|length }}
             </div>
             <div class="table-pagination-controls">
                 <button type="button" class="btn-page is-disabled" id="caseDeskPrevBtn" disabled>Prev</button>
