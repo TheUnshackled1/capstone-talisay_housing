@@ -1067,29 +1067,6 @@ def applications_list(request, position):
     group_a_requirements = requirements.filter(group='A')
     group_b_requirements = requirements.filter(group='B')
     
-    # Stage counts for summary cards
-    stage_counts = {
-        'eligibility': applicants.filter(
-            Q(application__isnull=True) | Q(application__status='draft')
-        ).distinct().count(),
-
-        'document_gathering': applicants.filter(
-            application__isnull=True
-        ).count(),
-        'form_released': applicants.filter(
-            application__status__in=['draft', 'completed']
-        ).exclude(
-            form_queue_routed_at__isnull=False,
-            application__status__in=['draft', 'completed'],
-        ).count(),
-        'awaiting_final_approval': applicants.filter(application__status='completed').distinct().count(),
-        'fully_approved': applicants.filter(
-            application__status='standby'
-        ).count(),
-        'lot_awarded': applicants.filter(
-            application__status='awarded'
-        ).count(),
-    }
     
     required_group_a_submission_total = Requirement.objects.filter(
         group='A',
@@ -1121,6 +1098,16 @@ def applications_list(request, position):
         if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
             continue
         applicants_data.append(row)
+    
+    # Stage counts for summary cards (calculated strictly from visible table rows)
+    stage_counts = {
+        'eligibility': len([a for a in applicants_data if a['current_stage'] == 'Eligibility']),
+        'document_gathering': len([a for a in applicants_data if a['current_stage'] == 'Document Gathering']),
+        'form_released': len([a for a in applicants_data if a['current_stage'] == 'Form Released']),
+        'awaiting_final_approval': len([a for a in applicants_data if a['current_stage'] == 'Awaiting final approval']),
+        'fully_approved': len([a for a in applicants_data if a['current_stage'] == 'Fully Approved']),
+        'lot_awarded': len([a for a in applicants_data if a['current_stage'] == 'Lot Awarded']),
+    }
     
     # Filter by stage if requested
     filter_stage = request.GET.get('stage', 'all')
