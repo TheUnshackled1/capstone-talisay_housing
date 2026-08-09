@@ -1099,15 +1099,6 @@ def applications_list(request, position):
             continue
         applicants_data.append(row)
     
-    # Stage counts for summary cards (calculated strictly from visible table rows)
-    stage_counts = {
-        'eligibility': len([a for a in applicants_data if a['current_stage'] == 'Eligibility']),
-        'document_gathering': len([a for a in applicants_data if a['current_stage'] == 'Document Gathering']),
-        'form_released': len([a for a in applicants_data if a['current_stage'] == 'Form Released']),
-        'awaiting_final_approval': len([a for a in applicants_data if a['current_stage'] == 'Awaiting final approval']),
-        'fully_approved': len([a for a in applicants_data if a['current_stage'] == 'Fully Approved']),
-        'lot_awarded': len([a for a in applicants_data if a['current_stage'] == 'Lot Awarded']),
-    }
     
     # Filter by stage if requested
     filter_stage = request.GET.get('stage', 'all')
@@ -1147,6 +1138,16 @@ def applications_list(request, position):
             return False
 
         applicants_data = [a for a in applicants_data if _evaluation_row_matches(a)]
+
+    # Stage counts for summary cards (calculated strictly from visible table rows)
+    stage_counts = {
+        'eligibility': len([a for a in applicants_data if a['current_stage'] == 'Eligibility']),
+        'document_gathering': len([a for a in applicants_data if a['current_stage'] == 'Document Gathering']),
+        'form_released': len([a for a in applicants_data if a['current_stage'] == 'Form Released']),
+        'awaiting_final_approval': len([a for a in applicants_data if a['current_stage'] == 'Awaiting final approval']),
+        'fully_approved': len([a for a in applicants_data if a['current_stage'] == 'Fully Approved']),
+        'lot_awarded': len([a for a in applicants_data if a['current_stage'] == 'Lot Awarded']),
+    }
 
     paginator = Paginator(applicants_data, MODULE2_EVALUATIONS_LIST_PER_PAGE)
     page_number = request.GET.get('page', 1)
@@ -1254,11 +1255,7 @@ def ready_for_form_queue(request, position):
 
     applicants_data = module2_ready_for_form_queue_rows(request.user)
 
-    ready_queue_total = len(applicants_data)
-    verified_count = len([a for a in applicants_data if not a.get('application')])
-    waiting_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft'])
-    awarding_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed'])
-
+    
     queue_barangay_ids = {
         a['applicant'].barangay_id
         for a in applicants_data
@@ -1294,6 +1291,12 @@ def ready_for_form_queue(request, position):
             or search_lower in (a['applicant'].reference_number or '').lower()
             or search_lower in (getattr(getattr(a['applicant'], 'barangay', None), 'name', '') or '').lower()
         ]
+
+
+    ready_queue_total = len(applicants_data)
+    verified_count = len([a for a in applicants_data if not a.get('application')])
+    waiting_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'draft'])
+    awarding_count = len([a for a in applicants_data if a.get('application') and getattr(a.get('application'), 'status', '') == 'completed'])
 
     selected_row_included = False
     selected_not_ready_reason = ''
