@@ -786,20 +786,20 @@ def document_management(request, position):
     page_row_ids = [a['id'] for a in page_applicants]
     documents_qs = (
         Document.objects
-        .select_related('applicant')
+        .select_related('applicant', 'uploaded_by')
         .filter(applicant_id__in=all_applicant_ids)
         .order_by('applicant__created_at', '-uploaded_at')
     )
 
     types_on_file = defaultdict(set)
     # Newest upload per (applicant, document_type) — documents_qs is ordered with -uploaded_at per applicant.
-    latest_doc_id_by_applicant_type = {}
+    latest_doc_by_applicant_type = {}
     for doc in documents_qs:
         rid_d = str(doc.applicant_id).lower()
         types_on_file[rid_d].add(doc.document_type)
         key = (rid_d, doc.document_type)
-        if key not in latest_doc_id_by_applicant_type:
-            latest_doc_id_by_applicant_type[key] = str(doc.id)
+        if key not in latest_doc_by_applicant_type:
+            latest_doc_by_applicant_type[key] = doc
 
     monitoring_reports_by_applicant = defaultdict(list)
     total_monitoring_report_documents = 0
@@ -841,20 +841,29 @@ def document_management(request, position):
                 on_file = type_key in types_on_file[rid]
                 lk = (rid, type_key)
                 view_url = None
-                if on_file and lk in latest_doc_id_by_applicant_type:
+                if on_file and lk in latest_doc_by_applicant_type:
                     view_url = reverse(
                         'documents:blob_download',
                         kwargs={
                             'position': request.user.position,
-                            'doc_id': latest_doc_id_by_applicant_type[lk],
+                            'doc_id': latest_doc_by_applicant_type[lk].id,
                         },
                     )
+                
+                doc_obj = latest_doc_by_applicant_type.get(lk) if on_file else None
+                validated_by = doc_obj.uploaded_by.get_full_name() if doc_obj and doc_obj.uploaded_by else ''
+                validator_role = doc_obj.uploaded_by.get_position_display() if doc_obj and doc_obj.uploaded_by else ''
+                validated_at = doc_obj.uploaded_at.strftime('%b %d, %Y %I:%M %p') if doc_obj and doc_obj.uploaded_at else ''
+
                 checklist.append({
                     'type_key': type_key,
                     'label': label,
                     'group_label': group['label'],
                     'on_file': on_file,
                     'view_url': view_url,
+                    'validated_by': validated_by,
+                    'validator_role': validator_role,
+                    'validated_at': validated_at,
                     **_vault_drawer_intake_fields(type_key),
                 })
         row['vault_checklist'] = checklist
@@ -878,8 +887,8 @@ def document_management(request, position):
         ap = applicant_map.get(rid)
         ts = types_on_file[rid]
         latest_by = {
-            doc_type: doc_id
-            for (r, doc_type), doc_id in latest_doc_id_by_applicant_type.items()
+            doc_type: doc_obj.id
+            for (r, doc_type), doc_obj in latest_doc_by_applicant_type.items()
             if r == rid
         }
         situation = (
@@ -897,11 +906,11 @@ def document_management(request, position):
         signed_on_file = bool(ap and applicant_has_signed_application_payload(ap))
         signed_view_url = None
         if signed_on_file:
-            doc_id = latest_doc_id_by_applicant_type.get((rid, 'signed_application'))
-            if doc_id:
+            doc_obj = latest_doc_by_applicant_type.get((rid, 'signed_application'))
+            if doc_obj:
                 signed_view_url = reverse(
                     'documents:blob_download',
-                    kwargs={'position': request.user.position, 'doc_id': doc_id},
+                    kwargs={'position': request.user.position, 'doc_id': doc_obj.id},
                 )
         app_obj = getattr(ap, 'application', None) if ap else None
         signed_item = {
@@ -910,6 +919,9 @@ def document_management(request, position):
             'group_label': 'Housing application (Module 2)',
             'on_file': signed_on_file,
             'view_url': signed_view_url,
+            'validated_by': doc_obj.uploaded_by.get_full_name() if (signed_on_file and doc_obj and doc_obj.uploaded_by) else '',
+            'validator_role': doc_obj.uploaded_by.get_position_display() if (signed_on_file and doc_obj and doc_obj.uploaded_by) else '',
+            'validated_at': doc_obj.uploaded_at.strftime('%b %d, %Y %I:%M %p') if (signed_on_file and doc_obj and doc_obj.uploaded_at) else '',
             **_vault_drawer_intake_fields('signed_application'),
         }
         if not signed_on_file:

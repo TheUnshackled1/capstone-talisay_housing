@@ -812,6 +812,11 @@ function openVaultDrawer(applicantId) {
         (data.vault_checklist || []).forEach(function (item) {
             const row = document.createElement('div');
             row.className = 'vault-drawer-row';
+            row.dataset.docName = item.label || '';
+            row.dataset.docStatus = item.on_file ? 'On file' : 'Missing';
+            row.dataset.validatedBy = item.validated_by || '';
+            row.dataset.validatorRole = item.validator_role || '';
+            row.dataset.validatedAt = item.validated_at || '';
             const labelSpan = document.createElement('span');
             labelSpan.className = 'vault-drawer-label';
             labelSpan.textContent = item.label || '';
@@ -871,6 +876,11 @@ function openVaultDrawer(applicantId) {
                 sit2.rows.forEach(function (sr) {
                     const srow = document.createElement('div');
                     srow.className = 'vault-drawer-row';
+                    srow.dataset.docName = sr.label || '';
+                    srow.dataset.docStatus = sr.on_file ? 'On file' : 'Missing';
+                    srow.dataset.validatedBy = sr.validated_by || '';
+                    srow.dataset.validatorRole = sr.validator_role || '';
+                    srow.dataset.validatedAt = sr.validated_at || '';
                     const lab = document.createElement('div');
                     lab.style.flex = '1';
                     lab.style.minWidth = '0';
@@ -1509,6 +1519,102 @@ document.addEventListener('DOMContentLoaded', () => {
             hoverCard.classList.remove('active');
         }, 250);
     });
+
+    // Premium Document Hover Card popover initialization
+    const docHoverCard = document.getElementById('documentHoverCard');
+    const dhcName = document.getElementById('dhcName');
+    const dhcStatus = document.getElementById('dhcStatus');
+    const dhcValidatedBy = document.getElementById('dhcValidatedBy');
+    const dhcValidatorRole = document.getElementById('dhcValidatorRole');
+    const dhcValidatedAt = document.getElementById('dhcValidatedAt');
+
+    let docHideTimeout;
+
+    if (docHoverCard) {
+        document.addEventListener('mouseover', function (e) {
+            const docRow = e.target.closest('.vault-drawer-row');
+            const isDocHoverCard = e.target.closest('#documentHoverCard');
+
+            if (!docRow) {
+                if (isDocHoverCard) {
+                    clearTimeout(docHideTimeout);
+                }
+                return;
+            }
+
+            clearTimeout(docHideTimeout);
+
+            const docName = docRow.dataset.docName || '';
+            const docStatus = docRow.dataset.docStatus || '';
+            const validatedBy = docRow.dataset.validatedBy || '';
+            const validatorRole = docRow.dataset.validatorRole || '';
+            const validatedAt = docRow.dataset.validatedAt || '';
+
+            dhcName.textContent = docName;
+            dhcStatus.textContent = docStatus;
+            if (docStatus === 'On file') {
+                dhcStatus.style.color = '#059669';
+            } else {
+                dhcStatus.style.color = '#dc2626';
+            }
+            
+            dhcValidatedBy.textContent = validatedBy || 'Not recorded';
+            dhcValidatorRole.textContent = validatorRole || '---';
+            dhcValidatedAt.textContent = validatedAt || '---';
+
+            // Position card
+            const rect = docRow.getBoundingClientRect();
+            
+            docHoverCard.style.display = 'block';
+            const cardWidth = docHoverCard.offsetWidth || 290;
+            const cardHeight = docHoverCard.offsetHeight || 190;
+            docHoverCard.style.display = ''; 
+
+            const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+            const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+            let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
+            let targetTop = rect.top + scrollY - cardHeight - 12;
+
+            if (targetLeft < 10) targetLeft = 10;
+            if (targetLeft + cardWidth > window.innerWidth - 10) {
+                targetLeft = window.innerWidth - cardWidth - 10;
+            }
+
+            if (rect.top - cardHeight - 12 < 10) {
+                targetTop = rect.bottom + scrollY + 12;
+                docHoverCard.classList.add('position-below');
+            } else {
+                docHoverCard.classList.remove('position-below');
+            }
+
+            docHoverCard.style.left = targetLeft + 'px';
+            docHoverCard.style.top = targetTop + 'px';
+            docHoverCard.classList.add('active');
+        });
+
+        document.addEventListener('mouseout', function (e) {
+            const docRow = e.target.closest('.vault-drawer-row');
+            const isDocHoverCard = e.target.closest('#documentHoverCard');
+
+            if (docRow || isDocHoverCard) {
+                docHideTimeout = setTimeout(function () {
+                    docHoverCard.classList.remove('active');
+                }, 250);
+            }
+        });
+
+        docHoverCard.addEventListener('mouseenter', function () {
+            clearTimeout(docHideTimeout);
+        });
+
+        docHoverCard.addEventListener('mouseleave', function () {
+            docHideTimeout = setTimeout(function () {
+                docHoverCard.classList.remove('active');
+            }, 250);
+        });
+    }
+
 });
 
 // Show subtle handoff toast when redirected from Module 2 requirement gate.
@@ -1643,4 +1749,4 @@ document.addEventListener('click', function(e) {
     });
 
 }());
-
+
