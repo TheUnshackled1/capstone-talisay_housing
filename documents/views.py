@@ -853,7 +853,7 @@ def document_management(request, position):
                 doc_obj = latest_doc_by_applicant_type.get(lk) if on_file else None
                 validated_by = doc_obj.uploaded_by.get_full_name() if doc_obj and doc_obj.uploaded_by else ''
                 validator_role = doc_obj.uploaded_by.get_position_display() if doc_obj and doc_obj.uploaded_by else ''
-                validated_at = doc_obj.uploaded_at.strftime('%b %d, %Y %I:%M %p') if doc_obj and doc_obj.uploaded_at else ''
+                validated_at = timezone.localtime(doc_obj.uploaded_at).strftime('%b %d, %Y %I:%M %p') if doc_obj and doc_obj.uploaded_at else ''
 
                 checklist.append({
                     'type_key': type_key,
@@ -921,7 +921,7 @@ def document_management(request, position):
             'view_url': signed_view_url,
             'validated_by': doc_obj.uploaded_by.get_full_name() if (signed_on_file and doc_obj and doc_obj.uploaded_by) else '',
             'validator_role': doc_obj.uploaded_by.get_position_display() if (signed_on_file and doc_obj and doc_obj.uploaded_by) else '',
-            'validated_at': doc_obj.uploaded_at.strftime('%b %d, %Y %I:%M %p') if (signed_on_file and doc_obj and doc_obj.uploaded_at) else '',
+            'validated_at': timezone.localtime(doc_obj.uploaded_at).strftime('%b %d, %Y %I:%M %p') if (signed_on_file and doc_obj and doc_obj.uploaded_at) else '',
             **_vault_drawer_intake_fields('signed_application'),
         }
         if not signed_on_file:
