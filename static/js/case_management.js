@@ -215,7 +215,7 @@
 
         if (!isResolved && !hasNotes && !hasDate) {
             section.style.display = 'none';
-            if (notesEl) notesEl.textContent = 'â€”';
+            if (notesEl) notesEl.textContent = '—';
             if (dateEl) dateEl.textContent = '';
             return;
         }
@@ -241,9 +241,9 @@
         }
         const filedMeta = document.getElementById('modalFiledMeta');
         if (filedMeta) {
-            let filedText = `Filed ${filed.toLocaleDateString()} Â· ${filed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            let filedText = `Filed ${filed.toLocaleDateString()} · ${filed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
             if (c.received_by) {
-                filedText += ` Â· Recorded by ${c.received_by}`;
+                filedText += ` · Recorded by ${c.received_by}`;
                 if (c.received_by_position) filedText += ` (${c.received_by_position})`;
             }
             filedMeta.textContent = filedText;
@@ -253,8 +253,8 @@
 
         const avatarEl = document.getElementById('modalStaffAvatar');
         const staffName = c.received_by || 'Unassigned';
-        const staffRole = c.received_by_position || 'â€”';
-        const initials = c.received_by_initials || (staffName !== 'Unassigned' ? staffName.slice(0, 2).toUpperCase() : 'â€”');
+        const staffRole = c.received_by_position || '—';
+        const initials = c.received_by_initials || (staffName !== 'Unassigned' ? staffName.slice(0, 2).toUpperCase() : '—');
         if (avatarEl) {
             avatarEl.textContent = initials;
             avatarEl.className = `handled-by-avatar ${staffAvatarClass(c.received_by_position_key || '')}`;
@@ -265,19 +265,19 @@
         if (staffRoleEl) staffRoleEl.textContent = staffRole;
 
         document.getElementById('modalComplainantName').textContent = c.complainant_name;
-        document.getElementById('modalComplainantPhone').textContent = c.complainant_phone || 'â€”';
-        document.getElementById('modalComplainantRef').textContent = c.complainant_reference || 'â€”';
-        document.getElementById('modalComplainantUnit').textContent = c.complainant_unit_label || 'â€”';
+        document.getElementById('modalComplainantPhone').textContent = c.complainant_phone || '—';
+        document.getElementById('modalComplainantRef').textContent = c.complainant_reference || '—';
+        document.getElementById('modalComplainantUnit').textContent = c.complainant_unit_label || '—';
 
         const profile = c.beneficiary_profile;
         const sexEl = document.getElementById('modalBeneficiarySex');
         const householdEl = document.getElementById('modalBeneficiaryHousehold');
         const householdWrap = document.getElementById('modalHouseholdMembersWrap');
         const householdList = document.getElementById('modalHouseholdMembersList');
-        if (sexEl) sexEl.textContent = profile?.sex_display || 'â€”';
+        if (sexEl) sexEl.textContent = profile?.sex_display || '—';
         if (householdEl) {
             const n = profile?.household_members;
-            householdEl.textContent = n != null ? `${n} member${n === 1 ? '' : 's'}` : 'â€”';
+            householdEl.textContent = n != null ? `${n} member${n === 1 ? '' : 's'}` : '—';
         }
         if (householdWrap && householdList) {
             const rows = profile?.household_member_rows || [];
@@ -289,9 +289,9 @@
                         <tbody>
                             ${rows.map((m) => `
                                 <tr>
-                                    <td style="font-weight:600;">${escapeHtml(m.name || 'â€”')}</td>
-                                    <td>${escapeHtml(m.relationship || 'â€”')}</td>
-                                    <td>${escapeHtml(m.sex_display || 'â€”')}</td>
+                                    <td style="font-weight:600;">${escapeHtml(m.name || '—')}</td>
+                                    <td>${escapeHtml(m.relationship || '—')}</td>
+                                    <td>${escapeHtml(m.sex_display || '—')}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -301,7 +301,7 @@
                 householdList.innerHTML = '';
             }
         }
-        document.getElementById('modalDescription').textContent = c.initial_description || 'â€”';
+        document.getElementById('modalDescription').textContent = c.initial_description || '—';
         const typeEl = document.getElementById('modalComplaintType');
         if (typeEl) {
             typeEl.innerHTML = `<span class="case-type-pill">${escapeHtml(c.case_type_display)}</span>`;
@@ -311,19 +311,19 @@
         if (c.subject_name && subjectSection) {
             subjectSection.style.display = 'block';
             document.getElementById('modalSubjectName').textContent = c.subject_name;
-            document.getElementById('modalSubjectPhone').textContent = c.subject_phone || 'â€”';
-            document.getElementById('modalSubjectRef').textContent = c.subject_reference || 'â€”';
-            document.getElementById('modalSubjectUnit').textContent = c.subject_unit_label || 'â€”';
+            document.getElementById('modalSubjectPhone').textContent = c.subject_phone || '—';
+            document.getElementById('modalSubjectRef').textContent = c.subject_reference || '—';
+            document.getElementById('modalSubjectUnit').textContent = c.subject_unit_label || '—';
 
             const sProfile = c.subject_profile;
             const sSexEl = document.getElementById('modalSubjectSex');
             const sHouseholdEl = document.getElementById('modalSubjectHousehold');
             const sHouseholdWrap = document.getElementById('modalSubjectHouseholdMembersWrap');
             const sHouseholdList = document.getElementById('modalSubjectHouseholdMembersList');
-            if (sSexEl) sSexEl.textContent = sProfile?.sex_display || 'â€”';
+            if (sSexEl) sSexEl.textContent = sProfile?.sex_display || '—';
             if (sHouseholdEl) {
                 const n = sProfile?.household_members;
-                sHouseholdEl.textContent = n != null ? `${n} member${n === 1 ? '' : 's'}` : 'â€”';
+                sHouseholdEl.textContent = n != null ? `${n} member${n === 1 ? '' : 's'}` : '—';
             }
             if (sHouseholdWrap && sHouseholdList) {
                 const rows = sProfile?.household_member_rows || [];
@@ -335,9 +335,9 @@
                             <tbody>
                                 ${rows.map((m) => `
                                     <tr>
-                                        <td style="font-weight:600;">${escapeHtml(m.name || 'â€”')}</td>
-                                        <td>${escapeHtml(m.relationship || 'â€”')}</td>
-                                        <td>${escapeHtml(m.sex_display || 'â€”')}</td>
+                                        <td style="font-weight:600;">${escapeHtml(m.name || '—')}</td>
+                                        <td>${escapeHtml(m.relationship || '—')}</td>
+                                        <td>${escapeHtml(m.sex_display || '—')}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -389,13 +389,13 @@
                     const when = log.logged_at
                         ? new Date(log.logged_at).toLocaleDateString()
                         : '';
-                    const unit = log.respondent_unit_label || log.unit_label || 'â€”';
+                    const unit = log.respondent_unit_label || log.unit_label || '—';
                     return `
                     <tr>
                         <td>${escapeHtml(when)}</td>
                         <td>${escapeHtml(unit)}</td>
-                        <td>${escapeHtml(log.case_type_display || 'â€”')}</td>
-                        <td>${escapeHtml(log.description || 'â€”')}</td>
+                        <td>${escapeHtml(log.case_type_display || '—')}</td>
+                        <td>${escapeHtml(log.description || '—')}</td>
                     </tr>`;
                 }).join('');
             } else {
@@ -412,7 +412,7 @@
                 priorList.innerHTML = c.prior_cases.map((pc) => `
                     <button type="button" class="prior-case-item" onclick="openCaseModal('${pc.id}')">
                         <strong>${escapeHtml(pc.case_number)}</strong>
-                        â€” ${escapeHtml(pc.case_type_display)} Â· ${escapeHtml(pc.status_display)}
+                        — ${escapeHtml(pc.case_type_display)} · ${escapeHtml(pc.status_display)}
                     </button>`).join('');
             } else {
                 priorSection.style.display = 'none';
@@ -472,7 +472,7 @@
                     <div class="case-actions-log-item">
                         <strong>${escapeHtml(row.label)}</strong>
                         ${row.details ? `<div>${escapeHtml(row.details)}</div>` : ''}
-                        <div class="case-evidence-meta">${escapeHtml(row.created_by)} Â· ${new Date(row.created_at).toLocaleString()}</div>
+                        <div class="case-evidence-meta">${escapeHtml(row.created_by)} · ${new Date(row.created_at).toLocaleString()}</div>
                     </div>
                 `).join('')
                 : '<p class="case-evidence-empty">No desk actions recorded yet.</p>';
@@ -552,7 +552,7 @@
                     <div class="case-actions-log-item">
                         <strong>${escapeHtml(row.label)}</strong>
                         ${row.details ? `<div>${escapeHtml(row.details)}</div>` : ''}
-                        <div class="case-evidence-meta">${escapeHtml(row.created_by)} Â· ${new Date(row.created_at).toLocaleString()}</div>
+                        <div class="case-evidence-meta">${escapeHtml(row.created_by)} · ${new Date(row.created_at).toLocaleString()}</div>
                     </div>
                 `).join('')
                 : '<p class="case-evidence-empty">No desk actions recorded yet.</p>';
@@ -611,7 +611,7 @@
     }
 
     function closeCasePrompt() {
-        const closure_outcome = prompt('Closure summary (required â€” case must be resolved first):');
+        const closure_outcome = prompt('Closure summary (required — case must be resolved first):');
         if (!closure_outcome || !closure_outcome.trim()) return;
         postCaseUpdate({ action: 'workflow_transition', transition: 'close', closure_outcome: closure_outcome.trim() })
             .then((d) => {
@@ -740,7 +740,7 @@
         if (row.reference_number) parts.push(row.reference_number);
         if (row.unit_label && !row.lot_map_label) parts.push(row.unit_label);
         if (row.site_name) parts.push(row.site_name);
-        const meta = parts.join(' Â· ') || 'Occupied unit';
+        const meta = parts.join(' · ') || 'Occupied unit';
         return `<strong>${row.full_name}</strong><br><span style="color: #64748b;">${meta}</span>`;
     }
 
@@ -760,7 +760,7 @@
         if (!box) return;
         q = (q || '').trim();
         const excludeComplainant = !!options.excludeComplainant;
-        box.innerHTML = '<p style="padding:0.5rem;font-size:0.8rem;color:#64748b;margin:0;">Loadingâ€¦</p>';
+        box.innerHTML = '<p style="padding:0.5rem;font-size:0.8rem;color:#64748b;margin:0;">Loading…</p>';
         box.style.display = 'block';
         fetch(`/cases/${CASE_POSITION}/beneficiary-search/?q=${encodeURIComponent(q)}`)
             .then((r) => r.json())
@@ -889,19 +889,19 @@
         if (!btn) return;
         const complainantUnit = btn.getAttribute('data-complainant-unit-label')
             || btn.getAttribute('data-unit-label')
-            || 'â€”';
-        const respondentUnit = btn.getAttribute('data-respondent-unit-label') || 'â€”';
-        const complainant = btn.getAttribute('data-complainant-name') || 'â€”';
-        const respondent = btn.getAttribute('data-respondent-name') || 'â€”';
-        const typeDisplay = btn.getAttribute('data-case-type-display') || 'â€”';
-        const description = btn.getAttribute('data-description') || 'â€”';
-        const loggedAt = btn.getAttribute('data-logged-at') || 'â€”';
+            || '—';
+        const respondentUnit = btn.getAttribute('data-respondent-unit-label') || '—';
+        const complainant = btn.getAttribute('data-complainant-name') || '—';
+        const respondent = btn.getAttribute('data-respondent-name') || '—';
+        const typeDisplay = btn.getAttribute('data-case-type-display') || '—';
+        const description = btn.getAttribute('data-description') || '—';
+        const loggedAt = btn.getAttribute('data-logged-at') || '—';
         const loggedBy = btn.getAttribute('data-logged-by') || 'Field';
 
         // Populate fields
         let loggedText = `Logged: ${loggedAt}`;
-        if (loggedBy && loggedBy !== 'â€”') {
-            loggedText += ` Â· Recorded by ${loggedBy}`;
+        if (loggedBy && loggedBy !== '—') {
+            loggedText += ` · Recorded by ${loggedBy}`;
             if (loggedBy !== 'Field') {
                 loggedText += ` (Field Personnel)`;
             }
@@ -919,8 +919,8 @@
         const subjUnitEl = document.getElementById('settledIncidentSubjectUnit');
         const subjUnitWrap = document.getElementById('settledIncidentSubjectUnitWrap');
         if (subjUnitEl && subjUnitWrap) {
-            if (respondent && respondent !== 'â€”' && respondent !== '') {
-                subjUnitEl.textContent = respondentUnit || 'â€”';
+            if (respondent && respondent !== '—' && respondent !== '') {
+                subjUnitEl.textContent = respondentUnit || '—';
                 subjUnitWrap.style.display = 'block';
             } else {
                 subjUnitWrap.style.display = 'none';
