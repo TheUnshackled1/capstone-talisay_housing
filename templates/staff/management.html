@@ -100,7 +100,7 @@
         <form method="get" id="documentsSearchForm" style="display: contents;">
             {% if doc_status_filter and doc_status_filter != 'all' %}<input type="hidden" name="doc_status" value="{{ doc_status_filter }}">{% endif %}
             
-            <div class="cases-search-box">
+            <div class="cases-search-box" style="flex: 1 1 160px; min-width: 160px;">
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
@@ -119,7 +119,7 @@
 
             <!-- Barangay Filter -->
             {% if barangays %}
-            <select class="cases-select filter-select" id="filterBarangay" name="barangay">
+            <select class="cases-select filter-select" id="filterBarangay" name="barangay" style="max-width: 6.5rem; padding-left: 0.4rem; padding-right: 1.2rem; font-size: 0.72rem;">
                 <option value="all" {% if selected_barangay == 'all' or not selected_barangay %}selected{% endif %}>All Barangays</option>
                 {% for brgy in barangays %}
                 <option value="{{ brgy }}" {% if selected_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
@@ -128,7 +128,7 @@
             {% endif %}
 
             <!-- Stage Filter -->
-            <select name="stage" id="filterStage" class="cases-select">
+            <select name="stage" id="filterStage" class="cases-select filter-select" style="max-width: 6.5rem; padding-left: 0.4rem; padding-right: 1.2rem; font-size: 0.72rem;">
                 <option value="all" {% if stage_filter == 'all' or not stage_filter %}selected{% endif %}>All Stages</option>
                 <option value="awarded" {% if stage_filter == 'awarded' %}selected{% endif %}>Awarded</option>
                 <option value="ready_for_awarding" {% if stage_filter == 'ready_for_awarding' %}selected{% endif %}>Ready for Awarding</option>
@@ -139,7 +139,7 @@
             </select>
 
             <!-- Sort -->
-            <select name="sort" id="filterSort" class="cases-select">
+            <select name="sort" id="filterSort" class="cases-select filter-select" style="max-width: 6.5rem; padding-left: 0.4rem; padding-right: 1.2rem; font-size: 0.72rem;">
                 <option value="default" {% if sort_order == 'default' or not sort_order %}selected{% endif %}>Sort: Default</option>
                 <option value="name_asc" {% if sort_order == 'name_asc' %}selected{% endif %}>Name A → Z</option>
                 <option value="name_desc" {% if sort_order == 'name_desc' %}selected{% endif %}>Name Z → A</option>
