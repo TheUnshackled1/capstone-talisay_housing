@@ -1477,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
         // Position directly above, centered
-        let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
+        let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2) - 60; // Shifted left per user request
         let targetTop = rect.top + scrollY - cardHeight - 12; // 12px gap
 
         // Boundaries checks
@@ -1532,10 +1532,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (docHoverCard) {
         document.addEventListener('mouseover', function (e) {
-            const docRow = e.target.closest('.vault-drawer-row');
+            const docLabel = e.target.closest('.vault-drawer-label');
             const isDocHoverCard = e.target.closest('#documentHoverCard');
 
-            if (!docRow) {
+            if (!docLabel) {
                 if (isDocHoverCard) {
                     clearTimeout(docHideTimeout);
                 }
@@ -1544,11 +1544,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             clearTimeout(docHideTimeout);
 
-            const docName = docRow.dataset.docName || '';
-            const docStatus = docRow.dataset.docStatus || '';
-            const validatedBy = docRow.dataset.validatedBy || '';
-            const validatorRole = docRow.dataset.validatorRole || '';
-            const validatedAt = docRow.dataset.validatedAt || '';
+            const docRow = docLabel.closest('.vault-drawer-row');
+            const docName = docRow ? (docRow.dataset.docName || '') : '';
+            const docStatus = docRow ? (docRow.dataset.docStatus || '') : '';
+            const validatedBy = docRow ? (docRow.dataset.validatedBy || '') : '';
+            const validatorRole = docRow ? (docRow.dataset.validatorRole || '') : '';
+            const validatedAt = docRow ? (docRow.dataset.validatedAt || '') : '';
 
             dhcName.textContent = docName;
             dhcStatus.textContent = docStatus;
@@ -1562,8 +1563,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dhcValidatorRole.textContent = validatorRole || '---';
             dhcValidatedAt.textContent = validatedAt || '---';
 
-            // Position card
-            const rect = docRow.getBoundingClientRect();
+            // Position card relative to the label
+            const rect = docLabel.getBoundingClientRect();
             
             docHoverCard.style.display = 'block';
             const cardWidth = docHoverCard.offsetWidth || 290;
@@ -1573,7 +1574,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
             const scrollY = window.pageYOffset || document.documentElement.scrollTop;
 
-            let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
+            let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2) - 60; // Shifted left per user request
             let targetTop = rect.top + scrollY - cardHeight - 12;
 
             if (targetLeft < 10) targetLeft = 10;
@@ -1594,10 +1595,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.addEventListener('mouseout', function (e) {
-            const docRow = e.target.closest('.vault-drawer-row');
+            const docLabel = e.target.closest('.vault-drawer-label');
             const isDocHoverCard = e.target.closest('#documentHoverCard');
 
-            if (docRow || isDocHoverCard) {
+            if (docLabel || isDocHoverCard) {
                 docHideTimeout = setTimeout(function () {
                     docHoverCard.classList.remove('active');
                 }, 250);
