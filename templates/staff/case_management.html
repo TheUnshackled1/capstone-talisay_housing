@@ -201,9 +201,11 @@
                                         <span style="display: inline-flex; align-items: center; gap: 0.15rem; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.54rem; font-weight: 700; padding: 0.05rem 0.25rem; border-radius: 0.25rem; font-family: monospace, sans-serif; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.01em;">
                                             #{{ case.case_number }}
                                         </span>
+                                        {% if case.complainant_applicant %}
                                         <span style="font-size: 0.54rem; color: #475569; font-weight: 500; background: #f8fafc; padding: 0.05rem 0.25rem; border-radius: 0.25rem; border: 1px solid #e2e8f0; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.01em;">
-                                            Complaints filed: {% if case.complainant_applicant %}{{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+                                            Complaints filed: {{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}
                                         </span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </td>
@@ -234,9 +236,6 @@
                                     <div style="display: flex; align-items: center; gap: 0.15rem; flex-wrap: nowrap;">
                                         <span style="display: inline-flex; align-items: center; gap: 0.15rem; background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; font-size: 0.54rem; font-weight: 700; padding: 0.05rem 0.25rem; border-radius: 0.25rem; font-family: monospace, sans-serif; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.01em;">
                                             #{{ case.case_number }}
-                                        </span>
-                                        <span style="font-size: 0.54rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.05rem 0.25rem; border-radius: 0.25rem; border: 1px solid #fecaca; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.01em;">
-                                            Complaints received: 1
                                         </span>
                                     </div>
                                     {% else %}
@@ -299,9 +298,11 @@
                                         <span style="display: inline-flex; align-items: center; gap: 0.2rem; background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; font-size: 0.6rem; font-weight: 700; padding: 0.08rem 0.35rem; border-radius: 0.35rem; font-family: monospace, sans-serif; white-space: nowrap; flex-shrink: 0;">
                                             #INC-{{ log.id }}
                                         </span>
+                                        {% if log.complainant_applicant %}
                                         <span style="font-size: 0.6rem; color: #475569; font-weight: 500; background: #f8fafc; padding: 0.08rem 0.35rem; border-radius: 0.35rem; border: 1px solid #e2e8f0; white-space: nowrap; flex-shrink: 0;">
-                                            Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+                                            Complaints filed: {{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}
                                         </span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </td>
@@ -338,9 +339,6 @@
                                     <div style="display: flex; align-items: center; gap: 0.15rem; flex-wrap: nowrap;">
                                         <span style="display: inline-flex; align-items: center; gap: 0.15rem; background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; font-size: 0.54rem; font-weight: 700; padding: 0.05rem 0.25rem; border-radius: 0.25rem; font-family: monospace, sans-serif; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.01em;">
                                             #INC-{{ log.id }}
-                                        </span>
-                                        <span style="font-size: 0.54rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.05rem 0.25rem; border-radius: 0.25rem; border: 1px solid #fecaca; white-space: nowrap; flex-shrink: 0; letter-spacing: -0.01em;">
-                                            Complaints received: 1
                                         </span>
                                     </div>
                                     {% else %}
@@ -675,17 +673,6 @@
 <div id="newCaseModal" class="tha-case-modal-overlay" onclick="closeNewCaseModal(event)">
     <div class="modal-content tha-reg-modal tha-case-reg-modal" onclick="event.stopPropagation();">
 
-        <div class="modal-header">
-            <h2 class="modal-title">Case recording</h2>
-            <button type="button" class="btn-close" onclick="closeNewCaseModal()" aria-label="Close">
-                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-
         <div class="modal-body">
             <div id="addCaseForm">
                 <input type="hidden" id="newReceivedAt" value="office">
@@ -696,7 +683,14 @@
                 <input type="hidden" id="subjectApplicantId">
                 <input type="hidden" id="newSubjectName">
 
-                <div class="tha-form-header">
+                <div class="tha-form-header" style="position: relative;">
+                    <button type="button" class="btn-close" onclick="closeNewCaseModal()"
+                        aria-label="Close Case Recording"
+                        style="position: absolute; right: 0.85rem; top: 0.75rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; line-height: 1; color: #94a3b8; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; cursor: pointer; transition: background 0.15s, color 0.15s;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.16)';this.style.color='#fff'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.color='#94a3b8'">
+                        &times;
+                    </button>
                     <div class="tha-form-crest" aria-hidden="true">
                         <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                     </div>
