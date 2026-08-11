@@ -1078,9 +1078,9 @@ def create_case(request, position):
                     'success': False,
                     'error': 'Select the beneficiary for this illegal occupant concern.',
                 }, status=400)
-            complainant_applicant_id = subject_applicant_id
+            complainant_applicant_id = ''
             if not complainant_name:
-                complainant_name = subject_name
+                complainant_name = 'THA Field Office'
         else:
             if not complainant_applicant_id:
                 return JsonResponse({
