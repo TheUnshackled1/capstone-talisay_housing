@@ -3343,7 +3343,7 @@ def caretaker_monitoring_dashboard(request):
         'task_notified': request.GET.get('notified') == '1',
     }
 
-    return render(request, 'staff/caretaker_monitoring_dashboard.html', context)
+    return render(request, 'field/caretaker_monitoring_dashboard.html', context)
 
 
 # =============================================================================
