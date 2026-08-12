@@ -152,18 +152,16 @@
                 </button>
             </div>
 
-            <!-- Type Filter (imitating applicants layout) -->
-            <select id="typeFilter" class="cases-select filter-select"
-                style="min-width: 130px; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.56rem 2rem 0.56rem 0.72rem; font-size: 0.78rem; color: #334155; outline: none; appearance: none; background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E') no-repeat right 0.75rem center/0.8rem; cursor: pointer; height: auto;">
+            <!-- Select Type dropdown -->
+            <select id="typeFilter" class="cases-select filter-select">
                 <option value="all" {% if filter_type == "all" %}selected{% endif %}>All Types</option>
                 {% for code, label in case_type_choices %}
                 <option value="{{ code }}" {% if filter_type == code %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
 
-            <!-- Add Case Button (imitating applicants layout) -->
-            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn"
-                style="background: #10b981; color: #fff; display: flex; align-items: center; gap: 0.35rem; padding: 0 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.78rem; cursor: pointer; border: none; white-space: nowrap; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2); transition: all 0.2s ease; height: auto;">
+            <!-- Add Case Button -->
+            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                     aria-hidden="true">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
