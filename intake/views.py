@@ -2177,6 +2177,8 @@ def archive_list(request, position):
             'handoffAt': handoff_at_detail,
             'referenceNumber': archive.reference_number_snapshot,
             'fullName': archive.full_name_snapshot,
+            'displacementReason': disp_snapshot,
+            'archiveDispNameClass': _archive_list_name_class_for_displacement(disp_snapshot),
             'lastName': archive.last_name_snapshot,
             'firstName': archive.first_name_snapshot,
             'middleName': archive.middle_name_snapshot,
