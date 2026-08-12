@@ -1,0 +1,186 @@
+﻿function exportArchiveCSV() {
+    const table = document.querySelector('.applicants-table');
+    if (!table) return;
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    const rows = Array.from(table.querySelectorAll('tbody tr'))
+        .filter(tr => tr.querySelectorAll('td').length > 1)
+        .map(tr => Array.from(tr.querySelectorAll('td')).map(td => (td.textContent || '').replace(/\s+/g, ' ').trim()));
+
+    if (rows.length === 0) {
+        showFlowAlert('No archive rows to export.');
+        return;
+    }
+    let csv = headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(',') + '\n';
+    rows.forEach(row => {
+        csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `Archive_Records_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function openArchiveHandoffSummary(buttonEl) {
+    if (!buttonEl) return;
+    const d = buttonEl.dataset || {};
+    const setText = (id, value, fallback = 'N/A') => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (value !== undefined && value !== null && String(value).trim() !== '') ? String(value) : fallback;
+    };
+
+    const displayTx = (d.id && String(d.id).trim())
+        ? `#${d.id.slice(0, 8)}`
+        : '';
+    const subtitlePrefix = displayTx ? `${displayTx} • ` : '';
+    setText('archiveSummarySubtitle', `${subtitlePrefix}${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
+    setText('archiveSummaryReference', d.reference || '');
+    setText('archiveSummaryName', d.name || '');
+    setText('archiveSummaryLastName', d.lastName || '');
+    setText('archiveSummaryFirstName', d.firstName || '');
+    setText('archiveSummaryMiddleName', d.middleName || '');
+    setText('archiveSummaryExtensionName', d.extensionName || '');
+    setText('archiveSummaryDob', d.dob || '');
+    setText('archiveSummaryBarangay', d.barangay || '');
+    setText('archiveSummaryEncodedBy', d.staff || '', 'Unknown');
+    setText('archiveSummaryStaffRole', d.staffPosition || '');
+    setText('archiveSummarySms', d.sms || '');
+
+    const docsLink = document.getElementById('archiveSummaryDocumentsLink');
+    const vaultUrl = (d.documentsVaultUrl || '').trim();
+    if (docsLink) {
+        if (vaultUrl) {
+            docsLink.href = vaultUrl;
+            docsLink.classList.remove('btn-archive-action--disabled');
+            docsLink.title = 'Open applicant document checklist in Document Management';
+        } else {
+            docsLink.href = '#';
+            docsLink.classList.add('btn-archive-action--disabled');
+            docsLink.title = 'Document vault link unavailable';
+        }
+    }
+
+    const modal = document.getElementById('archiveSummaryModal');
+    if (modal) modal.classList.add('active');
+}
+function closeArchiveSummaryModal() {
+    const modal = document.getElementById('archiveSummaryModal');
+    if (modal) modal.classList.remove('active');
+}
+
+// Premium Hover Card popover initialization for tables
+document.addEventListener('DOMContentLoaded', () => {
+    const hoverCard = document.getElementById('applicantHoverCard');
+    if (!hoverCard) return;
+    const hcAvatar = document.getElementById('hcAvatar');
+    const hcName = document.getElementById('hcName');
+    const hcTx = document.getElementById('hcTx');
+    const hcRef = document.getElementById('hcRef');
+    const hcRefRow = document.getElementById('hcRefRow');
+    const hcBrgy = document.getElementById('hcBrgy');
+    const hcDob = document.getElementById('hcDob');
+
+    let hideTimeout;
+
+    document.addEventListener('mouseover', function (e) {
+        const nameSpan = e.target.closest('.complainant-name.applicant-name');
+        const isHoverCard = e.target.closest('#applicantHoverCard');
+
+        if (!nameSpan) {
+            if (isHoverCard) {
+                clearTimeout(hideTimeout);
+            }
+            return;
+        }
+
+        clearTimeout(hideTimeout);
+
+        const fullName = nameSpan.dataset.fullName || nameSpan.textContent.trim();
+        const txId = nameSpan.dataset.txId || '';
+        const refCode = nameSpan.dataset.refCode || '';
+        const barangay = nameSpan.dataset.barangay || 'Not specified';
+        const dob = nameSpan.dataset.dob || 'Not specified';
+
+        // Populate card
+        hcName.textContent = fullName;
+        hcAvatar.textContent = fullName.slice(0, 2).toUpperCase();
+        
+        // Client-side slicing safety for UUIDs and long transaction IDs
+        let displayTx = txId;
+        if (displayTx.startsWith('APP-')) {
+            const rawId = displayTx.substring(4).replace(/[^a-fA-F0-9\-]/g, '');
+            const cleanId = rawId.replace(/-/g, '');
+            displayTx = 'APP-' + cleanId.slice(0, 8) + '...';
+        } else if (displayTx.startsWith('TX-')) {
+            const rawId = displayTx.substring(3).replace(/[^a-fA-F0-9\-]/g, '');
+            const cleanId = rawId.replace(/-/g, '');
+            displayTx = 'TX-' + cleanId.slice(0, 8) + '...';
+        } else if (displayTx.length > 15) {
+            displayTx = displayTx.slice(0, 12) + '...';
+        }
+        hcTx.textContent = displayTx;
+
+        if (refCode) {
+            hcRef.textContent = refCode;
+            hcRefRow.style.display = 'flex';
+        } else {
+            hcRefRow.style.display = 'none';
+        }
+        hcBrgy.textContent = barangay;
+        hcDob.textContent = dob;
+
+        // Position card — card is always display:block (visibility controls show/hide)
+        const rect = nameSpan.getBoundingClientRect();
+        const cardWidth = hoverCard.offsetWidth || 290;
+        const cardHeight = hoverCard.offsetHeight || 190;
+
+        const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+
+        // Position directly above, centered
+        let targetLeft = rect.left + scrollX + (rect.width / 2) - (cardWidth / 2);
+        let targetTop = rect.top + scrollY - cardHeight - 12; // 12px gap
+
+        // Boundaries checks
+        if (targetLeft < 10) targetLeft = 10;
+        if (targetLeft + cardWidth > window.innerWidth - 10) {
+            targetLeft = window.innerWidth - cardWidth - 10;
+        }
+
+        if (rect.top - cardHeight - 12 < 10) {
+            // Flip below
+            targetTop = rect.bottom + scrollY + 12;
+            hoverCard.classList.add('position-below');
+        } else {
+            hoverCard.classList.remove('position-below');
+        }
+
+        hoverCard.style.left = targetLeft + 'px';
+        hoverCard.style.top = targetTop + 'px';
+        hoverCard.classList.add('active');
+    });
+
+    document.addEventListener('mouseout', function (e) {
+        const nameSpan = e.target.closest('.complainant-name.applicant-name');
+        const isHoverCard = e.target.closest('#applicantHoverCard');
+
+        if (nameSpan || isHoverCard) {
+            hideTimeout = setTimeout(function () {
+                hoverCard.classList.remove('active');
+            }, 250);
+        }
+    });
+
+    hoverCard.addEventListener('mouseenter', function () {
+        clearTimeout(hideTimeout);
+    });
+
+    hoverCard.addEventListener('mouseleave', function () {
+        hideTimeout = setTimeout(function () {
+            hoverCard.classList.remove('active');
+        }, 250);
+    });
+});
