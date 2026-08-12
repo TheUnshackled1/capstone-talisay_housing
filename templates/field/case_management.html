@@ -5156,25 +5156,28 @@
                 </div>
             </div>
 
-            <!-- Search box -->
-            <div class="cases-search-box" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <!-- Search Box (imitating applicants layout) -->
+            <div class="cases-search-box" style="flex: 1; min-width: 120px; position: relative; display: flex; align-items: stretch; height: auto; margin: 0; box-sizing: border-box;">
+                <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
                 <input type="text" id="searchInput" placeholder="Complainant, case #, description..."
-                    value="{{ search_query }}">
-                <button type="button" class="cases-search-btn" onclick="applyCaseFilters()">
-                    <svg style="width: 0.85rem; height: 0.85rem; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    value="{{ search_query }}" style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+                <button type="button" class="cases-search-btn" onclick="applyCaseFilters()"
+                    style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
+                    onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
+                    <svg style="width: 0.85rem; height: 0.85rem; flex-shrink: 0; display: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.35-4.35"></path>
                     </svg>
-                    <span>Search</span>
+                    <span style="margin-left: 0;">Search</span>
                 </button>
             </div>
 
-            <!-- Select Type dropdown -->
-            <select id="typeFilter" class="cases-select filter-select" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
+            <!-- Select Type dropdown (imitating applicants layout) -->
+            <select id="typeFilter" class="cases-select filter-select"
+                style="min-width: 130px; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.56rem 2rem 0.56rem 0.72rem; font-size: 0.78rem; color: #334155; outline: none; appearance: none; background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E') no-repeat right 0.75rem center/0.8rem; cursor: pointer; height: auto; margin: 0; box-sizing: border-box;">
                 <option value="all" {% if filter_type == "all" %}selected{% endif %}>All Types</option>
                 {% for code, label in case_type_choices %}
                 <option value="{{ code }}" {% if filter_type == code %}selected{% endif %}>{{ label }}</option>
@@ -5183,12 +5186,14 @@
 
             <!-- Log settled incident -->
             <button type="button" class="cases-secondary-btn" onclick="openSettledLogModal()"
-                title="On-site incident handled without opening a formal case" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
+                title="On-site incident handled without opening a formal case" style="background: #f1f5f9; color: #475569; padding: 0 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.78rem; cursor: pointer; border: 1px solid #cbd5e1; white-space: nowrap; transition: all 0.2s ease; height: auto; margin: 0; box-sizing: border-box;"
+                onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
                 Log settled incident
             </button>
 
-            <!-- Add Case -->
-            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn" style="height: 2.3rem; margin: 0; box-sizing: border-box;">
+            <!-- Add Case (imitating applicants layout) -->
+            <button type="button" onclick="openNewCaseModal()" class="cases-add-btn"
+                style="background: #10b981; color: #fff; display: flex; align-items: center; gap: 0.35rem; padding: 0 1rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.78rem; cursor: pointer; border: none; white-space: nowrap; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2); transition: all 0.2s ease; height: auto; margin: 0; box-sizing: border-box;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                     aria-hidden="true">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
