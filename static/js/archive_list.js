@@ -1,4 +1,4 @@
-﻿function exportArchiveCSV() {
+function exportArchiveCSV() {
     const table = document.querySelector('.applicants-table');
     if (!table) return;
     const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
@@ -35,8 +35,6 @@ function openArchiveHandoffSummary(buttonEl) {
     const displayTx = (d.id && String(d.id).trim())
         ? `#${d.id.slice(0, 8)}`
         : '';
-    const subtitlePrefix = displayTx ? `${displayTx} • ` : '';
-    setText('archiveSummarySubtitle', `${subtitlePrefix}${d.reference || 'N/A'} • ${d.name || 'N/A'}`);
     setText('archiveSummaryReference', d.reference || '');
     setText('archiveSummaryName', d.name || '');
     setText('archiveSummaryLastName', d.lastName || '');
