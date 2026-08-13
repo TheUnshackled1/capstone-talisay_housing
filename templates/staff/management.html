@@ -203,12 +203,16 @@
                     </td>
                     <td class="col-documents">
                         <div class="doc-count-widget">
-                            <div class="doc-count-badge">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                </svg>
-                                <span>{{ applicant.doc_count }}</span>
+                            <div class="doc-count-badge {% if applicant.doc_count >= 8 %}doc-count-badge--complete{% elif applicant.doc_count > 0 %}doc-count-badge--partial{% else %}doc-count-badge--pending{% endif %}">
+                                <div class="doc-count-icon-wrap">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="8" y1="13" x2="16" y2="13"/>
+                                        <line x1="8" y1="17" x2="13" y2="17"/>
+                                    </svg>
+                                </div>
+                                <span class="doc-count-num">{{ applicant.doc_count }}</span>
                             </div>
                         </div>
                     </td>
