@@ -95,21 +95,17 @@
         {% if masterlist_by_block %}
         <div class="gk-carousel" id="gkCarousel" style="margin-top: 1.5rem;">
             {% if masterlist_by_block|length > 1 %}
-            <div class="gk-carousel-nav" id="gkNav">
-                <button class="gk-carousel-btn" id="gkPrev" aria-label="Previous block" disabled>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <div class="gk-carousel-dots" id="gkDots">
+            <div class="gk-carousel-nav" id="gkNav" style="gap: 0.35rem;">
+                <button class="btn-page" id="gkPrev" aria-label="Previous block" disabled>Prev</button>
+                <div class="gk-carousel-dots" id="gkDots" style="gap: 0.35rem;">
                     {% for block_name, block_rows_unused in masterlist_by_block.items %}
-                    <button class="gk-dot{% if forloop.first %} is-active{% endif %}"
+                    <button class="btn-page gk-dot{% if forloop.first %} is-active{% endif %}"
                             data-idx="{{ forloop.counter0 }}"
-                            aria-label="Block {{ block_name }}"></button>
+                            aria-label="Block {{ block_name }}">{{ forloop.counter }}</button>
                     {% endfor %}
                 </div>
-                <span class="gk-carousel-counter" id="gkCounter">1 / {{ masterlist_by_block|length }}</span>
-                <button class="gk-carousel-btn" id="gkNext" aria-label="Next block">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
+                <span class="gk-carousel-counter" id="gkCounter" style="display: none;">1 / {{ masterlist_by_block|length }}</span>
+                <button class="btn-page" id="gkNext" aria-label="Next block">Next</button>
             </div>
             {% endif %}
 
