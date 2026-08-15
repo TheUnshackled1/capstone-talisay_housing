@@ -2342,7 +2342,7 @@
 <div class="dashboard-container" data-user-position="{{ request.user.position }}">
     <div class="monitoring-shell">
         <h1 class="monitoring-title">Field Inspector</h1>
-        <p class="monitoring-subtitle">Hazard-area field certification</p>
+        <p class="monitoring-subtitle">Hazard-area field verification.</p>
     </div>
 
     <div class="section scroll-animate-right scroll-delay-1">
@@ -2411,7 +2411,7 @@
                             <th>#</th>
                             <th>Full Name</th>
                             <th>Date &amp; Time</th>
-                            <th>Queue / visit order</th>
+                            <th>Queue</th>
                             <th>Staff Handled</th>
                             <th>Action</th>
                         </tr>
@@ -2844,6 +2844,7 @@
             document.body.style.overflow = 'hidden';
         }
 
+        window.closeCertifiedApplicantsModal = closeCertifiedApplicantsModal;
         function closeCertifiedApplicantsModal() {
             const m = document.getElementById('certifiedApplicantsModal');
             if (!m) return;
@@ -3193,6 +3194,7 @@
         }
 
         // Field Verification Modal
+        window.openVerificationModal = openVerificationModal;
         async function openVerificationModal(applicantId, applicantName, address, dangerZoneType, dangerZoneLocation, referenceNumber) {
             clearFieldEvidenceUI();
             stopFieldCamera();
@@ -3221,6 +3223,7 @@
             document.body.style.overflow = 'hidden';
         }
 
+        window.closeVerificationModal = closeVerificationModal;
         function closeVerificationModal() {
             stopFieldCamera();
             clearFieldEvidenceUI();
@@ -3345,6 +3348,7 @@
             document.body.style.overflow = 'hidden';
         }
 
+        window.closeTodaySummaryModal = closeTodaySummaryModal;
         function closeTodaySummaryModal() {
             const m = document.getElementById('todaySummaryModal');
             if (!m) return;
@@ -3488,7 +3492,7 @@
                         <div class="tha-form-crest" aria-hidden="true">
                             <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                         </div>
-                        <h2>Hazard-area field certification</h2>
+                        <h2>Hazard-area field verification.</h2>
                         <p class="tha-form-subtitle">Talisay City Housing Authority · Field Verification</p>
                     </div>
 
