@@ -26,11 +26,11 @@ User = get_user_model()
 
 class PortalRoleHelperTests(TestCase):
     def test_normalize_caretaker_legacy(self):
-        self.assertEqual(normalize_portal_role('caretaker'), 'field_desk')
+        self.assertEqual(normalize_portal_role('caretaker'), 'field_inspector')
 
-    def test_normalize_ronda_and_field_to_field_desk(self):
-        self.assertEqual(normalize_portal_role('ronda'), 'field_desk')
-        self.assertEqual(normalize_portal_role('field'), 'field_desk')
+    def test_normalize_ronda_and_field_to_field_inspector(self):
+        self.assertEqual(normalize_portal_role('ronda'), 'field_inspector')
+        self.assertEqual(normalize_portal_role('field'), 'field_inspector')
 
     def test_portal_role_for_oauth_prefers_oauth_state_over_session(self):
         factory = RequestFactory()
@@ -52,15 +52,15 @@ class PortalRoleHelperTests(TestCase):
         self.assertFalse(allowed)
         self.assertIn('Access Denied', err)
 
-    def test_field_desk_accepts_ronda_and_field(self):
+    def test_field_inspector_accepts_ronda_and_field(self):
         for pos in ('ronda', 'field'):
             user = User(position=pos)
-            allowed, _ = user_allowed_for_portal(user, 'field_desk')
+            allowed, _ = user_allowed_for_portal(user, 'field_inspector')
             self.assertTrue(allowed)
 
-    def test_field_desk_rejects_second_member(self):
+    def test_field_inspector_rejects_second_member(self):
         user = User(position='second_member')
-        allowed, err = user_allowed_for_portal(user, 'field_desk')
+        allowed, err = user_allowed_for_portal(user, 'field_inspector')
         self.assertFalse(allowed)
         self.assertIn('field desk', err.lower())
 
@@ -121,8 +121,8 @@ class ResolveStaffUserTests(TestCase):
         self.assertIsNone(err)
         self.assertEqual(user, field_user)
 
-    def test_resolves_field_desk_portal_for_ronda(self):
-        user, err = resolve_staff_user_for_portal(self.shared_email, 'field_desk')
+    def test_resolves_field_inspector_portal_for_ronda(self):
+        user, err = resolve_staff_user_for_portal(self.shared_email, 'field_inspector')
         self.assertIsNone(err)
         self.assertEqual(user, self.ronda)
 
@@ -487,7 +487,7 @@ class LoginPortalPersistenceTests(TestCase):
         self.assertIn('role=second_member', response.url)
 
     def test_portal_role_for_position_maps_field_staff(self):
-        self.assertEqual(portal_role_for_position('ronda'), 'field_desk')
+        self.assertEqual(portal_role_for_position('ronda'), 'field_inspector')
         self.assertEqual(portal_role_for_position('second_member'), 'second_member')
 
 

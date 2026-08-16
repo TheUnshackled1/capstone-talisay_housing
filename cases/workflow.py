@@ -4,7 +4,7 @@ Module 5 — complaint handling per THA office spec.
 Phases: Recording → Type ID → Review → Action/Decision → Monitoring → Closure
 """
 
-from accounts.models import FIELD_DESK_POSITIONS
+from accounts.models import FIELD_INSPECTOR_POSITIONS
 
 # Field/Ronda file complaints; Second/Fourth Member monitor the same case list.
 CASE_MONITOR_DESK_POSITIONS = frozenset({'second_member', 'fourth_member'})
@@ -190,18 +190,18 @@ def user_can_manage_workflow(user) -> bool:
 
 def user_can_upload_case_evidence(user) -> bool:
     """Field desk: settlement photos and general case evidence."""
-    return getattr(user, 'position', None) in FIELD_DESK_POSITIONS
+    return getattr(user, 'position', None) in FIELD_INSPECTOR_POSITIONS
 
 
 def user_can_upload_case_intake_evidence(user) -> bool:
     """Office or field desk may attach optional intake files when recording a case."""
     pos = getattr(user, 'position', None)
-    return pos in FIELD_DESK_POSITIONS or pos in CASE_MONITOR_DESK_POSITIONS
+    return pos in FIELD_INSPECTOR_POSITIONS or pos in CASE_MONITOR_DESK_POSITIONS
 
 
 def user_can_field_mark_under_review(user) -> bool:
     """Field / Ronda may move Pending Review → Under Review."""
-    return getattr(user, 'position', None) in FIELD_DESK_POSITIONS
+    return getattr(user, 'position', None) in FIELD_INSPECTOR_POSITIONS
 
 
 def user_can_record_case(user) -> bool:
@@ -209,7 +209,7 @@ def user_can_record_case(user) -> bool:
 
 
 def case_desk_mode_for_position(position: str) -> str:
-    if position in FIELD_DESK_POSITIONS:
+    if position in FIELD_INSPECTOR_POSITIONS:
         return 'intake'
     if position in CASE_MONITOR_DESK_POSITIONS:
         return 'monitor'

@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 
 from allauth.account.models import EmailAddress
 
-from .models import FIELD_DESK_POSITIONS
+from .models import FIELD_INSPECTOR_POSITIONS
 
 User = get_user_model()
 
@@ -14,21 +14,21 @@ PORTAL_ROLE_SESSION_KEY = 'login_portal_role'
 LAST_PORTAL_ROLE_COOKIE = 'ihsms_last_portal_role'
 LAST_PORTAL_ROLE_COOKIE_MAX_AGE = 60 * 60 * 24 * 90  # 90 days
 
-VALID_PORTAL_ROLES = frozenset({'second_member', 'fourth_member', 'field_desk'})
+VALID_PORTAL_ROLES = frozenset({'second_member', 'fourth_member', 'field_inspector'})
 
 PORTAL_ROLE_DISPLAY = {
     'second_member': 'Second Member',
     'fourth_member': 'Fourth Member',
 
-    'field_desk': 'Field Inspector',
+    'field_inspector': 'Field Inspector',
 }
 
 
 def normalize_portal_role(role: str | None) -> str:
     """Normalize legacy portal role query values."""
     value = (role or '').strip()
-    if value in ('caretaker', 'ronda', 'field'):
-        return 'field_desk'
+    if value in ('caretaker', 'ronda', 'field', 'field_desk'):
+        return 'field_inspector'
     return value
 
 
@@ -67,8 +67,8 @@ def portal_role_display(role: str | None) -> str | None:
 def portal_role_for_position(position: str | None) -> str:
     """Map a staff User.position to the login portal role slug."""
     value = (position or '').strip()
-    if value in FIELD_DESK_POSITIONS:
-        return 'field_desk'
+    if value in FIELD_INSPECTOR_POSITIONS:
+        return 'field_inspector'
     if value in VALID_PORTAL_ROLES:
         return value
     return ''
@@ -119,8 +119,8 @@ def user_allowed_for_portal(user, portal_role: str | None) -> tuple[bool, str | 
     if not role:
         return True, None
 
-    if role == 'field_desk':
-        if user.position not in FIELD_DESK_POSITIONS:
+    if role == 'field_inspector':
+        if user.position not in FIELD_INSPECTOR_POSITIONS:
             return False, (
                 'Access denied: this portal is only for field desk staff (Ronda or Field).'
             )
@@ -169,8 +169,8 @@ def resolve_staff_user_for_portal(email: str, portal_role: str | None):
             'Contact your system administrator.'
         )
 
-    if role == 'field_desk':
-        matched = candidates.filter(position__in=FIELD_DESK_POSITIONS)
+    if role == 'field_inspector':
+        matched = candidates.filter(position__in=FIELD_INSPECTOR_POSITIONS)
     else:
         matched = candidates.filter(position=role)
 

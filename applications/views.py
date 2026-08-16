@@ -14,7 +14,7 @@ from django.conf import settings
 from functools import wraps
 from urllib.parse import urlencode
 import logging
-from accounts.models import FIELD_DESK_POSITIONS
+from accounts.models import FIELD_INSPECTOR_POSITIONS
 from intake.models import Applicant, Archive, Barangay, SMSLog as IntakeSMSLog
 from intake import sms_workflow
 from documents.models import (
@@ -2127,7 +2127,7 @@ def field_verify_cdrrmo(request, position):
     """
     Module 2 endpoint for field desk on-site verification findings (ronda and field).
     """
-    if request.user.position not in FIELD_DESK_POSITIONS:
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
         return JsonResponse(
             {'success': False, 'error': 'Permission denied. Only field desk staff can verify.'},
             status=403,

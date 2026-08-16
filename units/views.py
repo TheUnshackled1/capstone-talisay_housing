@@ -26,7 +26,7 @@ from units.models import (
     MonitoringTask, MonitoringReport, ExplanationReview, ExtensionRecord,
     LotAwardDocumentValidation,
 )
-from accounts.models import FIELD_DESK_POSITIONS
+from accounts.models import FIELD_INSPECTOR_POSITIONS
 from cases.views import cases_page_url, module5_case_rows_for_unit
 from units.block_lot_sort import block_lot_sort_key as _block_lot_sort_key
 from units.housing_unit_status import housing_unit_on_file
@@ -59,7 +59,7 @@ from units.monitoring_policy import (
 # Module 4 inventory: who may add housing units (block/lot rows)
 _MODULE4_ADD_HOUSING_UNIT_POSITIONS = frozenset({'fourth_member', 'second_member'})
 _MODULE4_CREATE_SITE_POSITIONS = frozenset({'fourth_member', 'second_member'})
-_MODULE4_MONITORING_COMPLIANCE_STAFF = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
+_MODULE4_MONITORING_COMPLIANCE_STAFF = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_INSPECTOR_POSITIONS
 
 _NOTICE_STATUS_VALUES = frozenset({'Under notice (30-day)', 'Final notice (10-day)'})
 
@@ -1572,14 +1572,14 @@ def get_unit_details(request, position, unit_id):
                     'created_at': u.created_at.isoformat(),
                 })
 
-        can_update_construction = request.user.position in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS)
+        can_update_construction = request.user.position in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_INSPECTOR_POSITIONS)
 
         # --- Award profile: who awarded, who authenticated, validation log ---
         _POSITION_LABELS = {
             'second_member': '2nd Member',
             'fourth_member': '4th Member',
             'caretaker': 'Caretaker',
-            'field_desk': 'Field Desk',
+            'field_inspector': 'Field Inspector',
             'admin': 'Admin',
         }
 
@@ -1942,7 +1942,7 @@ def validate_lot_award_document(request, position, unit_id):
         'second_member': '2nd Member',
         'fourth_member': '4th Member',
         'caretaker': 'Caretaker',
-        'field_desk': 'Field Desk',
+        'field_inspector': 'Field Inspector',
         'admin': 'Admin',
     }
 
@@ -2594,7 +2594,7 @@ def add_construction_update(request, position):
     """
     Append a construction progress update (timeline) for an occupied unit with an active lot award.
     """
-    if request.user.position not in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS):
+    if request.user.position not in (_MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_INSPECTOR_POSITIONS):
         return JsonResponse({'success': False, 'error': 'Access denied.'}, status=403)
 
     unit_id = (request.POST.get('unit_id') or '').strip()
@@ -2814,7 +2814,7 @@ def notify_monitoring_task(request, task_id):
     Mark a scheduled monitoring task as notified so the field desk dashboard can
     surface it for planning before the official inspection date.
     """
-    allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
+    allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_INSPECTOR_POSITIONS
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
@@ -3165,7 +3165,7 @@ def assess_monitoring_report(request, task_id):
     No Progress on the **120 Day Inspection** opens the explanation-letter workflow
     (deadline, scan, extension / disqualify). No Progress on the 90 Day Inspection does not.
     """
-    allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_DESK_POSITIONS
+    allowed_positions = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIELD_INSPECTOR_POSITIONS
     if request.user.position not in allowed_positions:
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
@@ -3265,8 +3265,8 @@ def caretaker_monitoring_dashboard(request):
     URL: /units/monitoring-dashboard/
     """
     # Restrict to field desk users. Unassigned tasks are visible to the shared desk.
-    if request.user.position not in FIELD_DESK_POSITIONS:
-        return HttpResponseForbidden("Only field desk staff can access this dashboard.")
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
+        return HttpResponseForbidden("Only field inspector staff can access this dashboard.")
 
     # Field desk only works on monitoring tasks that staff explicitly notified.
     today = timezone.now().date()
@@ -3359,7 +3359,7 @@ def submit_monitoring_report(request, task_id):
 
     URL: /units/monitoring-report/<task_id>/submit/
     """
-    if request.user.position not in FIELD_DESK_POSITIONS:
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
         return JsonResponse({
             'success': False,
             'error': 'Permission denied'

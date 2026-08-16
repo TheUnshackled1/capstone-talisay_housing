@@ -23,7 +23,7 @@ from allauth.socialaccount.providers.base.constants import AuthProcess
 
 from .auth_oauth import google_oauth_configured
 from .forms import LoginForm
-from .models import FIELD_DESK_POSITIONS
+from .models import FIELD_INSPECTOR_POSITIONS
 from .auth_portal import (
     PORTAL_ROLE_SESSION_KEY,
     is_valid_portal_role,
@@ -1329,7 +1329,7 @@ def dashboard_fourth_member(request):
 @login_required
 def dashboard_caretaker(request):
     """Legacy URL name; field desk (ronda / field) redirects to the field dashboard."""
-    if request.user.position not in FIELD_DESK_POSITIONS:
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
         messages.error(request, 'Access denied.')
         return redirect('accounts:dashboard')
     return redirect('accounts:dashboard_field')
@@ -1384,7 +1384,7 @@ def _staff_handled_row(user):
 @require_GET
 def field_applicant_cdrrmo_meta(request, applicant_id):
     """Fresh CDRRMO vault / certification dates for the field verification modal (GET)."""
-    if request.user.position not in FIELD_DESK_POSITIONS:
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
         return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
     try:
         applicant = Applicant.objects.get(pk=applicant_id)
@@ -1399,10 +1399,10 @@ def dashboard_field(request):
     Unified field desk: Ronda (includes on-site / caretaker duties) and Field personnel.
     Channel B danger-zone field verification (CDRRMO) after Module 2 handoff.
     """
-    if request.user.position not in FIELD_DESK_POSITIONS:
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
         messages.error(
             request,
-            'Access denied. This dashboard is for field desk staff (Ronda or Field) only.',
+            'Access denied. This dashboard is for field inspectors only.',
         )
         return redirect('accounts:dashboard')
 
@@ -1685,8 +1685,8 @@ def fourth_member_case_management(request):
 
 @login_required
 def field_case_management(request):
-    if request.user.position not in FIELD_DESK_POSITIONS:
-        messages.error(request, 'Access denied. This page is for field desk staff only.')
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
+        messages.error(request, 'Access denied. This page is for field inspectors only.')
         return redirect('accounts:dashboard')
     from cases.views import case_management_dashboard
     return case_management_dashboard(request, request.user.position)

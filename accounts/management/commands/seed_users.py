@@ -28,7 +28,7 @@ class Command(BaseCommand):
                 'last_name': 'Cuaysing',
                 'position': 'fourth_member',
             },
-            # Field desk — ronda includes former caretaker duties; FIELD_DESK_POSITIONS = ronda + field.
+            # Field desk - ronda includes former caretaker duties; FIELD_INSPECTOR_POSITIONS = ronda + field.
             {
                 'username': 'nonoy.cura',
                 'email': 'nonoy@talisayhousing.gov.ph',

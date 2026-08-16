@@ -16,7 +16,7 @@ from intake.models import Applicant
 from units.models import LotAward, HousingUnit
 from .models import Case, CaseAction, CaseEvidence, FieldSettledIncidentLog
 from . import workflow as wf
-from accounts.models import FIELD_DESK_POSITIONS
+from accounts.models import FIELD_INSPECTOR_POSITIONS
 
 # Monitor desk case recording + field settled log: no illegal occupant or occupancy dispute.
 CASE_TYPE_EXCLUDED_FROM_MONITOR_INTAKE_FORMS = frozenset({
@@ -49,14 +49,14 @@ def case_type_choices_for_intake_forms():
 def _valid_case_types_for_create(position, *, settled_log=False):
     if settled_log or position in wf.CASE_MONITOR_DESK_POSITIONS:
         return [code for code, _ in case_type_choices_for_monitor_intake_forms()]
-    if position in FIELD_DESK_POSITIONS:
+    if position in FIELD_INSPECTOR_POSITIONS:
         return [code for code, _ in case_type_choices_for_field_case_recording()]
     return [code for code, _ in Case.CASE_TYPE_CHOICES]
 
 
 def cases_page_url(position, **query):
     """Canonical Module 5 page URL for a staff position (accounts routes or legacy /cases/)."""
-    if position in FIELD_DESK_POSITIONS:
+    if position in FIELD_INSPECTOR_POSITIONS:
         base = reverse('accounts:field_cases')
     elif position == 'second_member':
         base = reverse('accounts:second_member_cases')
@@ -157,9 +157,9 @@ def _case_management_list_context(request, position):
     if filter_type != 'all':
         cases = cases.filter(case_type=filter_type)
 
-    is_field_desk = position in FIELD_DESK_POSITIONS
+    is_field_inspector = position in FIELD_INSPECTOR_POSITIONS
     use_split_case_desk = (
-        position in FIELD_DESK_POSITIONS
+        position in FIELD_INSPECTOR_POSITIONS
         or position in wf.CASE_MONITOR_DESK_POSITIONS
     )
     settled_incident_rows = []
@@ -238,8 +238,8 @@ def _case_management_list_context(request, position):
         'filter_status': filter_status,
         'filter_type': filter_type,
         'desk_rows': desk_rows,
-        'can_delete_incident_logs': position in wf.FIELD_DESK_POSITIONS,
-        'is_field_desk': is_field_desk,
+        'can_delete_incident_logs': position in wf.FIELD_INSPECTOR_POSITIONS,
+        'is_field_inspector': is_field_inspector,
         'use_split_case_desk': use_split_case_desk,
         'settled_incident_rows': settled_incident_rows,
         'settled_on_site_count': settled_on_site_count,
@@ -318,7 +318,7 @@ def case_management_dashboard(request, position):
         'prefill_beneficiary': prefill_beneficiary,
         'case_position': position,
         'case_desk_mode': wf.case_desk_mode_for_position(position),
-        'field_intake_positions': tuple(wf.FIELD_DESK_POSITIONS),
+        'field_intake_positions': tuple(wf.FIELD_INSPECTOR_POSITIONS),
         'monitor_intake_positions': tuple(wf.CASE_MONITOR_DESK_POSITIONS),
         'desk_feed_version': _case_desk_feed_version(list_ctx),
     }
@@ -335,7 +335,7 @@ def case_desk_feed(request, position):
     fragment_ctx = {
         **list_ctx,
         'show_time_ago': False,
-        'can_delete_incident_logs': position in wf.FIELD_DESK_POSITIONS,
+        'can_delete_incident_logs': position in wf.FIELD_INSPECTOR_POSITIONS,
     }
     html = {
         'table_body': render_to_string(
@@ -359,7 +359,7 @@ def case_desk_feed(request, position):
             request=request,
         ),
     }
-    if position in FIELD_DESK_POSITIONS:
+    if position in FIELD_INSPECTOR_POSITIONS:
         html['mobile_cards'] = render_to_string(
             'field/case_desk_mobile_cards.html',
             fragment_ctx,
@@ -1204,8 +1204,8 @@ def create_settled_incident_log(request, position):
     """
     Field desk only — log an on-site incident settled without opening a formal case.
     """
-    if position not in wf.FIELD_DESK_POSITIONS:
-        return JsonResponse({'success': False, 'error': 'Field desk only.'}, status=403)
+    if position not in wf.FIELD_INSPECTOR_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Field inspector only.'}, status=403)
     try:
         data = json.loads(request.body)
         related_unit_id = (data.get('related_unit_id') or '').strip()
@@ -1305,8 +1305,8 @@ def create_settled_incident_log(request, position):
 @verify_position
 def delete_settled_incident_log(request, position, log_id):
     """Field desk only — remove an on-site settled incident log entry."""
-    if position not in wf.FIELD_DESK_POSITIONS:
-        return JsonResponse({'success': False, 'error': 'Field desk only.'}, status=403)
+    if position not in wf.FIELD_INSPECTOR_POSITIONS:
+        return JsonResponse({'success': False, 'error': 'Field inspector only.'}, status=403)
     try:
         log = FieldSettledIncidentLog.objects.get(id=log_id)
         log.delete()
