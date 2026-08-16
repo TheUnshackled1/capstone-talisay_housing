@@ -3368,6 +3368,15 @@
             clearFieldEvidenceUI();
             stopFieldCamera();
 
+            // Reset accordions to collapsed state
+            ['sectionApplicantDec', 'cdrrmoStatusBox', 'sectionSitePhotos'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('expanded');
+                    el.classList.add('collapsed');
+                }
+            });
+
             document.getElementById('verificationModalApplicantId').value = applicantId;
             document.getElementById('verificationModalName').textContent = applicantName;
             document.getElementById('verificationModalAddress').textContent = address;
@@ -3730,7 +3739,7 @@
                         </ul>
                     </div>
 
-                    <div class="tha-section-block accordion-section expanded" id="sectionApplicantDec">
+                    <div class="tha-section-block accordion-section collapsed" id="sectionApplicantDec">
                         <h3 class="tha-section-title accordion-header" onclick="toggleAccordion('sectionApplicantDec')">
                             <span class="status-dot green"></span> Applicant’s declaration
                             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -3755,7 +3764,7 @@
                         </div>
                     </div>
 
-                    <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel tha-field-cdrrmo-panel accordion-section expanded" style="display: none;">
+                    <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel tha-field-cdrrmo-panel accordion-section collapsed" style="display: none;">
                         <div class="cdrrmo-cert-header accordion-header" onclick="toggleAccordion('cdrrmoStatusBox')">
                             <h3 class="tha-section-title" style="margin:0; border:none; padding:0; text-transform:uppercase; letter-spacing:0.14em; font-size:0.7rem; font-weight:800; color:#064e3b;"><span class="status-dot orange" id="cdrrmoStatusDot"></span> CDRRMO certification status</h3>
                             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -3778,7 +3787,7 @@
                         </div>
                     </div>
 
-                    <div class="tha-section-block accordion-section expanded" id="sectionSitePhotos">
+                    <div class="tha-section-block accordion-section collapsed" id="sectionSitePhotos">
                         <h3 class="tha-section-title accordion-header" onclick="toggleAccordion('sectionSitePhotos')">
                             <span class="status-dot orange" id="photosStatusDot"></span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; margin-right: 0.3rem;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Site Photographs
                             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
