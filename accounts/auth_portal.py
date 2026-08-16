@@ -19,8 +19,7 @@ VALID_PORTAL_ROLES = frozenset({'second_member', 'fourth_member', 'field_desk'})
 PORTAL_ROLE_DISPLAY = {
     'second_member': 'Second Member',
     'fourth_member': 'Fourth Member',
-    'ronda': 'Ronda / Field Personnel',
-    'field': 'Field Personnel',
+
     'field_desk': 'Field Inspector',
 }
 
