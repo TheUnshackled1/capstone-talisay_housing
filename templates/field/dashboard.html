@@ -1446,6 +1446,14 @@
         transform: translateY(0) scale(1) !important;
     }
 
+    .table-verify-btn:disabled, .field-evidence-file-btn:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        pointer-events: none;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
     .table-verify-btn--muted {
         border-color: #475569 !important;
         background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
@@ -2997,10 +3005,10 @@
             const cap = document.getElementById('fieldCameraCaptureBtn');
             const swt = document.getElementById('fieldCameraSwitchBtn');
             const stp = document.getElementById('fieldCameraStopBtn');
-            if (start) start.style.display = 'none';
-            if (cap) cap.style.display = 'inline-block';
-            if (swt) swt.style.display = 'inline-block';
-            if (stp) stp.style.display = 'inline-block';
+            if (start) start.disabled = true;
+            if (cap) cap.disabled = false;
+            if (swt) swt.disabled = false;
+            if (stp) stp.disabled = false;
             const v = document.getElementById('fieldCameraVideo');
             if (v) {
                 v.style.display = 'block';
@@ -3026,10 +3034,10 @@
             const cap = document.getElementById('fieldCameraCaptureBtn');
             const swt = document.getElementById('fieldCameraSwitchBtn');
             const stp = document.getElementById('fieldCameraStopBtn');
-            if (start) start.style.display = 'inline-block';
-            if (cap) cap.style.display = 'none';
-            if (swt) swt.style.display = 'none';
-            if (stp) stp.style.display = 'none';
+            if (start) start.disabled = false;
+            if (cap) cap.disabled = true;
+            if (swt) swt.disabled = true;
+            if (stp) stp.disabled = true;
         }
 
         function fieldNotify(message, title, variant) {
@@ -3561,9 +3569,9 @@
                         <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
                         <div class="field-evidence-buttons">
                             <button type="button" id="fieldCameraStartBtn" class="table-verify-btn">Activate camera</button>
-                            <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn" style="display: none;">Capture frame</button>
-                            <button type="button" id="fieldCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" style="display: none;"><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Switch camera</button>
-                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn table-verify-btn--muted" style="display: none;">Stop camera</button>
+                            <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn" disabled>Capture frame</button>
+                            <button type="button" id="fieldCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" disabled><svg class="btn-icon" style="width: 0.9rem; height: 0.9rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg> Switch camera</button>
+                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn table-verify-btn--muted" disabled>Stop camera</button>
                         </div>
                         <input type="file" id="fieldEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display: none;">
                         <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">Attach from device</button>
