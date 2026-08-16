@@ -21,7 +21,7 @@ PORTAL_ROLE_DISPLAY = {
     'fourth_member': 'Fourth Member',
     'ronda': 'Ronda / Field Personnel',
     'field': 'Field Personnel',
-    'field_desk': 'Field verification desk',
+    'field_desk': 'Field Inspector',
 }
 
 
