@@ -379,28 +379,21 @@
         align-items: center;
         gap: 14px;
         padding: 16px 18px;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: var(--kpi-bg, #ffffff);
+        border: 1px solid var(--kpi-border, #e2e8f0);
         border-radius: 16px;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px rgba(15, 23, 42, 0.06);
         transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
     .field-kpi-card:hover {
-        transform: translateY(-2px);
-        border-color: #cbd5e1;
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+        transform: translateY(-3px);
+        border-color: var(--kpi-border-hover, #cbd5e1);
+        box-shadow: 0 8px 25px var(--kpi-shadow, rgba(15, 23, 42, 0.12));
     }
 
     .field-kpi-card.field-kpi-card--interactive {
         cursor: pointer;
-    }
-    .field-kpi-card.field-kpi-card--interactive:focus-visible {
-        outline: 2px solid #2563eb;
-        outline-offset: 3px;
-    }
-    .field-kpi-card.field-kpi-card--interactive:active {
-        transform: translateY(-1px);
     }
 
     .field-kpi-icon {
@@ -410,53 +403,74 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: var(--kpi-bg, #e2e8f0);
-        color: var(--kpi-color, #334155);
+        background: var(--kpi-icon-bg, #e2e8f0);
+        color: #ffffff;
+        box-shadow: 0 4px 12px var(--kpi-icon-shadow, rgba(0,0,0,0.1));
         flex-shrink: 0;
     }
 
     .field-kpi-icon svg {
         width: 22px;
         height: 22px;
-        stroke-width: 2.2;
+        stroke-width: 2.5;
     }
 
     .field-kpi-label {
         margin: 0 0 4px 0;
-        font-size: 0.7rem;
-        font-weight: 800;
-        letter-spacing: 0.16em;
+        font-size: 0.72rem;
+        font-weight: 700;
         text-transform: uppercase;
-        color: #64748b;
+        letter-spacing: 0.08em;
+        color: var(--kpi-label, #64748b);
     }
 
     .field-kpi-value {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #0f172a;
         margin: 0;
         line-height: 1.05;
         font-variant-numeric: tabular-nums;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0f172a;
     }
 
     .field-kpi-card.kpi-blue {
-        --kpi-color: #2563eb;
-        --kpi-bg: #dbeafe;
+        --kpi-bg: #f4f9ff;
+        --kpi-border: #cbe0ff;
+        --kpi-border-hover: #93c5fd;
+        --kpi-shadow: rgba(37,99,235,0.15);
+        --kpi-icon-bg: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        --kpi-icon-shadow: rgba(37,99,235,0.3);
+        --kpi-label: #1e3a8a;
     }
 
     .field-kpi-card.kpi-green {
-        --kpi-color: #16a34a;
-        --kpi-bg: #dcfce7;
+        --kpi-bg: #f0fdf4;
+        --kpi-border: #bbf7d0;
+        --kpi-border-hover: #86efac;
+        --kpi-shadow: rgba(22,163,74,0.15);
+        --kpi-icon-bg: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        --kpi-icon-shadow: rgba(16,185,129,0.3);
+        --kpi-label: #064e3b;
     }
 
     .field-kpi-card.kpi-red {
-        --kpi-color: #dc2626;
-        --kpi-bg: #fee2e2;
+        --kpi-bg: #fef2f2;
+        --kpi-border: #fecaca;
+        --kpi-border-hover: #fca5a5;
+        --kpi-shadow: rgba(220,38,38,0.15);
+        --kpi-icon-bg: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        --kpi-icon-shadow: rgba(220,38,38,0.3);
+        --kpi-label: #7f1d1d;
     }
 
     .field-kpi-card.kpi-purple {
-        --kpi-color: #7c3aed;
-        --kpi-bg: #ede9fe;
+        --kpi-bg: #f5f3ff;
+        --kpi-border: #ddd6fe;
+        --kpi-border-hover: #c4b5fd;
+        --kpi-shadow: rgba(124,58,237,0.15);
+        --kpi-icon-bg: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        --kpi-icon-shadow: rgba(139,92,246,0.3);
+        --kpi-label: #4c1d95;
     }
 
     @media (max-width: 900px) {
@@ -2408,9 +2422,9 @@
             <div class="field-kpi-grid">
                 <div class="field-kpi-card kpi-blue field-kpi-card--interactive" role="button" tabindex="0" data-kpi-action="pending" aria-label="Pending field certifications — jump to verification queue">
                     <div class="field-kpi-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="9"></circle>
-                            <path d="M12 7v5l3 3"></path>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                     </div>
                     <div>
@@ -2420,9 +2434,9 @@
                 </div>
                 <div class="field-kpi-card kpi-green field-kpi-card--interactive" role="button" tabindex="0" data-kpi-action="certified" aria-label="Certified hazard — view list">
                     <div class="field-kpi-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="9"></circle>
-                            <path d="M8 12l2.5 2.5L16 9"></path>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <polyline points="9 12 11 14 15 10"></polyline>
                         </svg>
                     </div>
                     <div>
@@ -2432,10 +2446,12 @@
                 </div>
                 <div class="field-kpi-card kpi-purple field-kpi-card--interactive" role="button" tabindex="0" data-kpi-action="today" aria-label="Completed today — view today’s field summary">
                     <div class="field-kpi-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <rect x="4" y="5" width="16" height="15" rx="2"></rect>
-                            <path d="M8 3v4M16 3v4"></path>
-                            <path d="M7.5 13l2 2 4-4"></path>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                            <path d="M9 16l2 2 4-4"></path>
                         </svg>
                     </div>
                     <div>
