@@ -1866,14 +1866,95 @@
         gap: 0.5rem;
         font-family: inherit;
     }
-    .tha-case-reg-modal .tha-section-title::before {
-        content: '';
-        width: 0.45rem;
-        height: 0.45rem;
+    .tha-case-reg-modal .tha-section-title::before { display: none; }
+
+    /* Accordion & Progress Summary */
+    .verification-progress-summary {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .progress-summary-title {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #334155;
+        margin: 0 0 0.85rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .progress-summary-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+    .progress-summary-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+        color: #475569;
+        font-weight: 600;
+    }
+    .progress-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #fff;
+    }
+    .progress-icon.success { background: #10b981; }
+    .progress-icon.warning { background: #f59e0b; }
+    .progress-icon.neutral { background: #94a3b8; }
+    
+    .accordion-header {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        position: relative;
+        padding-right: 2rem !important;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+    }
+    .accordion-header:hover {
+        background-color: rgba(241, 245, 249, 0.6);
+    }
+    .accordion-header .chevron {
+        position: absolute;
+        right: 0.5rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        color: #64748b;
+        transition: transform 0.3s ease;
+    }
+    .accordion-section.collapsed .accordion-header .chevron {
+        transform: rotate(-90deg);
+    }
+    .accordion-section.collapsed .accordion-content {
+        display: none;
+    }
+    .accordion-content {
+        padding-top: 0.5rem;
+    }
+    
+    .status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        margin-right: 0.5rem;
         flex-shrink: 0;
     }
+    .status-dot.green { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+    .status-dot.orange { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
     .tha-case-reg-modal .modal-footer {
         flex-shrink: 0;
         position: sticky;
@@ -3003,6 +3084,7 @@
         let _fieldEvidenceObjUrl = null;
 
         function refreshFieldEvidenceCarousel() {
+            if (typeof updateVerificationProgress === 'function') updateVerificationProgress();
             const carousel = document.getElementById('fieldEvidenceCarousel');
             const img      = document.getElementById('fieldEvidenceImg');
             const counter  = document.getElementById('fieldEvidenceCounter');
@@ -3232,6 +3314,7 @@
             if (!meta) {
                 cdrrmoStatusText.textContent = '—';
                 cdrrmoDateText.textContent = '—';
+                if (typeof updateVerificationProgress === 'function') updateVerificationProgress();
                 return;
             }
             if (meta.status === 'certified') {
@@ -3249,6 +3332,7 @@
             }
             const verifiedIso = meta.certified_at || meta.document_at || null;
             cdrrmoDateText.textContent = formatFieldCdrrmoDateTime(verifiedIso);
+            if (typeof updateVerificationProgress === 'function') updateVerificationProgress();
         }
 
         async function refreshFieldCdrrmoMeta(applicantId) {
@@ -3303,6 +3387,7 @@
 
             document.getElementById('verificationModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            if (typeof updateVerificationProgress === 'function') updateVerificationProgress();
         }
 
         window.closeVerificationModal = closeVerificationModal;
@@ -3554,6 +3639,60 @@
                 }, 250);
             });
         });
+
+        window.toggleAccordion = function(sectionId) {
+            const el = document.getElementById(sectionId);
+            if (!el) return;
+            if (el.classList.contains('collapsed')) {
+                el.classList.remove('collapsed');
+                el.classList.add('expanded');
+            } else {
+                el.classList.remove('expanded');
+                el.classList.add('collapsed');
+            }
+        };
+
+        window.updateVerificationProgress = function() {
+            // Update Photos
+            const photoCount = typeof fieldEvidenceFiles !== 'undefined' ? fieldEvidenceFiles.length : 0;
+            const progressPhotosCount = document.getElementById('progressPhotosCount');
+            const photosStatusDot = document.getElementById('photosStatusDot');
+            if (progressPhotosCount) {
+                progressPhotosCount.textContent = photoCount + '/4';
+                if (photoCount >= 1) {
+                    progressPhotosCount.className = 'progress-icon success';
+                    if (photoCount === 4) { progressPhotosCount.textContent = '✓'; }
+                    if(photosStatusDot) photosStatusDot.className = 'status-dot green';
+                } else {
+                    progressPhotosCount.className = 'progress-icon warning';
+                    if(photosStatusDot) photosStatusDot.className = 'status-dot orange';
+                }
+            }
+
+            // Update CDRRMO Status
+            const cdrrmoStatusTextEl = document.getElementById('cdrrmoStatusText');
+            const progressCdrrmoStatus = document.getElementById('progressCdrrmoStatus');
+            const progressCdrrmoIcon = document.getElementById('progressCdrrmoIcon');
+            const cdrrmoStatusDot = document.getElementById('cdrrmoStatusDot');
+            const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
+            
+            if (cdrrmoStatusBox && cdrrmoStatusBox.style.display !== 'none') {
+                if(progressCdrrmoStatus) progressCdrrmoStatus.style.display = 'flex';
+                const statusStr = cdrrmoStatusTextEl ? cdrrmoStatusTextEl.textContent : '';
+                if (statusStr.includes('Certified') && !statusStr.includes('Not certified')) {
+                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon success'; progressCdrrmoIcon.textContent = '✓'; }
+                    if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot green';
+                } else if (statusStr.includes('Not certified')) {
+                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = '⚠'; }
+                    if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot orange';
+                } else {
+                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = '⚠'; }
+                    if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot orange';
+                }
+            } else {
+                if(progressCdrrmoStatus) progressCdrrmoStatus.style.display = 'none';
+            }
+        };
 </script>
 
     <!-- FIELD VERIFICATION MODAL -->
@@ -3578,9 +3717,22 @@
                         <p class="tha-form-subtitle">Talisay City Housing Authority · Field Verification</p>
                     </div>
 
-                    <div class="tha-section-block">
-                        <h3 class="tha-section-title">Applicant’s declaration</h3>
-                        <div class="tha-field-claim-grid">
+                    <!-- Verification Progress Summary -->
+                    <div class="verification-progress-summary">
+                        <h4 class="progress-summary-title">Verification Progress</h4>
+                        <ul class="progress-summary-list">
+                            <li id="progressApplicantDec"><span class="progress-icon success">✓</span> Applicant declaration</li>
+                            <li id="progressCdrrmoStatus" style="display: none;"><span class="progress-icon warning" id="progressCdrrmoIcon">⚠</span> CDRRMO certification</li>
+                            <li id="progressSitePhotos"><span class="progress-icon warning" id="progressPhotosCount">0/4</span> Site photographs</li>
+                        </ul>
+                    </div>
+
+                    <div class="tha-section-block accordion-section expanded" id="sectionApplicantDec">
+                        <h3 class="tha-section-title accordion-header" onclick="toggleAccordion('sectionApplicantDec')">
+                            <span class="status-dot green"></span> Applicant’s declaration
+                            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </h3>
+                        <div class="accordion-content tha-field-claim-grid">
                             <div class="tha-field-claim-cell">
                                 <span class="fld-lbl">Full name</span>
                                 <p id="verificationModalName"></p>
@@ -3600,11 +3752,12 @@
                         </div>
                     </div>
 
-                    <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel tha-field-cdrrmo-panel" style="display: none;">
-                        <div class="cdrrmo-cert-header">
-                            <h3>CDRRMO certification status</h3>
+                    <div id="cdrrmoStatusBox" class="cdrrmo-cert-panel tha-field-cdrrmo-panel accordion-section expanded" style="display: none;">
+                        <div class="cdrrmo-cert-header accordion-header" onclick="toggleAccordion('cdrrmoStatusBox')">
+                            <h3 class="tha-section-title" style="margin:0; border:none; padding:0; text-transform:uppercase; letter-spacing:0.14em; font-size:0.7rem; font-weight:800; color:#064e3b;"><span class="status-dot orange" id="cdrrmoStatusDot"></span> CDRRMO certification status</h3>
+                            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                         </div>
-                        <div class="cdrrmo-cert-body">
+                        <div class="accordion-content cdrrmo-cert-body">
                             <div class="cdrrmo-cert-cell">
                                 <span class="cdrrmo-cert-label">Government record status</span>
                                 <p id="cdrrmoStatusText">—</p>
@@ -3622,9 +3775,13 @@
                         </div>
                     </div>
 
-                    <div class="tha-section-block">
-                        <h3 class="tha-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; margin-right: 0.3rem;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Site Photographs</h3>
-                        <p class="field-evidence-hint" style="margin-bottom: 1rem;"><strong>Required: 1–4 photos</strong><br>Capture photos showing the applicant's location and surrounding hazard conditions.</p>
+                    <div class="tha-section-block accordion-section expanded" id="sectionSitePhotos">
+                        <h3 class="tha-section-title accordion-header" onclick="toggleAccordion('sectionSitePhotos')">
+                            <span class="status-dot orange" id="photosStatusDot"></span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem; margin-right: 0.3rem;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg> Site Photographs
+                            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </h3>
+                        <div class="accordion-content">
+                            <p class="field-evidence-hint" style="margin-bottom: 1rem;"><strong>Required: 1–4 photos</strong><br>Capture photos showing the applicant's location and surrounding hazard conditions.</p>
                         <video id="fieldCameraVideo" playsinline autoplay muted style="display: none;"></video>
                         <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
                         <div class="field-evidence-buttons">
@@ -3664,6 +3821,7 @@
                             </div>
                             <span id="fieldEvidenceNoPhotoLabel" style="display: block; text-align: center; font-size: 0.85rem; color: #475569; font-weight: 600; margin-top: 0.65rem;">0 / 4 photos captured</span>
                         </div>
+                        </div> <!-- end accordion content -->
                     </div>
                 </div>
 
