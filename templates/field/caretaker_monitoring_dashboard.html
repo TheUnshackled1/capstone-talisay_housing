@@ -167,14 +167,11 @@
     }
 
     .monitoring-kpi:hover {
-        border-color: #10b981;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
         transform: translateY(-2px);
     }
 
     .monitoring-kpi:active {
         transform: translateY(0);
-        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.16);
     }
 
     .monitoring-kpi:focus-visible {
@@ -195,23 +192,59 @@
     .monitoring-kpi-icon svg {
         width: 1.2rem;
         height: 1.2rem;
-        stroke-width: 2;
+        stroke-width: 2.5;
     }
 
+    /* Orange/Amber - Scheduled Tasks */
+    .monitoring-kpi-pending {
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+    .monitoring-kpi-pending:hover {
+        border-color: #f59e0b;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    }
     .monitoring-kpi-pending .monitoring-kpi-icon {
-        background: #dbeafe;
-        color: #0284c7;
+        background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
     }
+    .monitoring-kpi-pending h4 { color: #d97706; }
+    .monitoring-kpi-pending .monitoring-kpi-number { color: #78350f; }
 
-    .monitoring-kpi-overdue .monitoring-kpi-icon {
-        background: #fee2e2;
-        color: #dc2626;
+    /* Emerald - Completed */
+    .monitoring-kpi-completed {
+        background: #ecfdf5;
+        border-color: #a7f3d0;
     }
-
+    .monitoring-kpi-completed:hover {
+        border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
     .monitoring-kpi-completed .monitoring-kpi-icon {
-        background: #dcfce7;
-        color: #16a34a;
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
     }
+    .monitoring-kpi-completed h4 { color: #059669; }
+    .monitoring-kpi-completed .monitoring-kpi-number { color: #064e3b; }
+
+    /* Blue - Active Units */
+    .monitoring-kpi-active {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+    .monitoring-kpi-active:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+    .monitoring-kpi-active .monitoring-kpi-icon {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+    }
+    .monitoring-kpi-active h4 { color: #2563eb; }
+    .monitoring-kpi-active .monitoring-kpi-number { color: #1e3a8a; }
 
     .monitoring-kpi-text h4 {
         margin: 0;
@@ -2873,7 +2906,8 @@
     <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiScheduledModal" data-kpi-scroll-tasks="1" aria-controls="kpiScheduledModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M9 12l2 2l4 -4"/>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
         </div>
         <div class="monitoring-kpi-text">
@@ -2885,7 +2919,8 @@
     <button type="button" class="monitoring-kpi monitoring-kpi-completed" data-kpi-modal="kpiCompletedModal" aria-controls="kpiCompletedModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M9 12l2 2l4 -4"/>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <polyline points="9 12 11 14 15 10"></polyline>
             </svg>
         </div>
         <div class="monitoring-kpi-text">
@@ -2894,12 +2929,12 @@
         </div>
     </button>
 
-    <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiActiveUnitsModal" aria-controls="kpiActiveUnitsModal" aria-haspopup="dialog">
+    <button type="button" class="monitoring-kpi monitoring-kpi-active" data-kpi-modal="kpiActiveUnitsModal" aria-controls="kpiActiveUnitsModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/>
-                <path d="M17 7V5a2 2 0 0 0 -2 -2H9a2 2 0 0 0 -2 2v2"/>
-                <line x1="6" y1="12" x2="18" y2="12"/>
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
             </svg>
         </div>
         <div class="monitoring-kpi-text">
