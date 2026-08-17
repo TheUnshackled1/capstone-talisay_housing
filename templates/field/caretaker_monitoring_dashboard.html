@@ -3337,8 +3337,8 @@
 <div class="modal-overlay" id="earlyInspectionModal">
     <div class="modal-content early-confirm-card">
         <div class="early-confirm-top">
-            <p class="early-confirm-kicker">Early inspection testing</p>
-            <h2 class="early-confirm-title">This task is not due yet</h2>
+            <p class="early-confirm-kicker">EARLY INSPECTION</p>
+            <h2 class="early-confirm-title">This inspection is not yet due</h2>
         </div>
         <div class="early-confirm-body">
             <p id="earlyInspectionMessage" style="margin:0;">
@@ -3350,7 +3350,7 @@
                 Cancel
             </button>
             <button type="button" class="btn-submit-report" onclick="continueEarlyInspection()" style="margin:0;">
-                Continue for testing
+                Continue Anyway
             </button>
         </div>
     </div>
@@ -3719,8 +3719,8 @@ function openReportModal(taskId, allowEarly, scheduledDate, taskLabel, unitLocat
     if (allowEarly) {
         pendingEarlyTaskId = taskId;
         pendingEarlyTaskDetails = { taskLabel, unitLocation, dueDate, taskType };
-        document.getElementById('earlyInspectionMessage').textContent =
-            `Scheduled inspection date: ${scheduledDate}. Continue only for testing or demonstration.`;
+        document.getElementById('earlyInspectionMessage').innerHTML =
+            `<span style="display:block; margin-bottom: 0.75rem; font-weight:600;">Scheduled inspection: ${scheduledDate}</span>This task is scheduled for a future date. Continue only if you are conducting an early inspection for testing, demonstration, or authorized purposes.`;
         document.getElementById('earlyInspectionModal').classList.add('active');
         document.body.style.overflow = 'hidden';
         return;
