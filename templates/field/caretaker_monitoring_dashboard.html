@@ -3940,12 +3940,16 @@ function updatePhotoEvidenceCarouselUI() {
 
     if (photoEvidenceCarouselFiles.length === 0) {
         carousel.hidden = true;
-        if (label) { label.textContent = 'No photo selected'; label.style.display = 'block'; }
+        if (label) { label.textContent = 'No photo selected'; label.style.color = '#475569'; }
         return;
     }
 
     carousel.hidden = false;
-    if (label) label.style.display = 'none';
+    const totalAttached = photoEvidenceCarouselFiles.length;
+    if (label) {
+        label.textContent = `${totalAttached} / 4 photos attached`;
+        label.style.color = '#15803d';
+    }
 
     /* revoke old object URL to avoid memory leak */
     if (_photoEvidenceObjUrl) { try { URL.revokeObjectURL(_photoEvidenceObjUrl); } catch(e) {} }
