@@ -2105,6 +2105,65 @@
             display: flex !important;
         }
 
+        .m-card-premium-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            width: 100%;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 0.5rem;
+            padding-right: 2.8rem;
+            border-radius: 0.75rem;
+            color: #1e3a8a;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .m-card-premium-btn:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+        .m-card-premium-btn:active {
+            transform: translateY(0);
+        }
+        .m-card-premium-icon {
+            width: 2.4rem;
+            height: 2.4rem;
+            border-radius: 0.6rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+            flex-shrink: 0;
+        }
+        .m-card-premium-icon svg {
+            width: 1.2rem;
+            height: 1.2rem;
+            stroke-width: 2.5;
+        }
+        .m-card-premium-text {
+            flex: 1;
+            text-align: center;
+            letter-spacing: 0.02em;
+        }
+
+        .m-card-premium-btn--amber { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+        .m-card-premium-btn--amber:hover { border-color: #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15); }
+        .m-card-premium-btn--amber .m-card-premium-icon { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); }
+
+        .m-card-premium-btn--emerald { background: #ecfdf5; border-color: #a7f3d0; color: #064e3b; }
+        .m-card-premium-btn--emerald:hover { border-color: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); }
+        .m-card-premium-btn--emerald .m-card-premium-icon { background: linear-gradient(135deg, #10b981 0%, #047857 100%); box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3); }
+
+        .m-card-premium-btn--slate { background: #f8fafc; border-color: #e2e8f0; color: #334155; }
+        .m-card-premium-btn--slate:hover { border-color: #94a3b8; box-shadow: 0 4px 12px rgba(148, 163, 184, 0.15); }
+        .m-card-premium-btn--slate .m-card-premium-icon { background: linear-gradient(135deg, #94a3b8 0%, #475569 100%); box-shadow: 0 2px 6px rgba(148, 163, 184, 0.3); }
+
         .monitoring-shell {
             padding: 1.2rem 1rem;
         }
@@ -3342,16 +3401,43 @@
             
             <div class="m-card-actions">
                 {% if task.status == 'pending' and task.scheduled_date > today %}
-                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
-                        {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
+                    <button type="button" class="m-card-premium-btn {% if not task.notified_at %}m-card-premium-btn--amber{% endif %}" onclick="openReportModal('{{ task.id }}', true, '{{ task.scheduled_date|date:"F j, Y" }}', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        <div class="m-card-premium-icon">
+                            {% if task.notified_at %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+                            </svg>
+                            {% else %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <span class="m-card-premium-text">{% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}</span>
                     </button>
                 {% else %}
-                    <button type="button" class="btn-submit-report m-card-btn" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                    <button type="button" class="m-card-premium-btn {% if task.status == 'completed' %}m-card-premium-btn--slate{% else %}m-card-premium-btn--emerald{% endif %}" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
+                        <div class="m-card-premium-icon">
+                            {% if task.status == 'completed' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            {% else %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <polyline points="9 12 11 14 15 10"></polyline>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <span class="m-card-premium-text">
                         {% if task.status == 'completed' %}
                             View Report
                         {% else %}
                             Submit Report
                         {% endif %}
+                        </span>
                     </button>
                 {% endif %}
             </div>
