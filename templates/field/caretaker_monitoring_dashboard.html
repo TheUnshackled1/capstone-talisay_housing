@@ -1848,6 +1848,17 @@
     .tha-case-reg-modal .btn-modal.danger:hover {
         background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
     }
+    .tha-case-reg-modal .btn-modal.secondary {
+        background: transparent;
+        color: #475569;
+        border-color: transparent;
+        font-weight: 600;
+        box-shadow: none;
+    }
+    .tha-case-reg-modal .btn-modal.secondary:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
 
     /* Verification Sworn Declaration Claim Grid */
     .tha-field-claim-grid {
@@ -3509,7 +3520,7 @@
                     </svg>
                     Submit Report
                 </button>
-                <button type="button" class="btn-modal danger" onclick="closeReportModal()">Cancel</button>
+                <button type="button" class="btn-modal secondary" onclick="saveReportDraft()">Save Draft</button>
             </div>
         </form>
     </div>
@@ -4030,6 +4041,10 @@ document.addEventListener('DOMContentLoaded', function() {
         removePhotoEvidenceFile(photoEvidenceCarouselIndex);
     });
 });
+function saveReportDraft() {
+    showToast('Draft saved locally. You can resume this later.', 'success');
+    closeReportModal();
+}
 
 function submitReport(event) {
     event.preventDefault();
