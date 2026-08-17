@@ -2108,12 +2108,12 @@
         .m-card-premium-btn {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 0.8rem;
             width: 100%;
             background: #eff6ff;
             border: 1px solid #bfdbfe;
-            padding: 0.5rem;
-            padding-right: 2.8rem;
+            padding: 0.5rem 1rem;
             border-radius: 0.75rem;
             color: #1e3a8a;
             font-weight: 700;
@@ -2147,8 +2147,6 @@
             stroke-width: 2.5;
         }
         .m-card-premium-text {
-            flex: 1;
-            text-align: center;
             letter-spacing: 0.02em;
         }
 
@@ -3302,7 +3300,7 @@
                                 <line x1="12" y1="9" x2="12" y2="13"/>
                                 <line x1="12" y1="17" x2="12.01" y2="17"/>
                             </svg>
-                            {% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}
+                            {% if task.notified_at %}Open{% else %}Notify / test early{% endif %}
                         </button>
                     {% else %}
                         <button type="button" class="btn-submit-report" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
@@ -3414,7 +3412,7 @@
                             </svg>
                             {% endif %}
                         </div>
-                        <span class="m-card-premium-text">{% if task.notified_at %}Open notified task{% else %}Notify / test early{% endif %}</span>
+                        <span class="m-card-premium-text">{% if task.notified_at %}Open{% else %}Notify / test early{% endif %}</span>
                     </button>
                 {% else %}
                     <button type="button" class="m-card-premium-btn {% if task.status == 'completed' %}m-card-premium-btn--slate{% else %}m-card-premium-btn--emerald{% endif %}" onclick="openReportModal('{{ task.id }}', false, '', '{% if task.task_type == "day_60_inspection" %}90 Day Inspection{% elif task.task_type == "day_30_inspection" %}120 Day Inspection{% else %}{{ task.get_task_type_display|escapejs }}{% endif %}', 'Block {{ task.unit.block_number|escapejs }} Lot {{ task.unit.lot_number|escapejs }}', '{{ task.due_date|date:"F j, Y"|escapejs }}', '{{ task.task_type|escapejs }}')">
