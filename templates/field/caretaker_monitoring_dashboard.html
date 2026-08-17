@@ -3526,6 +3526,57 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="confirmSubmitModal">
+    <div class="modal-content early-confirm-card">
+        <div class="early-confirm-top">
+            <h2 class="early-confirm-title">Submit monitoring report?</h2>
+        </div>
+        <div class="early-confirm-body">
+            <p id="confirmSubmitMessage" style="margin:0;">
+                You are about to submit the <strong id="confirmSubmitTaskType"></strong> monitoring report for<br>
+                <strong id="confirmSubmitUnit"></strong>.<br><br>
+                Once submitted, the report will be recorded as completed.
+            </p>
+        </div>
+        <div class="early-confirm-actions">
+            <button type="button" class="btn-view-details" onclick="closeConfirmSubmitModal()" style="background:#ffffff;">
+                Cancel
+            </button>
+            <button type="button" class="btn-submit-report" onclick="executeSubmitReport()" style="margin:0;">
+                Submit Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="successSubmitModal">
+    <div class="modal-content early-confirm-card" style="text-align: center;">
+        <div class="early-confirm-top" style="background: #10b981; color: white;">
+            <svg style="width: 3rem; height: 3rem; margin: 0 auto 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <h2 class="early-confirm-title" style="color: white; font-size: 1.25rem;">Monitoring Report Submitted</h2>
+        </div>
+        <div class="early-confirm-body">
+            <h3 id="successSubmitUnit" style="margin: 0 0 0.5rem; font-size: 1.1rem; color: #0f172a;"></h3>
+            <p id="successSubmitSite" style="margin: 0 0 1rem; color: #64748b; font-size: 0.9rem;">Talisay City Housing Authority</p>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; font-size: 0.85rem; color: #475569; display: flex; flex-direction: column; gap: 0.5rem; text-align: left;">
+                <div style="display: flex; justify-content: space-between;">
+                    <strong>Status:</strong> <span style="color: #10b981; font-weight: 600;">Completed</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <strong>Submitted:</strong> <span id="successSubmitTime"></span>
+                </div>
+            </div>
+        </div>
+        <div class="early-confirm-actions">
+            <button type="button" class="btn-submit-report" onclick="closeSuccessSubmitModal()" style="margin:0; width: 100%;">
+                Done
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 let pendingEarlyTaskId = null;
 let pendingEarlyTaskDetails = null;
@@ -4046,38 +4097,69 @@ function saveReportDraft() {
     closeReportModal();
 }
 
+let pendingFormData = null;
+
 function submitReport(event) {
     event.preventDefault();
-
     const form = document.getElementById('reportForm');
-    const formData = new FormData(form);
-    const taskId = formData.get('task_id');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    pendingFormData = new FormData(form);
+    
+    document.getElementById('confirmSubmitTaskType').textContent = document.getElementById('reportTaskType').textContent;
+    document.getElementById('confirmSubmitUnit').textContent = document.getElementById('reportTaskUnit').textContent;
+    document.getElementById('confirmSubmitModal').classList.add('active');
+}
+
+function closeConfirmSubmitModal() {
+    document.getElementById('confirmSubmitModal').classList.remove('active');
+    pendingFormData = null;
+}
+
+function executeSubmitReport() {
+    if (!pendingFormData) return;
+    const taskId = pendingFormData.get('task_id');
+    const submitBtn = document.querySelector('#confirmSubmitModal .btn-submit-report');
+    if (submitBtn) submitBtn.disabled = true;
+
     fetch(`/units/monitoring-report/${taskId}/submit/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
         },
-        body: formData
+        body: pendingFormData
     })
     .then(response => response.json())
     .then(data => {
+        if (submitBtn) submitBtn.disabled = false;
+        closeConfirmSubmitModal();
         if (data.success) {
-            showToast('Report submitted successfully!', 'success');
+            closeReportModal();
+            document.getElementById('successSubmitUnit').textContent = document.getElementById('reportTaskUnit').textContent;
+            const now = new Date();
+            const timeStr = now.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) + ' • ' + now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+            document.getElementById('successSubmitTime').textContent = timeStr;
+            
+            document.getElementById('successSubmitModal').classList.add('active');
             try {
                 localStorage.setItem('tha_monitoring_task_sync', String(Date.now()));
-            } catch (ignoreLs) { /* private mode / quota */ }
-            setTimeout(() => {
-                closeReportModal();
-                location.reload();
-            }, 1000);
+            } catch (ignoreLs) { }
         } else {
-            showToast(data.error, 'error');
+            showToast(data.error || 'Failed to submit report.', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        if (submitBtn) submitBtn.disabled = false;
         showToast('Failed to submit report. Please check your connection.', 'error');
     });
+}
+
+function closeSuccessSubmitModal() {
+    document.getElementById('successSubmitModal').classList.remove('active');
+    location.reload();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
