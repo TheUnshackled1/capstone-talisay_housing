@@ -73,10 +73,10 @@ function caretakerTaskPhase(taskType) {
 
 function caretakerMonitoringWindowLine(taskType) {
     const t = String(taskType || '');
-    if (t === 'month_2_inspection') return '120-day extension â€” Extension 120 Day visit (120 days after extension start; not the original program 120 Day visit)';
+    if (t === 'month_2_inspection') return '120-day extension — Extension 120 Day visit (120 days after extension start; not the original program 120 Day visit)';
     const phase = caretakerTaskPhase(taskType);
-    if (phase === 'initial') return 'Initial monitoring â€” during 90 days';
-    if (phase === 'final') return 'Final monitoring â€” 120 days after 90 Day visit';
+    if (phase === 'initial') return 'Initial monitoring — during 90 days';
+    if (phase === 'final') return 'Final monitoring — 120 days after 90 Day visit';
     return 'Scheduled monitoring visit';
 }
 
@@ -128,7 +128,7 @@ function applyReportModalPhase(taskType) {
     const sharedSub = 'Occupancy and construction choices plus photo evidence match what housing staff review. If you do not add optional narratives, the system stores short default notes when you submit.';
 
     if (phase === 'initial') {
-        titleEl.textContent = 'Caretaker monitoring report â€” initial visit';
+        titleEl.textContent = 'Caretaker monitoring report — initial visit';
         subtitleEl.textContent = '';
         if (badgeEl) {
             badgeEl.textContent = 'Initial monitoring';
@@ -145,10 +145,10 @@ function applyReportModalPhase(taskType) {
     } else if (phase === 'final') {
         const isExtensionFinal = String(taskType) === 'month_2_inspection';
         if (isExtensionFinal) {
-            titleEl.textContent = 'Caretaker monitoring report â€” extension window (120 Day)';
+            titleEl.textContent = 'Caretaker monitoring report — extension window (120 Day)';
             subtitleEl.textContent = '';
             if (badgeEl) {
-                badgeEl.textContent = 'Extension Â· final';
+                badgeEl.textContent = 'Extension · final';
                 badgeEl.hidden = false;
             }
             noticeEl.className = 'monitoring-phase-notice monitoring-phase-notice--final';
@@ -160,7 +160,7 @@ function applyReportModalPhase(taskType) {
             );
             evidenceEl.textContent = 'Capture or attach up to 4 images showing whether construction on the lot is finished or still incomplete.';
         } else {
-            titleEl.textContent = 'Caretaker monitoring report â€” final visit';
+            titleEl.textContent = 'Caretaker monitoring report — final visit';
             subtitleEl.textContent = '';
             if (badgeEl) {
                 badgeEl.textContent = 'Final monitoring';
@@ -171,8 +171,8 @@ function applyReportModalPhase(taskType) {
             noticeEl.innerHTML = (
                 '<strong>120 Day Inspection (final)</strong> '
                 + 'Staff use your report to decide: '
-                + '<strong>Housing unit</strong> â€” lot build is finished; the lot is counted as a completed unit and monitoring closes. '
-                + '<strong>Explanation letter</strong> â€” opens the explanation-letter workflow.'
+                + '<strong>Housing unit</strong> — lot build is finished; the lot is counted as a completed unit and monitoring closes. '
+                + '<strong>Explanation letter</strong> — opens the explanation-letter workflow.'
             );
             evidenceEl.textContent = 'Capture or attach up to 4 images showing whether construction on the lot is finished or still incomplete.';
         }
@@ -189,11 +189,11 @@ function applyReportModalPhase(taskType) {
 }
 
 function setReportReference(taskLabel, unitLocation, dueDate, taskType) {
-    document.getElementById('reportTaskUnit').textContent = unitLocation || 'â€”';
-    document.getElementById('reportTaskType').textContent = taskLabel || 'â€”';
-    document.getElementById('reportTaskDueDate').textContent = dueDate || 'â€”';
+    document.getElementById('reportTaskUnit').textContent = unitLocation || '—';
+    document.getElementById('reportTaskType').textContent = taskLabel || '—';
+    document.getElementById('reportTaskDueDate').textContent = dueDate || '—';
     const line = caretakerMonitoringWindowLine(taskType);
-    document.getElementById('reportTaskMonitoringDay').textContent = line || 'â€”';
+    document.getElementById('reportTaskMonitoringDay').textContent = line || '—';
     applyReportModalPhase(taskType);
 }
 
@@ -570,7 +570,7 @@ function executeSubmitReport() {
             closeReportModal();
             document.getElementById('successSubmitUnit').textContent = document.getElementById('reportTaskUnit').textContent;
             const now = new Date();
-            const timeStr = now.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) + ' â€¢ ' + now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+            const timeStr = now.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) + ' ”¢ ' + now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
             document.getElementById('successSubmitTime').textContent = timeStr;
             
             document.getElementById('successSubmitModal').classList.add('active');

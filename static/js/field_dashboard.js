@@ -289,7 +289,7 @@
 
         function startFieldCamera() {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                fieldNotify('This browser does not support in-page camera access. Please use â€œAttach from deviceâ€ to upload photographs.', 'Camera unavailable');
+                fieldNotify('This browser does not support in-page camera access. Please use “Attach from device” to upload photographs.', 'Camera unavailable');
                 return;
             }
             if (fieldCameraStream) {
@@ -369,7 +369,7 @@
         }
 
         function formatHazardClassification(code) {
-            if (!code || !String(code).trim()) return 'â€”';
+            if (!code || !String(code).trim()) return '—';
             const key = String(code).trim().toLowerCase().replace(/-/g, '_');
             const map = {
                 riverside: 'Riverside / riverbank',
@@ -394,9 +394,9 @@
         })();
 
         function formatFieldCdrrmoDateTime(iso) {
-            if (!iso) return 'â€”';
+            if (!iso) return '—';
             const d = new Date(iso);
-            if (Number.isNaN(d.getTime())) return 'â€”';
+            if (Number.isNaN(d.getTime())) return '—';
             const datePart = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             const timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
             return datePart + ' ' + timePart;
@@ -409,22 +409,22 @@
             const cdrrmoDateText = document.getElementById('cdrrmoDateText');
             if (!cdrrmoStatusText || !cdrrmoDateText) return;
             if (!meta) {
-                cdrrmoStatusText.textContent = 'â€”';
-                cdrrmoDateText.textContent = 'â€”';
+                cdrrmoStatusText.textContent = '—';
+                cdrrmoDateText.textContent = '—';
                 if (typeof updateVerificationProgress === 'function') updateVerificationProgress();
                 return;
             }
             if (meta.status === 'certified') {
-                cdrrmoStatusText.textContent = 'Certified â€” danger zone (government record)';
+                cdrrmoStatusText.textContent = 'Certified — danger zone (government record)';
                 cdrrmoStatusText.style.color = '#166534';
             } else if (meta.status === 'not_certified') {
-                cdrrmoStatusText.textContent = 'Not certified â€” hazard claim not verified';
+                cdrrmoStatusText.textContent = 'Not certified — hazard claim not verified';
                 cdrrmoStatusText.style.color = '#991b1b';
             } else if (meta.document_at) {
-                cdrrmoStatusText.textContent = 'CDRRMO certification on file â€” awaiting field verification report';
+                cdrrmoStatusText.textContent = 'CDRRMO certification on file — awaiting field verification report';
                 cdrrmoStatusText.style.color = '#1d4ed8';
             } else {
-                cdrrmoStatusText.textContent = 'Pending â€” awaiting field verification report';
+                cdrrmoStatusText.textContent = 'Pending — awaiting field verification report';
                 cdrrmoStatusText.style.color = '#78350f';
             }
             const verifiedIso = meta.certified_at || meta.document_at || null;
@@ -476,12 +476,12 @@
             document.getElementById('verificationModalAddress').textContent = address;
             document.getElementById('verificationModalDangerZone').textContent = formatHazardClassification(dangerZoneType);
             document.getElementById('verificationModalLocation').textContent =
-                (dangerZoneLocation && dangerZoneLocation.trim()) ? dangerZoneLocation.trim() : 'â€”';
+                (dangerZoneLocation && dangerZoneLocation.trim()) ? dangerZoneLocation.trim() : '—';
 
             const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
             const cdrrmoRefText = document.getElementById('cdrrmoRefText');
 
-            cdrrmoRefText.textContent = referenceNumber && referenceNumber.trim() ? referenceNumber.trim() : 'â€”';
+            cdrrmoRefText.textContent = referenceNumber && referenceNumber.trim() ? referenceNumber.trim() : '—';
 
             if (dangerZoneType) {
                 cdrrmoStatusBox.style.display = 'block';
@@ -546,7 +546,7 @@
                     var smsMsg = '';
                     if (Object.prototype.hasOwnProperty.call(data, 'sms_dispatched')) {
                         smsMsg = data.sms_dispatched
-                            ? '\n\nA status SMS was queued for the applicantâ€™s contact number (check SMSLog / server output if using console mode).'
+                            ? '\n\nA status SMS was queued for the applicant’s contact number (check SMSLog / server output if using console mode).'
                             : '\n\nNo SMS was queued (missing or invalid mobile number, or gateway error).';
                     }
                     try {
@@ -767,7 +767,7 @@
                 progressPhotosCount.textContent = photoCount + '/4';
                 if (photoCount >= 1) {
                     progressPhotosCount.className = 'progress-icon success';
-                    if (photoCount === 4) { progressPhotosCount.textContent = 'âœ“'; }
+                    if (photoCount === 4) { progressPhotosCount.textContent = '✓'; }
                     if(photosStatusDot) photosStatusDot.className = 'status-dot green';
                 } else {
                     progressPhotosCount.className = 'progress-icon warning';
@@ -786,13 +786,13 @@
                 if(progressCdrrmoStatus) progressCdrrmoStatus.style.display = 'flex';
                 const statusStr = cdrrmoStatusTextEl ? cdrrmoStatusTextEl.textContent : '';
                 if (statusStr.includes('Certified') && !statusStr.includes('Not certified')) {
-                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon success'; progressCdrrmoIcon.textContent = 'âœ“'; }
+                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon success'; progressCdrrmoIcon.textContent = '✓'; }
                     if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot green';
                 } else if (statusStr.includes('Not certified')) {
-                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = 'âš '; }
+                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = '⚠'; }
                     if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot orange';
                 } else {
-                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = 'âš '; }
+                    if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = '⚠'; }
                     if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot orange';
                 }
             } else {
