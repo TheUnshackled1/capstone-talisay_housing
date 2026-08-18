@@ -17,10 +17,9 @@
 <div class="monitoring-kpis">
     <div class="monitoring-kpi monitoring-kpi-open">
         <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="9" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
             </svg>
         </div>
         <div class="monitoring-kpi-text">
@@ -29,25 +28,26 @@
         </div>
     </div>
 
-    <button type="button" class="monitoring-kpi monitoring-kpi-settled is-clickable" id="settledOnSiteKpiBtn"
-        onclick="openSettledIncidentsDrawer()" aria-expanded="false" aria-controls="settledIncidentsDrawer">
+    <div class="monitoring-kpi monitoring-kpi-settled">
         <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 12 12 17 22 12" />
+                <polyline points="2 17 12 22 22 17" />
             </svg>
         </div>
         <div class="monitoring-kpi-text">
-            <h4>Settled on-site</h4>
-            <div class="monitoring-kpi-number" id="caseDeskKpiSettled">{{ settled_on_site_count }}</div>
+            <h4>Total List</h4>
+            <div class="monitoring-kpi-number" id="caseDeskKpiSettled">{{ desk_rows|length }}</div>
         </div>
-    </button>
+    </div>
 
     <button type="button" class="monitoring-kpi monitoring-kpi-resolved is-clickable" id="resolvedKpiBtn"
         onclick="openResolvedCasesDrawer()" aria-expanded="false" aria-controls="resolvedCasesDrawer">
         <div class="monitoring-kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M8 12l2.5 2.5L16 9" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="M9 12l2 2 4-4" />
             </svg>
         </div>
         <div class="monitoring-kpi-text">
