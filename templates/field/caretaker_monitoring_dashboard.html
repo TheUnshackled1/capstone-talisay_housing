@@ -97,11 +97,11 @@
                                      data-ref-code="{{ task.lot_award.application.applicant.reference_number|default:'' }}"
                                      data-barangay="{{ task.lot_award.application.applicant.barangay.name|default:'Not specified' }}"
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
-                                <div class="kpi-applicant-addr">ðŸ“ {{ task.lot_award.application.applicant.current_address|default:"â€”" }}</div>
+                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
                             <td>{% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>{{ task.due_date|date:"M d, Y" }}</td>
-                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}â€”{% endif %}</td>
+                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -150,7 +150,7 @@
                                      data-ref-code="{{ task.lot_award.application.applicant.reference_number|default:'' }}"
                                      data-barangay="{{ task.lot_award.application.applicant.barangay.name|default:'Not specified' }}"
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
-                                <div class="kpi-applicant-addr">ðŸ“ {{ task.lot_award.application.applicant.current_address|default:"â€”" }}</div>
+                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
                             <td>{% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>
@@ -159,10 +159,10 @@
                                 {% elif task.reports.first %}
                                     {{ task.reports.first.submitted_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.reports.first.submitted_at|time:"H:i" }}</div>
                                 {% else %}
-                                    â€”
+                                    —
                                 {% endif %}
                             </td>
-                            <td>{% if task.reports.first and task.reports.first.submitted_by %}{{ task.reports.first.submitted_by.get_full_name|default:task.reports.first.submitted_by.username }}{% else %}â€”{% endif %}</td>
+                            <td>{% if task.reports.first and task.reports.first.submitted_by %}{{ task.reports.first.submitted_by.get_full_name|default:task.reports.first.submitted_by.username }}{% else %}—{% endif %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -213,11 +213,11 @@
                                      data-ref-code="{{ task.lot_award.application.applicant.reference_number|default:'' }}"
                                      data-barangay="{{ task.lot_award.application.applicant.barangay.name|default:'Not specified' }}"
                                      data-dob="{{ task.lot_award.application.applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">{{ task.lot_award.application.applicant.full_name }}</div>
-                                <div class="kpi-applicant-addr">ðŸ“ {{ task.lot_award.application.applicant.current_address|default:"â€”" }}</div>
+                                <div class="kpi-applicant-addr">📍 {{ task.lot_award.application.applicant.current_address|default:"—" }}</div>
                             </td>
                             <td>{% if task.task_type == 'day_60_inspection' %}90 Day Inspection{% elif task.task_type == 'day_30_inspection' %}120 Day Inspection{% else %}{{ task.get_task_type_display }}{% endif %}</td>
                             <td>{{ task.due_date|date:"M d, Y" }}</td>
-                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}â€”{% endif %}</td>
+                            <td>{% if task.notified_at %}{{ task.notified_at|date:"M d, Y" }}<div class="kpi-cell-muted">{{ task.notified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
                         </tr>
                         {% endwith %}
                         {% endfor %}
@@ -238,7 +238,7 @@
 <div id="monitoring-tasks-work-area" class="monitoring-work-area">
     <div class="monitoring-work-stripe"></div>
     <div class="monitoring-work-header">
-        <span class="monitoring-work-badge">â–¸ CARETAKER MONITORING DESK</span>
+        <span class="monitoring-work-badge">▸ CARETAKER MONITORING DESK</span>
     </div>
     {% if tasks %}
     <div class="monitoring-table-scroll">
@@ -339,11 +339,11 @@
                 {% endif %}
             </td>
             <td>
-                <div class="monitoring-schedule-note">{% if task.task_type == 'day_60_inspection' %}<strong>Initial monitoring â€” during 90 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring â€” confirm lot build is finished</strong>{% elif task.task_type == 'month_2_inspection' %}<strong>120-day extension â€” Extension 120 Day visit</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
+                <div class="monitoring-schedule-note">{% if task.task_type == 'day_60_inspection' %}<strong>Initial monitoring — during 90 days</strong>{% elif task.task_type == 'day_30_inspection' %}<strong>Final monitoring — confirm lot build is finished</strong>{% elif task.task_type == 'month_2_inspection' %}<strong>120-day extension — Extension 120 Day visit</strong>{% else %}<strong>{{ task.days_from_award }}</strong> days after monitoring starts{% endif %}</div>
             </td>
             <td>
                 {% if task.staff_handled_user %}
-                <div class="monitoring-staff-handled" title="{{ task.staff_name }}{% if task.staff_role %} Â· {{ task.staff_role }}{% endif %}">
+                <div class="monitoring-staff-handled" title="{{ task.staff_name }}{% if task.staff_role %} · {{ task.staff_role }}{% endif %}">
                     <div class="handled-by-avatar {% if task.staff_position_key == 'second_member' %}second-member{% elif task.staff_position_key == 'fourth_member' %}fourth-member{% else %}other{% endif %}">{{ task.staff_initials }}</div>
                     <div class="monitoring-staff-handled__meta">
                         <div class="monitoring-staff-handled__name">{{ task.staff_name }}</div>
@@ -351,7 +351,7 @@
                     </div>
                 </div>
                 {% else %}
-                <span class="monitoring-staff-name">â€”</span>
+                <span class="monitoring-staff-name">—</span>
                 {% endif %}
             </td>
             <td>
@@ -390,7 +390,7 @@
 </table>
     </div>
 
-    <!-- Responsive Mobile Card View (Option 2 â€” Tables-to-Cards Pattern) -->
+    <!-- Responsive Mobile Card View (Option 2 — Tables-to-Cards Pattern) -->
     <div class="mobile-cards-view mobile-tasks-cards">
         {% for task in tasks %}
         <article class="mobile-verification-card m-task-card" id="task-card-{{ task.id }}">
@@ -415,7 +415,7 @@
                 <div class="m-card-meta-row">
                     <span class="m-card-meta-label">Location:</span>
                     <span class="m-card-meta-value">
-                        Block {{ task.unit.block_number }} Lot {{ task.unit.lot_number }} Â· <small style="color:#64748b;">{{ task.unit.site.name|default:"Relocation site" }}</small>
+                        Block {{ task.unit.block_number }} Lot {{ task.unit.lot_number }} · <small style="color:#64748b;">{{ task.unit.site.name|default:"Relocation site" }}</small>
                     </span>
                 </div>
                 
@@ -454,7 +454,7 @@
                             </div>
                         </div>
                         {% else %}
-                        <span style="color: #64748b; font-style: italic;">â€”</span>
+                        <span style="color: #64748b; font-style: italic;">—</span>
                         {% endif %}
                     </div>
                 </div>
@@ -569,7 +569,7 @@
                         <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                     </div>
                     <h2 id="reportModalTitle">Caretaker monitoring report</h2>
-                    <p class="tha-form-subtitle">Talisay City Housing Authority Â· <span id="reportModalSubtitle">Module 4</span></p>
+                    <p class="tha-form-subtitle">Talisay City Housing Authority · <span id="reportModalSubtitle">Module 4</span></p>
                     <span id="reportModalPhaseBadge" class="monitoring-report-phase-badge" hidden></span>
                 </div>
 
@@ -577,19 +577,19 @@
                     <div class="monitoring-reference-grid">
                         <div class="monitoring-reference-cell">
                             <span class="monitoring-reference-label">Unit / lot</span>
-                            <p id="reportTaskUnit" class="monitoring-reference-value">â€”</p>
+                            <p id="reportTaskUnit" class="monitoring-reference-value">—</p>
                         </div>
                         <div class="monitoring-reference-cell">
                             <span class="monitoring-reference-label">Task type</span>
-                            <p id="reportTaskType" class="monitoring-reference-value">â€”</p>
+                            <p id="reportTaskType" class="monitoring-reference-value">—</p>
                         </div>
                         <div class="monitoring-reference-cell">
                             <span class="monitoring-reference-label">Due date</span>
-                            <p id="reportTaskDueDate" class="monitoring-reference-value">â€”</p>
+                            <p id="reportTaskDueDate" class="monitoring-reference-value">—</p>
                         </div>
                         <div class="monitoring-reference-cell">
                             <span class="monitoring-reference-label">Monitoring window</span>
-                            <p id="reportTaskMonitoringDay" class="monitoring-reference-value">â€”</p>
+                            <p id="reportTaskMonitoringDay" class="monitoring-reference-value">—</p>
                         </div>
                     </div>
                 </div>
@@ -645,7 +645,7 @@
                             <input type="radio" name="construction_status" value="completed_occupied">
                             <div class="monitoring-decision-text">
                                 <strong class="monitoring-decision-title">Build finished</strong>
-                                <p class="monitoring-decision-sub">Structure is substantially complete â€” the lot build is ready to count as a finished housing unit.</p>
+                                <p class="monitoring-decision-sub">Structure is substantially complete — the lot build is ready to count as a finished housing unit.</p>
                             </div>
                         </label>
                         <label class="monitoring-decision-label negative">
@@ -796,28 +796,28 @@
         <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
     </div>
     <div class="hover-card-header">
-        <div class="hover-card-avatar" id="hcAvatar">â€”</div>
+        <div class="hover-card-avatar" id="hcAvatar">—</div>
         <div class="hover-card-title-group">
-            <div class="hover-card-name" id="hcName">â€”</div>
+            <div class="hover-card-name" id="hcName">—</div>
             <div class="hover-card-tag">Applicant Profile</div>
         </div>
     </div>
     <div class="hover-card-body">
         <div class="hover-card-meta-row">
             <span class="hover-card-label">Transaction ID</span>
-            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">â€”</span>
+            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">—</span>
         </div>
         <div class="hover-card-meta-row" id="hcRefRow">
             <span class="hover-card-label">Reference Code</span>
-            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">â€”</span>
+            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
         </div>
         <div class="hover-card-meta-row">
             <span class="hover-card-label">Barangay</span>
-            <span class="hover-card-value" id="hcBrgy">â€”</span>
+            <span class="hover-card-value" id="hcBrgy">—</span>
         </div>
         <div class="hover-card-meta-row">
             <span class="hover-card-label">Birth Date</span>
-            <span class="hover-card-value" id="hcDob">â€”</span>
+            <span class="hover-card-value" id="hcDob">—</span>
         </div>
     </div>
     <div class="hover-card-footer">
