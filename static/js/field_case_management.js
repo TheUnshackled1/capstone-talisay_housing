@@ -900,10 +900,10 @@
         const cap = document.getElementById('newCaseCameraCaptureBtn');
         const stp = document.getElementById('newCaseCameraStopBtn');
         const swt = document.getElementById('newCaseCameraSwitchBtn');
-        if (start) start.style.display = 'inline-block';
-        if (cap) cap.style.display = 'none';
-        if (stp) stp.style.display = 'none';
-        if (swt) swt.style.display = 'none';
+        if (start) start.disabled = false;
+        if (cap) cap.disabled = true;
+        if (stp) stp.disabled = true;
+        if (swt) swt.disabled = true;
     }
 
     async function startNewCaseCamera() {
@@ -929,10 +929,10 @@
             const cap = document.getElementById('newCaseCameraCaptureBtn');
             const stp = document.getElementById('newCaseCameraStopBtn');
             const swt = document.getElementById('newCaseCameraSwitchBtn');
-            if (start) start.style.display = 'none';
-            if (cap) cap.style.display = 'inline-block';
-            if (stp) stp.style.display = 'inline-block';
-            if (swt) swt.style.display = 'inline-block';
+            if (start) start.disabled = true;
+            if (cap) cap.disabled = false;
+            if (stp) stp.disabled = false;
+            if (swt) swt.disabled = false;
         } catch (err) {
             alert('Could not open camera. Use Attach from device, or ensure you are on HTTPS or localhost.');
         }
