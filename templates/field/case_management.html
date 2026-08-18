@@ -1,4 +1,4 @@
-﻿{% extends 'field/field_base.html' %}
+{% extends 'field/field_base.html' %}
 {% load static humanize %}
 
 {% block title %}Case Management - THA{% endblock %}
@@ -883,6 +883,12 @@
         position: '{{ case_position }}',
         pollMs: 4000,
         initialVersion: '{{ desk_feed_version }}',
+    };
+    /* Config injected for field_case_management.js (static file cannot use Django template tags) */
+    window.CASE_CONFIG = {
+        position: '{{ case_position }}',
+        openNewCase: {% if open_new_case %}true{% else %}false{% endif %},
+        openCaseId: '{{ open_case_id|escapejs }}',
     };
 </script>
 <!-- JavaScript -->

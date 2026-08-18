@@ -1,4 +1,4 @@
-﻿    const CASE_POSITION = '{{ case_position }}';
+    const CASE_POSITION = (window.CASE_CONFIG && window.CASE_CONFIG.position) || '';
     let currentCaseId = null;
     let complainantSearchTimer = null;
     let subjectSearchTimer = null;
@@ -2050,10 +2050,10 @@
             } catch (err) {
                 console.warn('Case prefill failed', err);
             }
-        } else if ({% if open_new_case %}true{% else %}false{% endif %}) {
+        } else if (window.CASE_CONFIG && window.CASE_CONFIG.openNewCase) {
             openNewCaseModal();
         }
-        const openId = params.get('case_id') || '{{ open_case_id|escapejs }}';
+        const openId = params.get('case_id') || (window.CASE_CONFIG && window.CASE_CONFIG.openCaseId) || '';
         if (openId) openCaseModal(openId);
     }
 
