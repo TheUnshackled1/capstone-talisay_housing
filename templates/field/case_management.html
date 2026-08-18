@@ -120,13 +120,15 @@
 
 
             <!-- Search Box (imitating applicants layout) -->
-            <div class="cases-search-box" style="flex: 1; min-width: 200px; max-width: 400px; position: relative; display: flex; align-items: stretch; height: auto; margin: 0; box-sizing: border-box;">
+            <div class="cases-search-box" style="flex: 1; min-width: 0; max-width: 400px; position: relative; display: flex; align-items: stretch; height: auto; margin: 0; box-sizing: border-box;">
                 <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
-                <input type="text" id="searchInput" placeholder="Complainant, case #, description..."
-                    value="{{ search_query }}" style="flex: 1; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
+                <input type="text" id="searchInput" placeholder="Search cases..."
+                    onfocus="this.placeholder='Search complainant, case #, or description'"
+                    onblur="this.placeholder='Search cases...'"
+                    value="{{ search_query }}" style="flex: 1; min-width: 0; padding: 0.56rem 0.72rem 0.56rem 2.25rem; border: 1px solid #cbd5e1; border-radius: 0.5rem 0 0 0.5rem; font-size: 0.78rem; outline: none; transition: all 0.15s ease;">
                 <button type="button" class="cases-search-btn" onclick="applyCaseFilters()"
                     style="padding: 0 1.25rem; background: #15803d; color: white; border: none; border-radius: 0 0.5rem 0.5rem 0; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;"
                     onmouseover="this.style.background='#166534'" onmouseout="this.style.background='#15803d'">
