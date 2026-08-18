@@ -104,7 +104,7 @@
 
         <div class="cases-controls-bar">
             <!-- Total List -->
-            <div class="summary-chip-card summary-chip-card--blue" style="height: 2.5rem; margin: 0; box-sizing: border-box; align-self: center; padding: 0.3rem 0.65rem 0.3rem 0.3rem;">
+            <div class="summary-chip-card summary-chip-card--blue hide-on-mobile" style="height: 2.5rem; margin: 0; box-sizing: border-box; align-self: center; padding: 0.3rem 0.65rem 0.3rem 0.3rem;">
                 <div class="summary-icon-wrap" style="width: 1.9rem; height: 1.9rem; border-radius: 0.4rem;">
                     <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -120,7 +120,7 @@
 
 
             <!-- Search Box (imitating applicants layout) -->
-            <div class="cases-search-box" style="flex: 1; min-width: 0; max-width: 400px; position: relative; display: flex; align-items: stretch; height: auto; margin: 0; box-sizing: border-box;">
+            <div class="cases-search-box hide-on-mobile" style="flex: 1; min-width: 0; max-width: 400px; position: relative; display: flex; align-items: stretch; height: auto; margin: 0; box-sizing: border-box;">
                 <svg class="search-icon" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
@@ -141,16 +141,16 @@
             </div>
 
             <!-- Select Type dropdown -->
-            <select id="typeFilter" class="cases-select filter-select" style="height: 2.3rem; margin: 0; box-sizing: border-box; flex-shrink: 0; min-width: 120px; max-width: 160px;" onchange="applyCaseFilters()">
-                <option value="all" {% if filter_type == "all" %}selected{% endif %}>All Types</option>
+            <select id="typeFilter" class="cases-select filter-select hide-on-mobile" style="height: 2.3rem; margin: 0; box-sizing: border-box; flex-shrink: 0; min-width: 0;" onchange="applyCaseFilters()">
+                <option value="all" {% if filter_type == "all" %}selected{% endif %}>Type</option>
                 {% for code, label in case_type_choices %}
                 <option value="{{ code }}" {% if filter_type == code %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
 
             <!-- Select Status dropdown -->
-            <select id="statusDropdownFilter" class="cases-select filter-select" style="height: 2.3rem; margin: 0; box-sizing: border-box; flex-shrink: 0; min-width: 150px; max-width: 180px;" onchange="applyCaseFilters()">
-                <option value="all" {% if filter_status == "all" %}selected{% endif %}>All Status</option>
+            <select id="statusDropdownFilter" class="cases-select filter-select hide-on-mobile" style="height: 2.3rem; margin: 0; box-sizing: border-box; flex-shrink: 0; min-width: 0;" onchange="applyCaseFilters()">
+                <option value="all" {% if filter_status == "all" %}selected{% endif %}>Status</option>
                 <option value="pending_review" {% if filter_status == "pending_review" %}selected{% endif %}>Pending Review ({{ status_counts.pending_review|default:0 }})</option>
                 <option value="under_review" {% if filter_status == "under_review" %}selected{% endif %}>Under Review ({{ status_counts.under_review|default:0 }})</option>
                 <option value="mediation_monitoring" {% if filter_status == "mediation_monitoring" %}selected{% endif %}>Settlement ({{ status_counts.mediation_monitoring|default:0 }})</option>

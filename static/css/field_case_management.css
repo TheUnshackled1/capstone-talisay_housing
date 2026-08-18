@@ -4673,29 +4673,54 @@
     }
 
     @media (max-width: 640px) {
+        .hide-on-mobile {
+            display: none !important;
+        }
+
         .monitoring-kpis {
-            grid-template-columns: 1fr;
+            display: flex !important;
+            overflow-x: auto !important;
+            scroll-snap-type: x mandatory;
+            gap: 0.65rem !important;
+            padding-bottom: 0.5rem !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .monitoring-kpis::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .monitoring-kpi {
+            flex: 0 0 160px !important; /* Fixed width for cards so they scroll horizontally */
+            scroll-snap-align: start;
+            padding: 0.85rem !important;
+        }
+
+        .cases-controls-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .cases-controls-bar > * {
+            flex: 1 1 calc(50% - 0.5rem) !important;
+            margin: 0 !important;
+        }
+
+        .cases-controls-bar .cases-search-box {
+            flex: 1 1 100% !important; /* Search takes full width */
+            max-width: 100% !important;
+        }
+        
+        .cases-controls-bar .cases-add-btn,
+        .cases-controls-bar .cases-secondary-btn {
+            flex: 1 1 100% !important;
         }
 
         .cases-toolbar {
             padding: 0.9rem 1rem 0;
-        }
-
-        .cases-toolbar-actions {
-            justify-content: stretch;
-            width: 100%;
-            margin-left: 0;
-        }
-
-        .cases-secondary-btn,
-        .cases-add-btn {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .cases-filter-row {
-            flex-direction: column;
-            align-items: stretch;
         }
 
         .cases-select {
