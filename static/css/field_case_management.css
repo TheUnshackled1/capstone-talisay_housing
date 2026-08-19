@@ -1762,6 +1762,8 @@
         border-radius: 1rem;
         background: #fff;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12);
+        padding: 0;  /* reset any inherited base padding so header bleeds edge-to-edge */
+        position: relative;  /* anchor absolutely-positioned close button to the card */
     }
 
     .tha-case-view-modal .modal-header {
@@ -4129,6 +4131,15 @@
         border-radius: 1rem;
         background: #fff;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.12);
+        padding: 0;  /* reset any inherited base padding so header bleeds edge-to-edge */
+        position: relative;  /* anchor absolutely-positioned close button to the card */
+    }
+    .tha-case-reg-modal.modal-content form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
     #addCaseForm.is-illegal-occupant-mode #newCaseComplainantSection {
@@ -4554,7 +4565,7 @@
         .tha-case-reg-modal .modal-body,
         .tha-case-view-modal .modal-body,
         .tha-case-view-modal--monitor .case-monitor-body {
-            padding: 0 1rem 1.25rem !important;
+            padding: 0 1rem calc(5rem + env(safe-area-inset-bottom)) !important;
             flex: 1 !important;
             height: 100% !important;
             overflow-y: auto !important;
@@ -5061,22 +5072,24 @@
     .case-monitor-hero-close {
         position: absolute !important;
         top: 1.2rem !important;
-        right: 0.75rem !important;
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 6px;
-        padding: 0.3rem;
+        right: 1.2rem !important;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 8px;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
         cursor: pointer;
-        color: rgba(255, 255, 255, 0.85);
-        display: flex;
+        color: #f8fafc;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        transition: background 0.15s ease, color 0.15s ease;
         line-height: 0;
         z-index: 10;
     }
     .case-monitor-hero-close:hover {
-        background: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.2);
         color: #ffffff;
     }
 
