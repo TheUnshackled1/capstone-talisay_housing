@@ -3459,18 +3459,26 @@
         .mobile-verification-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 0.75rem;
+            border-radius: 14px;
             padding: 1rem;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            box-shadow:
+                0 1px 3px rgba(15, 23, 42, 0.05),
+                0 4px 14px rgba(15, 23, 42, 0.04);
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
             text-align: left;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .mobile-verification-card:hover {
+            transform: translateY(-2px);
             border-color: #cbd5e1;
-            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.05);
+            box-shadow:
+                0 4px 6px rgba(15, 23, 42, 0.06),
+                0 12px 28px rgba(30, 64, 175, 0.08);
         }
 
         .m-card-header {
@@ -3479,23 +3487,48 @@
             align-items: center;
             border-bottom: 1px solid #f1f5f9;
             padding-bottom: 0.55rem;
+            gap: 0.4rem;
+            flex-wrap: wrap;
         }
 
         .m-card-visit-order {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 800;
             color: #1e3a8a;
             text-transform: uppercase;
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
         }
 
+        /* Pill-style badges matching the Field Inspection card design */
         .m-card-badge {
-            font-size: 0.65rem;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.6rem;
             font-weight: 700;
-            background: #eff6ff;
-            color: #2563eb;
-            padding: 0.15rem 0.45rem;
-            border-radius: 4px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 0.18rem 0.52rem;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .case-record-kind-pill--case {
+            background: #dbeafe;
+            color: #1e40af;
             border: 1px solid #bfdbfe;
+        }
+
+        .case-record-kind-pill--incident {
+            background: #f3e8ff;
+            color: #6d28d9;
+            border: 1px solid #e9d5ff;
+        }
+
+        .case-type-badge--standard {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
         }
 
         .m-card-body {
@@ -3514,13 +3547,15 @@
         .m-card-meta-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             font-size: 0.78rem;
+            gap: 0.5rem;
         }
 
         .m-card-meta-label {
             font-weight: 600;
             color: #64748b;
+            flex-shrink: 0;
         }
 
         .m-card-meta-value {
@@ -3529,6 +3564,36 @@
             display: flex;
             align-items: center;
             gap: 0.35rem;
+            text-align: right;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .m-card-meta-sub {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        .m-card-actions {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 0.65rem;
+            display: flex;
+            justify-content: stretch;
+        }
+
+        .m-card-actions button,
+        .m-card-actions a,
+        .m-card-incident-actions .btn-open-record {
+            width: 100% !important;
+            justify-content: center !important;
+            display: inline-flex !important;
+        }
+
+        .m-card-incident-actions {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
         }
 
         .m-respondent-value {
@@ -3559,26 +3624,6 @@
             margin-top: 0 !important;
             display: block !important;
             text-align: right !important;
-        }
-
-        .m-card-actions {
-            border-top: 1px solid #f1f5f9;
-            padding-top: 0.65rem;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .m-card-actions button,
-        .m-card-actions a,
-        .m-card-incident-actions .btn-open-record {
-            width: 100% !important;
-            justify-content: center !important;
-            display: inline-flex !important;
-        }
-
-        .m-card-incident-actions {
-            flex-direction: column !important;
-            gap: 0.5rem !important;
         }
 
         /* Center the Total List chip on mobile viewports */
