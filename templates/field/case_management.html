@@ -583,18 +583,7 @@
 <div id="newCaseModal" class="tha-case-modal-overlay" onclick="closeNewCaseModal(event)">
     <div class="modal-content tha-reg-modal tha-case-reg-modal" onclick="event.stopPropagation();">
 
-        <div class="modal-header">
-            <h2 class="modal-title">Case recording</h2>
-            <button type="button" class="btn-close" onclick="closeNewCaseModal()" aria-label="Close">
-                <svg style="width: 1rem; height: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-
-        <div class="modal-body">
+        <div class="modal-body" style="padding-top: 0;">
             <div id="addCaseForm" class="tha-case-reg-form">
                 <input type="hidden" id="newReceivedAt" value="onsite">
                 <input type="hidden" id="complainantApplicantId">
@@ -604,7 +593,16 @@
                 <input type="hidden" id="subjectApplicantId">
                 <input type="hidden" id="newSubjectName">
 
-                <div class="tha-form-header">
+                <div class="tha-form-header" style="position: relative;">
+                    <button type="button" onclick="closeNewCaseModal()" aria-label="Close" 
+                        style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); cursor: pointer; border-radius: 4px; padding: 0.4rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;"
+                        onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='#fff';"
+                        onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.8)';">
+                        <svg style="width: 1.2rem; height: 1.2rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                     <div class="tha-form-crest" aria-hidden="true">
                         <img src="{% static 'images/favicon.png' %}" alt="" decoding="async">
                     </div>
