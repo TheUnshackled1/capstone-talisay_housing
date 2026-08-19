@@ -1,22 +1,28 @@
 {# Field desk: Open Record (monitoring + settlement). Staff monitor desk: View only. #}
 {% if case_desk_mode == 'monitor' %}
 <button type="button" class="btn-case-view" onclick="openCaseModal('{{ case.id }}')"
-    title="{% if case.received_by and case.received_by.position in field_intake_positions %}Field desk intake — monitor this record{% else %}Recorded at this desk{% endif %}">
-    <svg class="btn-icon" style="width:0.85rem;height:0.85rem;" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-        <circle cx="12" cy="12" r="3"></circle>
-    </svg>
+    title="{% if case.received_by and case.received_by.position in field_intake_positions %}Field desk intake — monitor this record{% else %}Recorded at this desk{% endif %}"
+    style="padding: 0.3rem 1rem 0.3rem 0.3rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: auto; box-sizing: border-box;">
+    <div style="width: 1.6rem; height: 1.6rem; border-radius: 0.35rem; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.3);">
+        <svg class="btn-icon" style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+    </div>
     VIEW{% if case.received_by and case.received_by.position in field_intake_positions %} <span class="case-action-desk-tag">· FIELD</span>{% endif %}
 </button>
 {% else %}
 <button type="button" class="btn-open-record" onclick="openCaseModal('{{ case.id }}')"
-    title="{% if case.received_by and case.received_by.position in monitor_intake_positions %}Recorded at office — field follow-up and settlement{% elif case.received_by %}Recorded at Field desk{% else %}Field intake{% endif %}">
-    <svg class="btn-icon" style="width:0.85rem;height:0.85rem;" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-        <circle cx="12" cy="14" r="2"></circle>
-    </svg>
+    title="{% if case.received_by and case.received_by.position in monitor_intake_positions %}Recorded at office — field follow-up and settlement{% elif case.received_by %}Recorded at Field desk{% else %}Field intake{% endif %}"
+    style="padding: 0.3rem 1rem 0.3rem 0.3rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: auto; box-sizing: border-box; width: 100%;">
+    <div style="width: 1.6rem; height: 1.6rem; border-radius: 0.35rem; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.3);">
+        <svg class="btn-icon" style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="14" r="2"></circle>
+        </svg>
+    </div>
     VIEW CASE
 </button>
 {% endif %}
