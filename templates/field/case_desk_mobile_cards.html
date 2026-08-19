@@ -84,9 +84,8 @@
 {% with log=row.incident_log %}
 <article class="mobile-verification-card m-case-card m-case-card--incident-log" id="incident-card-{{ log.id }}">
     <div class="m-card-header">
-        <span class="m-card-visit-order">#{{ forloop.counter }}</span>
         <span class="m-card-badge case-record-kind-pill case-record-kind-pill--incident">Incident log</span>
-        <span class="m-card-badge case-type-badge case-type-badge--standard">{{ log.get_case_type_display }}</span>
+        <span class="m-card-visit-order">#{{ forloop.counter }}</span>
     </div>
 
     <div class="m-card-body">
@@ -101,6 +100,7 @@
             {% endif %}>
             {{ row.incident_complainant_name|default:"—" }}
         </h4>
+        <span class="m-card-case-type case-type-badge case-type-badge--standard">{{ log.get_case_type_display }}</span>
         <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; text-align: center; margin-top: 0.15rem; margin-bottom: 0.5rem;">
             Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
         </span>
