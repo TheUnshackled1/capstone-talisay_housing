@@ -2245,3 +2245,10 @@
             });
         }
     });
+
+    /* ── Add Case accordion toggle ─────────────────────────────────── */
+    window.toggleCaseAccordion = function (accordionId) {
+        const el = document.getElementById(accordionId);
+        if (!el) return;
+        el.classList.toggle('collapsed');
+    };
