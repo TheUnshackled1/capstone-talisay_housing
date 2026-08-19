@@ -324,6 +324,7 @@
 
         <div class="modal-body case-detail-body case-monitor-body">
             <div class="tha-form-header case-monitor-hero">
+                <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" class="case-monitor-hero-logo">
                 <p class="case-monitor-hero-kicker">Field complaint</p>
                 <h2 id="modalCaseNumber">—</h2>
                 <p class="tha-form-subtitle">Talisay City Housing Authority</p>
@@ -336,10 +337,14 @@
 
             <div id="fieldCaseStaticWrap">
             <div id="caseRecordPrimary" class="case-monitor-grid">
+
                 <div class="case-monitor-col-left">
-                    <!-- Recorded by Card -->
-                    <article class="case-monitor-card">
-                        <h3 class="case-monitor-card-title">Recorded by</h3>
+                    <!-- Recorded by — collapsible -->
+                    <details class="case-monitor-card case-monitor-details" open>
+                        <summary class="case-monitor-card-title case-monitor-summary">
+                            Recorded by
+                            <svg class="case-monitor-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </summary>
                         <div id="modalStaffCard" class="case-monitor-staff">
                             <div id="modalStaffAvatar" class="handled-by-avatar other">—</div>
                             <div class="case-monitor-staff-text">
@@ -347,11 +352,14 @@
                                 <p id="modalStaffRole" class="case-monitor-staff-role">—</p>
                             </div>
                         </div>
-                    </article>
+                    </details>
 
-                    <!-- Incident Card -->
-                    <article class="case-monitor-card case-monitor-card--incident">
-                        <h3 class="case-monitor-card-title">Incident</h3>
+                    <!-- Incident — collapsible -->
+                    <details class="case-monitor-card case-monitor-card--incident case-monitor-details" open>
+                        <summary class="case-monitor-card-title case-monitor-summary">
+                            Incident
+                            <svg class="case-monitor-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </summary>
                         <div class="case-monitor-incident-type">
                             <span class="case-detail-label">Complaint type</span>
                             <span id="modalComplaintType"></span>
@@ -360,7 +368,7 @@
                             <span class="case-detail-label">Description</span>
                             <p id="modalDescription" class="case-monitor-description">—</p>
                         </div>
-                    </article>
+                    </details>
 
                     <article id="resolutionSection" class="case-monitor-card case-monitor-card--resolution" style="display: none;">
                         <h3 class="case-monitor-card-title">Resolution</h3>
@@ -369,9 +377,12 @@
                     </article>
                 </div>
 
-                <!-- Complainant Card -->
-                <article class="case-monitor-card case-monitor-card--complainant">
-                    <h3 class="case-monitor-card-title">Complainant</h3>
+                <!-- Complainant — collapsible -->
+                <details class="case-monitor-card case-monitor-card--complainant case-monitor-details" open>
+                    <summary class="case-monitor-card-title case-monitor-summary">
+                        Complainant
+                        <svg class="case-monitor-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </summary>
                     <p id="modalComplainantName" class="case-monitor-person-name applicant-name">—</p>
                     <dl class="case-monitor-facts">
                         <div><dt>Sex</dt><dd id="modalBeneficiarySex">—</dd></div>
@@ -384,12 +395,15 @@
                         <p class="case-monitor-household-label" style="font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; margin: 0 0 0.45rem;">Household members</p>
                         <div id="modalHouseholdMembersList"></div>
                     </div>
-                </article>
+                </details>
 
                 <div class="case-monitor-col-right">
-                    <!-- Respondent Card structured exactly like Complainant -->
-                    <article id="subjectSection" class="case-monitor-card case-monitor-card--respondent" style="display: none;">
-                        <h3 class="case-monitor-card-title">Reported Party</h3>
+                    <!-- Reported Party — collapsible -->
+                    <details id="subjectSection" class="case-monitor-card case-monitor-card--respondent case-monitor-details" style="display: none;">
+                        <summary class="case-monitor-card-title case-monitor-summary">
+                            Reported Party
+                            <svg class="case-monitor-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </summary>
                         <p id="modalSubjectName" class="case-monitor-person-name case-monitor-person-name--respondent">—</p>
                         <dl class="case-monitor-facts">
                             <div><dt>Sex</dt><dd id="modalSubjectSex">—</dd></div>
@@ -402,7 +416,7 @@
                             <p class="case-monitor-household-label" style="font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8; margin: 0 0 0.45rem;">Household members</p>
                             <div id="modalSubjectHouseholdMembersList"></div>
                         </div>
-                    </article>
+                    </details>
                 </div>
 
                 <article id="caseIntakeEvidenceSection" class="case-monitor-card case-monitor-card--full case-intake-evidence-card" style="display: none;">
@@ -412,9 +426,9 @@
                             <span class="case-settlement-inline-carousel-counter" id="caseIntakeSavedCounter"></span>
                         </div>
                         <div class="case-settlement-inline-carousel-stage">
-                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--prev" id="caseIntakeSavedPrev" aria-label="Previous photo">â€¹</button>
+                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--prev" id="caseIntakeSavedPrev" aria-label="Previous photo">‹</button>
                             <img id="caseIntakeSavedImg" src="" alt="Intake evidence photograph" />
-                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="caseIntakeSavedNext" aria-label="Next photo">â€º</button>
+                            <button type="button" class="case-settlement-inline-carousel-nav case-settlement-inline-carousel-nav--next" id="caseIntakeSavedNext" aria-label="Next photo">›</button>
                         </div>
                     </div>
                 </article>
@@ -434,9 +448,12 @@
                     <p id="modalReferralDate" class="case-monitor-meta-line"></p>
                 </article>
 
-                <!-- Previous Complaint History for Respondent Card (Full Width) -->
-                <article id="respondentPriorSection" class="case-monitor-card case-monitor-card--full" style="display: none;">
-                    <h3 class="case-monitor-card-title">Previous complaint history for reported party</h3>
+                <!-- Previous Complaint History — collapsible (Full Width) -->
+                <details id="respondentPriorSection" class="case-monitor-card case-monitor-card--full case-monitor-details" style="display: none;">
+                    <summary class="case-monitor-card-title case-monitor-summary">
+                        Previous complaint history for reported party
+                        <svg class="case-monitor-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </summary>
                     <p id="respondentPriorHeading" class="case-monitor-meta-line" style="font-weight: 700; color: #1e293b; margin-bottom: 0.55rem;"></p>
                     
                     <div id="respondentPriorTableWrap" class="case-prior-table-wrap" style="display: none; margin-top: 0.5rem;">
@@ -477,11 +494,14 @@
                         </div>
                     </div>
                     
-                    <!-- Mark Reviewed Section Inside Respondent Prior Card -->
+                    <!-- Mark Reviewed Section -->
                     <div id="fieldMarkReviewedWrap" class="case-mark-reviewed-row" style="display: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; text-align: right;">
                         <button type="button" id="btnMarkReviewed" class="btn-mark-reviewed-inline"
                             onclick="markFieldCaseReviewed()">Mark Reviewed</button>
                     </div>
+                </details>
+            </div>
+            </div>
                 </article>
             </div>
             </div>
