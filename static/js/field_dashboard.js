@@ -782,16 +782,13 @@
             // Update Photos
             const photoCount = typeof fieldEvidenceFiles !== 'undefined' ? fieldEvidenceFiles.length : 0;
             const progressPhotosCount = document.getElementById('progressPhotosCount');
-            const photosStatusDot = document.getElementById('photosStatusDot');
             if (progressPhotosCount) {
                 progressPhotosCount.textContent = photoCount + '/4';
                 if (photoCount >= 1) {
                     progressPhotosCount.className = 'progress-icon success';
                     if (photoCount === 4) { progressPhotosCount.textContent = '✓'; }
-                    if(photosStatusDot) photosStatusDot.className = 'status-dot green';
                 } else {
                     progressPhotosCount.className = 'progress-icon warning';
-                    if(photosStatusDot) photosStatusDot.className = 'status-dot orange';
                 }
             }
 
@@ -799,7 +796,6 @@
             const cdrrmoStatusTextEl = document.getElementById('cdrrmoStatusText');
             const progressCdrrmoStatus = document.getElementById('progressCdrrmoStatus');
             const progressCdrrmoIcon = document.getElementById('progressCdrrmoIcon');
-            const cdrrmoStatusDot = document.getElementById('cdrrmoStatusDot');
             const cdrrmoStatusBox = document.getElementById('cdrrmoStatusBox');
             
             if (cdrrmoStatusBox && cdrrmoStatusBox.style.display !== 'none') {
@@ -807,13 +803,10 @@
                 const statusStr = cdrrmoStatusTextEl ? cdrrmoStatusTextEl.textContent : '';
                 if (statusStr.includes('Certified') && !statusStr.includes('Not certified')) {
                     if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon success'; progressCdrrmoIcon.textContent = '✓'; }
-                    if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot green';
                 } else if (statusStr.includes('Not certified')) {
                     if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = '⚠'; }
-                    if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot orange';
                 } else {
                     if(progressCdrrmoIcon) { progressCdrrmoIcon.className = 'progress-icon warning'; progressCdrrmoIcon.textContent = '⚠'; }
-                    if(cdrrmoStatusDot) cdrrmoStatusDot.className = 'status-dot orange';
                 }
             } else {
                 if(progressCdrrmoStatus) progressCdrrmoStatus.style.display = 'none';
