@@ -1,4 +1,4 @@
-﻿{% extends 'field/field_base.html' %}
+{% extends 'field/field_base.html' %}
 {% load static %}
 
 {% block title %}Field inspection{% endblock %}
@@ -273,12 +273,12 @@
     <!-- CERTIFIED APPLICANTS MODAL — opens from Success Rate metric -->
     <div id="certifiedApplicantsModal" role="dialog" aria-modal="true" aria-labelledby="certifiedApplicantsModalTitle" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.55); align-items: center; justify-content: center; padding: 16px;">
         <div style="background: #ffffff; width: 100%; max-width: 720px; max-height: 86vh; border-radius: 12px; box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25); display: flex; flex-direction: column; overflow: hidden;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
-                <div style="min-width: 0;">
+            <div style="display: flex; align-items: flex-start; justify-content: center; position: relative; padding: 16px 20px; border-bottom: 1px solid #e2e8f0;">
+                <div style="text-align: center;">
                     <h2 id="certifiedApplicantsModalTitle" style="margin: 0 0 2px 0; font-family: 'Inter', 'Segoe UI', sans-serif ; font-size: 18px; font-weight: 700; color: #0f172a;">Certified hazard-area applicants</h2>
                     <p style="margin: 0; font-size: 12.5px; color: #475569;">Record of applicants whose declared hazard-area status was sustained on field inspection.</p>
                 </div>
-                <button type="button" onclick="closeCertifiedApplicantsModal()" aria-label="Close" style="flex: 0 0 auto; background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; cursor: pointer; color: #475569;">
+                <button type="button" onclick="closeCertifiedApplicantsModal()" aria-label="Close" style="position: absolute; right: 20px; top: 16px; background: transparent; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 8px; cursor: pointer; color: #475569;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
@@ -286,7 +286,7 @@
                 {% if certified_applicants %}
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <thead style="background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%); position: sticky; top: 0; z-index: 2;">
-                        <tr style="text-align: left; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;">
+                        <tr style="text-align: center; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;">
                             <th style="padding: 12px 14px; border-bottom: 2px solid #1d4ed8; border-right: 1px solid rgba(255, 255, 255, 0.08); background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%); color: #ffffff;">Applicant</th>
                             <th style="padding: 12px 14px; border-bottom: 2px solid #1d4ed8; border-right: 1px solid rgba(255, 255, 255, 0.08); background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%); color: #ffffff;">Hazard type</th>
                             <th style="padding: 12px 14px; border-bottom: 2px solid #1d4ed8; border-right: 1px solid rgba(255, 255, 255, 0.08); background: linear-gradient(180deg, #2563eb 0%, #1e3a8a 100%); color: #ffffff;">Certified on</th>
@@ -296,13 +296,13 @@
                     <tbody>
                         {% for ca in certified_applicants %}
                         <tr>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #0f172a; text-align: center;">
                                 <div style="font-weight: 600;">{{ ca.full_name }}</div>
                                 <div style="font-size: 11.5px; color: #64748b;">📍 {{ ca.address|default:"—" }}</div>
                             </td>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{{ ca.danger_zone_type|default:"—" }}</td>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{% if ca.certified_at %}{{ ca.certified_at|date:"M d, Y" }}<div style="font-size: 11px; color: #64748b;">{{ ca.certified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
-                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b;">{{ ca.recorded_by }}</td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b; text-align: center;">{{ ca.danger_zone_type|default:"—" }}</td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b; text-align: center;">{% if ca.certified_at %}{{ ca.certified_at|date:"M d, Y" }}<div style="font-size: 11px; color: #64748b;">{{ ca.certified_at|time:"H:i" }}</div>{% else %}—{% endif %}</td>
+                            <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b; text-align: center;">{{ ca.recorded_by }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
