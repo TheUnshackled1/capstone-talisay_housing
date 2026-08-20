@@ -500,31 +500,38 @@
                         </h3>
                         <div class="accordion-content">
                             <p class="field-evidence-hint" style="margin-bottom: 1rem;"><strong>Required: 1â€“4 photos</strong><br>Capture photos showing the applicant's location and surrounding hazard conditions.</p>
-                        <video id="fieldCameraVideo" playsinline autoplay muted style="display: none;"></video>
-                        <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
-                        <div class="field-evidence-buttons">
+                        <div id="fieldVideoWrap" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+                            <div style="position: relative; width: 100%; aspect-ratio: 16/9; background: #0f172a; border-radius: 8px; overflow: hidden; margin-bottom: 0.75rem;">
+                                <video id="fieldCameraVideo" class="field-evidence-camera-video" playsinline autoplay muted style="display: block; width: 100%; height: 100%; object-fit: cover;"></video>
+                                <canvas id="fieldCameraCanvas" style="display: none;"></canvas>
+                            </div>
+                            <div class="field-evidence-buttons">
+                                <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn">
+                                    <span class="cam-icon-wrapper cam-icon-cap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg></span>
+                                    Capture Photo
+                                </button>
+                                <button type="button" id="fieldCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted">
+                                    <span class="cam-icon-wrapper cam-icon-switch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg></span>
+                                    Switch camera
+                                </button>
+                                <button type="button" id="fieldCameraStopBtn" class="table-verify-btn table-verify-btn--muted">
+                                    <span class="cam-icon-wrapper cam-icon-stop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1" ry="1"></rect></svg></span>
+                                    Stop camera
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="field-evidence-buttons" id="fieldMainButtons">
                             <button type="button" id="fieldCameraStartBtn" class="table-verify-btn">
                                 <span class="cam-icon-wrapper cam-icon-start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg></span>
                                 Activate Camera
                             </button>
-                            <button type="button" id="fieldCameraCaptureBtn" class="table-verify-btn" disabled>
-                                <span class="cam-icon-wrapper cam-icon-cap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg></span>
-                                Capture Photo
-                            </button>
-                            <button type="button" id="fieldCameraSwitchBtn" class="table-verify-btn table-verify-btn--muted" disabled>
-                                <span class="cam-icon-wrapper cam-icon-switch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg></span>
-                                Switch camera
-                            </button>
-                            <button type="button" id="fieldCameraStopBtn" class="table-verify-btn table-verify-btn--muted" disabled>
-                                <span class="cam-icon-wrapper cam-icon-stop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1" ry="1"></rect></svg></span>
-                                Stop camera
+                            <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">
+                                <span class="cam-icon-wrapper cam-icon-attach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span>
+                                Attach from device
                             </button>
                         </div>
                         <input type="file" id="fieldEvidenceFileInput" accept="image/jpeg,image/png,image/webp,image/*" multiple style="display: none;">
-                        <button type="button" class="field-evidence-file-btn" id="fieldEvidenceFilePickBtn">
-                            <span class="cam-icon-wrapper cam-icon-attach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span>
-                            Attach from device
-                        </button>
                         <div class="field-evidence-intake" style="width:100%;">
                             <div id="fieldEvidenceCarousel" class="case-settlement-inline-carousel" hidden>
                                 <div class="case-settlement-inline-carousel-toolbar">

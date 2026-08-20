@@ -240,17 +240,12 @@
 
         function showFieldCameraUi(stream) {
             fieldCameraStream = stream;
-            const start = document.getElementById('fieldCameraStartBtn');
-            const cap = document.getElementById('fieldCameraCaptureBtn');
-            const swt = document.getElementById('fieldCameraSwitchBtn');
-            const stp = document.getElementById('fieldCameraStopBtn');
-            if (start) start.disabled = true;
-            if (cap) cap.disabled = false;
-            if (swt) swt.disabled = false;
-            if (stp) stp.disabled = false;
+            const vWrap = document.getElementById('fieldVideoWrap');
+            if (vWrap) vWrap.style.display = 'flex';
+            const mainBtns = document.getElementById('fieldMainButtons');
+            if (mainBtns) mainBtns.style.display = 'none';
             const v = document.getElementById('fieldCameraVideo');
             if (v) {
-                v.style.display = 'block';
                 v.srcObject = stream;
                 const playPromise = v.play();
                 if (playPromise && typeof playPromise.catch === 'function') {
@@ -267,16 +262,11 @@
             const v = document.getElementById('fieldCameraVideo');
             if (v) {
                 v.srcObject = null;
-                v.style.display = 'none';
             }
-            const start = document.getElementById('fieldCameraStartBtn');
-            const cap = document.getElementById('fieldCameraCaptureBtn');
-            const swt = document.getElementById('fieldCameraSwitchBtn');
-            const stp = document.getElementById('fieldCameraStopBtn');
-            if (start) start.disabled = false;
-            if (cap) cap.disabled = true;
-            if (swt) swt.disabled = true;
-            if (stp) stp.disabled = true;
+            const vWrap = document.getElementById('fieldVideoWrap');
+            if (vWrap) vWrap.style.display = 'none';
+            const mainBtns = document.getElementById('fieldMainButtons');
+            if (mainBtns) mainBtns.style.display = 'flex';
         }
 
         function fieldNotify(message, title, variant) {
@@ -324,14 +314,25 @@
                 fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached', 'warning');
                 return;
             }
-            c.width = v.videoWidth;
-            c.height = v.videoHeight;
-            c.getContext('2d').drawImage(v, 0, 0);
+            let vWidth = v.videoWidth || 1280;
+            let vHeight = v.videoHeight || 720;
+            
+            /* Optimization: Scale down 4K/high-res streams to max 1280px for faster field uploads */
+            const MAX_DIMENSION = 1280;
+            if (vWidth > MAX_DIMENSION || vHeight > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / vWidth, MAX_DIMENSION / vHeight);
+                vWidth = Math.floor(vWidth * ratio);
+                vHeight = Math.floor(vHeight * ratio);
+            }
+
+            c.width = vWidth;
+            c.height = vHeight;
+            c.getContext('2d').drawImage(v, 0, 0, vWidth, vHeight);
             c.toBlob(function(blob) {
                 if (!blob) return;
                 const file = new File([blob], 'site-evidence-' + Date.now() + '.jpg', { type: 'image/jpeg' });
                 addFieldEvidenceFile(file);
-            }, 'image/jpeg', 0.88);
+            }, 'image/jpeg', 0.8);
         }
 
         function addFieldEvidenceFile(file) {
