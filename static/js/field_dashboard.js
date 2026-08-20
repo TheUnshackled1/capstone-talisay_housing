@@ -314,37 +314,38 @@
                 fieldNotify('Maximum 4 evidence photos.', 'Photo limit reached', 'warning');
                 return;
             }
-            let vWidth = v.videoWidth || 1280;
-            let vHeight = v.videoHeight || 720;
+            let origWidth = v.videoWidth || 1280;
+            let origHeight = v.videoHeight || 720;
             
-            /* Optimization: Scale down 4K/high-res streams to max 1280px for faster field uploads */
-            const MAX_DIMENSION = 1280;
-            if (vWidth > MAX_DIMENSION || vHeight > MAX_DIMENSION) {
-                const ratio = Math.min(MAX_DIMENSION / vWidth, MAX_DIMENSION / vHeight);
-                vWidth = Math.floor(vWidth * ratio);
-                vHeight = Math.floor(vHeight * ratio);
-            }
-
-            /* Crop to 16:9 to match the UI's cinematic object-fit: cover */
+            /* Crop to 16:9 to match the UI's cinematic object-fit: cover on the original source */
             let targetAspect = 16 / 9;
-            let sourceAspect = vWidth / vHeight;
-            let cropWidth = vWidth;
-            let cropHeight = vHeight;
-            let offsetX = 0;
-            let offsetY = 0;
+            let sourceAspect = origWidth / origHeight;
+            let srcCropWidth = origWidth;
+            let srcCropHeight = origHeight;
+            let srcOffsetX = 0;
+            let srcOffsetY = 0;
 
             if (sourceAspect > targetAspect) {
-                cropWidth = Math.floor(vHeight * targetAspect);
-                offsetX = Math.floor((vWidth - cropWidth) / 2);
+                srcCropWidth = Math.floor(origHeight * targetAspect);
+                srcOffsetX = Math.floor((origWidth - srcCropWidth) / 2);
             } else if (sourceAspect < targetAspect) {
-                cropHeight = Math.floor(vWidth / targetAspect);
-                offsetY = Math.floor((vHeight - cropHeight) / 2);
+                srcCropHeight = Math.floor(origWidth / targetAspect);
+                srcOffsetY = Math.floor((origHeight - srcCropHeight) / 2);
             }
 
-            c.width = cropWidth;
-            c.height = cropHeight;
-            /* Draw using the source clipping rectangle to crop out the edges */
-            c.getContext('2d').drawImage(v, offsetX, offsetY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+            /* Optimization: Scale down 4K/high-res streams to max 1280px */
+            let destWidth = srcCropWidth;
+            let destHeight = srcCropHeight;
+            const MAX_DIMENSION = 1280;
+            if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
+                const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);
+                destWidth = Math.floor(destWidth * ratio);
+                destHeight = Math.floor(destHeight * ratio);
+            }
+
+            c.width = destWidth;
+            c.height = destHeight;
+            c.getContext('2d').drawImage(v, srcOffsetX, srcOffsetY, srcCropWidth, srcCropHeight, 0, 0, destWidth, destHeight);
             
             c.toBlob(function(blob) {
                 if (!blob) return;
