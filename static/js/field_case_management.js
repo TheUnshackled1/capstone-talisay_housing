@@ -754,9 +754,25 @@
             vHeight = Math.floor(vHeight * ratio);
         }
 
-        c.width = vWidth;
-        c.height = vHeight;
-        c.getContext('2d').drawImage(v, 0, 0, vWidth, vHeight);
+        /* Crop to 16:9 to match the UI's cinematic object-fit: cover */
+        let targetAspect = 16 / 9;
+        let sourceAspect = vWidth / vHeight;
+        let cropWidth = vWidth;
+        let cropHeight = vHeight;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (sourceAspect > targetAspect) {
+            cropWidth = Math.floor(vHeight * targetAspect);
+            offsetX = Math.floor((vWidth - cropWidth) / 2);
+        } else if (sourceAspect < targetAspect) {
+            cropHeight = Math.floor(vWidth / targetAspect);
+            offsetY = Math.floor((vHeight - cropHeight) / 2);
+        }
+
+        c.width = cropWidth;
+        c.height = cropHeight;
+        c.getContext('2d').drawImage(v, offsetX, offsetY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         c.toBlob((blob) => {
             if (!blob) return;
             const file = new File([blob], 'settlement-' + Date.now() + '.jpg', { type: 'image/jpeg' });
@@ -966,9 +982,25 @@
             vHeight = Math.floor(vHeight * ratio);
         }
 
-        c.width = vWidth;
-        c.height = vHeight;
-        c.getContext('2d').drawImage(v, 0, 0, vWidth, vHeight);
+        /* Crop to 16:9 to match the UI's cinematic object-fit: cover */
+        let targetAspect = 16 / 9;
+        let sourceAspect = vWidth / vHeight;
+        let cropWidth = vWidth;
+        let cropHeight = vHeight;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (sourceAspect > targetAspect) {
+            cropWidth = Math.floor(vHeight * targetAspect);
+            offsetX = Math.floor((vWidth - cropWidth) / 2);
+        } else if (sourceAspect < targetAspect) {
+            cropHeight = Math.floor(vWidth / targetAspect);
+            offsetY = Math.floor((vHeight - cropHeight) / 2);
+        }
+
+        c.width = cropWidth;
+        c.height = cropHeight;
+        c.getContext('2d').drawImage(v, offsetX, offsetY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         c.toBlob((blob) => {
             if (!blob) return;
             const file = new File([blob], 'intake-' + Date.now() + '.jpg', { type: 'image/jpeg' });

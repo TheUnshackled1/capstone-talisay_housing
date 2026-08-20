@@ -396,10 +396,26 @@ function capturePhotoEvidence() {
         vHeight = Math.floor(vHeight * ratio);
     }
 
-    canvas.width = vWidth;
-    canvas.height = vHeight;
+    /* Crop to 16:9 to match the UI's cinematic object-fit: cover */
+    let targetAspect = 16 / 9;
+    let sourceAspect = vWidth / vHeight;
+    let cropWidth = vWidth;
+    let cropHeight = vHeight;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (sourceAspect > targetAspect) {
+        cropWidth = Math.floor(vHeight * targetAspect);
+        offsetX = Math.floor((vWidth - cropWidth) / 2);
+    } else if (sourceAspect < targetAspect) {
+        cropHeight = Math.floor(vWidth / targetAspect);
+        offsetY = Math.floor((vHeight - cropHeight) / 2);
+    }
+
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
     const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, vWidth, vHeight);
+    context.drawImage(video, offsetX, offsetY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
     canvas.toBlob((blob) => {
         if (!blob) return;
         const file = new File([blob], `monitoring-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
