@@ -689,16 +689,11 @@
         const v = document.getElementById('caseSettlementCameraVideo');
         if (v) {
             v.srcObject = null;
-            v.style.display = 'none';
         }
-        const start = document.getElementById('caseSettlementCameraStartBtn');
-        const cap = document.getElementById('caseSettlementCameraCaptureBtn');
-        const stp = document.getElementById('caseSettlementCameraStopBtn');
-        const swt = document.getElementById('caseSettlementCameraSwitchBtn');
-        if (start) start.style.display = 'inline-block';
-        if (cap) cap.style.display = 'none';
-        if (stp) stp.style.display = 'none';
-        if (swt) swt.style.display = 'none';
+        const vWrap = document.getElementById('caseSettlementVideoWrap');
+        if (vWrap) vWrap.style.display = 'none';
+        const mainBtns = document.getElementById('caseSettlementMainButtons');
+        if (mainBtns) mainBtns.style.display = 'flex';
     }
 
     async function startCaseSettlementCamera() {
@@ -717,17 +712,18 @@
             const v = document.getElementById('caseSettlementCameraVideo');
             if (v) {
                 v.srcObject = caseSettlementCameraStream;
-                v.style.display = 'block';
                 await v.play();
             }
-            const start = document.getElementById('caseSettlementCameraStartBtn');
+            const vWrap = document.getElementById('caseSettlementVideoWrap');
+            if (vWrap) vWrap.style.display = 'flex';
+            const mainBtns = document.getElementById('caseSettlementMainButtons');
+            if (mainBtns) mainBtns.style.display = 'none';
             const cap = document.getElementById('caseSettlementCameraCaptureBtn');
+            if (cap) { cap.style.display = 'inline-block'; cap.disabled = false; }
             const stp = document.getElementById('caseSettlementCameraStopBtn');
+            if (stp) { stp.style.display = 'inline-block'; stp.disabled = false; }
             const swt = document.getElementById('caseSettlementCameraSwitchBtn');
-            if (start) start.style.display = 'none';
-            if (cap) cap.style.display = 'inline-block';
-            if (stp) stp.style.display = 'inline-block';
-            if (swt) swt.style.display = 'inline-block';
+            if (swt) { swt.style.display = 'inline-block'; swt.disabled = false; }
         } catch (err) {
             alert('Could not open camera. Use Attach from device, or ensure you are on HTTPS or localhost.');
         }
@@ -747,14 +743,25 @@
             alert('Wait for the camera preview, then capture again.');
             return;
         }
-        c.width = v.videoWidth;
-        c.height = v.videoHeight;
-        c.getContext('2d').drawImage(v, 0, 0);
+        let vWidth = v.videoWidth || 1280;
+        let vHeight = v.videoHeight || 720;
+        
+        /* Optimization: Scale down 4K/high-res streams to max 1280px for faster field uploads */
+        const MAX_DIMENSION = 1280;
+        if (vWidth > MAX_DIMENSION || vHeight > MAX_DIMENSION) {
+            const ratio = Math.min(MAX_DIMENSION / vWidth, MAX_DIMENSION / vHeight);
+            vWidth = Math.floor(vWidth * ratio);
+            vHeight = Math.floor(vHeight * ratio);
+        }
+
+        c.width = vWidth;
+        c.height = vHeight;
+        c.getContext('2d').drawImage(v, 0, 0, vWidth, vHeight);
         c.toBlob((blob) => {
             if (!blob) return;
             const file = new File([blob], 'settlement-' + Date.now() + '.jpg', { type: 'image/jpeg' });
             addCaseSettlementPendingFile(file);
-        }, 'image/jpeg', 0.88);
+        }, 'image/jpeg', 0.8);
     }
 
     function onCaseSettlementEvidenceFilesSelected(ev) {
@@ -894,16 +901,11 @@
         const v = document.getElementById('newCaseCameraVideo');
         if (v) {
             v.srcObject = null;
-            v.style.display = 'none';
         }
-        const start = document.getElementById('newCaseCameraStartBtn');
-        const cap = document.getElementById('newCaseCameraCaptureBtn');
-        const stp = document.getElementById('newCaseCameraStopBtn');
-        const swt = document.getElementById('newCaseCameraSwitchBtn');
-        if (start) start.disabled = false;
-        if (cap) cap.disabled = true;
-        if (stp) stp.disabled = true;
-        if (swt) swt.disabled = true;
+        const vWrap = document.getElementById('newCaseVideoWrap');
+        if (vWrap) vWrap.style.display = 'none';
+        const mainBtns = document.getElementById('newCaseMainButtons');
+        if (mainBtns) mainBtns.style.display = 'flex';
     }
 
     async function startNewCaseCamera() {
@@ -922,17 +924,18 @@
             const v = document.getElementById('newCaseCameraVideo');
             if (v) {
                 v.srcObject = newCaseCameraStream;
-                v.style.display = 'block';
                 await v.play();
             }
-            const start = document.getElementById('newCaseCameraStartBtn');
+            const vWrap = document.getElementById('newCaseVideoWrap');
+            if (vWrap) vWrap.style.display = 'flex';
+            const mainBtns = document.getElementById('newCaseMainButtons');
+            if (mainBtns) mainBtns.style.display = 'none';
             const cap = document.getElementById('newCaseCameraCaptureBtn');
+            if (cap) { cap.style.display = 'inline-block'; cap.disabled = false; }
             const stp = document.getElementById('newCaseCameraStopBtn');
+            if (stp) { stp.style.display = 'inline-block'; stp.disabled = false; }
             const swt = document.getElementById('newCaseCameraSwitchBtn');
-            if (start) start.disabled = true;
-            if (cap) cap.disabled = false;
-            if (stp) stp.disabled = false;
-            if (swt) swt.disabled = false;
+            if (swt) { swt.style.display = 'inline-block'; swt.disabled = false; }
         } catch (err) {
             alert('Could not open camera. Use Attach from device, or ensure you are on HTTPS or localhost.');
         }
@@ -952,14 +955,25 @@
             alert('Wait for the camera preview, then capture again.');
             return;
         }
-        c.width = v.videoWidth;
-        c.height = v.videoHeight;
-        c.getContext('2d').drawImage(v, 0, 0);
+        let vWidth = v.videoWidth || 1280;
+        let vHeight = v.videoHeight || 720;
+        
+        /* Optimization: Scale down 4K/high-res streams to max 1280px for faster field uploads */
+        const MAX_DIMENSION = 1280;
+        if (vWidth > MAX_DIMENSION || vHeight > MAX_DIMENSION) {
+            const ratio = Math.min(MAX_DIMENSION / vWidth, MAX_DIMENSION / vHeight);
+            vWidth = Math.floor(vWidth * ratio);
+            vHeight = Math.floor(vHeight * ratio);
+        }
+
+        c.width = vWidth;
+        c.height = vHeight;
+        c.getContext('2d').drawImage(v, 0, 0, vWidth, vHeight);
         c.toBlob((blob) => {
             if (!blob) return;
             const file = new File([blob], 'intake-' + Date.now() + '.jpg', { type: 'image/jpeg' });
             addNewCasePendingFile(file);
-        }, 'image/jpeg', 0.88);
+        }, 'image/jpeg', 0.8);
     }
 
     function onNewCaseEvidenceFilesSelected(ev) {
