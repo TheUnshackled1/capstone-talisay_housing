@@ -4181,94 +4181,6 @@ function getCsrfToken() {
         renderHouseholdMembers();
     }
 
-    function formatMaterialPickerDate(date) {
-        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-            return 'Select date';
-        }
-        return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-        });
-    }
-
-    function updateMaterialPickerHeader(fp) {
-        const dateEl = fp?.calendarContainer?.querySelector('[data-role="tha-selected-date"]');
-        if (!dateEl) return;
-        const selected = fp.selectedDates && fp.selectedDates[0] ? fp.selectedDates[0] : null;
-        dateEl.textContent = formatMaterialPickerDate(selected);
-    }
-
-    function applyMaterialPickerChrome(fp) {
-        if (!fp?.calendarContainer) return;
-        const calendar = fp.calendarContainer;
-        if (!calendar.classList.contains('tha-material-picker')) {
-            calendar.classList.add('tha-material-picker');
-        }
-
-        if (!calendar.querySelector('.tha-material-header')) {
-            const header = document.createElement('div');
-            header.className = 'tha-material-header';
-            header.innerHTML = `
-                <div class="tha-material-date-row">
-                    <div class="tha-material-date" data-role="tha-selected-date">Select date</div>
-                    <button type="button" class="tha-material-edit" aria-label="Edit date">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                        </svg>
-                    </button>
-                </div>
-            `;
-            calendar.prepend(header);
-        }
-
-        if (!calendar.querySelector('.tha-material-footer')) {
-            const footer = document.createElement('div');
-            footer.className = 'tha-material-footer';
-            footer.innerHTML = `
-                <button type="button" class="tha-material-btn cancel" data-action="cancel">Cancel</button>
-                <button type="button" class="tha-material-btn ok" data-action="ok">OK</button>
-            `;
-            calendar.appendChild(footer);
-        }
-
-        if (!calendar.dataset.thaMaterialBound) {
-            calendar.dataset.thaMaterialBound = 'true';
-            const editBtn = calendar.querySelector('.tha-material-edit');
-            const cancelBtn = calendar.querySelector('[data-action="cancel"]');
-            const okBtn = calendar.querySelector('[data-action="ok"]');
-
-            if (editBtn) {
-                editBtn.addEventListener('click', function () {
-                    if (fp.altInput) {
-                        fp.altInput.focus();
-                    } else if (fp._input) {
-                        fp._input.focus();
-                    }
-                });
-            }
-
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', function () {
-                    if (fp._thaPrevDate) {
-                        fp.setDate(fp._thaPrevDate, true);
-                    } else {
-                        fp.clear();
-                    }
-                    fp.close();
-                });
-            }
-
-            if (okBtn) {
-                okBtn.addEventListener('click', function () {
-                    fp.close();
-                });
-            }
-        }
-
-        updateMaterialPickerHeader(fp);
-    }
 
     /** Date inputs: material-style Flatpickr with native fallback. */
     function syncDateOfBirthMaxToToday() {
@@ -4287,24 +4199,16 @@ function getCsrfToken() {
                         altInputClass: 'form-input',
                         allowInput: true,
                         disableMobile: true,
-                        closeOnSelect: false,
+                        closeOnSelect: true,
                         maxDate: today,
                         onReady: function (_selected, _dateStr, fp) {
                             if (fp.altInput) {
                                 fp.altInput.placeholder = 'dd/mm/yyyy';
                                 fp.altInput.setAttribute('aria-label', 'Date of birth');
                             }
-                            applyMaterialPickerChrome(fp);
-                        },
-                        onOpen: function (_selected, _dateStr, fp) {
-                            fp._thaPrevDate = fp.selectedDates && fp.selectedDates[0]
-                                ? new Date(fp.selectedDates[0].getTime())
-                                : null;
-                            updateMaterialPickerHeader(fp);
                         },
                         onChange: function (_selected, _dateStr, fp) {
                             calculateAge();
-                            updateMaterialPickerHeader(fp);
                         },
                     });
                 } else {
@@ -4322,23 +4226,13 @@ function getCsrfToken() {
                         altInputClass: 'form-input',
                         allowInput: true,
                         disableMobile: true,
-                        closeOnSelect: false,
+                        closeOnSelect: true,
                         maxDate: today,
                         onReady: function (_selected, _dateStr, fp) {
                             if (fp.altInput) {
                                 fp.altInput.placeholder = 'dd/mm/yyyy';
                                 fp.altInput.setAttribute('aria-label', 'Date of notice or ejection');
                             }
-                            applyMaterialPickerChrome(fp);
-                        },
-                        onOpen: function (_selected, _dateStr, fp) {
-                            fp._thaPrevDate = fp.selectedDates && fp.selectedDates[0]
-                                ? new Date(fp.selectedDates[0].getTime())
-                                : null;
-                            updateMaterialPickerHeader(fp);
-                        },
-                        onChange: function (_selected, _dateStr, fp) {
-                            updateMaterialPickerHeader(fp);
                         },
                     });
                 } else {
