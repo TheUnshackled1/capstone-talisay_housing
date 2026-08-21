@@ -553,10 +553,10 @@ button {
 /* Fade and shrink all text labels */
 .sidebar.collapsed .logo-text,
 .sidebar.collapsed .nav-section-title,
-.sidebar.collapsed .nav-link>span,
-.sidebar.collapsed details>summary>span,
+.sidebar.collapsed .nav-link > span:not(.nav-icon-box),
+.sidebar.collapsed details > summary > span:not(.nav-icon-box),
 .sidebar.collapsed .user-details,
-.sidebar.collapsed .logout-btn>span {
+.sidebar.collapsed .logout-btn > span {
     max-width: 0;
     opacity: 0;
     visibility: hidden;
@@ -565,9 +565,13 @@ button {
 
 /* Collapse dropdown content instantly when sidebar collapses */
 .sidebar.collapsed .sidebar-dropdown-content {
-    max-height: 0;
-    opacity: 0;
+    max-height: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
     pointer-events: none;
+    border: none;
+    margin: 0;
+    padding: 0;
 }
 
 /* Center nav-link icons */
