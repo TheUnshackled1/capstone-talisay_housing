@@ -930,15 +930,15 @@
             const dateReg = (ap.registered_at || '').trim();
             const sitLabel = (situation.option || '').trim();
             const staff = (ap.staff_name || '').trim();
-            const chip = (icon, text) => text
-                ? `<span class="m2-info-chip"><span class="m2-info-chip-icon">${icon}</span>${escapeHtml(text)}</span>`
+            const chip = (text) => text
+                ? `<span class="m2-info-chip">${escapeHtml(text)}</span>`
                 : '';
             chipsRow.innerHTML = [
-                chip('📋', ref ? `Ref #${ref}` : ''),
-                chip('📍', barangay),
-                chip('📅', dateReg),
-                chip('🏷', sitLabel),
-                chip('👤', staff ? `Staff: ${staff}` : ''),
+                chip(ref ? `Ref #${ref}` : ''),
+                chip(barangay),
+                chip(dateReg),
+                chip(sitLabel),
+                chip(staff ? `Staff: ${staff}` : ''),
             ].filter(Boolean).join('');
             chipsRow.style.display = chipsRow.innerHTML ? 'flex' : 'none';
         }
