@@ -140,7 +140,7 @@
     </div>
     {% endif %}
 
-    <!-- SCHEMATIC GRID â€” hidden; data source for lot-plan map zones + KPI filters -->
+    <!-- SCHEMATIC GRID — hidden; data source for lot-plan map zones + KPI filters -->
     <div id="gridView-content" style="display: none;">
         <div class="vmap-canvas">
             {% for block, units in units_by_block.items %}
@@ -161,7 +161,7 @@
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
                             data-historical-beneficiary="{% if unit.is_historical_beneficiary %}1{% else %}0{% endif %}"
                             data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
-                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.is_historical_beneficiary %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant â€” available' %}vmap-lot--vacant{% endif %}"
+                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.is_historical_beneficiary %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')">
@@ -176,13 +176,13 @@
                               data-dob="{{ unit.current_occupant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                               {% elif unit.occupant_name %}
                               data-full-name="{{ unit.occupant_name }}"
-                              data-tx-id="{% if unit.occupant_id %}{{ unit.occupant_id }}{% else %}â€”{% endif %}"
+                              data-tx-id="{% if unit.occupant_id %}{{ unit.occupant_id }}{% else %}—{% endif %}"
                               data-ref-code=""
                               data-barangay="Not specified"
                               data-dob="Not specified"
                               {% endif %}
-                        >{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}â€”{% endif %}</span>
-                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.is_historical_beneficiary %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant â€” available' %}Vacant{% else %}{{ unit.status|default:"â€”" }}{% endif %}</span>
+                        >{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
+                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.is_historical_beneficiary %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
                     </button>
                     {% endfor %}
                 </div>
@@ -383,7 +383,7 @@
     <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4); max-width: 440px; width: 100%; overflow: hidden;">
         <div style="padding: 1.25rem 1.15rem 0.85rem; border-bottom: 1px solid #e5e7eb;">
             <h2 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0c4a6e;">Edit housing unit</h2>
-            <p style="margin: 0.35rem 0 0; font-size: 0.75rem; color: #64748b;">Vacant inventory only â€” block, lot, and optional notes.</p>
+            <p style="margin: 0.35rem 0 0; font-size: 0.75rem; color: #64748b;">Vacant inventory only — block, lot, and optional notes.</p>
         </div>
         <form id="editUnitForm" style="padding: 1rem 1.15rem 1.1rem;">
             {% csrf_token %}
@@ -461,28 +461,28 @@
                         <div class="premium-card-body">
                             <!-- Beneficiary profile avatar -->
                             <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:1rem;padding-bottom:0.85rem;border-bottom:1px solid #f1f5f9;">
-                                <div id="beneficiaryAvatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:0.04em;flex-shrink:0;">â€”</div>
+                                <div id="beneficiaryAvatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:0.04em;flex-shrink:0;">—</div>
                                 <div>
-                                    <p id="beneficiaryAvatarName" style="margin:0;font-size:0.9rem;font-weight:700;color:#0f172a;line-height:1.2;">â€”</p>
-                                    <p id="beneficiaryAvatarRef" style="margin:0.2rem 0 0;font-size:0.72rem;font-weight:500;color:#64748b;font-family:monospace;">â€”</p>
+                                    <p id="beneficiaryAvatarName" style="margin:0;font-size:0.9rem;font-weight:700;color:#0f172a;line-height:1.2;">—</p>
+                                    <p id="beneficiaryAvatarRef" style="margin:0.2rem 0 0;font-size:0.72rem;font-weight:500;color:#64748b;font-family:monospace;">—</p>
                                 </div>
                             </div>
                         <div class="premium-grid-4">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Name</p>
-                                <p id="modalBeneficiaryName" class="cell-value">â€”</p>
+                                <p id="modalBeneficiaryName" class="cell-value">—</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Reference no.</p>
-                                <p id="modalBeneficiaryRef" class="cell-value monospace">â€”</p>
+                                <p id="modalBeneficiaryRef" class="cell-value monospace">—</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Sex</p>
-                                <p id="modalBeneficiarySex" class="cell-value">â€”</p>
+                                <p id="modalBeneficiarySex" class="cell-value">—</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Household members</p>
-                                <p id="modalHouseholdMembers" class="cell-value">â€”</p>
+                                <p id="modalHouseholdMembers" class="cell-value">—</p>
                             </div>
                         </div>
                         </div>
@@ -502,31 +502,31 @@
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Awarded by</p>
                                     <div id="awardedByProfile" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
-                                        <div id="awardedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">â€”</div>
+                                        <div id="awardedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">—</div>
                                         <div>
-                                            <p id="awardedByName" class="cell-value" style="margin:0;line-height:1.2;">â€”</p>
+                                            <p id="awardedByName" class="cell-value" style="margin:0;line-height:1.2;">—</p>
                                             <span id="awardedByBadge" style="display:inline-block;font-size:0.62rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:4px;background:#d1fae5;color:#065f46;letter-spacing:0.03em;margin-top:0.15rem;"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Awarded at</p>
-                                    <p id="awardRecordAwardedAt" class="cell-value">â€”</p>
+                                    <p id="awardRecordAwardedAt" class="cell-value">—</p>
                                 </div>
                                 <!-- Authenticated by -->
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Authenticated by</p>
                                     <div id="authenticatedByProfile" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
-                                        <div id="authenticatedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">â€”</div>
+                                        <div id="authenticatedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">—</div>
                                         <div>
-                                            <p id="authenticatedByName" class="cell-value" style="margin:0;line-height:1.2;">â€”</p>
+                                            <p id="authenticatedByName" class="cell-value" style="margin:0;line-height:1.2;">—</p>
                                             <span id="authenticatedByBadge" style="display:inline-block;font-size:0.62rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:4px;background:#ede9fe;color:#4c1d95;letter-spacing:0.03em;margin-top:0.15rem;"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Authenticated at</p>
-                                    <p id="authenticatedAtValue" class="cell-value">â€”</p>
+                                    <p id="authenticatedAtValue" class="cell-value">—</p>
                                 </div>
                             </div>
                         </div>
@@ -575,15 +575,15 @@
                             <div class="premium-grid-3">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Date lot awarded</p>
-                                <p id="lotAwardedDate" class="cell-value">â€”</p>
+                                <p id="lotAwardedDate" class="cell-value">—</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Date possessed</p>
-                                <p id="lotPossessedDate" class="cell-value">â€”</p>
+                                <p id="lotPossessedDate" class="cell-value">—</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Days possessed</p>
-                                <p id="lotPossessedDays" class="cell-value">â€”</p>
+                                <p id="lotPossessedDays" class="cell-value">—</p>
                             </div>
                             </div>
                             <p id="lotPossessionFootnote" class="premium-card-footnote">
@@ -620,11 +620,11 @@
                             <div class="premium-grid-3">
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Monitoring starts</p>
-                                    <p id="monitoringStartsOn" class="cell-value">â€”</p>
+                                    <p id="monitoringStartsOn" class="cell-value">—</p>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Award date</p>
-                                    <p id="awardActivationDate" class="cell-value">â€”</p>
+                                    <p id="awardActivationDate" class="cell-value">—</p>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Monitoring policy</p>
@@ -662,14 +662,14 @@
 
                     <details id="priorNoProgressVisitsPanel" class="premium-data-card premium-data-card--collapsible border-slate" style="display: none; margin-top: 0.75rem;">
                         <summary class="premium-card-summary">
-                            <span class="premium-card-title">Initial monitoring â€” Explanation letter path</span>
+                            <span class="premium-card-title">Initial monitoring — Explanation letter path</span>
                             <span class="premium-card-chevron" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
                         </summary>
                         <div class="premium-card-body">
                             <p style="margin: 0 0 0.65rem; font-size: 0.75rem; color: #64748b; line-height: 1.45;">
-                                Completed original-program visits (90 Day and 120 Day) where staff chose No Progress or Explanation letter â€” kept here so the active extension workflow stays clear above.
+                                Completed original-program visits (90 Day and 120 Day) where staff chose No Progress or Explanation letter — kept here so the active extension workflow stays clear above.
                             </p>
                             <div id="priorNoProgressVisitsGrid"></div>
                         </div>
@@ -677,7 +677,7 @@
 
                     <details id="explanationLetterPanel" class="premium-data-card premium-data-card--collapsible border-rose" style="display: none; margin-top: 0.75rem;">
                         <summary class="premium-card-summary">
-                            <span class="premium-card-title explanation-letter-panel-title">120 Day â€” Explanation letter workflow</span>
+                            <span class="premium-card-title explanation-letter-panel-title">120 Day — Explanation letter workflow</span>
                             <span class="premium-card-chevron" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
@@ -875,36 +875,36 @@
         <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
     </div>
     <div class="hover-card-header">
-        <div class="hover-card-avatar" id="hcAvatar">â€”</div>
+        <div class="hover-card-avatar" id="hcAvatar">—</div>
         <div class="hover-card-title-group">
-            <div class="hover-card-name" id="hcName">â€”</div>
+            <div class="hover-card-name" id="hcName">—</div>
             <div class="hover-card-tag" id="hcTag">Applicant Profile</div>
         </div>
     </div>
     <div class="hover-card-body">
         <div class="hover-card-meta-row" id="hcTxRow">
             <span class="hover-card-label">Transaction ID</span>
-            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">â€”</span>
+            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">—</span>
         </div>
         <div class="hover-card-meta-row" id="hcRefRow">
             <span class="hover-card-label">Reference Code</span>
-            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">â€”</span>
+            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
         </div>
         <div class="hover-card-meta-row" id="hcStatusRow">
             <span class="hover-card-label">Status</span>
-            <span class="hover-card-value" id="hcStatus">â€”</span>
+            <span class="hover-card-value" id="hcStatus">—</span>
         </div>
         <div class="hover-card-meta-row" id="hcBlockLotRow">
             <span class="hover-card-label">Block / Lot</span>
-            <span class="hover-card-value" id="hcBlockLot">â€”</span>
+            <span class="hover-card-value" id="hcBlockLot">—</span>
         </div>
         <div class="hover-card-meta-row" id="hcBrgyRow">
             <span class="hover-card-label">Barangay</span>
-            <span class="hover-card-value" id="hcBrgy">â€”</span>
+            <span class="hover-card-value" id="hcBrgy">—</span>
         </div>
         <div class="hover-card-meta-row" id="hcDobRow">
             <span class="hover-card-label">Birth Date</span>
-            <span class="hover-card-value" id="hcDob">â€”</span>
+            <span class="hover-card-value" id="hcDob">—</span>
         </div>
     </div>
     <div class="hover-card-footer">
