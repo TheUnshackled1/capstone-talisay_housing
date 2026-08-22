@@ -109,44 +109,7 @@ def message_ready_for_form_queue_reminder(applicant) -> str:
     )
 
 
-# Baseline checklist codes — document names only (no R01/R02 codes in SMS).
-_REQUIRED_BASELINE_APPLICANT_LIST_SMS_CODES = frozenset({
-    'R01', 'R02', 'R03', 'R04', 'R05', 'R06', 'R07',
-})
-_OPTIONAL_BASELINE_APPLICANT_LIST_SMS_CODES = frozenset({'RVT'})
-_BASELINE_APPLICANT_LIST_SMS_CODES = _REQUIRED_BASELINE_APPLICANT_LIST_SMS_CODES | _OPTIONAL_BASELINE_APPLICANT_LIST_SMS_CODES
-_SITUATIONAL_CHECKLIST_CODES = frozenset({'CDRRMO', 'ISF-SIT'})
 
-
-def _applicant_list_situational_sms_clause(code: str, displacement_reason: str) -> str:
-    """
-    Hiligaynon last line(s) on LIST OF APPLICANTS SMS — which documents / situational items to prepare.
-
-    Different from ``_situation_clause_proceed_sms`` (evaluation handoff: Ronda, next steps after
-  scans are filed). Do not merge the two; applicants may receive both SMS at different times.
-    """
-    c = (code or '').strip().upper()
-    dr = (displacement_reason or '').strip()
-    if dr == 'not_abc':
-        return _situation_clause_proceed_sms(dr).strip()
-    if c == 'CDRRMO' or dr == 'danger_zone':
-        return (
-            'INI NGA DOKYUMENTO ANG CDRRMO MAGA PROVIDE SANG CERTIFIKASYON! '
-            'Option A — Resident of Danger Zone or Hazard Area — CDRRMO certification.'
-        )
-    if c == 'ISF-SIT' and dr == 'ejected':
-        return (
-            'Magasumiter sang imo situational nga dokumento para sa Option B — '
-            'Ejected or Evicted from Prior Residence (ISF situational documentation).'
-        )
-    if c == 'ISF-SIT' and dr == 'relocated':
-        return (
-            'Magasumiter sang imo situational nga dokumento para sa Option C — '
-            'Displaced by Government Project or Infrastructure (ISF situational documentation).'
-        )
-    if c == 'ISF-SIT':
-        return 'Magasumiter sang imo ISF situational documentation sunod sa imo Applicant Situation.'
-    return ''
 
 
 
