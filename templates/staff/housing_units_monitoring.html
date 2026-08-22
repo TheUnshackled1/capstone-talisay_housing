@@ -96,20 +96,35 @@
             </label>
             {% endif %}
             {% if can_create_relocation_site and no_relocation_sites %}
-            <button type="button" class="units-header-action" onclick="openCreateSiteModal()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Create site
+            <button type="button" class="summary-chip-card summary-chip-card--solid-emerald is-clickable" style="padding-right: 0.85rem;" onclick="openCreateSiteModal()">
+                <div class="summary-icon-wrap">
+                    <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </div>
+                <div>
+                    <p>New</p>
+                    <p style="font-size: 0.85rem;">Create site</p>
+                </div>
             </button>
             {% endif %}
             {% if can_add_housing_unit %}
-            <button type="button" id="openAddUnitModalBtn" class="units-header-action" onclick="openAddUnitModal()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add block / lot
+            <button type="button" id="openAddUnitModalBtn" class="summary-chip-card summary-chip-card--solid-emerald is-clickable" style="padding-right: 0.85rem;" onclick="openAddUnitModal()">
+                <div class="summary-icon-wrap">
+                    <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </div>
+                <div>
+                    <p>New</p>
+                    <p style="font-size: 0.85rem;">Add Block / Lot</p>
+                </div>
             </button>
             {% endif %}
-            <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="units-view-btn units-masterlist-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                GK Masterlist
+            <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="summary-chip-card summary-chip-card--solid-blue is-clickable" style="padding-right: 0.85rem; text-decoration: none;">
+                <div class="summary-icon-wrap">
+                    <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div>
+                    <p>View</p>
+                    <p style="font-size: 0.85rem;">GK Masterlist</p>
+                </div>
             </a>
         </div>
     </div>
@@ -117,7 +132,7 @@
     <!-- Escalation Alert -->
     {% if has_escalation_alerts %}
     <div style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.85rem; display: flex; gap: 0.75rem; font-size: 0.78rem;">
-        <span style="color: #dc2626; font-weight: 600; flex-shrink: 0;">⚠️</span>
+        <span style="color: #dc2626; font-weight: 600; flex-shrink: 0;">âš ï¸</span>
         <div>
             <p style="margin: 0; color: #991b1b; font-weight: 600;">Final notice deadline approaching:</p>
             <p style="margin: 0.15rem 0 0; color: #7f1d1d;">{{ escalation_message }}</p>
@@ -125,13 +140,13 @@
     </div>
     {% endif %}
 
-    <!-- SCHEMATIC GRID — hidden; data source for lot-plan map zones + KPI filters -->
+    <!-- SCHEMATIC GRID â€” hidden; data source for lot-plan map zones + KPI filters -->
     <div id="gridView-content" style="display: none;">
         <div class="vmap-canvas">
             {% for block, units in units_by_block.items %}
             <section class="vmap-block">
                 <header class="vmap-block-head">
-                    <span class="vmap-block-marker" aria-hidden="true">▣</span>
+                    <span class="vmap-block-marker" aria-hidden="true">â–£</span>
                     <h2 class="vmap-block-name">Block {{ block }}</h2>
                     <span class="vmap-block-meta">{{ units|length }} lot{{ units|length|pluralize }}</span>
                 </header>
@@ -146,7 +161,7 @@
                             data-housing-unit-on-file="{% if unit.is_housing_unit_on_file %}1{% else %}0{% endif %}"
                             data-historical-beneficiary="{% if unit.is_historical_beneficiary %}1{% else %}0{% endif %}"
                             data-extension-failed="{% if unit.extension_final_visit_failed %}1{% else %}0{% endif %}"
-                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.is_historical_beneficiary %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant — available' %}vmap-lot--vacant{% endif %}"
+                            class="unit-card vmap-lot {% if unit.is_housing_unit_on_file %}vmap-lot--housing-unit{% elif unit.is_historical_beneficiary %}vmap-lot--housing-unit{% elif unit.extension_final_visit_failed %}vmap-lot--extension-failed{% elif unit.status == 'Occupied' %}vmap-lot--occupied{% elif unit.status == 'Vacant â€” available' %}vmap-lot--vacant{% endif %}"
                             data-status="{{ unit.status }}"
                             data-construction="{{ unit.construction_tokens }}"
                             onclick="openUnitModal('{{ unit.id }}')">
@@ -161,13 +176,13 @@
                               data-dob="{{ unit.current_occupant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                               {% elif unit.occupant_name %}
                               data-full-name="{{ unit.occupant_name }}"
-                              data-tx-id="{% if unit.occupant_id %}{{ unit.occupant_id }}{% else %}—{% endif %}"
+                              data-tx-id="{% if unit.occupant_id %}{{ unit.occupant_id }}{% else %}â€”{% endif %}"
                               data-ref-code=""
                               data-barangay="Not specified"
                               data-dob="Not specified"
                               {% endif %}
-                        >{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}—{% endif %}</span>
-                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.is_historical_beneficiary %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant — available' %}Vacant{% else %}{{ unit.status|default:"—" }}{% endif %}</span>
+                        >{% if unit.current_occupant %}{{ unit.current_occupant.full_name|truncatechars:14 }}{% elif unit.occupant_name %}{{ unit.occupant_name|truncatechars:14 }}{% else %}â€”{% endif %}</span>
+                        <span class="vmap-lot-tag">{% if unit.is_housing_unit_on_file %}Unit{% elif unit.is_historical_beneficiary %}Unit{% elif unit.extension_final_visit_failed %}Failed{% elif unit.status == 'Occupied' %}Occupied{% elif unit.status == 'Vacant â€” available' %}Vacant{% else %}{{ unit.status|default:"â€”" }}{% endif %}</span>
                     </button>
                     {% endfor %}
                 </div>
@@ -208,9 +223,9 @@
                      data-clusters-url="{% static 'units/lot_plan_clusters.json' %}"></svg>
             </div>
             <div class="lotplan-zoom-controls">
-                <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-in" title="Zoom in" aria-label="Zoom in">＋</button>
+                <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-in" title="Zoom in" aria-label="Zoom in">ï¼‹</button>
                 <div class="lotplan-zoom-level" id="lotplan-zoom-level">75%</div>
-                <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+                <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-out" title="Zoom out" aria-label="Zoom out">âˆ’</button>
                 <button type="button" class="lotplan-zoom-btn lotplan-zoom-btn--reset" id="lotplan-zoom-reset" title="Reset zoom" aria-label="Reset zoom">FIT</button>
             </div>
         </div>
@@ -368,7 +383,7 @@
     <div onclick="event.stopPropagation();" style="background: white; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4); max-width: 440px; width: 100%; overflow: hidden;">
         <div style="padding: 1.25rem 1.15rem 0.85rem; border-bottom: 1px solid #e5e7eb;">
             <h2 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0c4a6e;">Edit housing unit</h2>
-            <p style="margin: 0.35rem 0 0; font-size: 0.75rem; color: #64748b;">Vacant inventory only — block, lot, and optional notes.</p>
+            <p style="margin: 0.35rem 0 0; font-size: 0.75rem; color: #64748b;">Vacant inventory only â€” block, lot, and optional notes.</p>
         </div>
         <form id="editUnitForm" style="padding: 1rem 1.15rem 1.1rem;">
             {% csrf_token %}
@@ -426,9 +441,9 @@
         <div class="unit-detail-body">
             <!-- Section tabs -->
             <div class="unit-section-tabs" role="tablist">
-                <button type="button" class="unit-tab is-active" role="tab" aria-selected="true" data-tab-target="beneficiaryDropdown" onclick="switchUnitTab(this)">Beneficiary · occupant &amp; household</button>
+                <button type="button" class="unit-tab is-active" role="tab" aria-selected="true" data-tab-target="beneficiaryDropdown" onclick="switchUnitTab(this)">Beneficiary Â· occupant &amp; household</button>
                 <div style="flex-basis: 100%; height: 0; margin: 0; padding: 0;"></div>
-                <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="lotMonitoringDropdown" onclick="switchUnitTab(this)">Formal lot award activation · monitoring tasks</button>
+                <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="lotMonitoringDropdown" onclick="switchUnitTab(this)">Formal lot award activation Â· monitoring tasks</button>
                 <div style="flex-basis: 100%; height: 0; margin: 0; padding: 0;"></div>
                 <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="caseDropdown" onclick="switchUnitTab(this)">Case</button>
             </div>
@@ -446,28 +461,28 @@
                         <div class="premium-card-body">
                             <!-- Beneficiary profile avatar -->
                             <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:1rem;padding-bottom:0.85rem;border-bottom:1px solid #f1f5f9;">
-                                <div id="beneficiaryAvatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:0.04em;flex-shrink:0;">—</div>
+                                <div id="beneficiaryAvatar" style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:0.04em;flex-shrink:0;">â€”</div>
                                 <div>
-                                    <p id="beneficiaryAvatarName" style="margin:0;font-size:0.9rem;font-weight:700;color:#0f172a;line-height:1.2;">—</p>
-                                    <p id="beneficiaryAvatarRef" style="margin:0.2rem 0 0;font-size:0.72rem;font-weight:500;color:#64748b;font-family:monospace;">—</p>
+                                    <p id="beneficiaryAvatarName" style="margin:0;font-size:0.9rem;font-weight:700;color:#0f172a;line-height:1.2;">â€”</p>
+                                    <p id="beneficiaryAvatarRef" style="margin:0.2rem 0 0;font-size:0.72rem;font-weight:500;color:#64748b;font-family:monospace;">â€”</p>
                                 </div>
                             </div>
                         <div class="premium-grid-4">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Name</p>
-                                <p id="modalBeneficiaryName" class="cell-value">—</p>
+                                <p id="modalBeneficiaryName" class="cell-value">â€”</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Reference no.</p>
-                                <p id="modalBeneficiaryRef" class="cell-value monospace">—</p>
+                                <p id="modalBeneficiaryRef" class="cell-value monospace">â€”</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Sex</p>
-                                <p id="modalBeneficiarySex" class="cell-value">—</p>
+                                <p id="modalBeneficiarySex" class="cell-value">â€”</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Household members</p>
-                                <p id="modalHouseholdMembers" class="cell-value">—</p>
+                                <p id="modalHouseholdMembers" class="cell-value">â€”</p>
                             </div>
                         </div>
                         </div>
@@ -487,31 +502,31 @@
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Awarded by</p>
                                     <div id="awardedByProfile" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
-                                        <div id="awardedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">—</div>
+                                        <div id="awardedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">â€”</div>
                                         <div>
-                                            <p id="awardedByName" class="cell-value" style="margin:0;line-height:1.2;">—</p>
+                                            <p id="awardedByName" class="cell-value" style="margin:0;line-height:1.2;">â€”</p>
                                             <span id="awardedByBadge" style="display:inline-block;font-size:0.62rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:4px;background:#d1fae5;color:#065f46;letter-spacing:0.03em;margin-top:0.15rem;"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Awarded at</p>
-                                    <p id="awardRecordAwardedAt" class="cell-value">—</p>
+                                    <p id="awardRecordAwardedAt" class="cell-value">â€”</p>
                                 </div>
                                 <!-- Authenticated by -->
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Authenticated by</p>
                                     <div id="authenticatedByProfile" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
-                                        <div id="authenticatedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">—</div>
+                                        <div id="authenticatedByAvatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;">â€”</div>
                                         <div>
-                                            <p id="authenticatedByName" class="cell-value" style="margin:0;line-height:1.2;">—</p>
+                                            <p id="authenticatedByName" class="cell-value" style="margin:0;line-height:1.2;">â€”</p>
                                             <span id="authenticatedByBadge" style="display:inline-block;font-size:0.62rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:4px;background:#ede9fe;color:#4c1d95;letter-spacing:0.03em;margin-top:0.15rem;"></span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Authenticated at</p>
-                                    <p id="authenticatedAtValue" class="cell-value">—</p>
+                                    <p id="authenticatedAtValue" class="cell-value">â€”</p>
                                 </div>
                             </div>
                         </div>
@@ -537,7 +552,7 @@
                                     </summary>
                                     <div style="margin-top:0.6rem;padding:0.75rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
                                         <label style="display:block;font-size:0.7rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;">Remarks <span style="font-weight:400;text-transform:none;color:#94a3b8;">(optional)</span></label>
-                                        <textarea id="validateDocNotes" rows="2" placeholder="e.g. Original document reviewed and signed off…" style="width:100%;padding:0.45rem 0.6rem;border:1px solid #cbd5e1;border-radius:7px;font-size:0.79rem;box-sizing:border-box;resize:vertical;"></textarea>
+                                        <textarea id="validateDocNotes" rows="2" placeholder="e.g. Original document reviewed and signed offâ€¦" style="width:100%;padding:0.45rem 0.6rem;border:1px solid #cbd5e1;border-radius:7px;font-size:0.79rem;box-sizing:border-box;resize:vertical;"></textarea>
                                         <button type="button" id="validateDocBtn" onclick="submitDocumentValidation()" style="margin-top:0.5rem;padding:0.45rem 1rem;background:linear-gradient(180deg,#1d4ed8,#1e40af);color:#fff;border:none;border-radius:7px;font-size:0.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.35rem;">
                                             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                                             Submit validation
@@ -560,15 +575,15 @@
                             <div class="premium-grid-3">
                             <div class="premium-data-cell">
                                 <p class="cell-label">Date lot awarded</p>
-                                <p id="lotAwardedDate" class="cell-value">—</p>
+                                <p id="lotAwardedDate" class="cell-value">â€”</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Date possessed</p>
-                                <p id="lotPossessedDate" class="cell-value">—</p>
+                                <p id="lotPossessedDate" class="cell-value">â€”</p>
                             </div>
                             <div class="premium-data-cell">
                                 <p class="cell-label">Days possessed</p>
-                                <p id="lotPossessedDays" class="cell-value">—</p>
+                                <p id="lotPossessedDays" class="cell-value">â€”</p>
                             </div>
                             </div>
                             <p id="lotPossessionFootnote" class="premium-card-footnote">
@@ -605,11 +620,11 @@
                             <div class="premium-grid-3">
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Monitoring starts</p>
-                                    <p id="monitoringStartsOn" class="cell-value">—</p>
+                                    <p id="monitoringStartsOn" class="cell-value">â€”</p>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Award date</p>
-                                    <p id="awardActivationDate" class="cell-value">—</p>
+                                    <p id="awardActivationDate" class="cell-value">â€”</p>
                                 </div>
                                 <div class="premium-data-cell">
                                     <p class="cell-label">Monitoring policy</p>
@@ -647,14 +662,14 @@
 
                     <details id="priorNoProgressVisitsPanel" class="premium-data-card premium-data-card--collapsible border-slate" style="display: none; margin-top: 0.75rem;">
                         <summary class="premium-card-summary">
-                            <span class="premium-card-title">Initial monitoring — Explanation letter path</span>
+                            <span class="premium-card-title">Initial monitoring â€” Explanation letter path</span>
                             <span class="premium-card-chevron" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
                         </summary>
                         <div class="premium-card-body">
                             <p style="margin: 0 0 0.65rem; font-size: 0.75rem; color: #64748b; line-height: 1.45;">
-                                Completed original-program visits (90 Day and 120 Day) where staff chose No Progress or Explanation letter — kept here so the active extension workflow stays clear above.
+                                Completed original-program visits (90 Day and 120 Day) where staff chose No Progress or Explanation letter â€” kept here so the active extension workflow stays clear above.
                             </p>
                             <div id="priorNoProgressVisitsGrid"></div>
                         </div>
@@ -662,7 +677,7 @@
 
                     <details id="explanationLetterPanel" class="premium-data-card premium-data-card--collapsible border-rose" style="display: none; margin-top: 0.75rem;">
                         <summary class="premium-card-summary">
-                            <span class="premium-card-title explanation-letter-panel-title">120 Day — Explanation letter workflow</span>
+                            <span class="premium-card-title explanation-letter-panel-title">120 Day â€” Explanation letter workflow</span>
                             <span class="premium-card-chevron" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                             </span>
@@ -762,7 +777,7 @@
             </div>
             <div class="unit-sms-compose-field">
                 <label for="unitSmsMessageInput">Message</label>
-                <textarea id="unitSmsMessageInput" maxlength="900" placeholder="Enter the SMS text to send…"></textarea>
+                <textarea id="unitSmsMessageInput" maxlength="900" placeholder="Enter the SMS text to sendâ€¦"></textarea>
             </div>
             <label class="unit-sms-compose-save-phone">
                 <input type="checkbox" id="unitSmsSavePhoneCheckbox" checked>
@@ -814,7 +829,7 @@
                     <p class="inspection-info-kicker">Monitoring schedule</p>
                     <h3 id="inspectionInfoTitle" class="inspection-info-title">Inspection details</h3>
                 </div>
-                <button type="button" class="unit-detail-close" onclick="closeInspectionInfoModal()" style="width: 2.2rem; height: 2.2rem; font-size: 1.3rem;">×</button>
+                <button type="button" class="unit-detail-close" onclick="closeInspectionInfoModal()" style="width: 2.2rem; height: 2.2rem; font-size: 1.3rem;">Ã—</button>
             </div>
             
             <div id="inspectionInfoBanner" style="padding: 0.85rem 1rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; margin-bottom: 1.2rem; display: none;">
@@ -860,36 +875,36 @@
         <img src="{% static 'images/tha_logo.png' %}" alt="Talisay City Housing Authority Logo" style="width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid #cbd5e1; padding: 0.2rem; background: #ffffff; box-sizing: border-box;">
     </div>
     <div class="hover-card-header">
-        <div class="hover-card-avatar" id="hcAvatar">—</div>
+        <div class="hover-card-avatar" id="hcAvatar">â€”</div>
         <div class="hover-card-title-group">
-            <div class="hover-card-name" id="hcName">—</div>
+            <div class="hover-card-name" id="hcName">â€”</div>
             <div class="hover-card-tag" id="hcTag">Applicant Profile</div>
         </div>
     </div>
     <div class="hover-card-body">
         <div class="hover-card-meta-row" id="hcTxRow">
             <span class="hover-card-label">Transaction ID</span>
-            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">—</span>
+            <span class="case-number-badge" id="hcTx" style="font-family: monospace;">â€”</span>
         </div>
         <div class="hover-card-meta-row" id="hcRefRow">
             <span class="hover-card-label">Reference Code</span>
-            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">—</span>
+            <span class="complainant-ref-code" id="hcRef" style="font-family: monospace;">â€”</span>
         </div>
         <div class="hover-card-meta-row" id="hcStatusRow">
             <span class="hover-card-label">Status</span>
-            <span class="hover-card-value" id="hcStatus">—</span>
+            <span class="hover-card-value" id="hcStatus">â€”</span>
         </div>
         <div class="hover-card-meta-row" id="hcBlockLotRow">
             <span class="hover-card-label">Block / Lot</span>
-            <span class="hover-card-value" id="hcBlockLot">—</span>
+            <span class="hover-card-value" id="hcBlockLot">â€”</span>
         </div>
         <div class="hover-card-meta-row" id="hcBrgyRow">
             <span class="hover-card-label">Barangay</span>
-            <span class="hover-card-value" id="hcBrgy">—</span>
+            <span class="hover-card-value" id="hcBrgy">â€”</span>
         </div>
         <div class="hover-card-meta-row" id="hcDobRow">
             <span class="hover-card-label">Birth Date</span>
-            <span class="hover-card-value" id="hcDob">—</span>
+            <span class="hover-card-value" id="hcDob">â€”</span>
         </div>
     </div>
     <div class="hover-card-footer">
@@ -897,3 +912,4 @@
     </div>
 </div>
 {% endblock %}
+
