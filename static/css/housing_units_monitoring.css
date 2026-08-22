@@ -114,84 +114,143 @@
        rather than a rainbow of shaded backgrounds. */
     .units-kpis {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
         gap: 0.6rem;
-        margin-bottom: 0.85rem;
+        margin-bottom: 0;
+        align-items: center;
     }
-    .units-kpi {
+    
+    .summary-chip-card {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.35rem 0.65rem 0.35rem 0.35rem;
+        border-radius: 0.75rem;
+        font-family: inherit;
+        text-align: left;
+        box-sizing: border-box;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: #ffffff;
+    }
+
+    button.summary-chip-card {
+        cursor: pointer;
+        outline: none;
+    }
+
+    button.summary-chip-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px -2px rgba(15, 23, 42, 0.08);
+    }
+    
+    button.summary-chip-card.is-active {
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    }
+
+    .summary-icon-wrap {
         display: flex;
         align-items: center;
-        gap: 0.65rem;
-        padding: 0.65rem 0.78rem;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        border-radius: 0.65rem;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    .units-kpi[role="button"] {
-        cursor: pointer;
-        transition: box-shadow 0.15s ease, transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
-    }
-    .units-kpi[role="button"]:hover {
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
-        transform: translateY(-1px);
-    }
-    .units-kpi[role="button"]:focus-visible {
-        outline: 2px solid #047857;
-        outline-offset: 2px;
-    }
-    .units-kpi.is-active {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
-        background: #eff6ff;
-    }
-    .units-kpi-icon {
-        width: 2.1rem;
-        height: 2.1rem;
-        flex-shrink: 0;
-        border-radius: 0.5rem;
-        display: inline-flex;
-        align-items: center;
         justify-content: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: 0.5rem;
+        flex-shrink: 0;
+        color: #ffffff;
     }
-    .units-kpi-icon svg {
-        width: 1.05rem;
-        height: 1.05rem;
-        stroke-width: 2;
-    }
-    .units-kpi-label {
-        margin: 0;
-        font-size: 0.6rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+
+    .summary-chip-card div p:first-child {
+        font-size: 0.58rem;
         color: #64748b;
+        margin: 0 0 0.1rem 0;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.06em;
     }
-    .units-kpi-value {
-        margin: 0.1rem 0 0;
-        font-size: 1.18rem;
+
+    .summary-chip-card div p:last-child {
+        font-size: 1.15rem;
         font-weight: 800;
-        color: #0f172a;
-        line-height: 1.05;
+        line-height: 1;
+        margin: 0;
     }
-    /* Semantic tile colors — tone only the icon; keep the card body neutral */
-    .units-kpi--all .units-kpi-icon { background: #e0e7ff; color: #4338ca; }
-    .units-kpi--occupied .units-kpi-icon { background: #d1fae5; color: #047857; }
-    .units-kpi--housing-file .units-kpi-icon { background: #ccfbf1; color: #0f766e; }
-    .units-kpi--housing-file .units-kpi-value { color: #0f766e; }
-    .units-kpi--vacant   .units-kpi-icon { background: #ecfdf5; color: #065f46; }
-    .units-kpi--notice30 .units-kpi-icon { background: #fef3c7; color: #92400e; }
-    .units-kpi--notice10 .units-kpi-icon { background: #fee2e2; color: #b91c1c; }
-    .units-kpi--repo     .units-kpi-icon { background: #f1f5f9; color: #475569; }
-    .units-kpi--repo .units-kpi-value    { color: #475569; }
-    .units-kpi--notice10 .units-kpi-value{ color: #b91c1c; }
-    .units-kpi--cm-not-started .units-kpi-icon { background: #f8fafc; color: #64748b; }
-    .units-kpi--cm-in-progress .units-kpi-icon { background: #d1fae5; color: #047857; }
-    .units-kpi--cm-completed .units-kpi-icon   { background: #bbf7d0; color: #065f46; }
-    .units-kpi--cm-delayed .units-kpi-icon     { background: #fee2e2; color: #b91c1c; }
-    .units-kpi--cm-in-progress .units-kpi-value { color: #047857; }
-    .units-kpi--cm-completed .units-kpi-value   { color: #065f46; }
-    .units-kpi--cm-delayed .units-kpi-value     { color: #b91c1c; }
+
+    /* BLUE - Total List */
+    .summary-chip-card--blue {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+    .summary-chip-card--blue .summary-icon-wrap {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        box-shadow: 0 2px 6px rgba(37,99,235,0.3);
+    }
+    .summary-chip-card--blue div p:last-child {
+        color: #1e3a8a;
+    }
+    .summary-chip-card--blue div p:first-child {
+        color: #3b82f6;
+    }
+    .summary-chip-card--blue.is-active {
+        border-color: #2563eb;
+    }
+
+    /* AMBER - Pending Review / Housing unit */
+    .summary-chip-card--amber {
+        background: #fff7ed;
+        border-color: #fed7aa;
+    }
+    .summary-chip-card--amber .summary-icon-wrap {
+        background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
+        box-shadow: 0 2px 6px rgba(234,88,12,0.3);
+    }
+    .summary-chip-card--amber div p:last-child {
+        color: #9a3412;
+    }
+    .summary-chip-card--amber div p:first-child {
+        color: #f97316;
+    }
+    .summary-chip-card--amber.is-active {
+        border-color: #ea580c;
+    }
+
+    /* PURPLE - Settled On-Site / Vacant */
+    .summary-chip-card--purple {
+        background: #faf5ff;
+        border-color: #e9d5ff;
+    }
+    .summary-chip-card--purple .summary-icon-wrap {
+        background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+        box-shadow: 0 2px 6px rgba(147,51,234,0.3);
+    }
+    .summary-chip-card--purple div p:last-child {
+        color: #581c87;
+    }
+    .summary-chip-card--purple div p:first-child {
+        color: #a855f7;
+    }
+    .summary-chip-card--purple.is-active {
+        border-color: #9333ea;
+    }
+
+    /* EMERALD - Resolved / Occupied */
+    .summary-chip-card--emerald {
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+    }
+    .summary-chip-card--emerald .summary-icon-wrap {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+    }
+    .summary-chip-card--emerald div p:last-child {
+        color: #064e3b;
+    }
+    .summary-chip-card--emerald div p:first-child {
+        color: #10b981;
+    }
+    .summary-chip-card--emerald.is-active {
+        border-color: #059669;
+    }
 
     /* Construction summary strip — neutral cards with numeric accents */
     .units-cm-strip {
