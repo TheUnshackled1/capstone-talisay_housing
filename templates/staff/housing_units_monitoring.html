@@ -460,12 +460,17 @@
                 <h2 id="modalUnitTitle" class="unit-detail-title"></h2>
                 <span id="modalUnitStatus" class="unit-detail-status" data-state=""></span>
             </div>
-            <button type="button" class="unit-detail-close" onclick="closeUnitModal()" title="Close" aria-label="Close">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
+            <div style="display: flex; align-items: center; gap: 0.55rem; margin-left: auto;">
+                <div style="height: 2rem; border: 1.5px solid rgba(15,23,42,0.12); border-radius: 0.35rem; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 0.1rem 0.35rem; box-sizing: border-box;" aria-hidden="true">
+                    <img src="{% static 'images/favicon.png' %}" alt="" decoding="async" style="width: auto; height: 100%; max-width: 5rem; object-fit: contain; display: block;">
+                </div>
+                <button type="button" class="unit-detail-close" onclick="closeUnitModal()" title="Close" aria-label="Close">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- Body -->
@@ -482,7 +487,7 @@
             <!-- Occupant Section -->
             <section class="unit-detail-section">
                 <div id="beneficiaryDropdown" class="unit-monitor-panel">
-                    <details class="premium-data-card premium-data-card--collapsible border-green" open>
+                    <details class="premium-data-card premium-data-card--collapsible border-green">
                         <summary class="premium-card-summary">
                             <span class="premium-card-title">Lot beneficiary</span>
                             <span class="premium-card-chevron" aria-hidden="true">
@@ -520,7 +525,7 @@
                     </details>
 
                     <!-- Lot Award Record card -->
-                    <details id="lotAwardRecordCard" class="premium-data-card premium-data-card--collapsible border-indigo" open hidden>
+                    <details id="lotAwardRecordCard" class="premium-data-card premium-data-card--collapsible border-indigo" hidden>
                         <summary class="premium-card-summary">
                             <span class="premium-card-title">Lot award record</span>
                             <span class="premium-card-chevron" aria-hidden="true">
@@ -564,7 +569,7 @@
                     </details>
 
                     <!-- Document Validation Log card -->
-                    <details id="validationLogCard" class="premium-data-card premium-data-card--collapsible border-amber" open hidden>
+                    <details id="validationLogCard" class="premium-data-card premium-data-card--collapsible border-amber" hidden>
                         <summary class="premium-card-summary">
                             <span class="premium-card-title">Document validation log</span>
                             <span id="validationLogCount" style="margin-left:0.4rem;font-size:0.68rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:10px;background:#fef3c7;color:#92400e;"></span>
@@ -751,7 +756,7 @@
             <!-- Case Section (prep for /cases integration) -->
             <section class="unit-detail-section">
                 <div id="caseDropdown" class="unit-monitor-panel" hidden>
-                    <details class="premium-data-card premium-data-card--collapsible border-blue" open>
+                    <details class="premium-data-card premium-data-card--collapsible border-blue">
                         <summary class="premium-card-summary">
                             <span class="premium-card-title">Case record</span>
                             <span class="premium-card-chevron" aria-hidden="true">
