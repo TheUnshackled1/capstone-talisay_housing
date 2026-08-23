@@ -1,4 +1,4 @@
-{% extends 'staff/staff_base.html' %}
+﻿{% extends 'staff/staff_base.html' %}
 {% load static %}
 
 {% block title %}Housing Unit & Occupancy Monitoring{% endblock %}
@@ -366,10 +366,22 @@
             </div>
             <div id="addUnitFormError" class="add-unit-form-error" style="display: none;"></div>
             <div style="display: flex; justify-content: center; gap: 0.6rem; padding: 0.85rem 0 0.1rem; margin-top: 0.4rem; border-top: 1px solid #f1f5f9;">
-                <button type="button" onclick="closeAddUnitModal()"
-                    style="padding: 0.6rem 1.4rem; background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); border: none; border-radius: 9px; font-size: 0.82rem; font-weight: 600; color: #fff; cursor: pointer; min-width: 7rem; box-shadow: 0 4px 10px -2px rgba(220, 38, 38, 0.35); transition: filter 0.15s, transform 0.1s;">Cancel</button>
                 <button type="submit" id="addUnitSubmitBtn"
-                    style="padding: 0.6rem 1.4rem; background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); color: #fff; border: none; border-radius: 9px; font-size: 0.82rem; font-weight: 700; cursor: pointer; min-width: 7rem; box-shadow: 0 4px 10px -2px rgba(21, 128, 61, 0.35); transition: filter 0.15s, transform 0.1s;">Save unit</button>
+                    class="summary-chip-card is-clickable"
+                    style="padding-right: 0.95rem; background: linear-gradient(135deg, #10b981 0%, #047857 100%); border-color: #065f46; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.25);">
+                    <div class="summary-icon-wrap" style="background: rgba(255,255,255,0.25); box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);">
+                        <svg style="width:1rem;height:1rem;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <span style="font-size: 0.82rem; font-weight: 700; color: #fff; font-family: 'Inter', 'Segoe UI', sans-serif;">Save unit</span>
+                </button>
+                <button type="button" onclick="closeAddUnitModal()"
+                    class="summary-chip-card is-clickable"
+                    style="padding-right: 0.95rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-color: #b91c1c; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.25);">
+                    <div class="summary-icon-wrap" style="background: rgba(255,255,255,0.25); box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);">
+                        <svg style="width:1rem;height:1rem;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </div>
+                    <span style="font-size: 0.82rem; font-weight: 600; color: #fff; font-family: 'Inter', 'Segoe UI', sans-serif;">Cancel</span>
+                </button>
             </div>
         </form>
     </div>
@@ -441,9 +453,9 @@
         <div class="unit-detail-body">
             <!-- Section tabs -->
             <div class="unit-section-tabs" role="tablist">
-                <button type="button" class="unit-tab is-active" role="tab" aria-selected="true" data-tab-target="beneficiaryDropdown" onclick="switchUnitTab(this)">Beneficiary Â· occupant &amp; household</button>
+                <button type="button" class="unit-tab is-active" role="tab" aria-selected="true" data-tab-target="beneficiaryDropdown" onclick="switchUnitTab(this)">Beneficiary · occupant &amp; household</button>
                 <div style="flex-basis: 100%; height: 0; margin: 0; padding: 0;"></div>
-                <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="lotMonitoringDropdown" onclick="switchUnitTab(this)">Formal lot award activation Â· monitoring tasks</button>
+                <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="lotMonitoringDropdown" onclick="switchUnitTab(this)">Formal lot award activation · monitoring tasks</button>
                 <div style="flex-basis: 100%; height: 0; margin: 0; padding: 0;"></div>
                 <button type="button" class="unit-tab" role="tab" aria-selected="false" data-tab-target="caseDropdown" onclick="switchUnitTab(this)">Case</button>
             </div>
@@ -741,15 +753,30 @@
         <!-- Footer -->
         <div class="unit-detail-footer">
             <div class="unit-detail-footer-actions">
-                <button type="button" id="editInventoryUnitBtn" class="unit-detail-footer-btn" style="display: none;" onclick="openEditUnitModal()">Edit block / lot</button>
-                <button type="button" id="deleteInventoryUnitBtn" class="unit-detail-footer-btn unit-detail-action-disqualify" style="display: none;" onclick="confirmDeleteHousingUnit()">Delete unit</button>
-                <button type="button" class="unit-detail-footer-btn unit-detail-action-sms" onclick="sendSMS()">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                    </svg>
-                    Send SMS
+                <button type="button" id="editInventoryUnitBtn" class="summary-chip-card is-clickable" style="display: none; padding-right: 0.85rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-color: #1e40af; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.25);" onclick="openEditUnitModal()">
+                    <div class="summary-icon-wrap" style="background: rgba(255,255,255,0.25); box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);">
+                        <svg style="width:1rem;height:1rem;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <span style="font-size: 0.82rem; font-weight: 600; color: #fff; font-family: 'Inter', 'Segoe UI', sans-serif;">Edit block / lot</span>
                 </button>
-                <a href="#" id="disqualifyBeneficiaryBtn" class="unit-detail-footer-btn unit-detail-action-disqualify" role="button" onclick="event.preventDefault(); openDisqualifyBeneficiaryModal();">Blacklist beneficiary</a>
+                <button type="button" id="deleteInventoryUnitBtn" class="summary-chip-card is-clickable" style="display: none; padding-right: 0.85rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-color: #b91c1c; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.25);" onclick="confirmDeleteHousingUnit()">
+                    <div class="summary-icon-wrap" style="background: rgba(255,255,255,0.25); box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);">
+                        <svg style="width:1rem;height:1rem;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </div>
+                    <span style="font-size: 0.82rem; font-weight: 600; color: #fff; font-family: 'Inter', 'Segoe UI', sans-serif;">Delete unit</span>
+                </button>
+                <button type="button" class="summary-chip-card is-clickable" style="padding-right: 0.85rem; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); border-color: #3730a3; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.25);" onclick="sendSMS()">
+                    <div class="summary-icon-wrap" style="background: rgba(255,255,255,0.25); box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);">
+                        <svg style="width:1rem;height:1rem;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                    </div>
+                    <span style="font-size: 0.82rem; font-weight: 600; color: #fff; font-family: 'Inter', 'Segoe UI', sans-serif;">Send SMS</span>
+                </button>
+                <a href="#" id="disqualifyBeneficiaryBtn" class="summary-chip-card is-clickable" role="button" style="padding-right: 0.85rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-color: #b45309; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.25); text-decoration: none;" onclick="event.preventDefault(); openDisqualifyBeneficiaryModal();">
+                    <div class="summary-icon-wrap" style="background: rgba(255,255,255,0.25); box-shadow: inset 0 1px 2px rgba(255,255,255,0.2);">
+                        <svg style="width:1rem;height:1rem;" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                    </div>
+                    <span style="font-size: 0.82rem; font-weight: 600; color: #fff; font-family: 'Inter', 'Segoe UI', sans-serif;">Blacklist beneficiary</span>
+                </a>
             </div>
         </div>
     </div>
@@ -912,4 +939,5 @@
     </div>
 </div>
 {% endblock %}
+
 
