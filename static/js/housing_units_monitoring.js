@@ -1333,10 +1333,10 @@ function initLotPlanZoom() {
     const btnReset = document.getElementById('lotplan-zoom-reset');
     const levelEl  = document.getElementById('lotplan-zoom-level');
 
-    const MIN_ZOOM = 0.75; // 75% standard minimum zoom
-    const MAX_ZOOM = 4;   // 400%
-    const ZOOM_STEP = 0.25;
-    const DEFAULT_ZOOM = 0.75;
+    const MIN_ZOOM = 1.0; // 100% standard minimum zoom
+    const MAX_ZOOM = 4.0; // 400% max
+    const ZOOM_STEP = 0.25; 
+    const DEFAULT_ZOOM = 1.0; // 100% display default
 
     let scale = DEFAULT_ZOOM;
     let panX = 0;
@@ -1546,16 +1546,16 @@ function initLotPlanZoom() {
     });
 
     // --- Initial setup ---
-    // Apply the default zoom scale (75%) immediately
-    applyTransform();
+    // Apply the default zoom scale and perfectly center it
+    resetZoom();
 
     // Re-apply if the image loads after initialization (which changes offsetHeight)
     const lotplanImg = stage.querySelector('.lotplan-img');
     if (lotplanImg) {
         if (lotplanImg.complete) {
-            applyTransform();
+            resetZoom();
         } else {
-            lotplanImg.addEventListener('load', applyTransform);
+            lotplanImg.addEventListener('load', resetZoom);
         }
     }
 }
