@@ -58,12 +58,11 @@ async function parseMonitoringJsonResponse(res) {
 }
 
 function updateFooterSmsButton(unit) {
-    const smsBtn = document.querySelector('.unit-detail-action-sms');
+    const smsBtn = document.getElementById('unitDetailSendSmsBtn');
     if (!smsBtn) return;
     const enable = Boolean(unit && unit.can_send_beneficiary_sms);
     smsBtn.disabled = !enable;
     smsBtn.style.opacity = enable ? '1' : '0.45';
-    smsBtn.style.cursor = enable ? 'pointer' : 'not-allowed';
     smsBtn.style.pointerEvents = enable ? 'auto' : 'none';
     smsBtn.title = enable
         ? 'Open Send SMS — review or edit contact number and message.'
