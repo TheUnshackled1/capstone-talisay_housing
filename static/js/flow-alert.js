@@ -22,6 +22,10 @@
         if (progBar) progBar.style.display = 'none';
         if (defaultBadge) defaultBadge.style.display = 'none';
         if (warningBadge) warningBadge.style.display = 'none';
+        var okBtn = document.getElementById('flowAlertOkBtn');
+        var cancelBtn = document.getElementById('flowAlertCancelBtn');
+        if (okBtn) okBtn.textContent = 'OK';
+        if (cancelBtn) cancelBtn.style.display = 'none';
         if (global.flowAlertCountdownTimeout) {
             clearTimeout(global.flowAlertCountdownTimeout);
             global.flowAlertCountdownTimeout = null;
@@ -42,7 +46,7 @@
         if (typeof onConfirm === 'function') onConfirm();
     }
 
-    function showFlowAlert(message, title, onConfirm, variant) {
+    function showFlowAlert(message, title, onConfirm, variant, okText, showCancel) {
         if (title === undefined) title = 'Notice';
         if (variant === undefined) variant = 'default';
         var modal = document.getElementById('flowAlertModal');
@@ -54,11 +58,20 @@
         var progBar = document.getElementById('flowAlertProgressBar');
         var defaultBadge = document.getElementById('flowAlertSuccessBadge');
         var warningBadge = document.getElementById('flowAlertWarningBadge');
+        var okBtn = document.getElementById('flowAlertOkBtn');
+        var cancelBtn = document.getElementById('flowAlertCancelBtn');
 
         if (!modal || !titleEl || !messageEl) {
             global.alert(message);
             if (typeof onConfirm === 'function') onConfirm();
             return;
+        }
+
+        if (okBtn) {
+            okBtn.textContent = okText || 'OK';
+        }
+        if (cancelBtn) {
+            cancelBtn.style.display = showCancel ? 'inline-block' : 'none';
         }
 
         // Reset countdown timer if active

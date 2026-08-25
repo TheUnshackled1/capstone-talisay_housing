@@ -201,12 +201,12 @@ async function submitUnitBeneficiarySms() {
  * Uses global showFlowAlert (staff_base + flow-alert.css) instead of window.alert.
  * variant: 'success' | 'warning' | 'default'
  */
-function monitoringFlowAlert(message, title, variant, onConfirm) {
+function monitoringFlowAlert(message, title, variant, onConfirm, okText, showCancel) {
     let tone = 'default';
     if (variant === 'success') tone = 'success';
     else if (variant === 'warning') tone = 'warning';
     if (typeof showFlowAlert === 'function') {
-        showFlowAlert(message || '', title || 'Notice', onConfirm || null, tone);
+        showFlowAlert(message || '', title || 'Notice', onConfirm || null, tone, okText, showCancel);
         return;
     }
     window.alert(message || '');
@@ -543,6 +543,8 @@ function confirmDeleteHousingUnit() {
         'Delete housing unit',
         'warning',
         function () { deleteHousingUnit(unit.id); },
+        'DELETE',
+        true
     );
 }
 
