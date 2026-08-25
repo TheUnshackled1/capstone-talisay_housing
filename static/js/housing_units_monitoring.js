@@ -520,7 +520,7 @@ document.getElementById('editUnitForm')?.addEventListener('submit', async functi
         } else {
             if (data.duplicate) {
                 const reqLot = document.getElementById('editUnitLot').value;
-                monitoringFlowAlert(`You can't make it Lot ${reqLot} because Lot ${reqLot} already exists. Try another lot or block.`, 'Conflict', 'error');
+                monitoringFlowAlert(`You can't make it Lot ${reqLot} because Lot ${reqLot} already exists. Try another lot or block.`, 'Conflict', 'warning');
             } else {
                 errEl.textContent = data.error || 'Could not update unit.';
                 errEl.style.display = 'block';
