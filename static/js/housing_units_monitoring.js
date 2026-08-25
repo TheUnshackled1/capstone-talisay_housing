@@ -518,8 +518,13 @@ document.getElementById('editUnitForm')?.addEventListener('submit', async functi
                 window.location.reload();
             });
         } else {
-            errEl.textContent = data.error || 'Could not update unit.';
-            errEl.style.display = 'block';
+            if (data.duplicate) {
+                const reqLot = document.getElementById('editUnitLot').value;
+                monitoringFlowAlert(`You can't make it Lot ${reqLot} because Lot ${reqLot} already exists. Try another lot or block.`, 'Conflict', 'error');
+            } else {
+                errEl.textContent = data.error || 'Could not update unit.';
+                errEl.style.display = 'block';
+            }
         }
     } catch (ex) {
         errEl.textContent = ex.message || 'Network error.';
