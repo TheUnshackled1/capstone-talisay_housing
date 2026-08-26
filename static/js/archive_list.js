@@ -27,6 +27,9 @@ function exportArchiveCSV() {
 function openArchiveHandoffSummary(buttonEl) {
     if (!buttonEl) return;
     const d = buttonEl.dataset || {};
+    window.currentArchiveId = d.id;
+    window.currentArchiveName = d.name || '';
+    
     const setText = (id, value, fallback = 'N/A') => {
         const el = document.getElementById(id);
         if (el) el.textContent = (value !== undefined && value !== null && String(value).trim() !== '') ? String(value) : fallback;
@@ -64,9 +67,49 @@ function openArchiveHandoffSummary(buttonEl) {
     const modal = document.getElementById('archiveSummaryModal');
     if (modal) modal.classList.add('active');
 }
+
 function closeArchiveSummaryModal() {
     const modal = document.getElementById('archiveSummaryModal');
     if (modal) modal.classList.remove('active');
+}
+
+function unarchiveApplicant() {
+    if (!window.currentArchiveId) return;
+    if (!confirm(`Are you sure you want to unarchive ${window.currentArchiveName}?\n\nThis will restore the applicant to the active Registration list.`)) {
+        return;
+    }
+
+    if (!window.ARCHIVE_CONFIG || !window.ARCHIVE_CONFIG.unarchiveUrl) {
+        showFlowAlert('Configuration error: Unarchive URL not found.', 'Error', null, 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('archive_id', window.currentArchiveId);
+    if (window.ARCHIVE_CONFIG.csrfToken) {
+        formData.append('csrfmiddlewaretoken', window.ARCHIVE_CONFIG.csrfToken);
+    }
+
+    fetch(window.ARCHIVE_CONFIG.unarchiveUrl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showFlowAlert(data.message || 'Applicant restored successfully.', 'Success', null, 'success');
+            closeArchiveSummaryModal();
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showFlowAlert(data.error || 'Failed to unarchive applicant.', 'Error', null, 'error');
+        }
+    })
+    .catch(err => {
+        showFlowAlert('Network error occurred.', 'Error', null, 'error');
+        console.error(err);
+    });
 }
 
 // Premium Hover Card popover initialization for tables

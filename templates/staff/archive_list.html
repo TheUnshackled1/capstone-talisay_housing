@@ -210,6 +210,12 @@
                             <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                             VIEW Documents
                         </a>
+                        {% if can_modify %}
+                        <button id="archiveSummaryUnarchiveBtn" class="btn-archive-action btn-archive-action--danger" style="margin-left: auto; border: 1px solid #fda4af; color: #be123c; background: #fff1f2;" onclick="unarchiveApplicant()">
+                            <svg style="width: 0.75rem; height: 0.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            UNARCHIVE / RESTORE record
+                        </button>
+                        {% endif %}
                     </div>
                 </section>
             </div>
@@ -254,6 +260,11 @@
 </div>
 
 
+<script>
+    window.ARCHIVE_CONFIG = {
+        unarchiveUrl: "{% url 'intake:unarchive_applicant' position=user_position %}",
+        csrfToken: "{{ csrf_token }}"
+    };
+</script>
 <script src="{% static 'js/archive_list.js' %}"></script>
 {% endblock %}
-

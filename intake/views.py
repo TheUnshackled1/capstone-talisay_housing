@@ -1060,6 +1060,47 @@ def delete_applicant(request, position):
 @login_required
 @verify_position
 @require_POST
+def unarchive_applicant(request, position):
+    """
+    AJAX endpoint to unarchive (restore) an applicant back to the active registered list.
+    URL Route: /intake/staff/<position>/unarchive-applicant/
+    """
+    from django.http import JsonResponse
+    
+    if request.user.position not in ['second_member', 'fourth_member']:
+        return JsonResponse({'success': False, 'error': 'Permission denied. Only Jocel or Joie can restore records.'}, status=403)
+    
+    archive_id = request.POST.get('archive_id')
+    if not archive_id:
+        return JsonResponse({'success': False, 'error': 'Missing archive_id.'}, status=400)
+    
+    try:
+        archive_record = Archive.objects.get(id=archive_id)
+        applicant = archive_record.applicant
+        
+        with transaction.atomic():
+            # Delete the archive record which restores them to applicants_list
+            archive_record.delete()
+            
+            # Unset module 2 handoff in case they were pushed to evaluation
+            if applicant.module2_handoff_at is not None:
+                applicant.module2_handoff_at = None
+                applicant.module2_handoff_by = None
+                applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by'])
+                
+        return JsonResponse({
+            'success': True,
+            'message': f'Applicant "{applicant.full_name}" restored successfully.'
+        })
+    except Archive.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Archive record not found.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@verify_position
+@require_POST
 def proceed_to_applications(request, position):
  
     if request.user.position not in ['second_member', 'fourth_member']:
@@ -2236,6 +2277,8 @@ def archive_list(request, position):
         'page_title': 'Archive Records',
         'staff_position': position,
         'position': position,
+        'user_position': request.user.position,
+        'can_modify': request.user.position in ['second_member', 'fourth_member'],
         'total_archived': paginator.count,
         'selected_stage': selected_stage,
         'selected_stage_label': selected_stage_label,
