@@ -98,8 +98,8 @@ class SMSLogAdmin(admin.ModelAdmin):
 
 @admin.register(Archive)
 class ArchiveAdmin(admin.ModelAdmin):
-    list_display = ('reference_number_snapshot', 'full_name_snapshot', 'channel', 'archived_by', 'archived_at')
-    list_filter = ('channel', 'archived_at', 'queue_type', 'cdrrmo_certified')
+    list_display = ('reference_number_snapshot', 'full_name_snapshot', 'channel', 'archived_by', 'archived_at', 'is_restored')
+    list_filter = ('channel', 'archived_at', 'queue_type', 'cdrrmo_certified', 'is_restored')
     search_fields = ('reference_number_snapshot', 'full_name_snapshot')
     readonly_fields = ('id', 'archived_at', 'reference_number_snapshot', 'full_name_snapshot', 'date_of_birth_snapshot', 'barangay_name_snapshot', 'applicant')
 
@@ -111,7 +111,7 @@ class ArchiveAdmin(admin.ModelAdmin):
             'fields': ('full_name_snapshot', 'date_of_birth_snapshot', 'barangay_name_snapshot'),
         }),
         ('🔄 HANDOFF DETAILS', {
-            'fields': ('channel', 'queue_type', 'archived_at', 'archived_by'),
+            'fields': ('channel', 'queue_type', 'archived_at', 'archived_by', 'is_restored'),
         }),
         ('📱 NOTIFICATION', {
             'fields': ('sms_sent', 'sms_sent_at'),

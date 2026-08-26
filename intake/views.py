@@ -1180,6 +1180,12 @@ def proceed_to_applications(request, position):
                 'archived_by': request.user,
             }
         )
+        # If the record was previously restored, clear the flag so it appears
+        # in the REGISTERED APPLICANTS table (and later in archive_list when
+        # not restored).
+        if not created and archive_record.is_restored:
+            archive_record.is_restored = False
+            archive_record.save(update_fields=['is_restored'])
         # Optional promotion path used by the archive checklist CTA:
         # once baseline required scans (R01–R07) are complete, mark as handed off for Module 2 list visibility.
         handoff_just_set = False
@@ -1964,6 +1970,11 @@ def walkin_register(request, position):
                 'archived_by': request.user,
             }
         )
+        # If the record was previously restored, clear the flag so it appears
+        # correctly in the REGISTERED APPLICANTS table.
+        if not created and archive_record.is_restored:
+            archive_record.is_restored = False
+            archive_record.save(update_fields=['is_restored'])
 
     # No SMS on registration.
     # Policy: first applicant-facing SMS is sent when staff proceeds record to Module 2.
