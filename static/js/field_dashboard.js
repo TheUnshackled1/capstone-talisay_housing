@@ -317,8 +317,9 @@
             let origWidth = v.videoWidth || 1280;
             let origHeight = v.videoHeight || 720;
             
-            /* Crop to 16:9 to match the UI's cinematic object-fit: cover on the original source */
-            let targetAspect = 16 / 9;
+            /* Crop to match the UI's exact rendered aspect ratio so the photo perfectly matches the preview */
+            let rect = v.getBoundingClientRect();
+            let targetAspect = rect.width / rect.height || (16 / 9);
             let sourceAspect = origWidth / origHeight;
             let srcCropWidth = origWidth;
             let srcCropHeight = origHeight;
