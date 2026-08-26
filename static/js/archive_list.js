@@ -73,42 +73,91 @@ function closeArchiveSummaryModal() {
     if (modal) modal.classList.remove('active');
 }
 
+function closeNoticeModal() {
+    const overlay = document.getElementById('noticeModalOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function showNoticeModal({ title = 'Notice', message = '', primaryText = 'OK', secondaryText = 'Cancel', applicantName = null, onPrimary = null, onSecondary = null }) {
+    const overlay = document.getElementById('noticeModalOverlay');
+    const titleEl = document.getElementById('noticeModalTitle');
+    const bodyEl = document.getElementById('noticeModalBody');
+    const primaryBtn = document.getElementById('noticePrimaryBtn');
+    const secondaryBtn = document.getElementById('noticeSecondaryBtn');
+    const subtitleEl = document.getElementById('noticeModalSubtitle');
+    const subtitleNameEl = document.getElementById('noticeModalSubtitleName');
+    
+    if (!overlay || !titleEl || !bodyEl || !primaryBtn || !secondaryBtn) return;
+
+    titleEl.textContent = title;
+    bodyEl.textContent = message;
+    
+    if (applicantName && subtitleEl && subtitleNameEl) {
+        subtitleNameEl.textContent = applicantName;
+        subtitleEl.style.display = 'block';
+    } else if (subtitleEl) {
+        subtitleEl.style.display = 'none';
+    }
+    
+    primaryBtn.textContent = primaryText;
+    secondaryBtn.textContent = secondaryText;
+    secondaryBtn.style.display = secondaryText ? '' : 'none';
+
+    primaryBtn.onclick = () => {
+        if (onPrimary) onPrimary();
+        closeNoticeModal();
+    };
+
+    secondaryBtn.onclick = () => {
+        if (onSecondary) onSecondary();
+        closeNoticeModal();
+    };
+
+    overlay.style.display = 'flex';
+}
+
 function unarchiveApplicant() {
     if (!window.currentArchiveId) return;
-    if (!confirm(`Are you sure you want to unarchive ${window.currentArchiveName}?\n\nThis will restore the applicant to the active Registration list.`)) {
-        return;
-    }
+    
+    showNoticeModal({
+        title: 'Unarchive / Restore Record?',
+        message: 'This will restore the applicant to the active Registration list.',
+        primaryText: 'Yes, Restore',
+        secondaryText: 'Cancel',
+        applicantName: window.currentArchiveName || 'This Applicant',
+        onPrimary: () => {
+            if (!window.ARCHIVE_CONFIG || !window.ARCHIVE_CONFIG.unarchiveUrl) {
+                showFlowAlert('Configuration error: Unarchive URL not found.', 'Error', null, 'error');
+                return;
+            }
 
-    if (!window.ARCHIVE_CONFIG || !window.ARCHIVE_CONFIG.unarchiveUrl) {
-        showFlowAlert('Configuration error: Unarchive URL not found.', 'Error', null, 'error');
-        return;
-    }
+            const formData = new FormData();
+            formData.append('archive_id', window.currentArchiveId);
+            if (window.ARCHIVE_CONFIG.csrfToken) {
+                formData.append('csrfmiddlewaretoken', window.ARCHIVE_CONFIG.csrfToken);
+            }
 
-    const formData = new FormData();
-    formData.append('archive_id', window.currentArchiveId);
-    if (window.ARCHIVE_CONFIG.csrfToken) {
-        formData.append('csrfmiddlewaretoken', window.ARCHIVE_CONFIG.csrfToken);
-    }
-
-    fetch(window.ARCHIVE_CONFIG.unarchiveUrl, {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showFlowAlert(data.message || 'Applicant restored successfully.', 'Success', null, 'success');
-            closeArchiveSummaryModal();
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            showFlowAlert(data.error || 'Failed to unarchive applicant.', 'Error', null, 'error');
+            fetch(window.ARCHIVE_CONFIG.unarchiveUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showFlowAlert(data.message || 'Applicant restored successfully.', 'Success', null, 'success');
+                    closeArchiveSummaryModal();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showFlowAlert(data.error || 'Failed to unarchive applicant.', 'Error', null, 'error');
+                }
+            })
+            .catch(err => {
+                showFlowAlert('Network error occurred.', 'Error', null, 'error');
+                console.error(err);
+            });
         }
-    })
-    .catch(err => {
-        showFlowAlert('Network error occurred.', 'Error', null, 'error');
-        console.error(err);
     });
 }
 
