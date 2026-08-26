@@ -296,7 +296,7 @@ function getCsrfToken() {
         );
     }
 
-    function showNoticeModal({ title = 'Notice', message = '', messageHtml = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null, allowHtml = false, refPill = '', celebration = false }) {
+    function showNoticeModal({ title = 'Notice', message = '', messageHtml = '', type = 'info', primaryText = 'OK', secondaryText = '', onPrimary = null, onSecondary = null, allowHtml = false, refPill = '', celebration = false, applicantName = null }) {
         const overlay = document.getElementById('noticeModalOverlay');
         const modal = document.getElementById('noticeModal');
         const titleEl = document.getElementById('noticeModalTitle');
@@ -304,6 +304,9 @@ function getCsrfToken() {
         const refWrap = document.getElementById('noticeModalRefWrap');
         const primaryBtn = document.getElementById('noticePrimaryBtn');
         const secondaryBtn = document.getElementById('noticeSecondaryBtn');
+        const subtitleEl = document.getElementById('noticeModalSubtitle');
+        const subtitleNameEl = document.getElementById('noticeModalSubtitleName');
+        
         if (!overlay || !modal || !titleEl || !bodyEl || !primaryBtn || !secondaryBtn) return;
 
         // Reset countdown timer if already active
@@ -339,6 +342,14 @@ function getCsrfToken() {
         } else {
             bodyEl.textContent = message;
         }
+        
+        if (applicantName && subtitleEl && subtitleNameEl) {
+            subtitleNameEl.textContent = applicantName;
+            subtitleEl.style.display = 'block';
+        } else if (subtitleEl) {
+            subtitleEl.style.display = 'none';
+        }
+        
         primaryBtn.textContent = primaryText || 'OK';
         secondaryBtn.textContent = secondaryText || 'Cancel';
         secondaryBtn.style.display = secondaryText ? '' : 'none';
@@ -429,45 +440,51 @@ function getCsrfToken() {
             return;
         }
 
-        if (!confirm(`Delete blacklisted applicant from the active list?\n\nName: ${fullName}\nReference: ${ref}\n\nThis cannot be undone.`)) {
-            return;
-        }
-
-        const deleteBtn = document.getElementById('archiveDeleteBlacklistedBtn');
-        if (deleteBtn) {
-            deleteBtn.disabled = true;
-            deleteBtn.textContent = 'Deleting...';
-        }
-
-        const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', getCsrfToken());
-        formData.append('applicant_id', applicantId);
-
-        fetch(window.APPLICANTS_CONFIG.deleteApplicantUrl, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showFlowAlert('Blacklisted applicant deleted successfully.', 'Success', null, 'success');
-                    closeArchiveRequirementsModal();
-                    setTimeout(() => location.reload(), 600);
-                } else {
-                    if (deleteBtn) {
-                        deleteBtn.disabled = false;
-                        deleteBtn.textContent = 'Delete Blacklisted Applicant';
-                    }
-                    showFlowAlert('Error: ' + (data.error || 'Unable to delete applicant'));
-                }
-            })
-            .catch(error => {
+        showNoticeModal({
+            title: 'Delete Blacklisted Applicant?',
+            message: `Reference: ${ref}\n\nThis cannot be undone.`,
+            type: 'error',
+            primaryText: 'Yes, Delete',
+            secondaryText: 'Cancel',
+            applicantName: fullName,
+            onPrimary: () => {
+                const deleteBtn = document.getElementById('archiveDeleteBlacklistedBtn');
                 if (deleteBtn) {
-                    deleteBtn.disabled = false;
-                    deleteBtn.textContent = 'Delete Blacklisted Applicant';
+                    deleteBtn.disabled = true;
+                    deleteBtn.textContent = 'Deleting...';
                 }
-                showFlowAlert('Error: ' + error.message);
-            });
+
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', getCsrfToken());
+                formData.append('applicant_id', applicantId);
+
+                fetch(window.APPLICANTS_CONFIG.deleteApplicantUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showFlowAlert('Blacklisted applicant deleted successfully.', 'Success', null, 'success');
+                            closeArchiveRequirementsModal();
+                            setTimeout(() => location.reload(), 600);
+                        } else {
+                            if (deleteBtn) {
+                                deleteBtn.disabled = false;
+                                deleteBtn.textContent = 'Delete Blacklisted Applicant';
+                            }
+                            showFlowAlert('Error: ' + (data.error || 'Unable to delete applicant'));
+                        }
+                    })
+                    .catch(error => {
+                        if (deleteBtn) {
+                            deleteBtn.disabled = false;
+                            deleteBtn.textContent = 'Delete Blacklisted Applicant';
+                        }
+                        showFlowAlert('Error: ' + error.message);
+                    });
+            }
+        });
     }
     window.deleteBlacklistedApplicantFromModal = deleteBlacklistedApplicantFromModal;
 
@@ -3545,70 +3562,76 @@ function getCsrfToken() {
         }
 
         const statusText = newStatus === 'certified' ? 'CERTIFIED' : 'NOT CERTIFIED';
-        if (!confirm(`Are you sure you want to mark this applicant as ${statusText}?\n\nThis will update their CDRRMO certification status.`)) {
-            return;
-        }
+        showNoticeModal({
+            title: `Mark as ${statusText}?`,
+            message: `Are you sure you want to mark this applicant as ${statusText}?\n\nThis will update their CDRRMO certification status.`,
+            type: 'warning',
+            primaryText: 'Yes, Confirm',
+            secondaryText: 'Cancel',
+            applicantName: currentApplicant.fullName,
+            onPrimary: () => {
+                const cdrrmoNotes = document.getElementById('cdrrmoNotes')?.value || '';
 
-        const cdrrmoNotes = document.getElementById('cdrrmoNotes')?.value || '';
+                // Send AJAX request to update CDRRMO status
+                const formData = new FormData();
+                formData.append('applicant_id', currentApplicant.applicantId);
+                formData.append('channel', 'B');
+                formData.append('cdrrmo_status', newStatus);
+                formData.append('cdrrmo_notes', cdrrmoNotes);
+                formData.append('csrfmiddlewaretoken', getCsrfToken());
 
-        // Send AJAX request to update CDRRMO status
-        const formData = new FormData();
-        formData.append('applicant_id', currentApplicant.applicantId);
-        formData.append('channel', 'B');
-        formData.append('cdrrmo_status', newStatus);
-        formData.append('cdrrmo_notes', cdrrmoNotes);
-        formData.append('csrfmiddlewaretoken', getCsrfToken());
+                fetch(window.APPLICANTS_CONFIG.updateApplicantUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update local data
+                            currentApplicant.cdrrmoStatus = newStatus === 'certified' ? 'Certified' : 'Not Certified';
+                            currentApplicant.isCdrrmoFlagged = false;
+                            currentApplicant.cdrrmoDaysPending = 0;
 
-        fetch(window.APPLICANTS_CONFIG.updateApplicantUrl, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update local data
-                    currentApplicant.cdrrmoStatus = newStatus === 'certified' ? 'Certified' : 'Not Certified';
-                    currentApplicant.isCdrrmoFlagged = false;
-                    currentApplicant.cdrrmoDaysPending = 0;
+                            if (newStatus === 'certified') {
+                                currentApplicant.eligibilityStatus = 'Pending eligibility check';
+                            } else {
+                                currentApplicant.eligibilityStatus = 'Pending eligibility check';
+                                currentApplicant.channel = 'C';  // Downgraded to walk-in
+                            }
 
-                    if (newStatus === 'certified') {
-                        currentApplicant.eligibilityStatus = 'Pending eligibility check';
-                    } else {
-                        currentApplicant.eligibilityStatus = 'Pending eligibility check';
-                        currentApplicant.channel = 'C';  // Downgraded to walk-in
-                    }
+                            // Update UI
+                            const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
+                            const cdrrmoText = document.getElementById('cdrrmoStatusText');
+                            const cdrrmoActionsBox = document.getElementById('cdrrmoActionsBox');
 
-                    // Update UI
-                    const cdrrmoBox = document.getElementById('cdrrmoStatusBox');
-                    const cdrrmoText = document.getElementById('cdrrmoStatusText');
-                    const cdrrmoActionsBox = document.getElementById('cdrrmoActionsBox');
+                            if (cdrrmoBox && cdrrmoText) {
+                                if (newStatus === 'certified') {
+                                    cdrrmoBox.style.background = '#dcfce7';
+                                    cdrrmoBox.style.borderColor = '#86efac';
+                                    cdrrmoText.style.color = '#166534';
+                                    cdrrmoText.innerHTML = `<strong>CDRRMO certification on file</strong><br>The declared hazard-area representation has been certified pursuant to CDRRMO field verification.`;
+                                } else {
+                                    cdrrmoBox.style.background = '#fee2e2';
+                                    cdrrmoBox.style.borderColor = '#fca5a5';
+                                    cdrrmoText.style.color = '#991b1b';
+                                    cdrrmoText.innerHTML = `<strong>CDRRMO certification not granted</strong><br>The declared location was not certified as a qualifying hazard area. The record will be reclassified for walk-in processing, as applicable.`;
+                                }
+                            }
 
-                    if (cdrrmoBox && cdrrmoText) {
-                        if (newStatus === 'certified') {
-                            cdrrmoBox.style.background = '#dcfce7';
-                            cdrrmoBox.style.borderColor = '#86efac';
-                            cdrrmoText.style.color = '#166534';
-                            cdrrmoText.innerHTML = `<strong>CDRRMO certification on file</strong><br>The declared hazard-area representation has been certified pursuant to CDRRMO field verification.`;
+                            // Hide action buttons
+                            if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
+
+                            showFlowAlert(`CDRRMO status updated to ${statusText}. Page will reload to reflect changes.`);
+                            location.reload();
                         } else {
-                            cdrrmoBox.style.background = '#fee2e2';
-                            cdrrmoBox.style.borderColor = '#fca5a5';
-                            cdrrmoText.style.color = '#991b1b';
-                            cdrrmoText.innerHTML = `<strong>CDRRMO certification not granted</strong><br>The declared location was not certified as a qualifying hazard area. The record will be reclassified for walk-in processing, as applicable.`;
+                            showFlowAlert('Error: ' + (data.error || 'Unknown error'));
                         }
-                    }
-
-                    // Hide action buttons
-                    if (cdrrmoActionsBox) cdrrmoActionsBox.style.display = 'none';
-
-                    showFlowAlert(`CDRRMO status updated to ${statusText}. Page will reload to reflect changes.`);
-                    location.reload();
-                } else {
-                    showFlowAlert('Error: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                showFlowAlert('Network error. Please try again.');
-            });
+                    })
+                    .catch(error => {
+                        showFlowAlert('Network error. Please try again.');
+                    });
+            }
+        });
     }
 
     function cancelEdit() {
@@ -3877,38 +3900,44 @@ function getCsrfToken() {
         const name = currentApplicant.fullName;
         const ref = currentApplicant.referenceNumber;
 
-        if (!confirm(`Archive this applicant record?\n\nName: ${name}\nReference: ${ref}\n\nThe applicant will be moved to the Archives list and will NOT be deleted.`)) {
-            return;
-        }
+        showNoticeModal({
+            title: 'Archive this applicant record?',
+            message: `Reference: ${ref}\n\nThe applicant will be moved to the Archives list and will NOT be deleted.`,
+            type: 'warning',
+            primaryText: 'OK',
+            secondaryText: 'Cancel',
+            applicantName: name,
+            onPrimary: () => {
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', getCsrfToken());
+                formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
+                formData.append('channel', currentApplicant.channel);
 
-        const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', getCsrfToken());
-        formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
-        formData.append('channel', currentApplicant.channel);
-
-        if (currentApplicant.channel === 'A') {
-            formData.append('submission_id', currentApplicant.submissionId);
-        }
-
-        fetch(window.APPLICANTS_CONFIG.proceedToApplicationsUrl, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showFlowAlert('Applicant archived successfully. Redirecting to Archives...', 'Success', null, 'success');
-                    closeReviewModal();
-                    setTimeout(function () {
-                        window.location.href = window.APPLICANTS_CONFIG.archiveListUrl;
-                    }, 1200);
-                } else {
-                    showFlowAlert('Error: ' + (data.error || 'Unknown error'));
+                if (currentApplicant.channel === 'A') {
+                    formData.append('submission_id', currentApplicant.submissionId);
                 }
-            })
-            .catch(error => {
-                showFlowAlert('Error: ' + error.message);
-            });
+
+                fetch(window.APPLICANTS_CONFIG.proceedToApplicationsUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showFlowAlert('Applicant archived successfully. Redirecting to Archives...', 'Success', null, 'success');
+                            closeReviewModal();
+                            setTimeout(function () {
+                                window.location.href = window.APPLICANTS_CONFIG.archiveListUrl;
+                            }, 1200);
+                        } else {
+                            showFlowAlert('Error: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        showFlowAlert('Error: ' + error.message);
+                    });
+            }
+        });
     }
 
 
@@ -5512,35 +5541,41 @@ function getCsrfToken() {
             return;
         }
 
-        if (!confirm('Reject this CDRRMO field report?\n\nThe applicant will be treated as not within a certified hazard area and reclassified for walk-in processing, where applicable.\n\nProceed?')) {
-            return;
-        }
+        showNoticeModal({
+            title: 'Reject CDRRMO Report?',
+            message: 'Reject this CDRRMO field report?\n\nThe applicant will be treated as not within a certified hazard area and reclassified for walk-in processing, where applicable.',
+            type: 'warning',
+            primaryText: 'Yes, Reject',
+            secondaryText: 'Cancel',
+            applicantName: currentApplicant ? currentApplicant.fullName : null,
+            onPrimary: () => {
+                const formData = new FormData();
+                formData.append('applicant_id', applicantId);
+                formData.append('decision', 'rejected');
+                formData.append('staff_notes', staffNotes);
 
-        const formData = new FormData();
-        formData.append('applicant_id', applicantId);
-        formData.append('decision', 'rejected');
-        formData.append('staff_notes', staffNotes);
-
-        fetch(window.APPLICANTS_CONFIG.updateCdrrmoStatusUrl, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showFlowAlert('CDRRMO disposition recorded as rejected.\n\nThe applicant record will be updated for walk-in processing and the page will reload.');
-                    closeReviewModal();
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showFlowAlert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                showFlowAlert('Error: ' + error.message);
-            });
+                fetch(window.APPLICANTS_CONFIG.updateCdrrmoStatusUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showFlowAlert('CDRRMO disposition recorded as rejected.\n\nThe applicant record will be updated for walk-in processing and the page will reload.');
+                            closeReviewModal();
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showFlowAlert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        showFlowAlert('Error: ' + error.message);
+                    });
+            }
+        });
     }
 
     function renderCdrrmoWorkflowTimeline(applicantData) {
@@ -5702,36 +5737,43 @@ function getCsrfToken() {
             showFlowAlert('Office receipt is only available while the CDRRMO certification record is still pending in the system (before a certified or not-certified disposition is filed).');
             return;
         }
-        if (!confirm('Record official CDRRMO certification as received at the THA intake office?\n\nThe applicant will be marked hazard-area certified, assigned a priority queue position where applicable, and notified by SMS if a mobile number is on file.\n\nProceed?')) {
-            return;
-        }
-        const extra = document.getElementById('officeCdrrmoReceiptNotes')?.value?.trim() || '';
-        const prefix = '[Official CDRRMO certification received at THA intake — ' + new Date().toISOString().slice(0, 10) + '] ';
-        const notes = extra ? (prefix + extra) : prefix;
-        const formData = new FormData();
-        formData.append('applicant_id', applicantId);
-        formData.append('decision', 'certified');
-        formData.append('notes', notes);
-        formData.append('office_receipt', '1');
-        formData.append('csrfmiddlewaretoken', getCsrfToken());
+        showNoticeModal({
+            title: 'Record CDRRMO Certification?',
+            message: 'Record official CDRRMO certification as received at the THA intake office?\n\nThe applicant will be marked hazard-area certified, assigned a priority queue position where applicable, and notified by SMS if a mobile number is on file.',
+            type: 'warning',
+            primaryText: 'Yes, Proceed',
+            secondaryText: 'Cancel',
+            applicantName: currentApplicant ? currentApplicant.fullName : null,
+            onPrimary: () => {
+                const extra = document.getElementById('officeCdrrmoReceiptNotes')?.value?.trim() || '';
+                const prefix = '[Official CDRRMO certification received at THA intake — ' + new Date().toISOString().slice(0, 10) + '] ';
+                const notes = extra ? (prefix + extra) : prefix;
+                const formData = new FormData();
+                formData.append('applicant_id', applicantId);
+                formData.append('decision', 'certified');
+                formData.append('notes', notes);
+                formData.append('office_receipt', '1');
+                formData.append('csrfmiddlewaretoken', getCsrfToken());
 
-        fetch(window.APPLICANTS_CONFIG.updateCdrrmoCertificationUrl, {
-            method: 'POST',
-            body: formData,
-        })
-            .then(function (response) { return response.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    showFlowAlert(data.message || 'CDRRMO certification recorded.');
-                    closeReviewModal();
-                    setTimeout(function () { location.reload(); }, 400);
-                } else {
-                    showFlowAlert(data.error || 'Unable to record certification.');
-                }
-            })
-            .catch(function (err) {
-                showFlowAlert('Error: ' + err.message);
-            });
+                fetch(window.APPLICANTS_CONFIG.updateCdrrmoCertificationUrl, {
+                    method: 'POST',
+                    body: formData,
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        if (data.success) {
+                            showFlowAlert(data.message || 'CDRRMO certification recorded.');
+                            closeReviewModal();
+                            setTimeout(function () { location.reload(); }, 400);
+                        } else {
+                            showFlowAlert(data.error || 'Unable to record certification.');
+                        }
+                    })
+                    .catch(function (err) {
+                        showFlowAlert('Error: ' + err.message);
+                    });
+            }
+        });
     }
 
     // Premium Hover Card popover initialization for tables
