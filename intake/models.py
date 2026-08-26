@@ -587,7 +587,17 @@ class Archive(models.Model):
 
     notes = models.TextField(blank=True)
 
+    # Restore flag: True when applicant has been restored from archive_list back
+    # to the REGISTERED APPLICANTS table.  Keeps the Archive row intact for audit
+    # purposes while hiding it from the ARCHIVED APPLICANT RECORDS page.
+    is_restored = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Set to True when applicant is restored from the archive list back to registration",
+    )
+
     class Meta:
+
         ordering = ['archived_at']
         verbose_name = "Intake Archive"
         verbose_name_plural = "Intake Archives"

@@ -1079,8 +1079,12 @@ def unarchive_applicant(request, position):
         applicant = archive_record.applicant
         
         with transaction.atomic():
-            # Delete the archive record which restores them to applicants_list
-            archive_record.delete()
+            # Flag the archive as restored instead of deleting it.
+            # This keeps the Archive row for audit trail while moving the
+            # applicant back to the REGISTERED APPLICANTS table and hiding
+            # them from the ARCHIVED APPLICANT RECORDS page.
+            archive_record.is_restored = True
+            archive_record.save(update_fields=['is_restored'])
             
             # Unset module 2 handoff in case they were pushed to evaluation
             if applicant.module2_handoff_at is not None:
@@ -2052,7 +2056,9 @@ def archive_list(request, position):
     search_query = (request.GET.get('q') or '').strip()
 
     archives_qs = (
-        Archive.objects.select_related(
+        Archive.objects.filter(
+            is_restored=False,  # Exclude restored archives (they appear in REGISTERED APPLICANTS instead)
+        ).select_related(
             'applicant',
             'archived_by',
             'applicant__module2_handoff_by',
