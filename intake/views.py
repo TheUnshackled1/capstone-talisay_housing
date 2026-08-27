@@ -2307,3 +2307,156 @@ def archive_list(request, position):
     }
 
     return render(request, 'staff/archive_list.html', context)
+
+
+# =============================================================================
+# PUBLIC — Applicant Status Tracker (no login required)
+# Linked from SMS deep-links:  /status/<ref>/
+# =============================================================================
+
+# Stage pipeline definition — order matters.
+_STATUS_PIPELINE = [
+    {
+        'key': 'registration',
+        'label': 'Rehistrasyon',
+        'label_en': 'Registration',
+        'statuses': [],  # reached by anyone who has a record
+        'description': 'Ang imo aplikasyon narehistro na sa Talisay Housing Authority.',
+        'description_en': 'Your application has been registered with the Talisay Housing Authority.',
+    },
+    {
+        'key': 'document_review',
+        'label': 'Pagsumiter sang Dokumento',
+        'label_en': 'Document Submission',
+        'statuses': ['pending', 'pending_cdrrmo', 'pending_followup', 'requirements'],
+        'description': 'Ang imo mga dokumento yara pa sa proseso sang pagsurob-suroy. Palihog maghulat.',
+        'description_en': 'Your documents are currently being reviewed. Please wait for further updates.',
+    },
+    {
+        'key': 'evaluation',
+        'label': 'Evaluation',
+        'label_en': 'Evaluation & Eligibility',
+        'statuses': ['eligible', 'application'],
+        'description': 'Ang imo aplikasyon yara na sa evaluation stage. Ang imo eligibility ginasulit sang mga opisyales.',
+        'description_en': 'Your application is now under evaluation. Your eligibility is being assessed by the officers.',
+    },
+    {
+        'key': 'form_generation',
+        'label': 'Porma',
+        'label_en': 'Form Generation',
+        'statuses': ['standby'],
+        'description': 'Ang imo porma gina-proseso na. Maghulat sang imbitasyon para sa imo orientasyon.',
+        'description_en': 'Your forms are being processed. Wait for an invitation to your orientation.',
+    },
+    {
+        'key': 'lot_awarding',
+        'label': 'Lot Awarding',
+        'label_en': 'Lot Awarding',
+        'statuses': ['awarded'],
+        'description': 'Congratulations! Ikaw na ang assignan sang lote. Palihog magdu-aw sa amon opisina para sa mga detalye.',
+        'description_en': 'Congratulations! You have been assigned a lot. Please visit our office for details.',
+    },
+]
+
+_DISQUALIFIED_STAGE = {
+    'key': 'disqualified',
+    'label': 'Nasarado',
+    'label_en': 'Application Closed',
+    'description': 'Ang imo aplikasyon indi ma-proseso pa. Palihog magdu-aw sa amon opisina para sa katarungan.',
+    'description_en': 'Your application could not be processed. Please visit our office for more information.',
+}
+
+
+def _resolve_pipeline_stage(status: str):
+    """
+    Returns (active_index, stages_list) based on the applicant status.
+    For disqualified, returns (-1, None) and the caller uses _DISQUALIFIED_STAGE.
+    """
+    if status == 'disqualified':
+        return -1, None
+
+    # Registration is always step 0 (completed if any record exists)
+    for idx, stage in enumerate(_STATUS_PIPELINE):
+        if status in stage['statuses']:
+            return idx, _STATUS_PIPELINE
+    # Unknown / default: show as document review
+    return 1, _STATUS_PIPELINE
+
+
+def applicant_status_tracker(request, ref):
+    """
+    Public (no-login) applicant status tracker page.
+    URL: /status/<ref>/
+
+    Resolves the applicant by reference number. If not found in active applicants,
+    checks the Archive table (applicants who were moved to Module 2+).
+    Renders a mobile-friendly status card — safe fields only (name + ref + stage).
+    """
+    ref = (ref or '').strip().upper()
+
+    applicant = None
+    archive = None
+    applicant_name = ''
+    applicant_status = ''
+    updated_at = None
+
+    # 1. Try active applicant first
+    try:
+        applicant = Applicant.objects.get(reference_number=ref)
+        applicant_name = applicant.full_name or ''
+        applicant_status = applicant.status or 'pending'
+        updated_at = applicant.updated_at
+    except Applicant.DoesNotExist:
+        pass
+
+    # 2. If not found in active, check Archive (forwarded to Module 2+)
+    if applicant is None:
+        try:
+            archive = Archive.objects.filter(
+                reference_number_snapshot=ref
+            ).order_by('-archived_at').first()
+            if archive:
+                applicant_name = archive.full_name_snapshot or ''
+                # Archived means they were forwarded — treat as evaluation/application stage
+                applicant_status = 'application'
+                updated_at = archive.archived_at
+        except Exception:
+            pass
+
+    # 3. If still not found, render a clean "not found" page
+    if applicant is None and archive is None:
+        return render(request, 'public/status_tracker.html', {
+            'not_found': True,
+            'ref': ref,
+        })
+
+    # Resolve pipeline stage
+    active_index, pipeline = _resolve_pipeline_stage(applicant_status)
+    is_disqualified = (active_index == -1)
+
+    # Build stage list with state flags for the template
+    stages = []
+    if pipeline:
+        for idx, stage in enumerate(pipeline):
+            if idx == 0:
+                state = 'done'  # Registration is always done if record exists
+            elif idx < active_index:
+                state = 'done'
+            elif idx == active_index:
+                state = 'active'
+            else:
+                state = 'pending'
+            stages.append({**stage, 'state': state})
+
+    context = {
+        'not_found': False,
+        'ref': ref,
+        'applicant_name': applicant_name,
+        'applicant_status': applicant_status,
+        'updated_at': updated_at,
+        'stages': stages,
+        'is_disqualified': is_disqualified,
+        'disqualified_stage': _DISQUALIFIED_STAGE if is_disqualified else None,
+        'active_stage': stages[active_index] if (stages and not is_disqualified) else None,
+    }
+    return render(request, 'public/status_tracker.html', context)

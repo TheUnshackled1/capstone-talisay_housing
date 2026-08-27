@@ -28,4 +28,9 @@ urlpatterns = [
     path('staff/<str:position>/proceed-to-applications/', views.proceed_to_applications, name='proceed_to_applications'),
     path('staff/<str:position>/delete-applicant/', views.delete_applicant, name='delete_applicant'),
     path('staff/<str:position>/unarchive-applicant/', views.unarchive_applicant, name='unarchive_applicant'),
+
+    # --- Public (no login required) ---
+    # Applicant status tracker — deep-linked from SMS messages.
+    # Example: /status/APP-20260827-1234/
+    path('status/<str:ref>/', views.applicant_status_tracker, name='applicant_status_tracker'),
 ]

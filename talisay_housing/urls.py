@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from accounts import views as accounts_views
+from intake import views as intake_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -16,6 +17,10 @@ urlpatterns = [
     path("documents/", include("documents.urls")),
     path("units/", include("units.urls")),
     path("cases/", include("cases.urls")),
+
+    # Public — Applicant status tracker (no login required, SMS deep link)
+    # Clean short URL: talisayihms.com/status/APP-20260827-1234/
+    path("status/<str:ref>/", intake_views.applicant_status_tracker, name='applicant_status_tracker'),
 ]
 
 # Serve media files during development

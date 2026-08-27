@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>{% if not_found %}Application Not Found{% else %}Application Status - {{ ref }}{% endif %} | Talisay Housing Authority</title>
+    <meta name="description" content="Check your housing application status with the Talisay Housing Authority.">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --green-dark: #064e3b; --green-mid: #059669; --green-pale: #d1fae5;
+            --gold: #d4af37; --red: #dc2626; --red-pale: #fee2e2;
+            --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db;
+            --gray-400: #9ca3af; --gray-500: #6b7280; --gray-700: #374151; --gray-800: #1f2937;
+            --white: #ffffff; --radius-lg: 1.25rem; --radius-pill: 999px;
+        }
+        html, body { min-height: 100%; font-family: 'Inter','Segoe UI',sans-serif; background: linear-gradient(145deg,#064e3b 0%,#065f46 30%,#0d9488 70%,#0f766e 100%); background-attachment: fixed; }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+        .tracker-header { width: 100%; max-width: 480px; text-align: center; margin-bottom: 1.5rem; animation: fadeDown .5s ease-out; }
+        .tracker-logo-ring { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.15); backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,.3); margin-bottom: .75rem; }
+        .tracker-logo-ring svg { width: 32px; height: 32px; color: #fff; }
+        .tracker-org-name { font-size: .75rem; font-weight: 600; color: rgba(255,255,255,.75); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .2rem; }
+        .tracker-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+        .tracker-card { width: 100%; max-width: 480px; background: var(--white); border-radius: var(--radius-lg); box-shadow: 0 24px 64px rgba(0,0,0,.18),0 4px 16px rgba(0,0,0,.1); overflow: hidden; animation: scaleIn .45s cubic-bezier(.34,1.56,.64,1); }
+        .card-accent { height: 5px; background: linear-gradient(90deg,#059669 0%,#34d399 60%,#d4af37 100%); }
+        .card-body { padding: 1.75rem 1.5rem 1.5rem; }
+        .applicant-greeting { font-size: 1.35rem; font-weight: 800; color: var(--gray-800); line-height: 1.2; margin-bottom: .4rem; }
+        .ref-badge { display: inline-flex; align-items: center; gap: .4rem; background: var(--green-pale); color: var(--green-dark); font-size: .72rem; font-weight: 700; letter-spacing: .06em; padding: .3rem .75rem; border-radius: var(--radius-pill); border: 1px solid rgba(5,150,105,.2); margin-bottom: 1.25rem; }
+        .ref-badge svg { width: 12px; height: 12px; }
+        .card-divider { height: 1px; background: var(--gray-100); margin: 0 -1.5rem 1.5rem; }
+        .stage-banner { background: linear-gradient(135deg,#ecfdf5,#f0fdf4); border: 1.5px solid rgba(5,150,105,.25); border-radius: .85rem; padding: 1rem 1.15rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: .75rem; }
+        .stage-banner.is-awarded { background: linear-gradient(135deg,#fefce8,#fef9c3); border-color: rgba(212,175,55,.4); }
+        .stage-banner.is-disqualified { background: var(--red-pale); border-color: rgba(220,38,38,.25); }
+        .stage-banner-icon { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--green-mid); display: flex; align-items: center; justify-content: center; }
+        .stage-banner-icon.awarded { background: var(--gold); }
+        .stage-banner-icon.disqualified { background: var(--red); }
+        .stage-banner-icon svg { width: 18px; height: 18px; color: #fff; }
+        .stage-banner-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--green-mid); margin-bottom: .15rem; }
+        .stage-banner-label.awarded { color: #92400e; }
+        .stage-banner-label.disqualified { color: var(--red); }
+        .stage-banner-title { font-size: 1rem; font-weight: 700; color: var(--gray-800); margin-bottom: .3rem; }
+        .stage-banner-desc { font-size: .82rem; color: var(--gray-700); line-height: 1.55; }
+        .pipeline-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 1rem; }
+        .pipeline { display: flex; flex-direction: column; }
+        .pipeline-step { display: flex; align-items: flex-start; gap: .85rem; position: relative; }
+        .pipeline-step:not(:last-child)::after { content: ''; position: absolute; left: 16px; top: 33px; width: 2px; bottom: -4px; background: var(--gray-200); z-index: 0; }
+        .pipeline-step.done::after { background: var(--green-mid); }
+        .pipeline-step.active::after { background: linear-gradient(to bottom,var(--green-mid),var(--gray-200)); }
+        .step-icon-wrap { position: relative; z-index: 1; flex-shrink: 0; margin-top: 4px; }
+        .step-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid var(--gray-300); background: var(--white); }
+        .pipeline-step.done .step-icon { background: var(--green-mid); border-color: var(--green-mid); }
+        .pipeline-step.active .step-icon { background: var(--green-mid); border-color: var(--green-mid); animation: pulse 2s ease-in-out infinite; }
+        .step-icon svg { width: 16px; height: 16px; }
+        .pipeline-step.done .step-icon svg, .pipeline-step.active .step-icon svg { color: #fff; }
+        .pipeline-step.pending .step-icon svg { color: var(--gray-300); }
+        .step-content { padding: 6px 0 20px; flex: 1; }
+        .step-name { font-size: .88rem; font-weight: 700; color: var(--gray-800); }
+        .pipeline-step.pending .step-name { color: var(--gray-400); font-weight: 500; }
+        .step-name-sub { font-size: .72rem; color: var(--gray-400); margin-top: .1rem; }
+        .step-state-badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .65rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: .15rem .55rem; border-radius: var(--radius-pill); margin-top: .35rem; }
+        .step-state-badge.done { background: #d1fae5; color: #065f46; }
+        .step-state-badge.active { background: rgba(5,150,105,.12); color: var(--green-mid); }
+        .step-state-badge.pending { background: var(--gray-100); color: var(--gray-400); }
+        .updated-row { margin-top: .5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100); font-size: .72rem; color: var(--gray-400); text-align: center; }
+        .tracker-footer { width: 100%; max-width: 480px; margin-top: 1.25rem; background: rgba(255,255,255,.08); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.15); border-radius: .85rem; padding: 1rem 1.25rem; text-align: center; animation: fadeUp .6s ease-out .3s both; }
+        .footer-label { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.6); margin-bottom: .35rem; }
+        .footer-office { font-size: .82rem; font-weight: 600; color: rgba(255,255,255,.9); margin-bottom: .15rem; }
+        .footer-address { font-size: .75rem; color: rgba(255,255,255,.65); }
+        .not-found-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--red-pale); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+        .not-found-icon svg { width: 28px; height: 28px; color: var(--red); }
+        .not-found-title { font-size: 1.1rem; font-weight: 700; color: var(--gray-800); margin-bottom: .5rem; text-align: center; }
+        .not-found-desc { font-size: .84rem; color: var(--gray-500); text-align: center; line-height: 1.6; }
+        .not-found-ref { margin-top: .75rem; background: var(--gray-100); border-radius: .5rem; padding: .5rem 1rem; font-size: .78rem; font-weight: 600; color: var(--gray-700); text-align: center; font-family: monospace; letter-spacing: .05em; }
+        @keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes scaleIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse {
+            0%,100%{box-shadow:0 0 0 4px rgba(5,150,105,.15),0 0 0 8px rgba(5,150,105,.07)}
+            50%{box-shadow:0 0 0 6px rgba(5,150,105,.22),0 0 0 12px rgba(5,150,105,.06)}
+        }
+    </style>
+</head>
+<body>
+
+<header class="tracker-header">
+    <div class="tracker-logo-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+    </div>
+    <p class="tracker-org-name">Talisay Housing Authority</p>
+    <h1 class="tracker-title">Application Status Tracker</h1>
+</header>
+
+<main class="tracker-card" role="main">
+    <div class="card-accent"></div>
+    <div class="card-body">
+
+        {% if not_found %}
+        <div class="not-found-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+        </div>
+        <p class="not-found-title">Application Not Found</p>
+        <p class="not-found-desc">
+            Wala kami nakit-an nga aplikasyon para sa reference number na imo ginpasok.<br>
+            <em>We could not find an application for the reference number you provided.</em>
+        </p>
+        {% if ref %}<div class="not-found-ref">{{ ref }}</div>{% endif %}
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #f3f4f6;font-size:.8rem;color:#6b7280;text-align:center;line-height:1.6;">
+            Palihog i-check ang imo reference number ukon magdu-aw sa amon opisina.<br>
+            <em>Please double-check your reference number or visit our office.</em>
+        </div>
+
+        {% else %}
+
+        <p class="applicant-greeting">{{ applicant_name }}</p>
+        <span class="ref-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+            {{ ref }}
+        </span>
+
+        <div class="card-divider"></div>
+
+        {% if is_disqualified %}
+        <div class="stage-banner is-disqualified">
+            <div class="stage-banner-icon disqualified">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stage-banner-label disqualified">{{ disqualified_stage.label_en }}</div>
+                <div class="stage-banner-title">{{ disqualified_stage.label }}</div>
+                <div class="stage-banner-desc">{{ disqualified_stage.description }}</div>
+            </div>
+        </div>
+
+        {% elif active_stage and active_stage.key == 'lot_awarding' %}
+        <div class="stage-banner is-awarded">
+            <div class="stage-banner-icon awarded">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stage-banner-label awarded">Current Stage</div>
+                <div class="stage-banner-title">{{ active_stage.label }}</div>
+                <div class="stage-banner-desc">{{ active_stage.description }}</div>
+            </div>
+        </div>
+
+        {% elif active_stage %}
+        <div class="stage-banner">
+            <div class="stage-banner-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            </div>
+            <div>
+                <div class="stage-banner-label">Current Stage</div>
+                <div class="stage-banner-title">{{ active_stage.label }}</div>
+                <div class="stage-banner-desc">{{ active_stage.description }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if stages %}
+        <p class="pipeline-label">Application Pipeline</p>
+        <div class="pipeline" role="list">
+            {% for step in stages %}
+            <div class="pipeline-step {{ step.state }}" role="listitem">
+                <div class="step-icon-wrap">
+                    <div class="step-icon">
+                        {% if step.state == 'done' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        {% elif step.state == 'active' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {% else %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="step-content">
+                    <div class="step-name">{{ step.label }}</div>
+                    <div class="step-name-sub">{{ step.label_en }}</div>
+                    <span class="step-state-badge {{ step.state }}">
+                        {% if step.state == 'done' %}&#10003; Completed
+                        {% elif step.state == 'active' %}&rarr; In Progress
+                        {% else %}Waiting{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if updated_at %}
+        <div class="updated-row">Last updated: {{ updated_at|date:"F j, Y" }}</div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+</main>
+
+<footer class="tracker-footer">
+    <p class="footer-label">Need Help? / May Pamangkot?</p>
+    <p class="footer-office">Talisay City Housing Authority</p>
+    <p class="footer-address">Talisay City, Negros Occidental &mdash; Region VI</p>
+</footer>
+
+</body>
+</html>

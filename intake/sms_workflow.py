@@ -44,6 +44,26 @@ def _tha_ref_name_header(applicant) -> str:
     return f'THA Ref# {ref}'
 
 
+def _status_link_suffix(ref: str, base_url: str = '') -> str:
+    """
+    Build the trailing status-tracker link for an SMS message.
+    Returns empty string if base_url is not provided.
+    """
+    base_url = (base_url or '').strip().rstrip('/')
+    if not base_url or not ref:
+        return ''
+    return f' I-check ang imo status diri: {base_url}/status/{ref}'
+
+
+def _get_default_base_url() -> str:
+    """Read PUBLIC_STATUS_BASE_URL from Django settings (safe — returns '' on error)."""
+    try:
+        from django.conf import settings
+        return (getattr(settings, 'PUBLIC_STATUS_BASE_URL', '') or '').rstrip('/')
+    except Exception:
+        return ''
+
+
 def _applicant_has_isf_situational_on_file(applicant) -> bool:
     """True when ISF-SIT / isf_situational_docs is already in the document vault."""
     if applicant is None:
@@ -58,7 +78,7 @@ def _situation_clause_proceed_sms(displacement_reason: str, *, has_isf_situation
     """
     Hiligaynon add-on by Applicant Situation (Module 1 Layer 3 / displacement_reason).
 
-    Options B/C: when ISF-SIT is already on file, omit the extra “submit required documentation”
+    Options B/C: when ISF-SIT is already on file, omit the extra "submit required documentation"
     reminder (baseline scans are complete and situational docs were filed).
     """
     dr = (displacement_reason or '').strip()
@@ -98,23 +118,23 @@ def _situation_clause_proceed_sms(displacement_reason: str, *, has_isf_situation
     )
 
 
-def message_ready_for_form_queue_reminder(applicant) -> str:
+def message_ready_for_form_queue_reminder(applicant, base_url: str = '') -> str:
     """
     Hiligaynon Go to Form reminder — sent when staff clicks **Proceed to Ready for Form queue**
     on the Application & Evaluation list (``applications.views.proceed_to_form_queue``).
     """
     head = _tha_ref_name_header(applicant)
+    ref = (getattr(applicant, 'reference_number', None) or '').strip()
+    if not base_url:
+        base_url = _get_default_base_url()
+    link = _status_link_suffix(ref, base_url)
     return (
         f'{head}: Ang imo aplikasyon yara sa Form Generation magahulat nalang kita sang ila nga perma nga ini paga permahan sang mga opisyales na nagahulugan sang eligibility '
-        f'Mag-hulat sang updates ukon magdu-aw sa Talisay Housing Authority kon kinahanglan. Salamat!'
+        f'Mag-hulat sang updates ukon magdu-aw sa Talisay Housing Authority kon kinahanglan. Salamat!{link}'
     )
 
 
-
-
-
-
-def message_proceed_to_evaluation(applicant) -> str:
+def message_proceed_to_evaluation(applicant, base_url: str = '') -> str:
     """
     Hiligaynon handoff SMS toward Application & Eligibility.
 
@@ -122,6 +142,10 @@ def message_proceed_to_evaluation(applicant) -> str:
     Uses ``_situation_clause_proceed_sms`` for next steps — not the document list from LIST SMS.
     """
     head = _tha_ref_name_header(applicant)
+    ref = (getattr(applicant, 'reference_number', None) or '').strip()
+    if not base_url:
+        base_url = _get_default_base_url()
+    link = _status_link_suffix(ref, base_url)
     dr = (getattr(applicant, 'displacement_reason', None) or '').strip()
     has_isf = dr in ('ejected', 'relocated') and _applicant_has_isf_situational_on_file(applicant)
     base = (
@@ -130,8 +154,8 @@ def message_proceed_to_evaluation(applicant) -> str:
     )
     situation = _situation_clause_proceed_sms(dr, has_isf_situational=has_isf)
     if has_isf:
-        return f'{base}{situation}'
-    closing = 'Mag-hulat sang updates para sa eligibility. Salamat!'
+        return f'{base}{situation}{link}'
+    closing = f'Mag-hulat sang updates para sa eligibility. Salamat!{link}'
     return f'{base}{situation}{closing}'
 
 
@@ -149,7 +173,7 @@ def format_orientation_schedule(when) -> str:
 def lot_awarding_notify_body(*, orientation_at=None) -> str:
     """
     Core Hiligaynon body for lot-awarding / orientation SMS (no THA header, no name suffix).
-    When orientation_at is set, include the schedule instead of “wait for schedule”.
+    When orientation_at is set, include the schedule instead of "wait for schedule".
     """
     if orientation_at:
         when_label = format_orientation_schedule(orientation_at)
@@ -163,10 +187,14 @@ def lot_awarding_notify_body(*, orientation_at=None) -> str:
     )
 
 
-def message_proceed_to_lot_awarding(applicant, *, orientation_at=None) -> str:
+def message_proceed_to_lot_awarding(applicant, *, orientation_at=None, base_url: str = '') -> str:
     """
     Hiligaynon lot-awarding notification.
     Fits in a single SMS (160 chars) if head is standard length.
     """
     head = _tha_ref_name_header(applicant)
-    return f'{head}: {lot_awarding_notify_body(orientation_at=orientation_at)}'
+    ref = (getattr(applicant, 'reference_number', None) or '').strip()
+    if not base_url:
+        base_url = _get_default_base_url()
+    link = _status_link_suffix(ref, base_url)
+    return f'{head}: {lot_awarding_notify_body(orientation_at=orientation_at)}{link}'

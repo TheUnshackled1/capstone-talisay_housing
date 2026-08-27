@@ -273,6 +273,14 @@ SEMAPHORE_SEND_TIMEOUT_SECONDS = float(os.environ.get('SEMAPHORE_SEND_TIMEOUT_SE
 SEMAPHORE_SEND_RETRY_ATTEMPTS = int(os.environ.get('SEMAPHORE_SEND_RETRY_ATTEMPTS', '2'))
 SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS = float(os.environ.get('SEMAPHORE_SEND_RETRY_BACKOFF_SECONDS', '1.0'))
 
+# Public applicant status tracker — deep-linked from SMS messages.
+# Example: https://talisayihms.com  (no trailing slash)
+# Set PUBLIC_STATUS_BASE_URL in .env for production; falls back to localhost for local dev.
+PUBLIC_STATUS_BASE_URL = os.environ.get(
+    'PUBLIC_STATUS_BASE_URL',
+    'https://talisayihms.com' if not DEBUG else 'http://localhost:8000',
+).rstrip('/')
+
 if SMS_SERVICE == 'semaphore' and SEMAPHORE_API_KEY:
     _sms_queue = 'priority' if SEMAPHORE_USE_PRIORITY_QUEUE else 'standard'
     _sms_boot = (
