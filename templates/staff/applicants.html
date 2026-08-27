@@ -654,7 +654,7 @@
                             </div>
                         </td>
                         <td style="text-align: center; vertical-align: middle;"
-                            title="{% if row.blacklistBlocked %}Blacklisted — cannot proceed to Applicant Requirements ({{ row.scannedCount }}/{{ row.requirementsTotal }} docs on file){% else %}Applicant Requirements (scan checklist): {{ row.scannedCount }}/{{ row.requirementsTotal }} filed — same totals as Documents{% endif %}">
+                            title="{% if row.blacklistBlocked %}Blacklisted — cannot proceed to Applicant Requirements ({{ row.requiredScannedCount }}/{{ row.requiredTotal }} required docs on file){% else %}Applicant Requirements (scan checklist): {{ row.requiredScannedCount }}/{{ row.requiredTotal }} required filed{% endif %}">
                             <span class="pastel-status-pill status--{{ row.requirementsStatusTier }}">
                                 {% if row.requirementsStatusTier == 'pending' or row.requirementsStatusTier == 'incomplete' or row.requirementsStatusTier == 'complete' %}
                                 <span class="pulse-dot"></span>
@@ -664,12 +664,12 @@
                         </td>
                         <td style="vertical-align: middle; text-align: center;">
                             <button type="button"
-                                class="btn-archive-docs {% if row.requiredTotal > 0 and row.requiredScannedCount >= row.requiredTotal %}btn-archive-docs--done{% elif row.scannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
+                                class="btn-archive-docs {% if row.requiredTotal > 0 and row.requiredScannedCount >= row.requiredTotal %}btn-archive-docs--done{% elif row.requiredScannedCount > 0 %}btn-archive-docs--partial{% else %}btn-archive-docs--none{% endif %}"
                                 onclick="openArchiveRequirementsModal(this)" data-reference="{{ row.referenceNumber }}"
-                                title="Applicant requirement scan checklist — {{ row.scannedCount }} of {{ row.requirementsTotal }} digitally filed">
+                                title="Applicant requirement scan checklist — {{ row.requiredScannedCount }} of {{ row.requiredTotal }} required digitally filed">
                                 <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-                                    <span style="letter-spacing: 1px; font-size: 0.6rem; line-height: 1; opacity: 0.95;">{% for i in '123456789012345'|make_list %}{% if forloop.counter <= row.scannedCount %}█{% elif forloop.counter <= row.requirementsTotal %}░{% endif %}{% endfor %}</span>
-                                    <span style="font-weight: 700; font-size: 0.6rem; white-space: nowrap;">{{ row.scannedCount }}/{{ row.requirementsTotal }}</span>
+                                    <span style="letter-spacing: 1px; font-size: 0.6rem; line-height: 1; opacity: 0.95;">{% for i in '123456789012345'|make_list %}{% if forloop.counter <= row.requiredScannedCount %}█{% elif forloop.counter <= row.requiredTotal %}░{% endif %}{% endfor %}</span>
+                                    <span style="font-weight: 700; font-size: 0.6rem; white-space: nowrap;">{{ row.requiredScannedCount }}/{{ row.requiredTotal }}</span>
                                 </div>
                             </button>
                         </td>
