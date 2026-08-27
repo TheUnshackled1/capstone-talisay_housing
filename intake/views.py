@@ -1439,6 +1439,8 @@ def applicants_list(request, position):
             archives__isnull=True,
         ).exclude(
             intake_registration_exclude_q(),
+        ).exclude(
+            application__isnull=False,
         ).distinct().select_related(
             'barangay', 'eligibility_checked_by', 'registered_by'
         ).prefetch_related(
@@ -1476,6 +1478,8 @@ def applicants_list(request, position):
             applicant__module2_handoff_at__isnull=True,
         ).exclude(
             intake_registration_exclude_q(prefix='applicant__'),
+        ).exclude(
+            applicant__application__isnull=False,
         ).select_related(
             'archived_by',
             'applicant',
@@ -2073,6 +2077,8 @@ def archive_list(request, position):
             is_restored=False,  # Exclude restored archives (they appear in REGISTERED APPLICANTS instead)
         ).exclude(
             intake_registration_exclude_q(prefix='applicant__'),
+        ).exclude(
+            applicant__application__isnull=False,
         ).select_related(
             'applicant',
             'archived_by',
