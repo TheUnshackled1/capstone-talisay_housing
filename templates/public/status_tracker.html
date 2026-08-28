@@ -8,79 +8,251 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --green-dark: #064e3b; --green-mid: #059669; --green-pale: #d1fae5;
-            --gold: #d4af37; --red: #dc2626; --red-pale: #fee2e2;
-            --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db;
-            --gray-400: #9ca3af; --gray-500: #6b7280; --gray-700: #374151; --gray-800: #1f2937;
-            --white: #ffffff; --radius-lg: 1.25rem; --radius-pill: 999px;
+            /* IHSMS sidebar navy palette */
+            --navy-900: #0f1f3d;
+            --navy-800: #16305a;
+            --navy-700: #1e3f72;
+            /* Gradient icon palette — mirrors sidebar icons */
+            --blue-from: #3b82f6;  --blue-to: #1d4ed8;
+            --amber-from: #f59e0b; --amber-to: #b45309;
+            --purple-from: #a855f7;--purple-to: #7c3aed;
+            --emerald-from: #10b981;--emerald-to: #047857;
+            --red-from: #f43f5e;   --red-to: #be123c;
+            /* Card tints */
+            --blue-bg: #eff6ff;    --blue-border: #bfdbfe;
+            --amber-bg: #fffbeb;   --amber-border: #fde68a;
+            --red-bg: #fff1f2;     --red-border: #fecdd3;
+            --emerald-bg: #ecfdf5; --emerald-border: #a7f3d0;
+            /* Neutrals */
+            --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+            --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280;
+            --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
+            --white: #ffffff;
+            --radius-xl: 1.5rem; --radius-lg: 1rem; --radius-md: .75rem; --radius-pill: 999px;
         }
-        html, body { min-height: 100%; font-family: 'Inter','Segoe UI',sans-serif; background: linear-gradient(145deg,#064e3b 0%,#065f46 30%,#0d9488 70%,#0f766e 100%); background-attachment: fixed; }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
-        .tracker-header { width: 100%; max-width: 480px; text-align: center; margin-bottom: 1.5rem; animation: fadeDown .5s ease-out; }
-        .tracker-logo-ring { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.15); backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,.3); margin-bottom: .75rem; }
-        .tracker-logo-ring svg { width: 32px; height: 32px; color: #fff; }
-        .tracker-org-name { font-size: .75rem; font-weight: 600; color: rgba(255,255,255,.75); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .2rem; }
-        .tracker-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
-        .tracker-card { width: 100%; max-width: 480px; background: var(--white); border-radius: var(--radius-lg); box-shadow: 0 24px 64px rgba(0,0,0,.18),0 4px 16px rgba(0,0,0,.1); overflow: hidden; animation: scaleIn .45s cubic-bezier(.34,1.56,.64,1); }
-        .card-accent { height: 5px; background: linear-gradient(90deg,#059669 0%,#34d399 60%,#d4af37 100%); }
-        .card-body { padding: 1.75rem 1.5rem 1.5rem; }
-        .applicant-greeting { font-size: 1.35rem; font-weight: 800; color: var(--gray-800); line-height: 1.2; margin-bottom: .4rem; }
-        .ref-badge { display: inline-flex; align-items: center; gap: .4rem; background: var(--green-pale); color: var(--green-dark); font-size: .72rem; font-weight: 700; letter-spacing: .06em; padding: .3rem .75rem; border-radius: var(--radius-pill); border: 1px solid rgba(5,150,105,.2); margin-bottom: 1.25rem; }
+
+        html, body {
+            min-height: 100%;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            /* Deep IHSMS navy gradient — like the sidebar */
+            background: linear-gradient(150deg, var(--navy-900) 0%, var(--navy-800) 50%, var(--navy-700) 100%);
+            background-attachment: fixed;
+        }
+        body {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: flex-start; min-height: 100vh;
+            padding: 2rem 1rem 4rem;
+        }
+
+        /* ── HEADER ── */
+        .tracker-header {
+            width: 100%; max-width: 500px;
+            text-align: center; margin-bottom: 1.75rem;
+            animation: fadeDown .5s ease-out;
+        }
+        /* Square gradient icon block — exactly like the sidebar items */
+        .tracker-logo-ring {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 72px; height: 72px; border-radius: 20px;
+            background: linear-gradient(135deg, var(--emerald-from), var(--emerald-to));
+            box-shadow: 0 8px 24px rgba(16,185,129,.4), 0 2px 8px rgba(16,185,129,.2);
+            margin-bottom: 1rem;
+        }
+        .tracker-logo-ring svg { width: 36px; height: 36px; color: #fff; }
+        .tracker-org-name {
+            font-size: .68rem; font-weight: 700; color: rgba(255,255,255,.5);
+            letter-spacing: .15em; text-transform: uppercase; margin-bottom: .3rem;
+        }
+        .tracker-title {
+            font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -.01em;
+        }
+
+        /* ── CARD ── */
+        .tracker-card {
+            width: 100%; max-width: 500px; background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 32px 80px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.15);
+            overflow: hidden;
+            animation: scaleIn .45s cubic-bezier(.34,1.56,.64,1);
+        }
+        /* Multi-color accent stripe — like the sidebar active indicator */
+        .card-accent {
+            height: 4px;
+            background: linear-gradient(90deg,
+                var(--blue-from) 0%,
+                var(--purple-from) 35%,
+                var(--emerald-from) 65%,
+                var(--amber-from) 100%);
+        }
+        .card-body { padding: 2rem 1.75rem 1.75rem; }
+
+        /* ── APPLICANT ── */
+        .applicant-greeting {
+            font-size: 1.45rem; font-weight: 900; color: var(--gray-900);
+            line-height: 1.15; margin-bottom: .5rem; letter-spacing: -.02em;
+        }
+        .ref-badge {
+            display: inline-flex; align-items: center; gap: .4rem;
+            background: var(--emerald-bg); color: var(--emerald-to);
+            font-size: .72rem; font-weight: 700; letter-spacing: .06em;
+            padding: .35rem .85rem; border-radius: var(--radius-pill);
+            border: 1.5px solid var(--emerald-border); margin-bottom: 1.5rem;
+        }
         .ref-badge svg { width: 12px; height: 12px; }
-        .card-divider { height: 1px; background: var(--gray-100); margin: 0 -1.5rem 1.5rem; }
-        .stage-banner { background: linear-gradient(135deg,#ecfdf5,#f0fdf4); border: 1.5px solid rgba(5,150,105,.25); border-radius: .85rem; padding: 1rem 1.15rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: .75rem; }
-        .stage-banner.is-awarded { background: linear-gradient(135deg,#fefce8,#fef9c3); border-color: rgba(212,175,55,.4); }
-        .stage-banner.is-disqualified { background: var(--red-pale); border-color: rgba(220,38,38,.25); }
-        .stage-banner-icon { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--green-mid); display: flex; align-items: center; justify-content: center; }
-        .stage-banner-icon.awarded { background: var(--gold); }
-        .stage-banner-icon.disqualified { background: var(--red); }
-        .stage-banner-icon svg { width: 18px; height: 18px; color: #fff; }
-        .stage-banner-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--green-mid); margin-bottom: .15rem; }
-        .stage-banner-label.awarded { color: #92400e; }
-        .stage-banner-label.disqualified { color: var(--red); }
-        .stage-banner-title { font-size: 1rem; font-weight: 700; color: var(--gray-800); margin-bottom: .3rem; }
-        .stage-banner-desc { font-size: .82rem; color: var(--gray-700); line-height: 1.55; }
-        .pipeline-label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 1rem; }
+        .card-divider { height: 1px; background: var(--gray-100); margin: 0 -1.75rem 1.75rem; }
+
+        /* ── STAGE BANNER — tinted card with square gradient icon ── */
+        .stage-banner {
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1.2rem;
+            margin-bottom: 1.75rem;
+            display: flex; align-items: flex-start; gap: 1rem;
+            background: var(--blue-bg); border: 1.5px solid var(--blue-border);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .stage-banner:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,.14); }
+        .stage-banner.is-awarded { background: var(--amber-bg); border-color: var(--amber-border); }
+        .stage-banner.is-awarded:hover { box-shadow: 0 8px 24px rgba(245,158,11,.14); }
+        .stage-banner.is-disqualified { background: var(--red-bg); border-color: var(--red-border); }
+        .stage-banner.is-disqualified:hover { box-shadow: 0 8px 24px rgba(244,63,94,.14); }
+
+        /* Sidebar-style square icon block */
+        .stage-banner-icon {
+            flex-shrink: 0; width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--blue-from), var(--blue-to));
+            box-shadow: 0 6px 16px rgba(59,130,246,.3), 0 2px 6px rgba(59,130,246,.15);
+        }
+        .stage-banner-icon.awarded {
+            background: linear-gradient(135deg, var(--amber-from), var(--amber-to));
+            box-shadow: 0 6px 16px rgba(245,158,11,.3), 0 2px 6px rgba(245,158,11,.15);
+        }
+        .stage-banner-icon.disqualified {
+            background: linear-gradient(135deg, var(--red-from), var(--red-to));
+            box-shadow: 0 6px 16px rgba(244,63,94,.3), 0 2px 6px rgba(244,63,94,.15);
+        }
+        .stage-banner-icon svg { width: 22px; height: 22px; color: #fff; }
+
+        .stage-banner-label {
+            font-size: .64rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .1em; color: var(--blue-to); margin-bottom: .15rem;
+        }
+        .stage-banner-label.awarded { color: var(--amber-to); }
+        .stage-banner-label.disqualified { color: var(--red-to); }
+        .stage-banner-title { font-size: 1rem; font-weight: 800; color: var(--gray-900); margin-bottom: .3rem; }
+        .stage-banner-desc { font-size: .82rem; color: var(--gray-700); line-height: 1.6; }
+
+        /* ── PIPELINE ── */
+        .pipeline-label {
+            font-size: .67rem; font-weight: 700; letter-spacing: .1em;
+            text-transform: uppercase; color: var(--gray-400); margin-bottom: 1.1rem;
+        }
         .pipeline { display: flex; flex-direction: column; }
-        .pipeline-step { display: flex; align-items: flex-start; gap: .85rem; position: relative; }
-        .pipeline-step:not(:last-child)::after { content: ''; position: absolute; left: 16px; top: 33px; width: 2px; bottom: -4px; background: var(--gray-200); z-index: 0; }
-        .pipeline-step.done::after { background: var(--green-mid); }
-        .pipeline-step.active::after { background: linear-gradient(to bottom,var(--green-mid),var(--gray-200)); }
-        .step-icon-wrap { position: relative; z-index: 1; flex-shrink: 0; margin-top: 4px; }
-        .step-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid var(--gray-300); background: var(--white); }
-        .pipeline-step.done .step-icon { background: var(--green-mid); border-color: var(--green-mid); }
-        .pipeline-step.active .step-icon { background: var(--green-mid); border-color: var(--green-mid); animation: pulse 2s ease-in-out infinite; }
-        .step-icon svg { width: 16px; height: 16px; }
-        .pipeline-step.done .step-icon svg, .pipeline-step.active .step-icon svg { color: #fff; }
+        .pipeline-step {
+            display: flex; align-items: flex-start; gap: 1rem; position: relative;
+        }
+        .pipeline-step:not(:last-child)::after {
+            content: ''; position: absolute; left: 19px; top: 42px;
+            width: 2px; bottom: -4px; background: var(--gray-200); z-index: 0;
+        }
+        .pipeline-step.done::after { background: var(--emerald-from); }
+        .pipeline-step.active::after { background: linear-gradient(to bottom, var(--blue-from), var(--gray-200)); }
+
+        .step-icon-wrap { position: relative; z-index: 1; flex-shrink: 0; margin-top: 3px; }
+        /* Square gradient blocks for each pipeline step — matches sidebar icons */
+        .step-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--gray-100); border: 2px solid var(--gray-200);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .pipeline-step.done .step-icon {
+            background: linear-gradient(135deg, var(--emerald-from), var(--emerald-to));
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(16,185,129,.3);
+        }
+        .pipeline-step.active .step-icon {
+            background: linear-gradient(135deg, var(--blue-from), var(--blue-to));
+            border-color: transparent;
+            box-shadow: 0 4px 16px rgba(59,130,246,.35);
+            animation: pulseBlue 2s ease-in-out infinite;
+        }
+        .pipeline-step:hover .step-icon { transform: translateY(-2px); }
+        .step-icon svg { width: 18px; height: 18px; }
+        .pipeline-step.done .step-icon svg,
+        .pipeline-step.active .step-icon svg { color: #fff; }
         .pipeline-step.pending .step-icon svg { color: var(--gray-300); }
-        .step-content { padding: 6px 0 20px; flex: 1; }
-        .step-name { font-size: .88rem; font-weight: 700; color: var(--gray-800); }
+
+        .step-content { padding: 6px 0 22px; flex: 1; }
+        .step-name { font-size: .9rem; font-weight: 700; color: var(--gray-800); }
         .pipeline-step.pending .step-name { color: var(--gray-400); font-weight: 500; }
         .step-name-sub { font-size: .72rem; color: var(--gray-400); margin-top: .1rem; }
-        .step-state-badge { display: inline-flex; align-items: center; gap: .25rem; font-size: .65rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: .15rem .55rem; border-radius: var(--radius-pill); margin-top: .35rem; }
-        .step-state-badge.done { background: #d1fae5; color: #065f46; }
-        .step-state-badge.active { background: rgba(5,150,105,.12); color: var(--green-mid); }
+
+        .step-state-badge {
+            display: inline-flex; align-items: center; gap: .3rem;
+            font-size: .63rem; font-weight: 700; letter-spacing: .06em;
+            text-transform: uppercase; padding: .2rem .65rem;
+            border-radius: var(--radius-pill); margin-top: .4rem;
+        }
+        .step-state-badge.done {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: var(--emerald-to);
+        }
+        .step-state-badge.active {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: var(--blue-to);
+        }
         .step-state-badge.pending { background: var(--gray-100); color: var(--gray-400); }
-        .updated-row { margin-top: .5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100); font-size: .72rem; color: var(--gray-400); text-align: center; }
-        .tracker-footer { width: 100%; max-width: 480px; margin-top: 1.25rem; background: rgba(255,255,255,.08); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.15); border-radius: .85rem; padding: 1rem 1.25rem; text-align: center; animation: fadeUp .6s ease-out .3s both; }
-        .footer-label { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.6); margin-bottom: .35rem; }
-        .footer-office { font-size: .82rem; font-weight: 600; color: rgba(255,255,255,.9); margin-bottom: .15rem; }
-        .footer-address { font-size: .75rem; color: rgba(255,255,255,.65); }
-        .not-found-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--red-pale); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
-        .not-found-icon svg { width: 28px; height: 28px; color: var(--red); }
-        .not-found-title { font-size: 1.1rem; font-weight: 700; color: var(--gray-800); margin-bottom: .5rem; text-align: center; }
-        .not-found-desc { font-size: .84rem; color: var(--gray-500); text-align: center; line-height: 1.6; }
-        .not-found-ref { margin-top: .75rem; background: var(--gray-100); border-radius: .5rem; padding: .5rem 1rem; font-size: .78rem; font-weight: 600; color: var(--gray-700); text-align: center; font-family: monospace; letter-spacing: .05em; }
-        @keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes scaleIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes pulse {
-            0%,100%{box-shadow:0 0 0 4px rgba(5,150,105,.15),0 0 0 8px rgba(5,150,105,.07)}
-            50%{box-shadow:0 0 0 6px rgba(5,150,105,.22),0 0 0 12px rgba(5,150,105,.06)}
+
+        .updated-row {
+            margin-top: .75rem; padding-top: 1rem;
+            border-top: 1px solid var(--gray-100);
+            font-size: .72rem; color: var(--gray-400); text-align: center;
+        }
+
+        /* ── FOOTER ── */
+        .tracker-footer {
+            width: 100%; max-width: 500px; margin-top: 1.5rem;
+            background: rgba(255,255,255,.07); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,.11); border-radius: var(--radius-lg);
+            padding: 1.1rem 1.5rem; text-align: center;
+            animation: fadeUp .6s ease-out .3s both;
+        }
+        .footer-label {
+            font-size: .67rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .1em; color: rgba(255,255,255,.4); margin-bottom: .4rem;
+        }
+        .footer-office { font-size: .85rem; font-weight: 700; color: rgba(255,255,255,.85); margin-bottom: .15rem; }
+        .footer-address { font-size: .75rem; color: rgba(255,255,255,.45); }
+
+        /* ── NOT FOUND ── */
+        .not-found-icon {
+            width: 64px; height: 64px; border-radius: 18px;
+            background: linear-gradient(135deg, var(--red-from), var(--red-to));
+            box-shadow: 0 8px 24px rgba(244,63,94,.3);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.25rem;
+        }
+        .not-found-icon svg { width: 30px; height: 30px; color: #fff; }
+        .not-found-title { font-size: 1.15rem; font-weight: 800; color: var(--gray-900); margin-bottom: .5rem; text-align: center; }
+        .not-found-desc { font-size: .84rem; color: var(--gray-500); text-align: center; line-height: 1.65; }
+        .not-found-ref {
+            margin-top: .85rem; background: var(--gray-100); border-radius: .6rem;
+            padding: .6rem 1rem; font-size: .78rem; font-weight: 700;
+            color: var(--gray-700); text-align: center; font-family: monospace; letter-spacing: .05em;
+        }
+
+        /* ── KEYFRAMES ── */
+        @keyframes fadeDown  { from{opacity:0;transform:translateY(-18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes scaleIn   { from{opacity:0;transform:scale(.9)}         to{opacity:1;transform:scale(1)} }
+        @keyframes fadeUp    { from{opacity:0;transform:translateY(14px)}  to{opacity:1;transform:translateY(0)} }
+        @keyframes pulseBlue {
+            0%,100% { box-shadow: 0 4px 16px rgba(59,130,246,.35), 0 0 0 3px rgba(59,130,246,.15); }
+            50%      { box-shadow: 0 4px 20px rgba(59,130,246,.5),  0 0 0 7px rgba(59,130,246,.08); }
         }
     </style>
 </head>
@@ -88,7 +260,8 @@
 
 <header class="tracker-header">
     <div class="tracker-logo-ring">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Bold house icon — premium stroke -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
             <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
@@ -103,10 +276,10 @@
 
         {% if not_found %}
         <div class="not-found-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Bold X circle — not found -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
             </svg>
         </div>
         <p class="not-found-title">Application Not Found</p>
@@ -115,7 +288,7 @@
             <em>We could not find an application for the reference number you provided.</em>
         </p>
         {% if ref %}<div class="not-found-ref">{{ ref }}</div>{% endif %}
-        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #f3f4f6;font-size:.8rem;color:#6b7280;text-align:center;line-height:1.6;">
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid #f3f4f6;font-size:.8rem;color:#6b7280;text-align:center;line-height:1.7;">
             Palihog i-check ang imo reference number ukon magdu-aw sa amon opisina.<br>
             <em>Please double-check your reference number or visit our office.</em>
         </div>
@@ -136,9 +309,10 @@
         {% if is_disqualified %}
         <div class="stage-banner is-disqualified">
             <div class="stage-banner-icon disqualified">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                <!-- Shield X — disqualified -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
                 </svg>
             </div>
             <div>
@@ -151,7 +325,8 @@
         {% elif active_stage and active_stage.key == 'lot_awarding' %}
         <div class="stage-banner is-awarded">
             <div class="stage-banner-icon awarded">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Star — lot awarding -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
             </div>
@@ -165,7 +340,8 @@
         {% elif active_stage %}
         <div class="stage-banner">
             <div class="stage-banner-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Bold clock — in-progress -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"/>
                     <polyline points="12 6 12 12 16 14"/>
                 </svg>
@@ -186,11 +362,14 @@
                 <div class="step-icon-wrap">
                     <div class="step-icon">
                         {% if step.state == 'done' %}
+                        <!-- Checkmark shield — done (emerald) -->
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         {% elif step.state == 'active' %}
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <!-- Arrow right — active (blue) -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                         {% else %}
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                        <!-- Circle — pending -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
                         {% endif %}
                     </div>
                 </div>
