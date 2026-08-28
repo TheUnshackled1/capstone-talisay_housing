@@ -86,28 +86,72 @@
             align-items: center;
         }
 
-        /* ── CARD-HEADER — dark navy block inside the card (like screenshot) ── */
+        /* ── CARD-HEADER — mirrors .login-header exactly ── */
         .card-header-block {
-            background: linear-gradient(160deg, var(--navy-800) 0%, var(--navy-900) 100%);
-            padding: 1.5rem 1.5rem 1.25rem;
+            background: linear-gradient(135deg, #1a3a6b 0%, #0f2447 100%);
+            padding: 1.25rem 1.25rem 1rem;
             text-align: center;
-            border-bottom: none;
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
         }
+        /* Same radial shimmer as login-header::before */
+        .card-header-block::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,.05) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        /* Glassy circle icon — exact login .logo-circle */
         .tracker-logo-ring {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 64px; height: 64px; border-radius: 18px;
-            background: linear-gradient(135deg, var(--emerald-from), var(--emerald-to));
-            box-shadow: 0 6px 20px rgba(16,185,129,.4), 0 2px 8px rgba(16,185,129,.2);
-            margin-bottom: .75rem;
+            width: 56px; height: 56px;
+            background: rgba(255,255,255,.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto .6rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,.25);
+            position: relative; z-index: 1;
         }
-        .tracker-logo-ring svg { width: 30px; height: 30px; color: #fff; }
-        .tracker-org-name {
-            font-size: .65rem; font-weight: 700; color: rgba(255,255,255,.5);
-            letter-spacing: .15em; text-transform: uppercase; margin-bottom: .25rem;
-        }
+        .tracker-logo-ring svg { width: 26px; height: 26px; color: #fff; }
+        /* "IHSMS"-equivalent — the system name */
         .tracker-title {
-            font-size: 1.05rem; font-weight: 800; color: #fff; letter-spacing: -.01em;
+            font-size: 1.15rem; font-weight: 700;
+            color: #fff; margin-bottom: .12rem;
+            position: relative; z-index: 1;
         }
+        /* Subtitle — same muted blue as login-subtitle */
+        .tracker-org-name {
+            font-size: .7rem; font-weight: 600;
+            color: rgba(253,230,138,.85);
+            letter-spacing: .1em; text-transform: uppercase;
+            margin-bottom: .5rem;
+            position: relative; z-index: 1;
+        }
+        /* Applicant name — shown in header like a section title */
+        .header-applicant-name {
+            font-size: .88rem; font-weight: 700;
+            color: #fff;
+            margin-bottom: .35rem;
+            position: relative; z-index: 1;
+            letter-spacing: .01em;
+        }
+        /* Ref badge — exact .role-badge from login */
+        .header-ref-badge {
+            display: inline-flex; align-items: center; gap: .3rem;
+            margin-top: .15rem;
+            padding: .3rem .75rem;
+            background: rgba(59,130,246,.2);
+            border: 1px solid rgba(147,197,253,.3);
+            border-radius: 50px;
+            font-size: .72rem; font-weight: 600;
+            color: #dbeafe;
+            position: relative; z-index: 1;
+            font-family: monospace; letter-spacing: .04em;
+        }
+        .header-ref-badge svg { width: 12px; height: 12px; stroke: #dbeafe; flex-shrink: 0; }
 
         /* ── CARD — matches login-card ── */
         .tracker-card {
@@ -333,16 +377,25 @@
 <div class="tracker-page">
 
 <main class="tracker-card" role="main">
-    <!-- Dark navy header block inside the card -->
+    <!-- Dark navy header — mirrors login-header -->
     <div class="card-header-block">
         <div class="tracker-logo-ring">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-6h6v6"/>
             </svg>
         </div>
         <p class="tracker-org-name">Talisay Housing Authority</p>
         <h1 class="tracker-title">Application Status Tracker</h1>
+        {% if not not_found %}
+        <p class="header-applicant-name">{{ applicant_name }}</p>
+        <span class="header-ref-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+            {{ ref }}
+        </span>
+        {% endif %}
     </div>
     <div class="card-accent"></div>
     <div class="card-body">
@@ -366,18 +419,8 @@
             <em>Please double-check your reference number or visit our office.</em>
         </div>
 
+
         {% else %}
-
-        <p class="applicant-greeting">{{ applicant_name }}</p>
-        <span class="ref-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11l3 3L22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-            </svg>
-            {{ ref }}
-        </span>
-
-        <div class="card-divider"></div>
 
         {% if is_disqualified %}
         <div class="stage-banner is-disqualified">
