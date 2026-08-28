@@ -1079,12 +1079,11 @@ def unarchive_applicant(request, position):
         applicant = archive_record.applicant
         
         with transaction.atomic():
-            # Flag the archive as restored instead of deleting it.
-            # This keeps the Archive row for audit trail while moving the
-            # applicant back to the REGISTERED APPLICANTS table and hiding
-            # them from the ARCHIVED APPLICANT RECORDS page.
+            # Flag the archive as restored and reset formal archive status so the
+            # applicant returns to the REGISTERED APPLICANTS working list.
             archive_record.is_restored = True
-            archive_record.save(update_fields=['is_restored'])
+            archive_record.formally_archived = False
+            archive_record.save(update_fields=['is_restored', 'formally_archived'])
             
             # Unset module 2 handoff in case they were pushed to evaluation
             if applicant.module2_handoff_at is not None:
@@ -1188,16 +1187,23 @@ def proceed_to_applications(request, position):
             archive_record.save(update_fields=['is_restored'])
         # Optional promotion path used by the archive checklist CTA:
         # once baseline required scans (R01–R07) are complete, mark as handed off for Module 2 list visibility.
-        # Always set module2_handoff_at so that "ARCHIVE record" removes the applicant
-        # from the working list (archive mini-table filters module2_handoff_at__isnull=True).
-        # SMS is only sent on the formal promote_to_module2 path.
+        # Set formally_archived only when explicitly requested ("ARCHIVE record" button
+        # or formal Module 2 handoff via promote_to_module2).
+        # Plain "Proceed" from the active list does NOT set formally_archived —
+        # those applicants should appear in the mini-table first.
+        formally_archive = request.POST.get('formally_archive') == 'true'
+        if archive_record is not None and (formally_archive or promote_to_module2):
+            if not archive_record.formally_archived:
+                archive_record.formally_archived = True
+                archive_record.save(update_fields=['formally_archived'])
+
+        # Formal Module 2 handoff: set module2_handoff_at for evaluation pipeline visibility.
         handoff_just_set = False
-        if applicant.module2_handoff_at is None:
+        if promote_to_module2 and applicant.module2_handoff_at is None:
             applicant.module2_handoff_at = timezone.now()
             applicant.module2_handoff_by = request.user
             applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
-            if promote_to_module2:
-                handoff_just_set = True  # triggers SMS below
+            handoff_just_set = True
 
         # Module 2 handoff: evaluation-stage SMS (document checklist path with promote_to_module2).
         should_send_proceed_sms = bool(applicant.phone_number) and handoff_just_set
@@ -1480,17 +1486,17 @@ def applicants_list(request, position):
             vault_types=walk_in_vault_types_by_applicant.get(app.id, set()),
         ))
 
-    # Mini-table (REGISTERED APPLICANTS): shows all archives where the applicant
-    # has NOT yet been formally archived (module2_handoff_at is null).
+    # Mini-table (REGISTERED APPLICANTS): shows all archives that have NOT been
+    # formally closed via "ARCHIVE record" (formally_archived=False).
     # This includes both:
-    #   - Newly proceeded applicants (is_restored=False, module2_handoff_at=None)
-    #   - Restored applicants (is_restored=True, module2_handoff_at=None)
-    # Once 'ARCHIVE record' is clicked (sets module2_handoff_at), they leave this
-    # table and appear only in archive_list.html.
+    #   - Newly proceeded applicants (is_restored=False, formally_archived=False)
+    #   - Restored applicants (is_restored=True, formally_archived=False)
+    # Once "ARCHIVE record" is clicked (sets formally_archived=True), they leave
+    # this table and appear only in archive_list.html with RESTORE button enabled.
     archive_records = []
     archives = list(
         Archive.objects.filter(
-            applicant__module2_handoff_at__isnull=True,
+            formally_archived=False,
         ).exclude(
             # Exclude restored archives — they belong to applicants who have already
             # been processed through a previous cycle and don't need to show here.
@@ -2282,13 +2288,13 @@ def archive_list(request, position):
             'formPreviewUrl': form_preview_url,
             'formPreviewKind': form_preview_kind,
             # Restorable only when:
-            # 1. The archive is NOT already restored (is_restored=True means back in working list)
-            # 2. Applicant was formally archived (module2_handoff_at IS set)
-            # 3. Has not yet received an Application (still Registration stage)
-            # Applicants in Evaluation/Form/Awarding/Housing have Applications and are excluded from this page.
+            # 1. The archive IS formally_archived (staff clicked "ARCHIVE record")
+            # 2. The archive is NOT already restored (is_restored=True = back in working list)
+            # 3. Has not yet received an Application (Evaluation/Form/Awarding/Housing
+            #    applicants have Applications and are excluded from this page entirely).
             'isRestorable': (
-                not archive.is_restored
-                and bool(getattr(archive.applicant, 'module2_handoff_at', None))
+                archive.formally_archived
+                and not archive.is_restored
                 and not bool(getattr(archive.applicant, 'application', None))
             ),
         })

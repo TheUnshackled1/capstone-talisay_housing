@@ -3912,10 +3912,7 @@ function getCsrfToken() {
                 formData.append('csrfmiddlewaretoken', getCsrfToken());
                 formData.append('applicant_id', currentApplicant.applicantId || currentApplicant.id);
                 formData.append('channel', currentApplicant.channel);
-
-                if (currentApplicant.channel === 'A') {
-                    formData.append('submission_id', currentApplicant.submissionId);
-                }
+                formData.append('formally_archive', 'true');  // signals the view to set formally_archived=True
 
                 fetch(window.APPLICANTS_CONFIG.proceedToApplicationsUrl, {
                     method: 'POST',

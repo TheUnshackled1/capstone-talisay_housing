@@ -236,10 +236,11 @@ def archive_applicant_status(
     applicant: Applicant | None, bl_row: Blacklist | None
 ) -> tuple[str, str | None]:
     """
-    Intake Archives table: current stage including pre–Module 2 handoff (Registration).
-    Uses the Application object's existence to determine stage — not module2_handoff_at —
-    so that applicants archived via 'ARCHIVE record' (which sets module2_handoff_at but
-    creates no Application) still appear under 'Registration' in archive_list.html.
+    Intake Archives table: current stage label for display and stage filtering.
+    - No module2_handoff_at → Registration (in working list, not yet formally proceeded)
+    - module2_handoff_at set, no Application → Evaluation & Eligibility
+    - Has Application → full pipeline stage (Form Generation, Awarding, etc.)
+    Note: formally_archived (not module2_handoff_at) controls working list visibility.
     """
     if not applicant:
         return ('—', None)
@@ -247,8 +248,9 @@ def archive_applicant_status(
         return ('Blacklisted Beneficiaries registry', None)
     app_obj = getattr(applicant, 'application', None)
     if not app_obj:
-        # No Application object = still in Registration/intake stage regardless of handoff
-        return ('Registration', None)
+        if not getattr(applicant, 'module2_handoff_at', None):
+            return ('Registration', None)
+        return ('Evaluation & Eligibility', None)
     return staff_pipeline_primary_detail(applicant, app_obj, None)
 
 

@@ -596,6 +596,16 @@ class Archive(models.Model):
         help_text="Set to True when applicant is restored from the archive list back to registration",
     )
 
+    # Formally archived flag: True when staff clicks "ARCHIVE record" from the
+    # working list (mini-table).  This removes the applicant from the working list
+    # WITHOUT setting module2_handoff_at (which would push them to Module 2 evaluation).
+    # Reset to False on RESTORE so the applicant returns to the working list.
+    formally_archived = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Set to True when ARCHIVE record is clicked; removes from working list without Module 2 handoff",
+    )
+
     class Meta:
 
         ordering = ['archived_at']
