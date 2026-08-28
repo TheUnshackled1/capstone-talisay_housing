@@ -1185,8 +1185,7 @@ def proceed_to_applications(request, position):
         if not created and archive_record.is_restored:
             archive_record.is_restored = False
             archive_record.save(update_fields=['is_restored'])
-        # Optional promotion path used by the archive checklist CTA:
-        # once baseline required scans (R01–R07) are complete, mark as handed off for Module 2 list visibility.
+        # Optional promotion path: archive checklist CTA with promote_to_module2=True.
         # Set formally_archived only when explicitly requested ("ARCHIVE record" button
         # or formal Module 2 handoff via promote_to_module2).
         # Plain "Proceed" from the active list does NOT set formally_archived —
@@ -1497,12 +1496,6 @@ def applicants_list(request, position):
     archives = list(
         Archive.objects.filter(
             formally_archived=False,
-        ).exclude(
-            # Exclude restored archives — they belong to applicants who have already
-            # been processed through a previous cycle and don't need to show here.
-            # Exception: keep is_restored=True archives that are back in the working
-            # list (module2_handoff_at=None is already filtered above, so this is safe).
-            Q(is_restored=True) & Q(applicant__application__isnull=False),
         ).exclude(
             intake_registration_exclude_q(prefix='applicant__'),
         ).exclude(
@@ -2290,11 +2283,13 @@ def archive_list(request, position):
             # Restorable only when:
             # 1. The archive IS formally_archived (staff clicked "ARCHIVE record")
             # 2. The archive is NOT already restored (is_restored=True = back in working list)
-            # 3. Has not yet received an Application (Evaluation/Form/Awarding/Housing
+            # 3. module2_handoff_at=None (not in Evaluation & Eligibility)
+            # 4. Has not yet received an Application (Evaluation/Form/Awarding/Housing
             #    applicants have Applications and are excluded from this page entirely).
             'isRestorable': (
                 archive.formally_archived
                 and not archive.is_restored
+                and not bool(getattr(archive.applicant, 'module2_handoff_at', None))
                 and not bool(getattr(archive.applicant, 'application', None))
             ),
         })
