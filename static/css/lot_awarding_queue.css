@@ -222,75 +222,81 @@
         outline-offset: 2px;
     }
 
-    @media (max-width: 640px) {
-        .lawq-action-emerald {
-            padding: 0.4rem 0.55rem;
-        }
+       /* ===== Lot Awarding Queue Table & Column Layout =====
+       Proportioned across 8 columns to fill 100% of the table width cleanly:
+       1. Select (5%)
+       2. # (4%)
+       3. Full Name (26%)
+       4. SMS (6.5%)
+       5. Queue priority (17%)
+       6. Proceeded Date & Time (18.5%)
+       7. Status (11%)
+       8. Actions (12%)
+       Total = 100%
+       ======================================================== */
+
+    .lawq-queue .rfq-table-wrap {
+        width: 100% !important;
+        overflow-x: auto !important;
     }
 
-    .lawq-actions-inline .lawq-muted {
-        display: block;
-        text-align: center;
-        line-height: 1.35;
-        padding: 0.1rem 0.15rem;
-    }
-
-    /* Fix table container and table width */
     .lawq-queue .rfq-table {
         table-layout: fixed !important;
         width: 100% !important;
-        min-width: 0 !important;
+        min-width: 58rem !important;
         border-collapse: collapse !important;
     }
 
     .lawq-queue .rfq-table th {
-        white-space: normal !important;
-        line-height: 1.2 !important;
-        padding: 0.45rem 0.3rem !important;
+        white-space: nowrap !important;
+        line-height: 1.25 !important;
+        padding: 0.65rem 0.5rem !important;
         text-align: center !important;
-    }
-
-    /* Override Ready-for-Formâs Actions column on this page */
-    .lawq-queue .rfq-table th.rfq-col-actions,
-    .lawq-queue .rfq-table td.rfq-col-actions {
-        min-width: 6.5rem !important;
-        width: 7rem !important;
-        max-width: 7.5rem !important;
-        padding-left: 0.25rem !important;
-        padding-right: 0.25rem !important;
+        font-size: 0.62rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        color: #ffffff !important;
+        background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
     }
 
     .lawq-queue .rfq-table tbody td {
         vertical-align: middle !important;
+        padding: 0.6rem 0.5rem !important;
+        border: 1px solid #e5e7eb !important;
+        color: #334155;
     }
 
-    .lawq-queue .rfq-table tbody td.lawq-applicant-cell {
-        vertical-align: middle !important;
-        padding-top: 0.45rem;
-        padding-bottom: 0.45rem;
-    }
-
-    /* Lot Awarding column widths â select column shifts indices */
+    /* Col 1: Select */
     .lawq-queue .rfq-table th.lawq-select-col,
     .lawq-queue .rfq-table td.lawq-select-col {
-        width: 2.2rem !important;
-        min-width: 2.2rem !important;
+        width: 5% !important;
+        min-width: 3.2rem !important;
         text-align: center !important;
     }
 
+    /* Col 2: Row Number (#) */
     .lawq-queue .rfq-table th:nth-child(2),
     .lawq-queue .rfq-table td:nth-child(2) {
-        width: 2.2rem !important;
-        min-width: 2.2rem !important;
+        width: 4% !important;
+        min-width: 2.5rem !important;
         text-align: center !important;
     }
 
-    .lawq-queue .rfq-table td.lawq-applicant-cell,
+    /* Col 3: Full Name */
     .lawq-queue .rfq-table th:nth-child(3) {
-        width: 28% !important;
-        min-width: 13rem !important;
-        word-break: keep-all;
-        overflow-wrap: break-word;
+        width: 26% !important;
+        min-width: 12rem !important;
+        text-align: center !important;
+    }
+
+    .lawq-queue .rfq-table td.lawq-applicant-cell {
+        width: 26% !important;
+        min-width: 12rem !important;
+        text-align: left !important;
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
     }
 
     .lawq-queue .rfq-table .rfq-name {
@@ -305,14 +311,13 @@
         margin-top: 0.25rem;
     }
 
-    /* Col 4: SMS column â micro-compact */
+    /* Col 4: SMS */
     .lawq-queue .rfq-table th.lawq-col-sms,
     .lawq-queue .rfq-table td.lawq-col-sms {
-        width: 2.6rem !important;
-        min-width: 2.4rem !important;
+        width: 6.5% !important;
+        min-width: 3.5rem !important;
         text-align: center !important;
         vertical-align: middle !important;
-        padding: 0.15rem 0.05rem !important;
     }
 
     .lawq-sms-badge {
@@ -321,9 +326,9 @@
         align-items: center;
         justify-content: center;
         gap: 0.05rem;
-        padding: 0.12rem 0.2rem;
+        padding: 0.15rem 0.35rem;
         border-radius: 4px;
-        font-size: 0.5rem;
+        font-size: 0.55rem;
         font-weight: 700;
         line-height: 1.05;
         border: 1px solid transparent;
@@ -345,59 +350,51 @@
     }
 
     .lawq-sms-badge-count {
-        font-size: 0.45rem;
+        font-size: 0.48rem;
         font-weight: 600;
         opacity: 0.92;
     }
 
-    /* Col 5: Queue Priority column â micro-compact */
+    /* Col 5: Queue Priority */
     .lawq-queue .rfq-table th.rfq-col-priority,
     .lawq-queue .rfq-table td.rfq-col-priority {
-        width: 3.2rem !important;
-        min-width: 2.8rem !important;
+        width: 17% !important;
+        min-width: 9rem !important;
         text-align: center !important;
-        padding: 0.15rem 0.05rem !important;
     }
 
     .lawq-queue .rfq-priority-tier {
-        font-size: 0.52rem !important;
+        font-size: 0.58rem !important;
         font-weight: 700 !important;
         white-space: nowrap !important;
     }
 
-    /* Col 6: Proceeded Date & Time column â compact matching SMS */
+    /* Col 6: Proceeded Date & Time */
     .lawq-queue .rfq-table th.rfq-col-proceeded,
     .lawq-queue .rfq-table td.rfq-col-proceeded {
-        width: 5.2rem !important;
-        min-width: 4.6rem !important;
+        width: 18.5% !important;
+        min-width: 10.5rem !important;
         white-space: nowrap !important;
-        font-size: 0.6rem !important;
+        font-size: 0.65rem !important;
         text-align: center !important;
-        padding: 0.25rem 0.15rem !important;
     }
 
-    /* Col 7: Status column â compact matching SMS */
+    /* Col 7: Status */
     .lawq-queue .rfq-table th.rfq-col-status,
     .lawq-queue .rfq-table td.rfq-col-status {
-        width: 5.0rem !important;
-        min-width: 4.6rem !important;
+        width: 11% !important;
+        min-width: 6.5rem !important;
         white-space: nowrap !important;
         text-align: center !important;
-        padding: 0.25rem 0.15rem !important;
     }
 
-    .lawq-queue .lawq-chip {
-        /* Removing conflicting overrides to maintain high-fidelity pill shape */
-    }
-
-    /* Col 8: Actions column â compact matching SMS */
+    /* Col 8: Actions */
     .lawq-queue .rfq-table th.rfq-col-actions,
     .lawq-queue .rfq-table td.rfq-col-actions {
-        width: 4.6rem !important;
-        min-width: 4.4rem !important;
+        width: 12% !important;
+        min-width: 7.5rem !important;
         white-space: nowrap !important;
         text-align: center !important;
-        padding: 0.25rem 0.15rem !important;
     }
 
     .lawq-queue .lawq-actions-inline {
@@ -407,6 +404,19 @@
         justify-content: center !important;
         width: 100% !important;
         padding: 0 !important;
+    }
+
+    .lawq-actions-inline .lawq-muted {
+        display: block;
+        text-align: center;
+        line-height: 1.35;
+        padding: 0.1rem 0.15rem;
+    }
+
+    @media (max-width: 640px) {
+        .lawq-action-emerald {
+            padding: 0.4rem 0.55rem;
+        }
     }
 
     /* One bordered block: bulk bar + table */
