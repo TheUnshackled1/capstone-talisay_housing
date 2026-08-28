@@ -2,7 +2,7 @@
 <html lang="fil">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if not_found %}Application Not Found{% else %}Application Status - {{ ref }}{% endif %} | Talisay Housing Authority</title>
     <meta name="description" content="Check your housing application status with the Talisay Housing Authority.">
     <meta name="robots" content="noindex, nofollow">
@@ -36,22 +36,60 @@
         }
 
         html, body {
-            min-height: 100%;
+            min-height: 100vh;
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            /* Deep IHSMS navy gradient — like the sidebar */
-            background: linear-gradient(150deg, var(--navy-900) 0%, var(--navy-800) 50%, var(--navy-700) 100%);
-            background-attachment: fixed;
         }
         body {
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: flex-start; min-height: 100vh;
-            padding: 2rem 1rem 4rem;
+            /* Deep IHSMS navy — matches login page */
+            background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-800) 50%, var(--navy-900) 100%);
+            background-attachment: fixed;
+            /* Full-screen centered like the login form */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.25rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        /* Radial glow overlay — same as login.css */
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(59,130,246,.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(147,197,253,.08) 0%, transparent 40%),
+                radial-gradient(circle at 40% 80%, rgba(59,130,246,.05) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        /* Subtle grid overlay — same as login.css */
+        body::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        /* ── PAGE WRAPPER — the login-container equivalent ── */
+        .tracker-page {
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* ── HEADER ── */
         .tracker-header {
-            width: 100%; max-width: 500px;
-            text-align: center; margin-bottom: 1.75rem;
+            width: 100%;
+            text-align: center; margin-bottom: 1.5rem;
             animation: fadeDown .5s ease-out;
         }
         /* Square gradient icon block — exactly like the sidebar items */
@@ -71,15 +109,18 @@
             font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -.01em;
         }
 
-        /* ── CARD ── */
+        /* ── CARD — matches login-card ── */
         .tracker-card {
-            width: 100%; max-width: 500px; background: var(--white);
-            border-radius: var(--radius-xl);
-            box-shadow: 0 32px 80px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.15);
+            width: 100%;
+            background: var(--white);
+            border-radius: 14px;
+            box-shadow:
+                0 25px 50px -12px rgba(0,0,0,.45),
+                0 0 0 1px rgba(255,255,255,.08);
             overflow: hidden;
             animation: scaleIn .45s cubic-bezier(.34,1.56,.64,1);
         }
-        /* Multi-color accent stripe — like the sidebar active indicator */
+        /* Multi-color accent stripe */
         .card-accent {
             height: 4px;
             background: linear-gradient(90deg,
@@ -88,22 +129,22 @@
                 var(--emerald-from) 65%,
                 var(--amber-from) 100%);
         }
-        .card-body { padding: 2rem 1.75rem 1.75rem; }
+        .card-body { padding: 1.75rem 1.5rem 1.5rem; }
 
         /* ── APPLICANT ── */
         .applicant-greeting {
-            font-size: 1.45rem; font-weight: 900; color: var(--gray-900);
+            font-size: 1.3rem; font-weight: 900; color: var(--gray-900);
             line-height: 1.15; margin-bottom: .5rem; letter-spacing: -.02em;
         }
         .ref-badge {
             display: inline-flex; align-items: center; gap: .4rem;
             background: var(--emerald-bg); color: var(--emerald-to);
-            font-size: .72rem; font-weight: 700; letter-spacing: .06em;
-            padding: .35rem .85rem; border-radius: var(--radius-pill);
-            border: 1.5px solid var(--emerald-border); margin-bottom: 1.5rem;
+            font-size: .7rem; font-weight: 700; letter-spacing: .06em;
+            padding: .3rem .75rem; border-radius: var(--radius-pill);
+            border: 1.5px solid var(--emerald-border); margin-bottom: 1.25rem;
         }
         .ref-badge svg { width: 12px; height: 12px; }
-        .card-divider { height: 1px; background: var(--gray-100); margin: 0 -1.75rem 1.75rem; }
+        .card-divider { height: 1px; background: var(--gray-100); margin: 0 -1.5rem 1.5rem; }
 
         /* ── STAGE BANNER — tinted card with square gradient icon ── */
         .stage-banner {
@@ -216,10 +257,10 @@
 
         /* ── FOOTER ── */
         .tracker-footer {
-            width: 100%; max-width: 500px; margin-top: 1.5rem;
+            width: 100%; margin-top: 1.25rem;
             background: rgba(255,255,255,.07); backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,.11); border-radius: var(--radius-lg);
-            padding: 1.1rem 1.5rem; text-align: center;
+            padding: 1rem 1.25rem; text-align: center;
             animation: fadeUp .6s ease-out .3s both;
         }
         .footer-label {
@@ -257,6 +298,7 @@
     </style>
 </head>
 <body>
+<div class="tracker-page">
 
 <header class="tracker-header">
     <div class="tracker-logo-ring">
@@ -401,5 +443,6 @@
     <p class="footer-address">Talisay City, Negros Occidental &mdash; Region VI</p>
 </footer>
 
+</div><!-- /.tracker-page -->
 </body>
 </html>
