@@ -193,7 +193,7 @@
         /* ── STAGE BANNER — tinted card with square gradient icon ── */
         .stage-banner {
             border-radius: var(--radius-md);
-            padding: 1.1rem 1.2rem;
+            padding: 1.25rem 1.5rem;
             margin-bottom: 1.75rem;
             display: flex; align-items: flex-start; gap: 1rem;
             background: var(--blue-bg); border: 1.5px solid var(--blue-border);
@@ -228,8 +228,10 @@
         }
         .stage-banner-label.awarded { color: var(--amber-to); }
         .stage-banner-label.disqualified { color: var(--red-to); }
-        .stage-banner-title { font-size: 1rem; font-weight: 800; color: var(--gray-900); margin-bottom: .3rem; }
-        .stage-banner-desc { font-size: .82rem; color: var(--gray-700); line-height: 1.6; }
+        .stage-banner-title { font-size: 1.05rem; font-weight: 800; color: var(--gray-900); margin-bottom: .3rem; }
+        .stage-banner-desc { 
+            font-size: .82rem; color: var(--gray-700); line-height: 1.6;
+        }
 
         /* ── PIPELINE ── */
         .pipeline-label {
@@ -270,7 +272,7 @@
         .step-icon svg { width: 18px; height: 18px; }
         .pipeline-step.done .step-icon svg,
         .pipeline-step.active .step-icon svg { color: #fff; }
-        .pipeline-step.pending .step-icon svg { color: var(--gray-300); }
+        .pipeline-step.pending .step-icon svg { color: var(--gray-300); stroke-width: 2.5; }
 
         .step-content { padding: 6px 0 22px; flex: 1; }
         .step-name { font-size: .9rem; font-weight: 700; color: var(--gray-800); }
@@ -470,7 +472,7 @@
         {% endif %}
 
         {% if stages %}
-        <p class="pipeline-label">Application Pipeline</p>
+        <p class="pipeline-label">Application Progress</p>
         <div class="pipeline" role="list">
             {% for step in stages %}
             <div class="pipeline-step {{ step.state }}" role="listitem">
@@ -478,13 +480,13 @@
                     <div class="step-icon">
                         {% if step.state == 'done' %}
                         <!-- Checkmark shield — done (emerald) -->
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         {% elif step.state == 'active' %}
                         <!-- Arrow right — active (blue) -->
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                         {% else %}
                         <!-- Circle — pending -->
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/></svg>
                         {% endif %}
                     </div>
                 </div>
