@@ -64,6 +64,37 @@ function openArchiveHandoffSummary(buttonEl) {
         }
     }
 
+    // Show/disable RESTORE button based on isRestorable flag
+    const restoreBtn = document.getElementById('archiveSummaryUnarchiveBtn');
+    if (restoreBtn) {
+        const isRestorable = d.restorable === 'true';
+        const statusLabel = d.statusLabel || '';
+        if (isRestorable) {
+            restoreBtn.disabled = false;
+            restoreBtn.style.opacity = '1';
+            restoreBtn.style.cursor = 'pointer';
+            restoreBtn.style.pointerEvents = '';
+            restoreBtn.title = 'Restore this applicant back to the active registration list';
+            // Remove locked badge if previously added
+            const existingNote = restoreBtn.querySelector('.restore-locked-note');
+            if (existingNote) existingNote.remove();
+        } else {
+            restoreBtn.disabled = true;
+            restoreBtn.style.opacity = '0.45';
+            restoreBtn.style.cursor = 'not-allowed';
+            restoreBtn.style.pointerEvents = 'none';
+            restoreBtn.title = `Cannot restore — applicant is already in: ${statusLabel}`;
+            // Add a small locked label under the button if not already there
+            if (!restoreBtn.querySelector('.restore-locked-note')) {
+                const note = document.createElement('span');
+                note.className = 'restore-locked-note';
+                note.style.cssText = 'display:block; font-size:0.52rem; color:#b45309; margin-top:0.2rem; text-align:center; white-space:nowrap; font-weight:600; letter-spacing:0.03em;';
+                note.textContent = `🔒 Already in ${statusLabel}`;
+                restoreBtn.parentNode.insertBefore(note, restoreBtn.nextSibling);
+            }
+        }
+    }
+
     const modal = document.getElementById('archiveSummaryModal');
     if (modal) modal.classList.add('active');
 }
@@ -71,6 +102,8 @@ function openArchiveHandoffSummary(buttonEl) {
 function closeArchiveSummaryModal() {
     const modal = document.getElementById('archiveSummaryModal');
     if (modal) modal.classList.remove('active');
+    // Clean up any locked-note badge from previous open
+    document.querySelectorAll('.restore-locked-note').forEach(el => el.remove());
 }
 
 function closeNoticeModal() {

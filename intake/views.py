@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Exists, OuterRef
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
 from functools import wraps
@@ -1188,12 +1188,16 @@ def proceed_to_applications(request, position):
             archive_record.save(update_fields=['is_restored'])
         # Optional promotion path used by the archive checklist CTA:
         # once baseline required scans (R01–R07) are complete, mark as handed off for Module 2 list visibility.
+        # Always set module2_handoff_at so that "ARCHIVE record" removes the applicant
+        # from the working list (archive mini-table filters module2_handoff_at__isnull=True).
+        # SMS is only sent on the formal promote_to_module2 path.
         handoff_just_set = False
-        if promote_to_module2 and applicant.module2_handoff_at is None:
+        if applicant.module2_handoff_at is None:
             applicant.module2_handoff_at = timezone.now()
             applicant.module2_handoff_by = request.user
             applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by', 'updated_at'])
-            handoff_just_set = True
+            if promote_to_module2:
+                handoff_just_set = True  # triggers SMS below
 
         # Module 2 handoff: evaluation-stage SMS (document checklist path with promote_to_module2).
         should_send_proceed_sms = bool(applicant.phone_number) and handoff_just_set
@@ -1433,10 +1437,16 @@ def applicants_list(request, position):
     applicants = []
 
     # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
-    # Active "Total List": applicants not yet in Intake Archives (proceed button creates Archive only).
+    # Active list: only applicants with NO archive record at all (brand new registrations).
+    # Restored applicants have is_restored=True archives, so they route to the
+    # mini-table below instead of back to the active list.
     walk_in_applicants = list(
-        Applicant.objects.filter(
-            archives__isnull=True,
+        Applicant.objects.exclude(
+            Exists(
+                Archive.objects.filter(
+                    applicant=OuterRef('pk'),
+                )
+            )
         ).exclude(
             intake_registration_exclude_q(),
         ).exclude(
@@ -1470,12 +1480,23 @@ def applicants_list(request, position):
             vault_types=walk_in_vault_types_by_applicant.get(app.id, set()),
         ))
 
-    # Read-only archive/receipt rows (proceed from modal creates Archive; no Module 2 handoff on Applicant).
-    # Query Archive model for snapshot data
+    # Mini-table (REGISTERED APPLICANTS): shows all archives where the applicant
+    # has NOT yet been formally archived (module2_handoff_at is null).
+    # This includes both:
+    #   - Newly proceeded applicants (is_restored=False, module2_handoff_at=None)
+    #   - Restored applicants (is_restored=True, module2_handoff_at=None)
+    # Once 'ARCHIVE record' is clicked (sets module2_handoff_at), they leave this
+    # table and appear only in archive_list.html.
     archive_records = []
     archives = list(
         Archive.objects.filter(
             applicant__module2_handoff_at__isnull=True,
+        ).exclude(
+            # Exclude restored archives — they belong to applicants who have already
+            # been processed through a previous cycle and don't need to show here.
+            # Exception: keep is_restored=True archives that are back in the working
+            # list (module2_handoff_at=None is already filtered above, so this is safe).
+            Q(is_restored=True) & Q(applicant__application__isnull=False),
         ).exclude(
             intake_registration_exclude_q(prefix='applicant__'),
         ).exclude(
@@ -1531,8 +1552,6 @@ def applicants_list(request, position):
 
     for archive in archives:
         channel_code, channel_label = channel_display_map.get(archive.channel, ('?', archive.channel))
-
-        # Convert UTC time to Manila time for display
         local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
 
         module3_summary = 'Not yet proceeded beyond Archives'
@@ -1627,7 +1646,6 @@ def applicants_list(request, position):
         applicant = getattr(archive, 'applicant', None)
         if not ref or not applicant:
             continue
-
         local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
         archive_review_modal[ref] = _build_intake_applicant_review_payload(
             applicant,
@@ -1637,7 +1655,22 @@ def applicants_list(request, position):
             module2_handed_off=True,
             is_archived=True,
         )
-    
+
+    archive_documents_modal = {
+        r['referenceNumber']: {
+            'referenceNumber': r['referenceNumber'],
+            'fullName': r['fullName'],
+            'applicantId': r.get('applicantId', ''),
+            'displacementReason': r.get('displacementReason', ''),
+            'rows': r['requirementScanRows'],
+            'blacklistBlocked': bool(r.get('blacklistBlocked')),
+            'blacklistReason': r.get('blacklistReason', ''),
+            'blacklistRegistryName': r.get('blacklistRegistryName', ''),
+            'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
+        }
+        for r in archive_records
+    }
+
     active_list_q = (request.GET.get('q') or '').strip()
     archive_list_q = (request.GET.get('archive_q') or '').strip()
     archive_list_barangay = (request.GET.get('archive_barangay') or 'all').strip()
@@ -1665,37 +1698,6 @@ def applicants_list(request, position):
                 ('fullName', 'referenceNumber', 'barangay'),
             )
         ]
-
-    if archive_list_q:
-        archive_records = [
-            r for r in archive_records
-            if _intake_table_row_matches_search(
-                r,
-                archive_list_q,
-                ('fullName', 'referenceNumber', 'barangay', 'requirementsStatusLabel'),
-                blacklist_flag_key='blacklistBlocked',
-            )
-        ]
-    if archive_list_barangay and archive_list_barangay != 'all':
-        archive_records = [
-            r for r in archive_records
-            if (r.get('barangay') or '') == archive_list_barangay
-        ]
-
-    archive_documents_modal = {
-        r['referenceNumber']: {
-            'referenceNumber': r['referenceNumber'],
-            'fullName': r['fullName'],
-            'applicantId': r.get('applicantId', ''),
-            'displacementReason': r.get('displacementReason', ''),
-            'rows': r['requirementScanRows'],
-            'blacklistBlocked': bool(r.get('blacklistBlocked')),
-            'blacklistReason': r.get('blacklistReason', ''),
-            'blacklistRegistryName': r.get('blacklistRegistryName', ''),
-            'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
-        }
-        for r in archive_records
-    }
 
     # Sort all applicants by dateRegistered (FIFO - oldest first)
     applicants.sort(key=lambda x: x['dateRegistered'])
@@ -2073,9 +2075,7 @@ def archive_list(request, position):
     search_query = (request.GET.get('q') or '').strip()
 
     archives_qs = (
-        Archive.objects.filter(
-            is_restored=False,  # Exclude restored archives (they appear in REGISTERED APPLICANTS instead)
-        ).exclude(
+        Archive.objects.exclude(
             intake_registration_exclude_q(prefix='applicant__'),
         ).exclude(
             applicant__application__isnull=False,
@@ -2281,6 +2281,16 @@ def archive_list(request, position):
             'generatedFormPdfUrl': generated_form_pdf_url,
             'formPreviewUrl': form_preview_url,
             'formPreviewKind': form_preview_kind,
+            # Restorable only when:
+            # 1. The archive is NOT already restored (is_restored=True means back in working list)
+            # 2. Applicant was formally archived (module2_handoff_at IS set)
+            # 3. Has not yet received an Application (still Registration stage)
+            # Applicants in Evaluation/Form/Awarding/Housing have Applications and are excluded from this page.
+            'isRestorable': (
+                not archive.is_restored
+                and bool(getattr(archive.applicant, 'module2_handoff_at', None))
+                and not bool(getattr(archive.applicant, 'application', None))
+            ),
         })
 
     if selected_stage:

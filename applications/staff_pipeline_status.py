@@ -237,14 +237,18 @@ def archive_applicant_status(
 ) -> tuple[str, str | None]:
     """
     Intake Archives table: current stage including pre–Module 2 handoff (Registration).
+    Uses the Application object's existence to determine stage — not module2_handoff_at —
+    so that applicants archived via 'ARCHIVE record' (which sets module2_handoff_at but
+    creates no Application) still appear under 'Registration' in archive_list.html.
     """
     if not applicant:
         return ('—', None)
     if bl_row:
         return ('Blacklisted Beneficiaries registry', None)
-    if not getattr(applicant, 'module2_handoff_at', None):
-        return ('Registration', None)
     app_obj = getattr(applicant, 'application', None)
+    if not app_obj:
+        # No Application object = still in Registration/intake stage regardless of handoff
+        return ('Registration', None)
     return staff_pipeline_primary_detail(applicant, app_obj, None)
 
 
