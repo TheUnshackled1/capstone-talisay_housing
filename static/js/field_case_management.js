@@ -1381,7 +1381,7 @@
     }
 
     function clearSubjectAutoFill() {
-        ['subjectAutoName', 'subjectAutoRef', 'subjectAutoUnit'].forEach((id) => setReadonlyField(id, ''));
+        ['subjectAutoName', 'subjectAutoRef', 'subjectAutoUnit', 'subjectAutoPhone'].forEach((id) => setReadonlyField(id, ''));
         document.getElementById('subjectAutoFill')?.classList.remove('is-linked');
     }
 
@@ -1395,6 +1395,7 @@
         setReadonlyField('subjectAutoName', row.full_name);
         setReadonlyField('subjectAutoRef', row.reference_number);
         setReadonlyField('subjectAutoUnit', row.unit_label);
+        setReadonlyField('subjectAutoPhone', row.phone_number);
         document.getElementById('subjectAutoFill')?.classList.add('is-linked');
         document.getElementById('subjectSearchResults').style.display = 'none';
         document.getElementById('subjectSearchInput').value = row.full_name || '';
