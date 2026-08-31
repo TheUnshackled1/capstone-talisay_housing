@@ -3771,14 +3771,14 @@ function _renderStaffPill(avatarEl, nameEl, badgeEl, profile, noAuthText) {
 function renderAwardProfile(profile) {
     const recordCard = document.getElementById('lotAwardRecordCard');
     const logCard = document.getElementById('validationLogCard');
-    if (!recordCard || !logCard) return;
+    if (!recordCard) return;
     if (!profile) {
         recordCard.hidden = true;
-        logCard.hidden = true;
+        if (logCard) logCard.hidden = true;
         return;
     }
     recordCard.hidden = false;
-    logCard.hidden = false;
+    if (logCard) logCard.hidden = false;
 
     // Awarded by
     _renderStaffPill(
