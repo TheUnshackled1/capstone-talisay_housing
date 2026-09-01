@@ -235,9 +235,9 @@ class Applicant(models.Model):
     ]
     EJECTION_TYPE_CHOICES = [
         ('', '— Select —'),
-        ('private_eviction', 'Private land eviction'),
-        ('court_order', 'Court order'),
-        ('landowner_recovery', 'Landowner recovery'),
+        ('private_eviction', 'Private Land Eviction'),
+        ('court_order', 'Court Order'),
+        ('landowner_recovery', 'Landowner Recovery'),
         ('other', 'Other'),
     ]
     displacement_reason = models.CharField(
