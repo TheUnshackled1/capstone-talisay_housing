@@ -190,7 +190,7 @@ class Applicant(models.Model):
     )
     household_size = models.PositiveIntegerField(
         default=1,
-        verbose_name="Declared Household Size",
+        verbose_name="Household Size",
         help_text="Number of household members as declared during registration"
     )
     occupation = models.CharField(max_length=25, blank=True, verbose_name="Occupation")
