@@ -16,13 +16,16 @@
 
 /** Hazard type lookup — built once, reused on every modal open. */
 const HAZARD_LABELS = Object.freeze({
-    riverside:          'Riverside / riverbank',
-    flood_prone:        'Flood-prone area',
-    landslide:          'Landslide-prone area',
-    coastal:            'Coastal / near shoreline',
-    railroad:           'Near railroad tracks',
-    road_right_of_way:  'Road right-of-way',
-    other:              'Other mapped hazard',
+    riverside:          'Riverside / Riverbank',
+    flood_prone:        'Flood-Prone Area',
+    landslide:          'Landslide-Prone Area',
+    storm_surge:        'Storm Surge Zone',
+    river_bank:         'River / Creek Bank',
+    cliff_edge:         'Cliff Edge',
+    coastal:            'Coastal Erosion',
+    railroad:           'Near Railroad Tracks',
+    road_right_of_way:  'Road Right-of-Way',
+    other:              'Other Hazard',
 });
 
 /** CDRRMO metadata pre-loaded from the inline JSON script tag. */

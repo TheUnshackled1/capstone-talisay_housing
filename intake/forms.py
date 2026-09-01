@@ -122,13 +122,13 @@ DISPLACEMENT_REGISTRATION_CHOICES = [
 # Aligned with Module 2 hazard options (stored on Applicant.danger_zone_type).
 DANGER_ZONE_TYPES = [
     ('', '— Select hazard type —'),
-    ('flood_prone', 'Flood-prone area'),
-    ('landslide', 'Landslide-prone area'),
-    ('storm_surge', 'Storm surge zone'),
-    ('river_bank', 'River / creek bank'),
-    ('cliff_edge', 'Cliff edge'),
-    ('coastal', 'Coastal erosion'),
-    ('other', 'Other hazard'),
+    ('flood_prone', 'Flood-Prone Area'),
+    ('landslide', 'Landslide-Prone Area'),
+    ('storm_surge', 'Storm Surge Zone'),
+    ('river_bank', 'River / Creek Bank'),
+    ('cliff_edge', 'Cliff Edge'),
+    ('coastal', 'Coastal Erosion'),
+    ('other', 'Other Hazard'),
 ]
 
 EJECTION_REGISTRATION_CHOICES = list(Applicant.EJECTION_TYPE_CHOICES)

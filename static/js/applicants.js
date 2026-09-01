@@ -1691,16 +1691,16 @@ function getCsrfToken() {
         if (raw == null || !String(raw).trim()) return '';
         const code = String(raw).trim().toLowerCase().replace(/-/g, '_');
         const map = {
-            riverside: 'Riverside / riverbank',
-            flood_prone: 'Flood-prone area',
-            landslide: 'Landslide-prone area',
-            storm_surge: 'Storm surge zone',
-            river_bank: 'River / creek bank',
-            cliff_edge: 'Cliff edge',
-            coastal: 'Coastal / near shoreline',
-            railroad: 'Near railroad tracks',
-            road_right_of_way: 'Road right-of-way',
-            other: 'Other hazard classification',
+            riverside: 'Riverside / Riverbank',
+            flood_prone: 'Flood-Prone Area',
+            landslide: 'Landslide-Prone Area',
+            storm_surge: 'Storm Surge Zone',
+            river_bank: 'River / Creek Bank',
+            cliff_edge: 'Cliff Edge',
+            coastal: 'Coastal Erosion',
+            railroad: 'Near Railroad Tracks',
+            road_right_of_way: 'Road Right-of-Way',
+            other: 'Other Hazard',
         };
         if (map[code]) return map[code];
         return String(raw).replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
