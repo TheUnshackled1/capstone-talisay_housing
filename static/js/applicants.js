@@ -4181,7 +4181,15 @@ function getCsrfToken() {
                 </div>
                 <div class="form-group hh-member-remove-cell">
                     <label class="form-label">&nbsp;</label>
-                    <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">Remove</button>
+                    <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">
+                        <span class="btn-icon-block">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </span>
+                        <span>Remove</span>
+                    </button>
                 </div>
             `;
             container.appendChild(memberDiv);
