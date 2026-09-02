@@ -63,7 +63,15 @@
             </div>
             {% if queue_total %}
             <div class="lawq-controls-inline" style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
-                <button type="button" class="lawq-bulk-btn" id="lawqBulkSmsBtn" disabled>Send SMS</button>
+                <button type="button" class="lawq-bulk-btn" id="lawqBulkSmsBtn" disabled>
+                    <span class="btn-icon-block">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </span>
+                    <span>Send SMS</span>
+                </button>
                 <span id="lawqBulkCount" class="lawq-inline-selected">0 selected</span>
             </div>
             {% endif %}
@@ -192,13 +200,13 @@
                                 <button type="button" class="rfq-action-btn lawq-action-emerald"
                                     style="width: max-content !important; min-width: 0 !important; max-width: none !important;"
                                     onclick="openAwardModal('{{ row.application.id }}', '{{ row.applicant.full_name|escapejs }}')">
-                                    <svg class="rfq-action-btn-icon" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                        <path d="M3 11l9-8 9 8" />
-                                        <path d="M5 10v10h14V10" />
-                                        <path d="M9 21V13h6v8" />
-                                    </svg>
-                                    AWARD LOT
+                                    <span class="btn-icon-block">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>AWARD LOT</span>
                                 </button>
                                 {% else %}
                                 <span class="lawq-muted">Lot awarding is restricted for your role.</span>
@@ -292,14 +300,21 @@
 
         <div class="lawq-sms-footer">
             <button type="button" class="lawq-sms-btn-cancel" onclick="closeLawqSmsModal()">
-                Cancel
+                <span class="btn-icon-block">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </span>
+                <span>Cancel</span>
             </button>
             <button type="button" id="lawqSmsConfirmBtn" class="lawq-sms-btn-submit">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    style="width:0.95rem; height:0.95rem; flex-shrink:0;" aria-hidden="true">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
+                <span class="btn-icon-block">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </span>
                 <span>Send SMS</span>
             </button>
         </div>
@@ -331,8 +346,21 @@
             </div>
             
             <div class="lawq-award-footer" id="awardFormFooter">
-                <button type="button" class="lawq-award-btn-cancel" onclick="closeAwardModal()">Cancel</button>
+                <button type="button" class="lawq-award-btn-cancel" onclick="closeAwardModal()">
+                    <span class="btn-icon-block">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </span>
+                    <span>Cancel</span>
+                </button>
                 <button type="button" class="lawq-award-btn-submit" id="awardLotReviewBtn" onclick="showAwardConfirm()" {% if not vacant_units_by_site %}disabled{% endif %}>
+                    <span class="btn-icon-block">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </span>
                     <span>Save</span>
                 </button>
             </div>
@@ -347,13 +375,22 @@
                 </p>
             </div>
             <div class="lawq-award-footer" id="awardConfirmFooter" style="display: none;">
-                <button type="button" class="lawq-award-btn-cancel" onclick="hideAwardConfirm()">Back</button>
+                <button type="button" class="lawq-award-btn-cancel" onclick="hideAwardConfirm()">
+                    <span class="btn-icon-block">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </span>
+                    <span>Back</span>
+                </button>
                 <button type="submit" class="lawq-award-btn-submit" id="awardLotSubmitBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        style="width:0.95rem; height:0.95rem; flex-shrink:0;" aria-hidden="true">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
+                    <span class="btn-icon-block">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </span>
                     <span>Confirm & Award Lot</span>
                 </button>
             </div>

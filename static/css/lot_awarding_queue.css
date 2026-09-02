@@ -59,10 +59,19 @@
         background: #eff6ff !important;
         border-color: #bfdbfe !important;
         border-left: 1px solid #bfdbfe !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+    }
+    .summary-chip-card--blue:hover {
+        border-color: #93c5fd !important;
+        border-left-color: #93c5fd !important;
     }
     .summary-chip-card--blue .summary-icon-wrap {
         background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         box-shadow: 0 2px 6px rgba(37,99,235,0.3);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .summary-chip-card--blue:hover .summary-icon-wrap {
+        transform: scale(1.08);
     }
     .summary-chip-card--blue div p:last-child {
         color: #1e3a8a !important;
@@ -168,22 +177,23 @@
     /* Emerald â matches Review / Evaluate / View across the staff portal so
        the row-primary action keeps a consistent look. Width is fluid for
        narrow viewports; the column also collapses gracefully on mobile. */
+    /* Emerald — AWARD LOT action button with glassmorphic icon block */
     body .rfq-shell .lawq-queue .rfq-table td.rfq-col-actions .lawq-action-emerald,
     .lawq-queue .lawq-actions-inline .lawq-action-emerald,
     .lawq-action-emerald,
     button.lawq-action-emerald,
     .rfq-action-btn.lawq-action-emerald {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%) !important;
         color: #ffffff !important;
         border: 1px solid #047857 !important;
         font-weight: 800 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.04em !important;
-        font-size: 0.65rem !important;
-        gap: 0.35rem !important;
-        padding: 0.42rem 1rem !important;
-        border-radius: 0.7rem !important;
-        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08) !important;
+        font-size: 0.68rem !important;
+        gap: 0.42rem !important;
+        padding: 0.38rem 0.85rem !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -191,30 +201,58 @@
         box-sizing: border-box !important;
         line-height: 1.2 !important;
         height: auto !important;
-        min-height: 0 !important;
+        min-height: 30px !important;
         width: auto !important;
         min-width: 0 !important;
         flex: 0 0 auto !important;
         max-width: none !important;
         margin: 0 auto !important;
         align-self: center !important;
+        cursor: pointer !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
     }
 
-    body .rfq-shell .lawq-queue .rfq-table td.rfq-col-actions .lawq-action-emerald svg,
-    .lawq-action-emerald svg {
-        width: 0.85rem !important;
-        height: 0.85rem !important;
+    .lawq-action-emerald .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
         flex-shrink: 0 !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
+    }
+
+    .lawq-action-emerald .btn-icon-block svg {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
     }
 
     body .rfq-shell .lawq-queue .rfq-table td.rfq-col-actions .lawq-action-emerald:hover,
     .lawq-action-emerald:hover,
     button.lawq-action-emerald:hover {
-        background: linear-gradient(135deg, #047857 0%, #064e3b 100%) !important;
-        filter: none !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 55%, #064e3b 100%) !important;
+        border-color: #064e3b !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 14px rgba(4, 120, 87, 0.35) !important;
-        transform: translateY(-1.5px) scale(1.04) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(5, 150, 105, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    }
+
+    .lawq-action-emerald:hover .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
+    }
+
+    .lawq-action-emerald:active {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     .lawq-action-emerald:focus-visible {
@@ -498,20 +536,70 @@
 
     .lawq-bulk-btn {
         appearance: none;
-        border: 1px solid #0e7490;
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-        color: #fff;
-        font-weight: 700;
-        font-size: 0.68rem;
-        padding: 0.45rem 0.75rem;
-        border-radius: 0.45rem;
-        cursor: pointer;
-        white-space: nowrap;
+        border: 1px solid #0e7490 !important;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 55%, #0e7490 100%) !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 0.72rem !important;
+        letter-spacing: 0.03em !important;
+        padding: 0.38rem 0.85rem !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.45rem !important;
+        min-height: 32px !important;
+        box-shadow: 0 2px 6px rgba(8, 145, 178, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease !important;
+    }
+
+    .lawq-bulk-btn .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
+    }
+
+    .lawq-bulk-btn .btn-icon-block svg {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
+    }
+
+    .lawq-bulk-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #0891b2 0%, #0e7490 55%, #155e75 100%) !important;
+        border-color: #155e75 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(8, 145, 178, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    }
+
+    .lawq-bulk-btn:hover:not(:disabled) .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
+    }
+
+    .lawq-bulk-btn:active:not(:disabled) {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     .lawq-bulk-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+        opacity: 0.55 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
 
     .lawq-select-col {
@@ -1007,68 +1095,139 @@
     }
 
     #awardModal .lawq-award-btn-cancel {
-        background: #ef4444 !important;
-        border: 1px solid #dc2626 !important;
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 55%, #be123c 100%) !important;
+        border: 1px solid #be123c !important;
         color: #ffffff !important;
-        border-radius: 10px !important;
-        padding: 0.65rem 1.25rem !important;
-        font-size: 0.82rem !important;
-        font-weight: 700 !important;
-        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.06) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-radius: 8px !important;
+        padding: 0.45rem 1rem !important;
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.03em !important;
+        box-shadow: 0 2px 6px rgba(225, 29, 72, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
         cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.42rem !important;
+    }
+
+    #awardModal .lawq-award-btn-cancel .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
+    }
+
+    #awardModal .lawq-award-btn-cancel .btn-icon-block svg {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
     }
 
     #awardModal .lawq-award-btn-cancel:hover {
-        background: #dc2626 !important;
-        border-color: #b91c1c !important;
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 55%, #881337 100%) !important;
+        border-color: #881337 !important;
         color: #ffffff !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(225, 29, 72, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    }
+
+    #awardModal .lawq-award-btn-cancel:hover .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
+    }
+
+    #awardModal .lawq-award-btn-cancel:active {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     #awardModal .lawq-award-btn-submit {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%) !important;
         border: 1px solid #047857 !important;
         color: #ffffff !important;
-        border-radius: 10px !important;
-        padding: 0.65rem 1.5rem !important;
-        font-size: 0.82rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.01em !important;
-        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-radius: 8px !important;
+        padding: 0.45rem 1.15rem !important;
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.03em !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
         display: inline-flex !important;
         align-items: center !important;
-        gap: 0.45rem !important;
+        gap: 0.42rem !important;
         cursor: pointer !important;
     }
 
+    #awardModal .lawq-award-btn-submit .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
+    }
+
+    #awardModal .lawq-award-btn-submit .btn-icon-block svg {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
+    }
+
     #awardModal .lawq-award-btn-submit:hover:not(:disabled) {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35) !important;
-        transform: translateY(-1px) !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 55%, #064e3b 100%) !important;
+        border-color: #064e3b !important;
+        box-shadow: 0 5px 14px rgba(5, 150, 105, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    #awardModal .lawq-award-btn-submit:hover:not(:disabled) .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
     }
 
     #awardModal .lawq-award-btn-submit:active:not(:disabled) {
-        transform: translateY(0) !important;
+        transform: translateY(0) scale(0.98) !important;
     }
 
     #awardModal .lawq-award-btn-submit:disabled {
-        background: #e2e8f0 !important;
-        color: #94a3b8 !important;
-        border-color: #cbd5e1 !important;
-        box-shadow: none !important;
-        opacity: 0.7 !important;
+        opacity: 0.55 !important;
         cursor: not-allowed !important;
         transform: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
 
     .lawq-inline-selected {
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.78rem;
-        white-space: nowrap;
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 0.22rem 0.6rem !important;
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 9999px !important;
+        color: #475569 !important;
+        font-weight: 700 !important;
+        font-size: 0.72rem !important;
+        letter-spacing: 0.02em !important;
+        white-space: nowrap !important;
     }
 
     /* Royal Blue Headers */
@@ -1645,58 +1804,123 @@
     }
 
     #lawqSmsModal .lawq-sms-btn-cancel {
-        background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        color: #475569 !important;
-        border-radius: 10px !important;
-        padding: 0.65rem 1.25rem !important;
-        font-size: 0.82rem !important;
-        font-weight: 700 !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 55%, #be123c 100%) !important;
+        border: 1px solid #be123c !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        padding: 0.45rem 1rem !important;
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.03em !important;
+        box-shadow: 0 2px 6px rgba(225, 29, 72, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
         cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.42rem !important;
+    }
+
+    #lawqSmsModal .lawq-sms-btn-cancel .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
+    }
+
+    #lawqSmsModal .lawq-sms-btn-cancel .btn-icon-block svg {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
     }
 
     #lawqSmsModal .lawq-sms-btn-cancel:hover {
-        background: #f8fafc !important;
-        border-color: #94a3b8 !important;
-        color: #0f172a !important;
-        transform: translateY(-1px) !important;
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 55%, #881337 100%) !important;
+        border-color: #881337 !important;
+        color: #ffffff !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(225, 29, 72, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    }
+
+    #lawqSmsModal .lawq-sms-btn-cancel:hover .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
+    }
+
+    #lawqSmsModal .lawq-sms-btn-cancel:active {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     #lawqSmsModal .lawq-sms-btn-submit {
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
-        border: 1px solid #0891b2 !important;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 55%, #0e7490 100%) !important;
+        border: 1px solid #0e7490 !important;
         color: #ffffff !important;
-        border-radius: 10px !important;
-        padding: 0.65rem 1.5rem !important;
-        font-size: 0.82rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.01em !important;
-        box-shadow: 0 2px 6px rgba(8, 145, 178, 0.25) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border-radius: 8px !important;
+        padding: 0.45rem 1.15rem !important;
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.03em !important;
+        box-shadow: 0 2px 6px rgba(8, 145, 178, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
         display: inline-flex !important;
         align-items: center !important;
-        gap: 0.45rem !important;
+        gap: 0.42rem !important;
         cursor: pointer !important;
     }
 
+    #lawqSmsModal .lawq-sms-btn-submit .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.35rem !important;
+        height: 1.35rem !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
+    }
+
+    #lawqSmsModal .lawq-sms-btn-submit .btn-icon-block svg {
+        width: 0.8rem !important;
+        height: 0.8rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
+    }
+
     #lawqSmsModal .lawq-sms-btn-submit:hover:not(:disabled) {
-        background: linear-gradient(135deg, #0e7490 0%, #0a586e 100%) !important;
-        box-shadow: 0 6px 16px rgba(8, 145, 178, 0.35) !important;
-        transform: translateY(-1px) !important;
+        background: linear-gradient(135deg, #0891b2 0%, #0e7490 55%, #155e75 100%) !important;
+        border-color: #155e75 !important;
+        box-shadow: 0 5px 14px rgba(8, 145, 178, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    #lawqSmsModal .lawq-sms-btn-submit:hover:not(:disabled) .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
     }
 
     #lawqSmsModal .lawq-sms-btn-submit:active:not(:disabled) {
-        transform: translateY(0) !important;
+        transform: translateY(0) scale(0.98) !important;
     }
 
     #lawqSmsModal .lawq-sms-btn-submit:disabled {
-        background: #e2e8f0 !important;
-        color: #94a3b8 !important;
-        border-color: #cbd5e1 !important;
-        box-shadow: none !important;
-        opacity: 0.7 !important;
+        opacity: 0.55 !important;
         cursor: not-allowed !important;
         transform: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
