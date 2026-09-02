@@ -508,16 +508,8 @@
         const sitDwtMapping = M2_VAULT_DOCUMENT_TYPE_TO_INTAKE_DOC[vaultDt];
         const hasExistingDocAttr = docUrl ? '1' : '0';
         const safeExistingDocNameAttr = escapeHtml(docName || 'Document');
-        const sitScanControlHtml = (vaultScanUrl && MODULE2_CAN_DWT_SCAN && sitDwtMapping)
-            ? `<button type="button" class="m2-elig-scan-btn m2-sit-action-scan" data-intake-doc-key="${escapeHtml(sitDwtMapping.doc_key)}" data-intake-doc-code="${escapeHtml(sitDwtMapping.doc_code)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationDwtScan(this)" title="Scan with Dynamsoft (TWAIN), same as Intake Applicants — saves to vault">${M2_SCAN_SVG}Scan</button>`
-            : (vaultScanUrl
-                ? `<a class="m2-elig-scan-btn m2-sit-action-scan m2-replace-aware-link" href="${safeVaultScanHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — attach a scanned file">${M2_SCAN_SVG}Scan</a>`
-                : '');
-        const sitUploadHtml = (vaultUploadUrl && MODULE2_CAN_DWT_SCAN && sitDwtMapping)
-            ? `<button type="button" class="m2-elig-upload-btn m2-elig-intake-upload-btn m2-sit-action-upload" data-intake-doc-key="${escapeHtml(sitDwtMapping.doc_key)}" data-intake-doc-code="${escapeHtml(sitDwtMapping.doc_code)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationFileUpload(this)" title="Choose a file from this computer — same as Intake document checklist">${M2_UPLOAD_SVG}Upload</button>`
-            : (vaultUploadUrl
-                ? `<a class="m2-elig-upload-btn m2-sit-action-upload m2-replace-aware-link" href="${safeVaultUploadHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — upload a file">${M2_UPLOAD_SVG}Upload</a>`
-                : '');
+        const sitScanControlHtml = '';
+        const sitUploadHtml = '';
         const isFieldSitePhotosRow = String(c.key || '').trim() === 'field_site_photos';
         const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
         const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';
@@ -541,16 +533,15 @@
                  onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')">${M2_PASS_SVG}Mark</button>`
                 : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}">${M2_PASS_SVG}Mark</button>`);
         const viewSitDocBtnHtml = docUrl ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>` : '';
-        const actionsRow = `
-            <div class="m2-elig-actions m2-sit-actions">
-                <div class="m2-ev-toolbar">
-                    ${viewSitDocBtnHtml ? viewSitDocBtnHtml.replace('class="eligibility-view-doc-btn', 'class="m2-ev-toolbar-btn eligibility-view-doc-btn') : ''}
-                    ${sitUploadHtml ? sitUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn') : ''}
-                    ${sitScanControlHtml ? sitScanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn') : ''}
-                    ${viewFieldPhotosHtml ? viewFieldPhotosHtml.replace('class="eligibility-view-doc-btn', 'class="m2-ev-toolbar-btn eligibility-view-doc-btn') : ''}
-                    ${markPassedButtonsHtml ? markPassedButtonsHtml.replace('class="eligibility-decision-btn', 'class="m2-ev-toolbar-btn eligibility-decision-btn') : ''}
+        const actionsRow = (viewSitDocBtnHtml || viewFieldPhotosHtml || markPassedButtonsHtml)
+            ? `<div class="m2-elig-actions m2-sit-actions">
+                <div class="m2-elig-decision-actions">
+                    ${viewSitDocBtnHtml}
+                    ${viewFieldPhotosHtml}
+                    ${markPassedButtonsHtml}
                 </div>
-            </div>`;
+            </div>`
+            : '';
         return `
             <div class="${cardClass}">
                 <div class="m2-elig-card-head">
@@ -1093,43 +1084,21 @@
             const safeVaultScanHref = vaultScanUrl ? vaultScanUrl.replace(/"/g, '&quot;') : '';
             const eligDwtMapping = M2_ELIGIBILITY_CHECK_TO_INTAKE_DOC[entry.key];
             const hasExistingDocAttr = docUrl ? '1' : '0';
-            const safeExistingDocNameAttr = escapeHtml(docName || 'Scanned document');
-            const scanControlHtml = (vaultScanUrl && MODULE2_CAN_DWT_SCAN && eligDwtMapping)
-                ? `<button type="button" class="m2-elig-scan-btn" data-check-key="${escapeHtml(entry.key)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2EligibilityChecklistDwtScan(this)" title="Scan with Dynamsoft (TWAIN), same as Intake Applicants — saves to vault">${M2_SCAN_SVG}Scan</button>`
-                : (vaultScanUrl
-                    ? `<a class="m2-elig-scan-btn m2-replace-aware-link" href="${safeVaultScanHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — attach a scanned file">${M2_SCAN_SVG}Scan</a>`
-                    : '');
-            const eligUploadHtml = (vaultUploadUrl && MODULE2_CAN_DWT_SCAN && eligDwtMapping)
-                ? `<button type="button" class="m2-elig-upload-btn m2-elig-intake-upload-btn" data-m2-upload-check-key="${escapeHtml(entry.key)}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2TriggerEligibilityChecklistFileUpload(this)" title="Choose a file from this computer — same as Intake document checklist">${M2_UPLOAD_SVG}Upload</button>`
-                : (vaultUploadUrl
-                    ? `<a class="m2-elig-upload-btn m2-replace-aware-link" href="${safeVaultUploadHref}" target="_blank" rel="noopener noreferrer" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" title="Open Document Vault — upload a file">${M2_UPLOAD_SVG}Upload</a>`
-                    : '');
-            const docActionsHtml = (docUrl || eligUploadHtml || scanControlHtml)
-                ? `<div class="m2-ev-toolbar">
-                    ${docUrl ? `<a class="m2-ev-toolbar-btn eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">&#x1F441; View</a>` : ''}
-                    ${eligUploadHtml ? eligUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-replace-aware-link') : ''}
-                    ${scanControlHtml ? scanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-replace-aware-link') : ''}
-                   </div>`
+            const viewDocBtnHtml = docUrl
+                ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">&#x1F441; View</a>`
                 : '';
-            const decisionActionsHtml = entry.is_reviewable
-                ? `<div class="m2-elig-decision-actions">
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x26A0; Missing</button>
-                   </div>`
+            const decisionButtonsHtml = entry.is_reviewable
+                ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x26A0; Missing</button>`
                 : '';
-            const actionsRow = (!docUrl && (eligUploadHtml || scanControlHtml) && entry.is_reviewable)
+            const actionsRow = (viewDocBtnHtml || decisionButtonsHtml)
                 ? `<div class="m2-elig-actions">
-                    <div class="m2-ev-toolbar">
-                        ${eligUploadHtml ? eligUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-replace-aware-link') : ''}
-                        ${scanControlHtml ? scanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-replace-aware-link') : ''}
-                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
-                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x26A0; Missing</button>
+                    <div class="m2-elig-decision-actions">
+                        ${viewDocBtnHtml}
+                        ${decisionButtonsHtml}
                     </div>
                    </div>`
-                : `<div class="m2-elig-actions">
-                    ${docActionsHtml}
-                    ${decisionActionsHtml}
-                   </div>`;
+                : '';
 
             return `
                 <div class="${cardToneClass}">
