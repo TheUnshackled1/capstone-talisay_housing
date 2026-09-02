@@ -2427,6 +2427,10 @@ def applicant_status_tracker(request, ref):
         applicant_name = applicant.full_name or ''
         applicant_status = applicant.status or 'pending'
         updated_at = applicant.updated_at
+        # If already routed to Form Generation queue, advance the tracker stage
+        # regardless of the underlying status field (which stays 'eligible'/'application').
+        if getattr(applicant, 'form_queue_routed_at', None):
+            applicant_status = 'standby'
     except Applicant.DoesNotExist:
         pass
 
