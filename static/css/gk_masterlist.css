@@ -418,7 +418,7 @@
         position: absolute;
         bottom: 0; left: 0; right: 0;
         height: 3px;
-        background: linear-gradient(90deg, #10b981 0%, #2563eb 50%, #10b981 100%);
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%);
     }
     .gk-modal-logo-wrap {
         display: inline-flex;
@@ -478,27 +478,24 @@
         gap: 1rem;
     }
 
-    /* ── Section card (like COMPLAINANT / REPORTED PARTY) ── */
+    /* ── Section card ── */
     .gk-modal-section {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
         overflow: hidden;
-        border-left: 3px solid #10b981;
     }
     .gk-modal-section-head {
         display: flex;
         align-items: center;
+        justify-content: center;
+        text-align: center;
         gap: 0.5rem;
         padding: 0.65rem 0.9rem 0.55rem;
         border-bottom: 1px solid #f1f5f9;
     }
     .gk-modal-section-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #10b981;
-        flex-shrink: 0;
+        display: none;
     }
     .gk-modal-section-label {
         font-size: 0.6rem;
@@ -507,6 +504,7 @@
         text-transform: uppercase;
         color: #0f172a;
         margin: 0;
+        text-align: center;
     }
     .gk-modal-section-body {
         padding: 0.85rem 0.9rem;
@@ -518,8 +516,21 @@
         grid-template-columns: 1fr 1fr;
         gap: 0.65rem;
     }
+    .gk-modal-grid--3col {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.65rem;
+    }
+    @media (max-width: 480px) {
+        .gk-modal-grid--3col {
+            grid-template-columns: 1fr;
+        }
+    }
 
     /* ── Field ── */
+    .gk-modal-field {
+        text-align: center;
+    }
     .gk-modal-field label {
         display: block;
         font-size: 0.63rem;
@@ -528,6 +539,7 @@
         margin-bottom: 0.28rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
+        text-align: center;
     }
     .gk-modal-field input,
     .gk-modal-field select {
@@ -541,12 +553,17 @@
         background: #fff;
         color: #0f172a;
         transition: border-color 0.15s, box-shadow 0.15s;
+        text-align: center;
+        text-align-last: center;
+    }
+    .gk-modal-field input::placeholder {
+        text-align: center;
     }
     .gk-modal-field input:focus,
     .gk-modal-field select:focus {
         outline: none;
-        border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
     .gk-input-uppercase {
         text-transform: uppercase;
