@@ -16,11 +16,10 @@
     let pendingM2RequirementUploadContext = null;
     let m2ReplaceDocConfirmResolver = null;
 
-    const M2_UPLOAD_SVG = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>';
-    const M2_SCAN_SVG = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
-    const M2_VIEW_SVG = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-    const M2_PASS_SVG = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-    const M2_FAIL_SVG = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    const M2_VIEW_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    const M2_PASS_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    const M2_MISSING_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+    const M2_PHOTO_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
 
     /** Maps eligibility card keys → intake `upload_scanned_requirement` doc_key / barangay requirement code (same as intake staff checklist). */
     const M2_ELIGIBILITY_CHECK_TO_INTAKE_DOC = {
@@ -514,7 +513,7 @@
         const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
         const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';
         const viewFieldPhotosHtml = (isFieldSitePhotosRow && fieldPhotoUrls.length && fieldPhotosAttr)
-            ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View ${fieldPhotoUrls.length} photograph(s) in the viewer">${M2_VIEW_SVG}View</button>`
+            ? `<button type="button" class="eligibility-view-doc-btn m2-sit-action-view-photos" data-m2-field-photos="${fieldPhotosAttr}" onclick="m2OpenSituationFieldPhotoGalleryFromBtn(this)" title="View ${fieldPhotoUrls.length} photograph(s) in the viewer"><span class="btn-icon-block">${M2_PHOTO_ICON_SVG}</span><span>Photos</span></button>`
             : '';
         const evidenceHtml = formatM2EvidenceHtml(splitSituationDetailForEvidence(c.detail));
         let cardClass = 'm2-elig-card m2-elig-card--compact';
@@ -530,9 +529,9 @@
             ? ''
             : (ok
                 ? `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed active-pass" title="${escapeHtml(markPassedTitle)}"
-                 onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')">${M2_PASS_SVG}Mark</button>`
-                : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}">${M2_PASS_SVG}Mark</button>`);
-        const viewSitDocBtnHtml = docUrl ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">${M2_VIEW_SVG}View</a>` : '';
+                 onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Mark</span></button>`
+                : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Mark</span></button>`);
+        const viewSitDocBtnHtml = docUrl ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}"><span class="btn-icon-block">${M2_VIEW_ICON_SVG}</span><span>View</span></a>` : '';
         const actionsRow = (viewSitDocBtnHtml || viewFieldPhotosHtml || markPassedButtonsHtml)
             ? `<div class="m2-elig-actions m2-sit-actions">
                 <div class="m2-elig-decision-actions">
@@ -1085,11 +1084,11 @@
             const eligDwtMapping = M2_ELIGIBILITY_CHECK_TO_INTAKE_DOC[entry.key];
             const hasExistingDocAttr = docUrl ? '1' : '0';
             const viewDocBtnHtml = docUrl
-                ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}">&#x1F441; View</a>`
+                ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}"><span class="btn-icon-block">${M2_VIEW_ICON_SVG}</span><span>View</span></a>`
                 : '';
             const decisionButtonsHtml = entry.is_reviewable
-                ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x26A0; Missing</button>`
+                ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Pass</span></button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')"><span class="btn-icon-block">${M2_MISSING_ICON_SVG}</span><span>Missing</span></button>`
                 : '';
             const actionsRow = (viewDocBtnHtml || decisionButtonsHtml)
                 ? `<div class="m2-elig-actions">
