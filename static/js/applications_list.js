@@ -232,7 +232,7 @@
     }
 
     async function m2TriggerEligibilityChecklistFileUpload(buttonEl) {
-        if (!buttonEl || !MODULE2_CAN_DWT_SCAN) return;
+        if (!buttonEl) return;
         const checkKey = String(buttonEl.dataset.m2UploadCheckKey || '').trim();
         const mapping = M2_ELIGIBILITY_CHECK_TO_INTAKE_DOC[checkKey];
         const applicantId = currentEligibilityApplicantId;
@@ -257,7 +257,7 @@
     }
 
     async function m2SituationCertificationFileUpload(buttonEl) {
-        if (!buttonEl || !MODULE2_CAN_DWT_SCAN) return;
+        if (!buttonEl) return;
         const docKey = String(buttonEl.dataset.intakeDocKey || '').trim();
         const docCode = String(buttonEl.dataset.intakeDocCode || '').trim() || 'document';
         const applicantId = currentEligibilityApplicantId;
@@ -509,10 +509,10 @@
         const safeExistingDocNameAttr = escapeHtml(docName || 'Document');
         const isFieldSitePhotosRow = String(c.key || '').trim() === 'field_site_photos';
         const sitUploadHtml = (!ok && vaultUploadUrl) 
-            ? `<a class="eligibility-decision-btn" style="text-decoration:none;" href="${safeVaultUploadHref}" target="_blank" title="Upload document"><span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span><span>Upload</span></a>`
+            ? `<button type="button" class="eligibility-decision-btn" title="Upload document" data-intake-doc-key="${sitDwtMapping ? escapeHtml(sitDwtMapping.doc_key) : ''}" data-intake-doc-code="${sitDwtMapping ? escapeHtml(sitDwtMapping.doc_code) : ''}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationFileUpload(this)"><span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span><span>Upload</span></button>`
             : '';
         const sitScanControlHtml = (!ok && vaultScanUrl && !isFieldSitePhotosRow)
-            ? `<a class="eligibility-decision-btn" style="text-decoration:none;" href="${safeVaultScanHref}" target="_blank" title="Scan document"><span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line></svg></span><span>Scan</span></a>`
+            ? `<button type="button" class="eligibility-decision-btn" title="Scan document" data-intake-doc-key="${sitDwtMapping ? escapeHtml(sitDwtMapping.doc_key) : ''}" data-intake-doc-code="${sitDwtMapping ? escapeHtml(sitDwtMapping.doc_code) : ''}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationDwtScan(this)"><span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line></svg></span><span>Scan</span></button>`
             : '';
         const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
         const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';

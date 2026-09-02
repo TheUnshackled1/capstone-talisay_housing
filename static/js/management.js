@@ -175,9 +175,7 @@ async function vaultDrawerConfirmReplace(docName) {
 }
 
 async function vaultDrawerTriggerUpload(buttonEl) {
-    if (!buttonEl || !VAULT_DRAWER_CAN_INTAKE_SCAN) {
-        const tk = buttonEl && buttonEl.dataset.vaultTypeKey;
-        if (tk) vaultOpenUploadForMissingDoc(tk);
+    if (!buttonEl) {
         return;
     }
     const docKey = String(buttonEl.dataset.intakeDocKey || '').trim();
