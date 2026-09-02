@@ -580,7 +580,11 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     decided_check_keys = {d.check_key for d in check_decisions}
     failed_check_decisions = [d for d in check_decisions if d.status == 'failed']
     has_failed_checks = bool(failed_check_decisions)
-    all_checks_decided = decided_check_keys.issuperset(ELIGIBILITY_CHECK_KEYS)
+    voter_auto_passed = bool(voter_ok and 'voter' not in decided_check_keys)
+    effective_decided_check_keys = set(decided_check_keys)
+    if voter_auto_passed:
+        effective_decided_check_keys.add('voter')
+    all_checks_decided = effective_decided_check_keys.issuperset(ELIGIBILITY_CHECK_KEYS)
     failed_check_keys = sorted(d.check_key for d in failed_check_decisions)
 
     form_generation_ready = bool(
@@ -634,7 +638,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
                     '(checklist -> situation modal -> Continue / certify).'
                 )
             elif not all_checks_decided:
-                pending_n = len(ELIGIBILITY_CHECK_KEYS - decided_check_keys)
+                pending_n = len(ELIGIBILITY_CHECK_KEYS - effective_decided_check_keys)
                 readiness_hint = (
                     f'Compliance: decide all five eligibility checks ({pending_n} still not marked Passed or Failed).'
                 )
@@ -698,9 +702,10 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         'has_failed_checks': has_failed_checks,
         'failed_check_keys': failed_check_keys,
         'all_checks_decided': all_checks_decided,
-        'decided_check_count': len(decided_check_keys),
+        'decided_check_count': len(effective_decided_check_keys),
         'required_check_count': len(ELIGIBILITY_CHECK_KEYS),
         'form_generation_ready': form_generation_ready,
+        'voter_auto_passed': voter_auto_passed,
         'readiness_hint': readiness_hint,
     }
 
@@ -1561,6 +1566,17 @@ def proceed_to_form_queue(request, position):
             'success': False,
             'error': hint or 'Applicant is not ready for form generation yet.',
         }, status=400)
+
+    if rules.get('voter_auto_passed'):
+        EligibilityCheckDecision.objects.get_or_create(
+            applicant=applicant,
+            check_key='voter',
+            defaults={
+                'status': 'passed',
+                'failure_reason': '',
+                'reviewed_by': request.user,
+            },
+        )
 
     applicant.form_queue_routed_at = timezone.now()
     applicant.form_queue_routed_by = request.user
@@ -3344,6 +3360,17 @@ def generate_form(request, position, applicant_id):
             'success': False,
             'error': 'Application form already generated.'
         })
+
+    if rules.get('voter_auto_passed'):
+        EligibilityCheckDecision.objects.get_or_create(
+            applicant=applicant,
+            check_key='voter',
+            defaults={
+                'status': 'passed',
+                'failure_reason': '',
+                'reviewed_by': request.user,
+            },
+        )
 
     try:
         with transaction.atomic():
