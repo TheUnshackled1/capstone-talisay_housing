@@ -1086,7 +1086,7 @@
             const viewDocBtnHtml = docUrl
                 ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}"><span class="btn-icon-block">${M2_VIEW_ICON_SVG}</span><span>View</span></a>`
                 : '';
-            const decisionButtonsHtml = entry.is_reviewable
+            const decisionButtonsHtml = (entry.is_reviewable && !isVoterAutoPassed)
                 ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Pass</span></button>
                     <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')"><span class="btn-icon-block">${M2_MISSING_ICON_SVG}</span><span>Missing</span></button>`
                 : '';
