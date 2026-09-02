@@ -371,11 +371,11 @@ function vaultBuildServicesMenu(actionsEl, item, overrideGalleryUrls, overrideGa
     menu.className    = 'vault-svc-menu';
     menu.style.display = 'none';
 
-    function addItem(icon, label, onClick) {
+    function addItem(icon, label, onClick, extraClass) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'vault-svc-item';
-        btn.innerHTML = icon + label;
+        btn.className = 'vault-svc-item' + (extraClass ? ' ' + extraClass : '');
+        btn.innerHTML = '<span class="vault-svc-icon-box">' + icon + '</span><span class="vault-svc-label">' + label + '</span>';
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             closeAllVaultSvcMenus();
@@ -384,19 +384,19 @@ function vaultBuildServicesMenu(actionsEl, item, overrideGalleryUrls, overrideGa
         menu.appendChild(btn);
     }
 
-    const eyeSvg   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-    const upSvg    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
-    const scanSvg  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>';
-    const repSvg   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    const eyeSvg   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const upSvg    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+    const scanSvg  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>';
+    const repSvg   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
 
     if (hasView) {
-        addItem(eyeSvg, '\u00a0View', function () {
+        addItem(eyeSvg, 'View', function () {
             if (viewUrls && viewUrls.length) {
                 openVaultImageGallery(viewUrls, galleryTitle || 'Photos');
             } else if (viewUrl) {
                 window.open(viewUrl, '_blank', 'noopener');
             }
-        });
+        }, 'vault-svc-item--view');
     }
 
     if (hasUpload) {
@@ -407,13 +407,13 @@ function vaultBuildServicesMenu(actionsEl, item, overrideGalleryUrls, overrideGa
         fakeBtn.dataset.intakeDocCode   = docCode || '';
         fakeBtn.dataset.hasExistingDoc  = onFile ? '1' : '0';
         fakeBtn.dataset.existingDocName = (item && item.label) || 'Document';
-        addItem(upSvg, '\u00a0Upload', function () {
+        addItem(upSvg, 'Upload', function () {
             if (canInline) {
                 vaultDrawerTriggerUpload(fakeBtn);
             } else if (typeKey) {
                 vaultOpenUploadForMissingDoc(typeKey);
             }
-        });
+        }, 'vault-svc-item--upload');
     }
 
     if (hasScan) {
@@ -423,13 +423,13 @@ function vaultBuildServicesMenu(actionsEl, item, overrideGalleryUrls, overrideGa
         fakeScanBtn.dataset.intakeDocCode   = docCode || '';
         fakeScanBtn.dataset.hasExistingDoc  = onFile ? '1' : '0';
         fakeScanBtn.dataset.existingDocName = (item && item.label) || 'Document';
-        addItem(scanSvg, '\u00a0Scan', function () {
+        addItem(scanSvg, 'Scan', function () {
             if (canInline) {
                 vaultDrawerTriggerScan(fakeScanBtn);
             } else if (typeKey) {
                 vaultOpenScanForMissingDoc(typeKey);
             }
-        });
+        }, 'vault-svc-item--scan');
     }
 
     if (hasReplace) {
@@ -439,20 +439,13 @@ function vaultBuildServicesMenu(actionsEl, item, overrideGalleryUrls, overrideGa
         fakeRepBtn.dataset.intakeDocCode   = docCode || '';
         fakeRepBtn.dataset.hasExistingDoc  = '1';
         fakeRepBtn.dataset.existingDocName = (item && item.label) || 'Document';
-        const repItem = document.createElement('button');
-        repItem.type = 'button';
-        repItem.className = 'vault-svc-item vault-svc-item--replace';
-        repItem.innerHTML = repSvg + '\u00a0Replace';
-        repItem.addEventListener('click', function (e) {
-            e.stopPropagation();
-            closeAllVaultSvcMenus();
+        addItem(repSvg, 'Replace', function () {
             if (canInline) {
                 vaultDrawerTriggerUpload(fakeRepBtn);
             } else if (typeKey) {
                 vaultOpenUploadForMissingDoc(typeKey);
             }
-        });
-        menu.appendChild(repItem);
+        }, 'vault-svc-item--replace');
     }
 
     // Append menu to body so it escapes vault-drawer-scroll overflow:auto

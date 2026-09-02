@@ -1891,23 +1891,24 @@
 .vault-svc-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.32rem 0.75rem;
-    border: 1px solid #6366f1;
-    border-radius: 0.45rem;
+    gap: 0.35rem;
+    padding: 0.34rem 0.78rem;
+    border: 1px solid #4338ca;
+    border-radius: 0.5rem;
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: white;
-    font-size: 0.66rem;
+    font-size: 0.68rem;
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     letter-spacing: 0.02em;
+    box-shadow: 0 2px 5px rgba(79, 70, 229, 0.28);
 }
 .vault-svc-btn:hover {
     background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-    box-shadow: 0 3px 8px rgba(79,70,229,0.3);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.38);
     transform: translateY(-1px);
 }
 .vault-svc-menu {
@@ -1915,56 +1916,133 @@
     top: calc(100% + 4px);
     right: 0;
     z-index: 99999;
-    background: white;
+    background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 0.55rem;
-    box-shadow: 0 10px 28px -4px rgba(15,23,42,0.14), 0 2px 6px rgba(15,23,42,0.06);
-    min-width: 150px;
-    padding: 0.3rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.06);
+    min-width: 155px;
+    padding: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
     overflow: hidden;
 }
 .vault-svc-item {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.65rem;
     width: 100%;
-    padding: 0.48rem 0.65rem;
-    border: none;
-    background: transparent;
-    color: #334155;
-    font-size: 0.7rem;
-    font-weight: 600;
-    font-family: inherit;
+    padding: 0.42rem 0.65rem;
+    border: 1px solid transparent;
+    background: #f8fafc;
+    border-radius: 0.55rem;
     cursor: pointer;
-    border-radius: 0.35rem;
+    font-family: inherit;
     text-align: left;
-    transition: background 0.12s ease, color 0.12s ease;
-}
-.vault-svc-item svg {
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-    stroke: currentColor;
+    box-sizing: border-box;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    text-decoration: none;
 }
 .vault-svc-item:hover {
-    background: #eff6ff;
-    color: #1d4ed8;
+    transform: translateX(3px);
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
 }
-.vault-svc-item:first-child:hover {
+.vault-svc-icon-box {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #ffffff;
+    transition: transform 0.18s ease;
+}
+.vault-svc-item:hover .vault-svc-icon-box {
+    transform: scale(1.08);
+}
+.vault-svc-icon-box svg {
+    width: 13px !important;
+    height: 13px !important;
+    stroke: #ffffff !important;
+    flex-shrink: 0;
+    display: block;
+}
+.vault-svc-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    flex: 1;
+}
+
+/* 1. View — Blue Theme */
+.vault-svc-item--view {
+    background: #f0f7ff;
+    border-color: #bfdbfe;
+    color: #1e40af;
+}
+.vault-svc-item--view:hover {
+    background: #dbeafe;
+    border-color: #60a5fa;
+    color: #1e3a8a;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.14);
+}
+.vault-svc-item--view .vault-svc-icon-box {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.35);
+}
+
+/* 2. Upload — Emerald Theme */
+.vault-svc-item--upload {
     background: #f0fdf4;
-    color: #15803d;
+    border-color: #bbf7d0;
+    color: #065f46;
 }
-.vault-svc-item:nth-child(2):hover {
-    background: #eff6ff;
-    color: #1d4ed8;
+.vault-svc-item--upload:hover {
+    background: #dcfce7;
+    border-color: #34d399;
+    color: #064e3b;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.14);
 }
-.vault-svc-item:nth-child(3):hover {
-    background: #f5f3ff;
-    color: #6d28d9;
+.vault-svc-item--upload .vault-svc-icon-box {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    box-shadow: 0 2px 5px rgba(16, 185, 129, 0.35);
+}
+
+/* 3. Scan — Purple Theme */
+.vault-svc-item--scan {
+    background: #faf5ff;
+    border-color: #e9d5ff;
+    color: #6b21a8;
+}
+.vault-svc-item--scan:hover {
+    background: #f3e8ff;
+    border-color: #c084fc;
+    color: #581c87;
+    box-shadow: 0 3px 10px rgba(168, 85, 247, 0.14);
+}
+.vault-svc-item--scan .vault-svc-icon-box {
+    background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+    box-shadow: 0 2px 5px rgba(168, 85, 247, 0.35);
+}
+
+/* 4. Replace — Amber Theme */
+.vault-svc-item--replace {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #b45309;
 }
 .vault-svc-item--replace:hover {
-    background: #fff7ed;
-    color: #c2410c;
+    background: #fef3c7;
+    border-color: #fbbf24;
+    color: #9a3412;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.14);
+}
+.vault-svc-item--replace .vault-svc-icon-box {
+    background: linear-gradient(135deg, #f59e0b 0%, #c2410c 100%);
+    box-shadow: 0 2px 5px rgba(245, 158, 11, 0.35);
 }
 
 /* ── Unified filter/sort select control ── */
