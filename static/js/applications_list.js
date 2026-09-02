@@ -736,7 +736,7 @@
             return {
                 label: 'Pending Follow-up',
                 cls: 'followup',
-                title: 'One or more eligibility checks marked Failed — reviewer follow-up required.',
+                title: 'One or more eligibility checks marked Missing — reviewer follow-up required.',
             };
         }
         if (data.form_generation_ready) return { label: 'Ready for Form', cls: 'ready', title: '' };
@@ -862,7 +862,7 @@
         const data = await saveEligibilityDecision(checkKey, 'failed', reason, { notifyApplicantSms: notifySms });
         if (!data) return;
         closeEligibilityFailReasonModal();
-        let msg = 'Failed decision saved.';
+        let msg = 'Missing decision saved.';
         if (notifySms) {
             if (data.sms_sent) {
                 msg += ' ' + (data.sms_detail || 'SMS sent to applicant.');
@@ -991,7 +991,7 @@
         const pendingLabel = totalPendingCount > 0
             ? `<span class="m2-summary-status-label m2-summary-status-label--pending">${totalPendingCount} requirement${totalPendingCount === 1 ? '' : 's'} pending</span>`
             : (failedChecks.length
-                ? `<span class="m2-summary-status-label m2-summary-status-label--fail">${failedChecks.length} failed &mdash; blocks Ready for Form</span>`
+                ? `<span class="m2-summary-status-label m2-summary-status-label--fail">${failedChecks.length} missing &mdash; blocks Ready for Form</span>`
                 : `<span class="m2-summary-status-label m2-summary-status-label--ok">All requirements complete</span>`);
 
         const proceedFormBtn = document.getElementById('eligibilityProceedFormModalBtn');
@@ -1033,7 +1033,7 @@
                 proceedFormBtn.onclick = null;
                 proceedFormBtn.classList.remove('m2-proceed--ready');
                 if (failedChecks.length > 0) {
-                    proceedFormBtn.title = `Resolve failed requirements first (${failedChecks.length} failed)`;
+                    proceedFormBtn.title = `Resolve missing requirements first (${failedChecks.length} missing)`;
                 } else if (totalPendingCount > 0) {
                     proceedFormBtn.title = `Complete all requirements first (${totalPendingCount} remaining)`;
                 } else {
@@ -1075,7 +1075,7 @@
             const vaultUploadUrl = typeof entry.vault_upload_url === 'string' ? entry.vault_upload_url.trim() : '';
             const vaultScanUrl = typeof entry.vault_scan_url === 'string' ? entry.vault_scan_url.trim() : '';
             const hasManualStatus = manualStatus === 'passed' || manualStatus === 'failed';
-            const manualLabel = manualStatus === 'passed' ? 'Passed' : (manualStatus === 'failed' ? 'Failed' : '');
+            const manualLabel = manualStatus === 'passed' ? 'Passed' : (manualStatus === 'failed' ? 'Missing' : '');
             const evidenceHtml = formatM2EvidenceHtml(entry.evidence);
             const isVoterAutoPassed = entry.key === 'voter' && entry.status === 'passed' && !hasManualStatus;
             const chipHtml = hasManualStatus
@@ -1114,7 +1114,7 @@
             const decisionActionsHtml = entry.is_reviewable
                 ? `<div class="m2-elig-decision-actions">
                     <button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x2715; Fail</button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x26A0; Missing</button>
                    </div>`
                 : '';
             const actionsRow = (!docUrl && (eligUploadHtml || scanControlHtml) && entry.is_reviewable)
@@ -1123,7 +1123,7 @@
                         ${eligUploadHtml ? eligUploadHtml.replace('class="m2-elig-upload-btn', 'class="m2-ev-toolbar-btn m2-elig-upload-btn').replace('class="m2-elig-upload-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-upload-btn m2-replace-aware-link') : ''}
                         ${scanControlHtml ? scanControlHtml.replace('class="m2-elig-scan-btn', 'class="m2-ev-toolbar-btn m2-elig-scan-btn').replace('class="m2-elig-scan-btn m2-replace-aware-link', 'class="m2-ev-toolbar-btn m2-elig-scan-btn m2-replace-aware-link') : ''}
                         <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')">&#x2713; Pass</button>
-                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x2715; Fail</button>
+                        <button type="button" class="m2-ev-toolbar-btn eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')">&#x26A0; Missing</button>
                     </div>
                    </div>`
                 : `<div class="m2-elig-actions">
@@ -1196,8 +1196,7 @@
         const summaryChipsHtml = `<div class="m2-summary-chips">
             <span class="m2-summary-chip m2-summary-chip--passed">&#x2714; Passed <span class="m2-summary-chip__count">${passedChecks.length}</span></span>
             <span class="m2-summary-chip m2-summary-chip--pending">&#x23F3; Pending <span class="m2-summary-chip__count">${undecidedChecks.length}</span></span>
-            <span class="m2-summary-chip m2-summary-chip--failed">&#x2718; Failed <span class="m2-summary-chip__count">${failedChecks.length}</span></span>
-            <span class="m2-summary-chip m2-summary-chip--missing">&#x26A0; Missing <span class="m2-summary-chip__count">${missingEvidenceChecks.length}</span></span>
+            <span class="m2-summary-chip m2-summary-chip--failed">&#x26A0; Missing <span class="m2-summary-chip__count">${failedChecks.length}</span></span>
             ${pendingLabel}
         </div>`;
 

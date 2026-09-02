@@ -247,7 +247,7 @@
                             {% elif data.m2_evaluator.field_evidence_required and data.m2_evaluator.field_evidence_status == 'missing' %}
                             <span class="m2-readiness-chip needs-docs">NEEDS FIELD EVIDENCE</span>
                             {% elif data.m2_evaluator.has_failed_checks %}
-                            <span class="m2-readiness-chip review" title="One or more eligibility checks marked Failed — reviewer follow-up required.">PENDING FOLLOW-UP</span>
+                            <span class="m2-readiness-chip review" title="One or more eligibility checks marked Missing — reviewer follow-up required.">PENDING FOLLOW-UP</span>
                             {% elif data.m2_evaluator.form_generation_ready %}
                             <span class="m2-readiness-chip ready">READY FOR FORM</span>
                             {% else %}
@@ -400,7 +400,7 @@
                 <img src="{% static 'images/favicon.png' %}" alt="Logo" decoding="async">
             </div>
             <h3 class="eligibility-next-title">Eligibility Evaluation Checklist</h3>
-            <p class="eligibility-next-subtitle" id="eligibilityNextSubtitle">Review each check, then mark Passed or Failed.</p>
+            <p class="eligibility-next-subtitle" id="eligibilityNextSubtitle">Review each check, then mark Passed or Missing.</p>
             <div id="eligibilityNextInfoChips" class="m2-info-chips-row" style="display:none;"></div>
             <button type="button" class="btn-close" onclick="closeEligibilityNextModal()"
                 style="position: absolute; right: 0.85rem; top: 0.75rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; line-height: 1; color: #94a3b8; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; cursor: pointer; transition: background 0.15s, color 0.15s;"
@@ -524,19 +524,19 @@
                 <img src="{% static 'images/favicon.png' %}" alt="Logo" decoding="async"
                     style="height: 100%; max-height: 2.2rem; width: auto; object-fit: contain;">
             </div>
-            <h3 class="eligibility-next-title">Mark Failed</h3>
-            <p class="eligibility-next-subtitle">Provide a reason before saving this failed decision.</p>
+            <h3 class="eligibility-next-title">Mark Missing</h3>
+            <p class="eligibility-next-subtitle">Provide a reason or remarks before saving this missing decision.</p>
         </div>
         <div class="eligibility-next-body">
             <label for="eligibilityFailReasonInput"
-                style="display:block;font-size:0.75rem;font-weight:700;color:#334155;margin-bottom:0.4rem;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">Failure Reason</label>
+                style="display:block;font-size:0.75rem;font-weight:700;color:#334155;margin-bottom:0.4rem;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">Missing Reason / Remarks</label>
             <textarea id="eligibilityFailReasonInput" rows="4"
-                placeholder="Example: Submitted certificate is expired and does not match current applicant profile."
+                placeholder="Example: Missing required certificate or document does not match applicant profile."
                 style="width:100%;padding:0.6rem;border:1px solid #cbd5e1;border-radius:0.5rem;font-size:0.8rem;resize:vertical;"></textarea>
             <label
                 style="display:flex;align-items:flex-start;gap:0.45rem;margin-top:0.55rem;font-size:0.72rem;color:#334155;line-height:1.35;cursor:pointer;">
                 <input type="checkbox" id="eligibilityFailNotifySms" checked style="margin-top:0.12rem;flex-shrink:0;">
-                <span>Send SMS to the applicant using the failure reason above (requires a valid PH mobile number on
+                <span>Send SMS to the applicant using the missing reason above (requires a valid PH mobile number on
                     file).</span>
             </label>
             <div id="eligibilityFailReasonError"
