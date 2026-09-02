@@ -2416,19 +2416,31 @@
 
     .flow-alert-next {
         min-width: 88px;
-        border: none;
-        border-radius: 0.6rem;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        color: #fff;
+        border: 1px solid #1d4ed8;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%);
+        color: #ffffff;
         font-weight: 700;
-        font-size: 0.84rem;
-        padding: 0.48rem 0.95rem;
+        font-size: 0.86rem;
+        padding: 0.48rem 1.1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
         cursor: pointer;
-        box-shadow: none;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
     }
 
     .flow-alert-next:hover {
-        background: #1d4ed8;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%);
+        border-color: #1e40af;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        transform: translateY(-2px);
+    }
+
+    .flow-alert-next:active {
+        transform: translateY(0px) scale(0.98);
     }
 
     /* Flow Alert Success Celebration (Glassmorphism & premium styling overrides) */
@@ -2536,58 +2548,124 @@
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+        gap: 0.65rem !important;
         width: auto !important;
         min-width: 8.5rem !important;
         height: auto !important;
-        padding: 0.75rem 2.5rem !important;
+        padding: 0.65rem 2rem !important;
         font-size: 0.95rem !important;
         font-weight: 700 !important;
-        border-radius: 0.75rem !important;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        letter-spacing: 0.02em !important;
+        border-radius: 0.85rem !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%) !important;
         color: #ffffff !important;
-        border: none !important;
-        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border: 1px solid #047857 !important;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
         cursor: pointer;
     }
 
     .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35) !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 55%, #064e3b 100%) !important;
+        border-color: #064e3b !important;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
         transform: translateY(-2px) !important;
     }
 
     .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:active {
-        transform: translateY(0) !important;
+        transform: translateY(0px) scale(0.98) !important;
+    }
+
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-ok .btn-icon-block {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.65rem;
+        height: 1.65rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-ok .btn-icon-block svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        stroke-width: 2.5;
+        color: #ffffff;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+    }
+
+    .flow-alert-card.flow-alert-card--celebration .flow-alert-ok:hover .btn-icon-block {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
     }
 
     .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
+        gap: 0.65rem !important;
         width: auto !important;
-        min-width: 8.5rem !important;
+        min-width: 9.5rem !important;
         height: auto !important;
-        padding: 0.75rem 2.5rem !important;
+        padding: 0.65rem 2rem 0.65rem 2.2rem !important;
         font-size: 0.95rem !important;
         font-weight: 700 !important;
-        border-radius: 0.75rem !important;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        letter-spacing: 0.02em !important;
+        border-radius: 0.85rem !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%) !important;
         color: #ffffff !important;
-        border: none !important;
-        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25) !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border: 1px solid #1d4ed8 !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
         cursor: pointer;
     }
 
     .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #172554 100%) !important;
-        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35) !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%) !important;
+        border-color: #1e40af !important;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
         transform: translateY(-2px) !important;
     }
 
     .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next:active {
-        transform: translateY(0) !important;
+        transform: translateY(0px) scale(0.98) !important;
+    }
+
+    .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next .btn-icon-block {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.65rem;
+        height: 1.65rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next .btn-icon-block svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        stroke-width: 2.5;
+        color: #ffffff;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+    }
+
+    .flow-alert-card.flow-alert-card--celebration.flow-alert-card--precheck-next .flow-alert-next:hover .btn-icon-block {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
     }
 
     .flow-alert-progress-bar {
