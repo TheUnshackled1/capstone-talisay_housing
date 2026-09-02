@@ -44,7 +44,7 @@ def staff_pipeline_primary_detail(
         if is_historical_lot_award(la_active):
             return (
                 'Historical beneficiary',
-                f'{loc} · Document vault reserved · uploads pending',
+                f'{loc} · No Document · Uploads Pending',
             )
         status_disp = unit.get_status_display() if hasattr(unit, 'get_status_display') else unit.status
         return (
