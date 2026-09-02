@@ -2431,6 +2431,13 @@ def applicant_status_tracker(request, ref):
         # regardless of the underlying status field (which stays 'eligible'/'application').
         if getattr(applicant, 'form_queue_routed_at', None):
             applicant_status = 'standby'
+        # If the linked Application has been moved to lot-awarding standby queue,
+        # override to 'awarded' so the tracker shows Lot Awarding as the active stage.
+        try:
+            if applicant.application.status == 'standby':
+                applicant_status = 'awarded'
+        except Exception:
+            pass
     except Applicant.DoesNotExist:
         pass
 
