@@ -719,7 +719,7 @@
 <!-- Review/Edit Modal - Combined Detail & Review -->
 <div class="modal-overlay" id="reviewModal" onclick="closeReviewModal()">
     <div class="modal-content tha-review-modal"
-        style="max-width: 56rem; max-height: 90vh; overflow-y: auto; padding: 0; border: none;"
+        style="max-height: 90vh; overflow-y: auto; padding: 0; border: none;"
         onclick="event.stopPropagation()">
         <div class="modal-header"
             style="position: sticky; top: 0; z-index: 10; padding: 0; border: none; background: #0f172a; width: 100%;">
@@ -972,9 +972,14 @@
                             <input type="text" id="officeCdrrmoReceiptNotes" class="form-input"
                                 placeholder="e.g., DRRMO certification no., date of CDRRMO letter, receiving personnel"
                                 style="font-size: 0.75rem; padding: 0.375rem; margin-bottom: 0.75rem;">
-                            <button type="button" class="btn-modal" onclick="recordOfficeCdrrmoCertified()"
-                                style="background: #1d4ed8; color: white; border: 1px solid #1e40af; padding: 0.5rem 0.875rem; font-size: 0.75rem; font-weight: 600;">
-                                Record CDRRMO certification received at office
+                            <button type="button" class="btn-modal primary btn-record-cdrrmo" onclick="recordOfficeCdrrmoCertified()">
+                                <span class="btn-icon-block">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                    </svg>
+                                </span>
+                                <span>Record CDRRMO certification received at office</span>
                             </button>
                             <p style="font-size: 0.6875rem; color: #64748b; margin: 0.5rem 0 0 0; line-height: 1.4;">
                                 This action files the same disposition as a <strong>certified</strong> CDRRMO finding:
@@ -1107,13 +1112,24 @@
                                 intake staff — disposition on field report</p>
 
                             <div id="cdrrmoActionsBox" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <button type="button" onclick="approveCdrrmo()" class="btn-modal"
-                                    style="background: #dcfce7; color: #14532d; border: 1px solid #86efac; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
-                                    Accept field report (certified)
+                                <button type="button" onclick="approveCdrrmo()" class="btn-modal success btn-cdrrmo-approve"
+                                    style="flex: 1; min-width: 150px;">
+                                    <span class="btn-icon-block">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span>Accept field report (certified)</span>
                                 </button>
-                                <button type="button" onclick="rejectCdrrmo()" class="btn-modal"
-                                    style="background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; padding: 0.5rem 0.75rem; font-size: 0.75rem; flex: 1; min-width: 150px;">
-                                    Reject field report (not certified)
+                                <button type="button" onclick="rejectCdrrmo()" class="btn-modal danger btn-cdrrmo-reject"
+                                    style="flex: 1; min-width: 150px;">
+                                    <span class="btn-icon-block">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </span>
+                                    <span>Reject field report (not certified)</span>
                                 </button>
                             </div>
 
@@ -1280,40 +1296,48 @@
                 {% if can_modify %}
                 <!-- Edit Mode Toggle - Only for Jocel/Joie -->
                 <button type="button" class="btn-modal secondary" id="btnEditToggle" onclick="toggleEditMode()">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="width: 1rem; height: 1rem;">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
+                    <span class="btn-icon-block">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </span>
                     <span id="editToggleText">EDIT record</span>
                 </button>
 
                 <!-- Save/Cancel (Edit Mode) -->
                 <div id="editActions" style="display: none; gap: 0.5rem;">
-                    <button type="submit" class="btn-modal primary">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                            <polyline points="7 3 7 8 15 8"></polyline>
-                        </svg>
-                        Save Edit
+                    <button type="submit" class="btn-modal primary" id="btnSaveEdit">
+                        <span class="btn-icon-block">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                        </span>
+                        <span>Save Edit</span>
                     </button>
-                    <button type="button" class="btn-modal secondary" onclick="cancelEdit()">
-                        Discard changes
+                    <button type="button" class="btn-modal secondary" id="btnDiscardEdit" onclick="cancelEdit()">
+                        <span class="btn-icon-block">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </span>
+                        <span>Discard changes</span>
                     </button>
                 </div>
 
-
-
                 <!-- Delete Button - Only for Jocel/Joie -->
                 <button type="button" class="btn-modal danger" id="btnDelete" onclick="confirmDelete()">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="width: 1rem; height: 1rem;">
-                        <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                        <rect x="1" y="3" width="22" height="5"></rect>
-                        <line x1="10" y1="12" x2="14" y2="12"></line>
-                    </svg>
-                    ARCHIVE record
+                    <span class="btn-icon-block">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                            <rect x="1" y="3" width="22" height="5"></rect>
+                            <line x1="10" y1="12" x2="14" y2="12"></line>
+                        </svg>
+                    </span>
+                    <span>ARCHIVE record</span>
                 </button>
                 {% else %}
                 <!-- Read-Only Notice for Field Team -->
