@@ -1595,8 +1595,18 @@
                 throw new Error(data.error || 'Unable to proceed applicant to Ready for Form queue.');
             }
             const smsPlan = data.sms_plan || {};
+            let alertMsg = 'Applicant moved to FORM GENERATION.';
+            if (smsPlan.has_phone) {
+                if (smsPlan.dispatched) {
+                    alertMsg += '\n\nSMS notification dispatched to applicant.';
+                } else if (smsPlan.deduped) {
+                    alertMsg += '\n\nSMS notification was previously sent.';
+                }
+            } else {
+                alertMsg += '\n\nNo phone number on file for SMS notification.';
+            }
             showFlowAlert(
-                'Applicant moved to FORM GENERATION',
+                alertMsg,
                 'SUCCESS',
                 () => {
                     closeEligibilityNextModal();
