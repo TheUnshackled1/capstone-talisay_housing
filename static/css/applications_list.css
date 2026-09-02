@@ -4019,7 +4019,7 @@
     }
 
     .eligibility-next-footer {
-        padding: 0.45rem 1rem;
+        padding: 0.65rem 1.25rem;
         border-top: 1px solid #e2e8f0;
         display: flex;
         align-items: center;
@@ -4028,110 +4028,198 @@
         position: sticky;
         bottom: 0;
         z-index: 2;
+        box-shadow: 0 -2px 10px rgba(15, 23, 42, 0.03);
     }
 
-    .eligibility-next-back {
-        border: 1px solid #eab308;
-        background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+    /* Glassmorphic Icon Blocks in Eligibility Modal Footer */
+    .eligibility-next-footer .btn-icon-block {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.55rem;
+        height: 1.55rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .eligibility-next-footer .btn-icon-block svg {
+        width: 0.85rem;
+        height: 0.85rem;
+        stroke-width: 2.5;
         color: #ffffff;
-        border-radius: 0.6rem;
-        padding: 0.45rem 0.85rem;
-        font-size: 0.8rem;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+    }
+
+    /* Back Button — Dynamic Amber Gradient & Border */
+    .eligibility-next-back {
+        border: 1px solid #d97706;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 55%, #b45309 100%);
+        color: #ffffff;
+        border-radius: 9px;
+        padding: 0.48rem 1rem 0.48rem 0.6rem;
+        font-size: 0.82rem;
         font-weight: 700;
+        letter-spacing: 0.02em;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        box-shadow: 0 3px 10px rgba(217, 119, 6, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
     }
 
     .eligibility-next-back:hover {
-        background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
-        border-color: #ca8a04;
+        background: linear-gradient(135deg, #d97706 0%, #b45309 55%, #92400e 100%);
+        border-color: #92400e;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(217, 119, 6, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .eligibility-next-back:hover .btn-icon-block {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .eligibility-next-back:active {
+        transform: translateY(0px) scale(0.98);
     }
 
     .eligibility-next-close {
-        border: 1px solid #2563eb;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border: 1px solid #1d4ed8;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%);
         color: #ffffff;
-        border-radius: 0.6rem;
-        padding: 0.45rem 0.85rem;
-        font-size: 0.8rem;
+        border-radius: 9px;
+        padding: 0.48rem 1rem;
+        font-size: 0.82rem;
         font-weight: 700;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
     }
 
     .eligibility-next-close:hover {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        border-color: #1d4ed8;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%);
+        border-color: #1e40af;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
 
+    .eligibility-next-close:active {
+        transform: translateY(0px) scale(0.98);
+    }
+
+    /* Progress Label — Dynamic Pill Badge centered in footer */
+    .m2-progress-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #475569;
+        background: rgba(248, 250, 252, 0.95);
+        border: 1px solid #cbd5e1;
+        border-radius: 9999px;
+        padding: 0.38rem 0.95rem;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    .m2-progress-label.m2-progress-label--done {
+        color: #047857;
+        font-weight: 800;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border-color: #a7f3d0;
+        box-shadow: 0 3px 10px rgba(16, 185, 129, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        transform: translateX(-50%) scale(1.03);
+    }
+
+    /* Proceed Button — Dynamic Emerald Gradient, Glassmorphic Icon Block & Micro-Animations */
     .eligibility-next-proceed {
         border: 1px solid #047857;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%);
         color: #ffffff;
-        border-radius: 0.6rem;
-        padding: 0.45rem 0.85rem;
-        font-size: 0.8rem;
+        border-radius: 9px;
+        padding: 0.48rem 0.6rem 0.48rem 1rem;
+        font-size: 0.82rem;
         font-weight: 700;
+        letter-spacing: 0.02em;
         cursor: pointer;
-        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        box-shadow: 0 3px 10px rgba(5, 150, 105, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.25s ease;
     }
 
     .eligibility-next-proceed:hover:not(:disabled) {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        border-color: #065f46;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        background: linear-gradient(135deg, #059669 0%, #047857 55%, #064e3b 100%);
+        border-color: #064e3b;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(5, 150, 105, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .eligibility-next-proceed:hover:not(:disabled) .btn-icon-block {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .eligibility-next-proceed:active:not(:disabled) {
+        transform: translateY(0px) scale(0.98);
     }
 
     .eligibility-next-proceed:disabled,
     .eligibility-next-proceed[disabled] {
         background: #f1f5f9 !important;
         color: #94a3b8 !important;
-        border-color: #cbd5e1 !important;
+        border: 1px solid #e2e8f0 !important;
         cursor: not-allowed !important;
         box-shadow: none !important;
         opacity: 0.75 !important;
         transform: none !important;
     }
 
-    /* Proceed button smooth transition + ready animation */
-    .eligibility-next-proceed {
-        transition: background 0.35s ease, border-color 0.35s ease,
-                    box-shadow 0.35s ease, transform 0.2s ease, opacity 0.25s ease;
+    .eligibility-next-proceed:disabled .btn-icon-block,
+    .eligibility-next-proceed[disabled] .btn-icon-block {
+        background: rgba(148, 163, 184, 0.15) !important;
+        border: 1px solid rgba(148, 163, 184, 0.2) !important;
+        box-shadow: none !important;
     }
 
-    @keyframes m2-proceed-ready-pulse {
-        0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
-        60%  { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    .eligibility-next-proceed:disabled .btn-icon-block svg,
+    .eligibility-next-proceed[disabled] .btn-icon-block svg {
+        color: #94a3b8 !important;
+        filter: none !important;
     }
 
     .eligibility-next-proceed.m2-proceed--ready {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%) !important;
         border-color: #047857 !important;
         color: #ffffff !important;
         opacity: 1 !important;
         cursor: pointer !important;
         animation: m2-proceed-ready-pulse 0.7s ease-out 0.1s both;
         transform: translateY(-1px);
-        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
-    }
-
-    /* Progress label — absolutely centered in footer */
-    .m2-progress-label {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        text-align: center;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: #94a3b8;
-        letter-spacing: 0.01em;
-        transition: color 0.3s ease;
-        pointer-events: none;
-        white-space: nowrap;
-    }
-
-    .m2-progress-label.m2-progress-label--done {
-        color: #059669;
-        font-weight: 700;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
     }
 
     @media (max-width: 1024px) {
