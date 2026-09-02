@@ -1074,7 +1074,7 @@
             const chipHtml = hasManualStatus
                 ? `<span class="eligibility-check-chip ${manualStatus}">${manualLabel}</span>`
                 : (isVoterAutoPassed
-                    ? `<span class="eligibility-check-chip auto-passed" title="Auto-passed: voter certification is optional and profile confirms registered voter">Auto-passed</span>`
+                    ? `<span class="eligibility-check-chip auto-passed" title="Auto-Passed: voter certification is optional and profile confirms registered voter">Auto-Passed</span>`
                     : '');
             let cardToneClass = 'm2-elig-card m2-elig-card--compact';
             if (manualStatus === 'failed') cardToneClass += ' m2-elig-card--fail';
