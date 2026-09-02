@@ -709,16 +709,16 @@ function getCsrfToken() {
         const disabledAttr = isBlacklisted ? ' disabled' : '';
         const disabledTitle = isBlacklisted ? ' — Resolve blacklist first' : '';
 
-        const scanSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg>';
+        const scanSvg = '<span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="3" y1="12" x2="21" y2="12"></line></svg></span>';
 
-        let removeBtnHtml = '<span style="color:#94a3b8;font-size:0.75rem;width:6.2rem;display:inline-flex;justify-content:center;align-items:center;">—</span>';
+        let removeBtnHtml = '<span style="color:#94a3b8;font-size:0.75rem;width:6.4rem;display:inline-flex;justify-content:center;align-items:center;">—</span>';
         if (hasFile) {
-            const trashSvg = '<svg class="action-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:0.8rem; height:0.8rem; vertical-align:middle; margin-right:0.25rem;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
-            removeBtnHtml = '<button type="button" class="btn-modal primary archive-replace-btn-confirm" style="background-color: #dc2626; border-color: #dc2626; color: white; width: 6.2rem; justify-content: center;" data-archive-code="' + safeCode + '" onclick="removeArchiveRequirementByCode(this.getAttribute(\'data-archive-code\'))" title="Remove"' + disabledAttr + '>' + trashSvg + 'REMOVE</button>';
+            const trashSvg = '<span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></span>';
+            removeBtnHtml = '<button type="button" class="btn-modal primary archive-replace-btn-confirm archive-req-remove-btn" data-archive-code="' + safeCode + '" onclick="removeArchiveRequirementByCode(this.getAttribute(\'data-archive-code\'))" title="Remove requirement from file"' + disabledAttr + '>' + trashSvg + '<span>REMOVE</span></button>';
         }
 
-        return '<div class="archive-req-actions-group" style="display:flex; gap:0.25rem;">'
-            + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault' + disabledTitle + '"' + disabledAttr + ' style="width: 5.5rem; justify-content: center;">' + scanSvg + 'SCAN</button>'
+        return '<div class="archive-req-actions-group" style="display:flex; gap:0.4rem; align-items:center; justify-content:center;">'
+            + '<button type="button" class="btn-modal secondary archive-req-row-scan-btn" data-archive-scan-code="' + safeCode + '" data-has-existing-doc="' + hasExistingAttr + '" data-existing-doc-name="' + docName + '" onclick="scanArchiveRequirementByCode(this.getAttribute(\'data-archive-scan-code\'))" title="Capture from scanner (TWAIN) — saves to document vault' + disabledTitle + '"' + disabledAttr + '>' + scanSvg + '<span>SCAN</span></button>'
             + removeBtnHtml
             + '</div>';
     }
@@ -732,11 +732,12 @@ function getCsrfToken() {
         }
         const label = escapeHtml(filedLabel || 'SCANNED');
         const docTitle = escapeHtml(String((row && row.latest_file_name) || filedLabel || 'Document on file').trim());
+        const checkSvg = '<span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
         if (latestFileUrl) {
             const safeLatestFileUrl = escapeHtml(latestFileUrl);
-            return '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + '">' + label + '</button>';
+            return '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + '">' + checkSvg + '<span>' + label + '</span></button>';
         }
-        return '<span class="req-scan req-scan-done">' + label + '</span>';
+        return '<span class="req-scan req-scan-done">' + checkSvg + '<span>' + label + '</span></span>';
     }
 
     function renderArchiveRequirementsChecklistTable(payload) {

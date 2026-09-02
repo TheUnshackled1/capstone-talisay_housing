@@ -1071,12 +1071,28 @@
         outline-offset: 2px;
     }
 
+    #archiveRequirementsModal {
+        padding-left: calc(var(--sidebar-width, 260px) + 1.5rem) !important;
+        padding-right: 1.5rem !important;
+        box-sizing: border-box !important;
+    }
+
+    @media (max-width: 991px) {
+        #archiveRequirementsModal {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+
     #archiveRequirementsModal .archive-req-modal {
         border: 1px solid #cbd5e1;
         border-radius: 1rem;
         display: flex;
         flex-direction: column;
         max-height: min(92vh, 54rem);
+        max-width: min(54rem, calc(100vw - var(--sidebar-width, 260px) - 3rem)) !important;
+        width: 100% !important;
+        margin: 0 auto !important;
         overflow: hidden;
         box-shadow: 0 24px 52px -18px rgba(15, 23, 42, 0.35);
     }
@@ -1376,31 +1392,73 @@
         order: 3;
         min-width: 0;
         width: auto;
-        padding: 0.55rem 1.25rem;
-        font-size: 0.75rem;
+        padding: 0.52rem 1.25rem;
+        font-size: 0.8rem;
         font-weight: 800;
+        letter-spacing: 0.02em;
         line-height: 1.2;
-        border-radius: 0.5rem;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
         color: #94a3b8;
-        background: #f1f5f9;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border: 1px solid #cbd5e1;
-        box-shadow: none;
-        transition: all 0.18s ease;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        cursor: not-allowed;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn .btn-icon-block {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.55rem;
+        height: 1.55rem;
+        border-radius: 6px;
+        background: rgba(148, 163, 184, 0.15);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        color: #94a3b8;
+        flex-shrink: 0;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+    }
+
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn .btn-icon-block svg {
+        width: 0.85rem;
+        height: 0.85rem;
+        stroke-width: 2.5;
+        display: block;
     }
 
     #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready {
-        color: #ffffff;
-        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-        border-color: #1e3a8a;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        font-weight: 800;
-        letter-spacing: 0.01em;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%) !important;
+        border: 1px solid #1d4ed8 !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        cursor: pointer !important;
+    }
+
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready .btn-icon-block {
+        background: rgba(255, 255, 255, 0.22) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        color: #ffffff !important;
     }
 
     #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        transform: translateY(-1.5px) scale(1.02);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%) !important;
+        border-color: #1e40af !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    }
+
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready:hover .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
+    }
+
+    #archiveRequirementsModal #archiveProceedToEvaluationBtn.is-ready:active {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     #archiveRequirementsModal #archiveProceedToEvaluationBtn[disabled] {
@@ -1501,22 +1559,105 @@
         stroke: currentColor;
     }
 
-    #archiveRequirementsModal .archive-req-row-scan-btn {
-        border-color: #10b981 !important;
+    #archiveRequirementsModal .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.3rem !important;
+        height: 1.3rem !important;
+        border-radius: 5px !important;
+        background: rgba(255, 255, 255, 0.22) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.38) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
         color: #ffffff !important;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease !important;
     }
 
-    #archiveRequirementsModal .archive-req-row-scan-btn:hover {
-        border-color: #059669;
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        color: #ffffff;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.22);
-        transform: translateY(-1.5px) scale(1.04);
+    #archiveRequirementsModal .btn-icon-block svg {
+        width: 0.78rem !important;
+        height: 0.78rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
+        filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.15)) !important;
     }
 
-    #archiveRequirementsModal .archive-req-row-scan-btn svg.action-btn-svg {
-        stroke: currentColor;
+    #archiveRequirementsModal .archive-req-row-scan-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.38rem !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 8px !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        min-width: 5.6rem !important;
+        min-height: 30px !important;
+        border: 1px solid #047857 !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 55%, #047857 100%) !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        cursor: pointer !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
+    }
+
+    #archiveRequirementsModal .archive-req-row-scan-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #059669 0%, #047857 55%, #064e3b 100%) !important;
+        border-color: #064e3b !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(5, 150, 105, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    }
+
+    #archiveRequirementsModal .archive-req-row-scan-btn:hover:not(:disabled) .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
+    }
+
+    #archiveRequirementsModal .archive-req-row-scan-btn:active:not(:disabled) {
+        transform: translateY(0) scale(0.98) !important;
+    }
+
+    #archiveRequirementsModal .archive-replace-btn-confirm,
+    #archiveRequirementsModal .archive-req-remove-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.38rem !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 8px !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.04em !important;
+        min-width: 6.4rem !important;
+        min-height: 30px !important;
+        border: 1px solid #be123c !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 55%, #be123c 100%) !important;
+        box-shadow: 0 2px 6px rgba(225, 29, 72, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        cursor: pointer !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
+    }
+
+    #archiveRequirementsModal .archive-replace-btn-confirm:hover:not(:disabled),
+    #archiveRequirementsModal .archive-req-remove-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 55%, #881337 100%) !important;
+        border-color: #881337 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(225, 29, 72, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    }
+
+    #archiveRequirementsModal .archive-replace-btn-confirm:hover:not(:disabled) .btn-icon-block,
+    #archiveRequirementsModal .archive-req-remove-btn:hover:not(:disabled) .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(255, 255, 255, 0.32) !important;
+    }
+
+    #archiveRequirementsModal .archive-replace-btn-confirm:active:not(:disabled),
+    #archiveRequirementsModal .archive-req-remove-btn:active:not(:disabled) {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     #archiveRequirementsModal .archive-proceed-hint {
@@ -1617,26 +1758,63 @@
     }
 
     #archiveRequirementsModal .req-scan-done {
-        color: #10b981;
-        background: transparent;
-        border-color: transparent;
-        text-transform: uppercase !important;
-        font-weight: 700 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.38rem !important;
+        padding: 0.28rem 0.68rem !important;
+        border-radius: 9999px !important;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border: 1px solid #6ee7b7 !important;
+        color: #047857 !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
         letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
     }
 
-    #archiveRequirementsModal .req-scan-pending {
-        color: #64748b;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-color: #cbd5e1;
+    #archiveRequirementsModal .req-scan-done::before {
+        display: none !important;
     }
 
-    #archiveRequirementsModal .archive-req-scan-link {
-        cursor: pointer;
+    #archiveRequirementsModal .req-scan-done .btn-icon-block {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 1.15rem !important;
+        height: 1.15rem !important;
+        border-radius: 4px !important;
+        background: rgba(16, 185, 129, 0.18) !important;
+        border: 1px solid rgba(16, 185, 129, 0.35) !important;
+        box-shadow: 0 1px 2px rgba(16, 185, 129, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+        color: #047857 !important;
+        flex-shrink: 0 !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease !important;
+    }
+
+    #archiveRequirementsModal .req-scan-done .btn-icon-block svg {
+        width: 0.7rem !important;
+        height: 0.7rem !important;
+        stroke-width: 2.5 !important;
+        display: block !important;
     }
 
     #archiveRequirementsModal .archive-req-scan-link:hover {
-        filter: brightness(0.98);
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+        border-color: #34d399 !important;
+        color: #065f46 !important;
+        transform: translateY(-1.5px) !important;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    }
+
+    #archiveRequirementsModal .archive-req-scan-link:hover .btn-icon-block {
+        transform: scale(1.1) !important;
+        background: rgba(16, 185, 129, 0.28) !important;
+    }
+
+    #archiveRequirementsModal .archive-req-scan-link:active {
+        transform: translateY(0) scale(0.98) !important;
     }
 
     @media (max-width: 640px) {
