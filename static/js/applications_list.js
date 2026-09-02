@@ -507,9 +507,13 @@
         const sitDwtMapping = M2_VAULT_DOCUMENT_TYPE_TO_INTAKE_DOC[vaultDt];
         const hasExistingDocAttr = docUrl ? '1' : '0';
         const safeExistingDocNameAttr = escapeHtml(docName || 'Document');
-        const sitScanControlHtml = '';
-        const sitUploadHtml = '';
         const isFieldSitePhotosRow = String(c.key || '').trim() === 'field_site_photos';
+        const sitUploadHtml = vaultUploadUrl 
+            ? `<a class="eligibility-decision-btn" style="text-decoration:none;" href="${safeVaultUploadHref}" target="_blank" title="Upload document"><span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span><span>Upload</span></a>`
+            : '';
+        const sitScanControlHtml = (sitDwtMapping && !isFieldSitePhotosRow)
+            ? `<button type="button" class="eligibility-decision-btn" onclick="archiveOpenDynamicWebTwainModal('${sitDwtMapping}', '${safeExistingDocNameAttr}')" title="Scan document"><span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line></svg></span><span>Scan</span></button>`
+            : '';
         const fieldPhotoUrls = Array.isArray(c.field_photo_urls) ? c.field_photo_urls.filter(function (u) { return u && String(u).trim(); }) : [];
         const fieldPhotosAttr = fieldPhotoUrls.length ? m2EscapeAttrJson(JSON.stringify(fieldPhotoUrls)) : '';
         const viewFieldPhotosHtml = (isFieldSitePhotosRow && fieldPhotoUrls.length && fieldPhotosAttr)
@@ -532,11 +536,13 @@
                  onclick="showFlowAlert('This requirement is satisfied on record. When every row shows Done, click Mark Situation Certified below.', 'Situation Certification', null, 'success')"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Mark</span></button>`
                 : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Mark</span></button>`);
         const viewSitDocBtnHtml = docUrl ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}"><span class="btn-icon-block">${M2_VIEW_ICON_SVG}</span><span>View</span></a>` : '';
-        const actionsRow = (viewSitDocBtnHtml || viewFieldPhotosHtml || markPassedButtonsHtml)
+        const actionsRow = (viewSitDocBtnHtml || viewFieldPhotosHtml || sitUploadHtml || sitScanControlHtml || markPassedButtonsHtml)
             ? `<div class="m2-elig-actions m2-sit-actions">
                 <div class="m2-elig-decision-actions">
                     ${viewSitDocBtnHtml}
                     ${viewFieldPhotosHtml}
+                    ${sitScanControlHtml}
+                    ${sitUploadHtml}
                     ${markPassedButtonsHtml}
                 </div>
             </div>`
