@@ -414,8 +414,10 @@ document.getElementById('addUnitForm')?.addEventListener('submit', async functio
             const dupHead = 'Not created — this block/lot already exists. Nothing was saved again.';
             const dupDetail = data.error || '';
             errEl.textContent = '';
+            errEl.style.textAlign = 'center';
             const msgP = document.createElement('p');
             msgP.style.margin = '0';
+            msgP.style.textAlign = 'center';
             msgP.textContent = dupHead + (dupDetail ? ' ' + dupDetail : '');
             errEl.appendChild(msgP);
             if (data.existing_unit_id) {
