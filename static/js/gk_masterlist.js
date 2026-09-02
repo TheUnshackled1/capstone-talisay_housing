@@ -15,21 +15,43 @@
 
     /* Give every slide the exact pixel width of the visible wrapper */
     function sizeSlides() {
+        if (total <= 1) {
+            slides.forEach(function (s) { s.style.width = '100%'; });
+            return;
+        }
         var w = wrap.getBoundingClientRect().width || wrap.offsetWidth;
-        slides.forEach(function (s) { s.style.width = w + 'px'; });
+        if (w > 0) {
+            slides.forEach(function (s) { s.style.width = w + 'px'; });
+        }
     }
 
     function slideWidth() {
+        if (total <= 1) return 0;
         return wrap.getBoundingClientRect().width || wrap.offsetWidth;
     }
 
-    function goTo(idx) {
+    function goTo(idx, immediate) {
         current = Math.max(0, Math.min(idx, total - 1));
-        track.style.transform = 'translateX(-' + (current * slideWidth()) + 'px)';
+        if (total <= 1) {
+            track.style.transform = 'none';
+        } else if (immediate) {
+            var prevTrans = track.style.transition;
+            track.style.transition = 'none';
+            track.style.transform = 'translateX(-' + (current * slideWidth()) + 'px)';
+            void track.offsetWidth; // force reflow
+            track.style.transition = prevTrans || '';
+        } else {
+            track.style.transform = 'translateX(-' + (current * slideWidth()) + 'px)';
+        }
         dots.forEach(function (d, i) { d.classList.toggle('is-active', i === current); });
         if (counter) counter.textContent = (current + 1) + ' / ' + total;
         if (prevBtn) prevBtn.disabled = current === 0;
         if (nextBtn) nextBtn.disabled = current === total - 1;
+    }
+
+    function updateLayout(immediate) {
+        sizeSlides();
+        goTo(current, immediate);
     }
 
     if (prevBtn) prevBtn.addEventListener('click', function () { goTo(current - 1); });
@@ -56,17 +78,55 @@
         if (Math.abs(diff) > 55) goTo(diff < 0 ? current + 1 : current - 1);
     });
 
-    /* Resize: re-size slides and re-apply translate */
+    /* ResizeObserver: responds immediately whenever container width changes (e.g. sidebar toggle) */
+    if (window.ResizeObserver) {
+        var ro = new ResizeObserver(function () {
+            updateLayout(true);
+        });
+        ro.observe(wrap);
+    }
+
+    /* Window resize */
     window.addEventListener('resize', function () {
-        sizeSlides();
-        goTo(current);
+        updateLayout(true);
     });
+
+    /* Smooth resizing during sidebar collapse/expand transition (300ms) */
+    function animateSidebarResize() {
+        var start = performance.now();
+        function tick(now) {
+            updateLayout(true);
+            if (now - start < 360) {
+                requestAnimationFrame(tick);
+            } else {
+                updateLayout(false);
+            }
+        }
+        requestAnimationFrame(tick);
+    }
+
+    var toggleBtn = document.getElementById('sidebarToggleBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', animateSidebarResize);
+    }
+    var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', animateSidebarResize);
+    }
+
+    var mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+        mainContent.addEventListener('transitionend', function (e) {
+            if (e.propertyName === 'margin-left' || e.propertyName === 'width') {
+                updateLayout(false);
+            }
+        });
+    }
 
     /* Init — defer until browser has finished layout so offsetWidth is non-zero */
     requestAnimationFrame(function () {
         requestAnimationFrame(function () {
-            sizeSlides();
-            goTo(0);
+            updateLayout(true);
         });
     });
 }());
