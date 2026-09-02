@@ -3506,9 +3506,32 @@ def proceed_to_lot_awarding_queue(request, position):
         application.standby_position = last_position + 1
         application.save(update_fields=['status', 'standby_entered_at', 'standby_position', 'updated_at'])
 
+        # Send congratulatory SMS to applicant.
+        applicant = application.applicant
+        has_phone = bool((applicant.phone_number or '').strip())
+        sms_dispatched = False
+        if has_phone:
+            lot_msg = sms_workflow.message_proceed_to_lot_awarding(applicant)
+            sms_dispatched = bool(
+                send_sms(
+                    applicant.phone_number,
+                    lot_msg,
+                    sms_workflow.PROCEED_TO_LOT_AWARDING,
+                    applicant=applicant,
+                    module='applications',
+                )
+            )
+        if getattr(settings, 'DEBUG', False):
+            print(
+                f'\n[proceed_to_lot_awarding_queue] ref={applicant.reference_number} '
+                f'dispatched={sms_dispatched} has_phone={has_phone}\n'
+                f'  {"SMS sent — check runserver terminal." if sms_dispatched else "No phone on applicant — SMS skipped."}\n'
+            )
+
         return JsonResponse({
             'success': True,
             'standby_position': application.standby_position,
+            'sms_dispatched': sms_dispatched,
             'message': (
                 f'Application routed to lot-awarding queue '
                 f'(Standby position #{application.standby_position}).'
