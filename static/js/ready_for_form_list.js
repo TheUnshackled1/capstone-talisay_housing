@@ -186,8 +186,19 @@
         const opts = options || {};
         if (titleEl) titleEl.textContent = opts.title || 'Generate application form?';
         if (message) messageEl.textContent = message;
-        okBtn.textContent = opts.okText || 'Generate Form';
-        cancelBtn.textContent = opts.cancelText || 'Cancel';
+        const okLabel = opts.okText || 'Generate Form';
+        const cancelLabel = opts.cancelText || 'Cancel';
+        const isProceed = okLabel.toLowerCase().includes('proceed');
+        const okSvg = isProceed
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>';
+        const cancelSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+
+        okBtn.className = 'tha-btn tha-btn-success';
+        okBtn.innerHTML = `<span class="btn-icon-block">${okSvg}</span><span>${okLabel}</span>`;
+
+        cancelBtn.className = 'tha-btn tha-btn-danger';
+        cancelBtn.innerHTML = `<span class="btn-icon-block">${cancelSvg}</span><span>${cancelLabel}</span>`;
         overlay.classList.add('active');
 
         const cleanup = () => {
