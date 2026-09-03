@@ -224,6 +224,7 @@ SESSION_COOKIE_AGE = 60 * 60 * 5  # 5 hours
 # =============================================================================
 GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID', '').strip()
 GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET', '').strip()
+GOOGLE_PICKER_API_KEY = os.environ.get('GOOGLE_PICKER_API_KEY', '').strip()
 _domains_raw = os.environ.get('GOOGLE_OAUTH_ALLOWED_DOMAINS', '').strip()
 if _domains_raw:
     GOOGLE_OAUTH_ALLOWED_DOMAINS = tuple(

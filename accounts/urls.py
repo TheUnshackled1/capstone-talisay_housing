@@ -9,6 +9,10 @@ urlpatterns = [
     path('login/google/', views.google_login_start, name='google_login_start'),
     path('logout/', views.logout_view, name='logout'),
 
+    # Google Drive OAuth popup (for Document Vault Upload button)
+    path('google/drive-auth/', views.google_drive_auth_start, name='google_drive_auth_start'),
+    path('google/drive-callback/', views.google_drive_auth_callback, name='google_drive_auth_callback'),
+
     # Main Dashboard (redirects to position-specific dashboard)
     path('dashboard/', views.dashboard_redirect, name='dashboard'),
 

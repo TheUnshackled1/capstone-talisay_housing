@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
+from django.conf import settings
 from django.views.decorators.http import require_http_methods, require_POST
 from functools import wraps
 from collections import defaultdict
@@ -996,6 +997,8 @@ def document_management(request, position):
         'blacklisted_registry_count': blacklisted_registry_count,
         'vault_drawer_data': vault_drawer_data,
         'vault_drawer_can_intake_scan': request.user.position in ('second_member', 'fourth_member'),
+        # Google Picker API integration
+        'GOOGLE_PICKER_API_KEY': getattr(settings, 'GOOGLE_PICKER_API_KEY', ''),
     }
 
     return render(request, 'staff/management.html', context)

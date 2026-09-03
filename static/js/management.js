@@ -174,26 +174,262 @@ async function vaultDrawerConfirmReplace(docName) {
     return window.confirm('Replace the file already on record?\n\n' + label + '\n\nProceed?');
 }
 
-async function vaultDrawerTriggerUpload(buttonEl) {
-    if (!buttonEl) {
-        return;
+// ─── Google Drive Token via Server-Side OAuth Popup ───────────────────────────
+// Opens /accounts/google/drive-auth/ in a popup. Django handles the OAuth
+// code exchange server-side and sends the token back via postMessage.
+let _gDriveAccessToken = null;  // Cached for the session
+
+/**
+ * Opens a small popup to our Django Drive-auth view, waits for the token
+ * to come back via postMessage, then resolves with the access token string.
+ */
+function _getGDriveAccessToken() {
+    return new Promise(function (resolve, reject) {
+        if (_gDriveAccessToken) { resolve(_gDriveAccessToken); return; }
+
+        const authUrl = '/google/drive-auth/';
+        const popup   = window.open(
+            authUrl,
+            'google_drive_auth',
+            'width=520,height=640,left=200,top=80,resizable=yes,scrollbars=yes',
+        );
+
+        if (!popup || popup.closed) {
+            reject(new Error('Popup was blocked. Please allow popups for this site and try again.'));
+            return;
+        }
+
+        let settled = false;
+
+        function handlePayload(data) {
+            if (settled) return;
+            if (!data || data.type !== 'google_drive_token') return;
+            settled = true;
+
+            clearTimeout(timeoutId);
+            window.removeEventListener('message', onPostMessage);
+            if (bc) { try { bc.close(); } catch(e) {} }
+
+            if (data.access_token) {
+                console.log('[GooglePicker] Drive token received ✓');
+                _gDriveAccessToken = data.access_token;
+                setTimeout(function () { _gDriveAccessToken = null; }, 55 * 60 * 1000);
+                resolve(_gDriveAccessToken);
+            } else {
+                reject(new Error('Google Drive authorisation failed: ' + (data.error || 'unknown')));
+            }
+        }
+
+        // Primary: BroadcastChannel (survives cross-origin popup navigation)
+        let bc = null;
+        try {
+            bc = new BroadcastChannel('gdrive_auth');
+            bc.onmessage = function (e) { handlePayload(e.data); };
+        } catch (e) {
+            console.warn('[GooglePicker] BroadcastChannel not supported, using postMessage only');
+        }
+
+        // Fallback: postMessage (works if window.opener is still set)
+        function onPostMessage(event) {
+            if (event.origin !== window.location.origin) return;
+            handlePayload(event.data);
+        }
+        window.addEventListener('message', onPostMessage);
+
+        // Safety timeout — user closed popup without authorising
+        const timeoutId = setTimeout(function () {
+            if (!settled) {
+                settled = true;
+                window.removeEventListener('message', onPostMessage);
+                if (bc) { try { bc.close(); } catch(e) {} }
+                reject(new Error('Google Drive authorisation timed out or the popup was closed.'));
+            }
+        }, 3 * 60 * 1000); // 3 minutes
+    });
+}
+
+// ─── Google Picker API Loader ──────────────────────────────────────────────────
+let _gPickerApiLoaded = false;
+
+/**
+ * Ensures gapi.picker is loaded via the Google API loader script.
+ * Returns a Promise that resolves when google.picker.* is ready to use.
+ */
+function _loadGooglePickerApi() {
+    return new Promise(function (resolve, reject) {
+        if (_gPickerApiLoaded) { resolve(); return; }
+        if (typeof gapi === 'undefined') {
+            // gapi script is async — retry briefly
+            let retries = 0;
+            const poll = setInterval(function () {
+                retries++;
+                if (typeof gapi !== 'undefined') {
+                    clearInterval(poll);
+                    gapi.load('picker', {
+                        callback: function () { _gPickerApiLoaded = true; resolve(); },
+                        onerror:  function () { reject(new Error('Failed to load Google Picker library.')); },
+                    });
+                } else if (retries > 20) {
+                    clearInterval(poll);
+                    reject(new Error('Google API library not loaded. Refresh the page and try again.'));
+                }
+            }, 250);
+            return;
+        }
+        gapi.load('picker', {
+            callback: function () { _gPickerApiLoaded = true; resolve(); },
+            onerror:  function () { reject(new Error('Failed to load Google Picker library.')); },
+        });
+    });
+}
+
+/**
+ * Handles the actual Drive file download + Django vault upload after the user
+ * picks a file. Kept separate so the Picker callback stays synchronous.
+ */
+async function _handlePickerSelection(doc, accessToken, buttonEl, oldHtml) {
+    const fileId   = doc[google.picker.Document.ID];
+    const mimeType = doc[google.picker.Document.MIME_TYPE] || 'application/octet-stream';
+    const fileName = doc[google.picker.Document.NAME]      || ('gdrive_' + fileId);
+
+    buttonEl.disabled    = true;
+    buttonEl.textContent = 'Downloading…';
+
+    try {
+        let downloadUrl;
+        if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
+            downloadUrl = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media';
+        } else {
+            // Google Doc / Sheet / Slide → export as PDF
+            downloadUrl = 'https://www.googleapis.com/drive/v3/files/' + fileId + '/export?mimeType=application/pdf';
+        }
+
+        console.log('[GooglePicker] Downloading file:', fileName, mimeType, downloadUrl);
+
+        const driveResp = await fetch(downloadUrl, {
+            headers: { Authorization: 'Bearer ' + accessToken },
+        });
+        if (!driveResp.ok) {
+            throw new Error('Could not download from Google Drive (HTTP ' + driveResp.status + ').');
+        }
+        const blob = await driveResp.blob();
+
+        const ext        = fileName.includes('.') ? '' : (mimeType === 'application/pdf' ? '.pdf' : '.jpg');
+        const uploadName = fileName + ext;
+
+        buttonEl.textContent = 'Uploading…';
+        console.log('[GooglePicker] Uploading to vault:', uploadName, 'size:', blob.size);
+
+        const ctx = vaultDrawerPendingUploadContext;
+        vaultDrawerPendingUploadContext = null;
+
+        const formData = new FormData();
+        formData.append('applicant_id', vaultDrawerApplicantId);
+        formData.append('doc_key',  ctx.docKey);
+        formData.append('doc_code', String(ctx.docCode || '').toUpperCase());
+        formData.append('file', blob, uploadName);
+        formData.append('capture_method', 'upload');
+
+        const uploadResp = await fetch(VAULT_MGMT_INTAKE_DWT_URL, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+        });
+        const ct     = (uploadResp.headers.get('content-type') || '').toLowerCase();
+        const result = ct.includes('application/json') ? await uploadResp.json() : null;
+        if (!result || !result.success) {
+            throw new Error((result && result.error) ? result.error : 'Upload to vault failed.');
+        }
+
+        vaultMgmtNotify('File from Google Drive saved to the document vault.', 'Upload complete', 'success');
+        location.reload();
+
+    } catch (err) {
+        console.error('[GooglePicker] error:', err);
+        vaultMgmtNotify(err.message || 'Upload failed.');
+        buttonEl.disabled  = false;
+        buttonEl.innerHTML = oldHtml;
+        vaultDrawerPendingUploadContext = null;
     }
-    const docKey = String(buttonEl.dataset.intakeDocKey || '').trim();
+}
+
+/**
+ * Opens the native Google Picker modal (Drive + Photos).
+ */
+async function vaultDrawerTriggerUpload(buttonEl) {
+    if (!buttonEl) return;
+
+    const docKey  = String(buttonEl.dataset.intakeDocKey  || '').trim();
     const docCode = String(buttonEl.dataset.intakeDocCode || '').trim();
     if (!docKey || !vaultDrawerApplicantId) return;
+
+    // Confirm replace if a document is already on file
     if (String(buttonEl.dataset.hasExistingDoc || '0') === '1') {
         const ok = await vaultDrawerConfirmReplace(buttonEl.dataset.existingDocName || 'Document');
         if (!ok) return;
     }
-    vaultDrawerPendingUploadContext = {
-        docKey: docKey,
-        docCode: docCode,
-        triggerBtn: buttonEl,
-    };
-    const inp = document.getElementById('vaultDrawerFileInput');
-    if (!inp) return;
-    inp.value = '';
-    inp.click();
+
+    vaultDrawerPendingUploadContext = { docKey, docCode, triggerBtn: buttonEl };
+
+    const oldHtml = buttonEl.innerHTML;
+    buttonEl.disabled    = true;
+    buttonEl.textContent = 'Opening Drive…';
+
+    try {
+        console.log('[GooglePicker] Loading Picker API + fetching token…');
+
+        // Load Picker API and OAuth token in parallel
+        const [, accessToken] = await Promise.all([
+            _loadGooglePickerApi(),
+            _getGDriveAccessToken(),
+        ]);
+
+        console.log('[GooglePicker] Token obtained, building Picker…');
+
+        const apiKey = (window.MANAGEMENT_CONFIG || {}).googlePickerApiKey || '';
+
+        // Plain DocsView — works across all Picker API versions
+        const driveView = new google.picker.DocsView()
+            .setIncludeFolders(true)
+            .setSelectFolderEnabled(false)
+            .setMimeTypes('image/jpeg,image/png,image/gif,image/webp,application/pdf');
+
+        // Synchronous callback — the Picker API does NOT support async callbacks
+        const picker = new google.picker.PickerBuilder()
+            .setOAuthToken(accessToken)
+            .setDeveloperKey(apiKey)
+            .setTitle('Select a document from Google Drive')
+            .addView(driveView)
+            .setCallback(function (data) {
+                const action = data[google.picker.Response.ACTION];
+                console.log('[GooglePicker] callback action:', action);
+
+                if (action === google.picker.Action.PICKED) {
+                    const doc = data[google.picker.Response.DOCUMENTS][0];
+                    // Hand off to async handler — Picker callback must stay sync
+                    _handlePickerSelection(doc, accessToken, buttonEl, oldHtml);
+                } else if (action === google.picker.Action.CANCEL) {
+                    buttonEl.disabled  = false;
+                    buttonEl.innerHTML = oldHtml;
+                    vaultDrawerPendingUploadContext = null;
+                }
+            })
+            .build();
+
+        console.log('[GooglePicker] Picker built, showing…');
+        picker.setVisible(true);
+
+        // Restore button while picker overlay is open
+        buttonEl.disabled  = false;
+        buttonEl.innerHTML = oldHtml;
+
+    } catch (err) {
+        console.error('[GooglePicker] setup error:', err);
+        vaultMgmtNotify(err.message || 'Could not open Google Drive Picker.');
+        buttonEl.disabled  = false;
+        buttonEl.innerHTML = oldHtml;
+        vaultDrawerPendingUploadContext = null;
+    }
 }
 
 async function vaultDrawerTriggerScan(buttonEl) {

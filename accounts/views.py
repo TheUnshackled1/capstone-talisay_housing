@@ -1691,3 +1691,115 @@ def field_case_management(request):
     from cases.views import case_management_dashboard
     return case_management_dashboard(request, request.user.position)
 
+
+# =============================================================================
+# Google Drive OAuth popup — used by the Document Vault "Upload" button
+# to get a drive.readonly access token server-side via authorization code flow.
+# =============================================================================
+
+@login_required
+def google_drive_auth_start(request):
+    """
+    Opens as a popup from management.js.
+    Redirects the popup to Google's OAuth consent page requesting
+    drive.readonly scope.  On completion Google redirects back to
+    google_drive_auth_callback.
+    """
+    import secrets
+    from django.conf import settings as django_settings
+
+    state = secrets.token_urlsafe(16)
+    request.session['gdrive_oauth_state'] = state
+
+    callback_uri = request.build_absolute_uri('/google/drive-callback/')
+
+    params = urlencode({
+        'client_id':     django_settings.GOOGLE_OAUTH_CLIENT_ID,
+        'redirect_uri':  callback_uri,
+        'response_type': 'code',
+        'scope':         'https://www.googleapis.com/auth/drive.readonly',
+        'access_type':   'online',
+        'state':         state,
+        'prompt':        'select_account',
+    })
+    return redirect(f'https://accounts.google.com/o/oauth2/v2/auth?{params}')
+
+
+def google_drive_auth_callback(request):
+    """
+    OAuth callback — Google redirects here with ?code=... after the user
+    grants Drive access.  We exchange the code for an access token and send
+    it back to the parent window via BroadcastChannel + postMessage, then close.
+    No login_required — Google redirects here without session cookies in
+    some browser configs, but the state param provides CSRF protection.
+    """
+    import urllib.request as _urlreq
+    import json as _json
+    from django.conf import settings as django_settings
+
+    error = request.GET.get('error', '')
+    code  = request.GET.get('code', '')
+
+    def _close_with(payload):
+        """
+        Deliver the token (or error) back to the parent window and close.
+        Uses BroadcastChannel as primary (works even when window.opener is
+        cleared after cross-origin navigation) and postMessage as fallback.
+        Shows a human-readable error if something went wrong.
+        """
+        payload_js = _json.dumps(payload)
+
+        if payload.get('error'):
+            error_msg = payload['error']
+            body_html = (
+                f'<h3 style="color:#c0392b;font-family:sans-serif">Drive auth failed: {error_msg}</h3>'
+                f'<p style="font-family:sans-serif">This window will close shortly.</p>'
+            )
+        else:
+            body_html = '<p style="font-family:sans-serif">Authorised \u2713 \u2014 closing\u2026</p>'
+
+        html = (
+            f'<!DOCTYPE html><html><body>{body_html}<script>'
+            # BroadcastChannel — works even without window.opener
+            f'(function(){{try{{var bc=new BroadcastChannel("gdrive_auth");bc.postMessage({payload_js});bc.close();}}catch(e){{}}}}());'
+            # postMessage fallback
+            f'try{{window.opener&&window.opener.postMessage({payload_js},window.location.origin);}}catch(e){{}}'
+            # Close after a short delay so the user can read any error
+            f'setTimeout(function(){{window.close();}},800);'
+            f'</script></body></html>'
+        )
+        return HttpResponse(html, content_type='text/html')
+
+    if error or not code:
+        return _close_with({'type': 'google_drive_token', 'error': error or 'no_code'})
+
+    # Exchange authorization code for access token
+    callback_uri = request.build_absolute_uri('/google/drive-callback/')
+    post_data = urlencode({
+        'code':          code,
+        'client_id':     django_settings.GOOGLE_OAUTH_CLIENT_ID,
+        'client_secret': django_settings.GOOGLE_OAUTH_CLIENT_SECRET,
+        'redirect_uri':  callback_uri,
+        'grant_type':    'authorization_code',
+    }).encode()
+
+    try:
+        req = _urlreq.Request(
+            'https://oauth2.googleapis.com/token',
+            data=post_data,
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            method='POST',
+        )
+        with _urlreq.urlopen(req, timeout=10) as resp:
+            token_data = _json.loads(resp.read())
+    except Exception as exc:
+        return _close_with({'type': 'google_drive_token', 'error': f'token_exchange_failed: {exc}'})
+
+    access_token = token_data.get('access_token', '')
+    if not access_token:
+        google_error = token_data.get('error', 'no_access_token')
+        google_desc  = token_data.get('error_description', '')
+        return _close_with({'type': 'google_drive_token', 'error': f'{google_error}: {google_desc}'})
+
+    # Send token to parent and close popup
+    return _close_with({'type': 'google_drive_token', 'access_token': access_token})

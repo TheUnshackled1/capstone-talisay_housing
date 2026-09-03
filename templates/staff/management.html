@@ -519,9 +519,12 @@
     window.MANAGEMENT_CONFIG = {
         intakeDwtUrl: '{% url "intake:upload_scanned_requirement" request.user.position %}',
         canIntakeScan: {{ vault_drawer_can_intake_scan|yesno:"true,false" }},
-        userPosition: '{{ request.user.position }}'
+        userPosition: '{{ request.user.position }}',
+        googlePickerApiKey: '{{ GOOGLE_PICKER_API_KEY }}'
     };
 </script>
+<!-- Google API loader (for Picker UI) -->
+<script src="https://apis.google.com/js/api.js" async defer></script>
 <!-- JavaScript -->
 <script src="{% static 'js/management.js' %}"></script>
 
