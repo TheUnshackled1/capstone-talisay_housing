@@ -238,27 +238,16 @@ function _getGDriveAccessToken() {
         }
         window.addEventListener('message', onPostMessage);
 
-        // Safety timeout — fire immediately if popup is closed; otherwise 3 minutes
+        // Safety timeout — user closed popup without authorising
         const timeoutId = setTimeout(function () {
             if (!settled) {
                 settled = true;
                 window.removeEventListener('message', onPostMessage);
                 if (bc) { try { bc.close(); } catch(e) {} }
-                reject(new Error('Google Drive authorisation timed out or the popup was closed.'));
+                reject(new Error('Google Drive authorisation timed out.'));
             }
         }, 3 * 60 * 1000); // 3 minutes
 
-        // Poll so we detect popup.close() within ~1 s instead of waiting 3 min
-        const closedPoll = setInterval(function () {
-            if (popup.closed && !settled) {
-                settled = true;
-                clearTimeout(timeoutId);
-                clearInterval(closedPoll);
-                window.removeEventListener('message', onPostMessage);
-                if (bc) { try { bc.close(); } catch(e) {} }
-                reject(new Error('Google Drive authorisation was cancelled.'));
-            }
-        }, 800);
     });
 }
 
