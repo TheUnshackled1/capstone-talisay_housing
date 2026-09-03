@@ -213,7 +213,9 @@ function _getGDriveAccessToken() {
             if (data.access_token) {
                 console.log('[GooglePicker] Drive token received ✓');
                 _gDriveAccessToken = data.access_token;
-                setTimeout(function () { _gDriveAccessToken = null; }, 55 * 60 * 1000);
+                // Use the server-reported expiry; default 3600 s; shave 60 s for clock skew
+                const ttl = Math.max(60, (data.expires_in || 3600) - 60) * 1000;
+                setTimeout(function () { _gDriveAccessToken = null; }, ttl);
                 resolve(_gDriveAccessToken);
             } else {
                 reject(new Error('Google Drive authorisation failed: ' + (data.error || 'unknown')));
@@ -236,7 +238,7 @@ function _getGDriveAccessToken() {
         }
         window.addEventListener('message', onPostMessage);
 
-        // Safety timeout — user closed popup without authorising
+        // Safety timeout — fire immediately if popup is closed; otherwise 3 minutes
         const timeoutId = setTimeout(function () {
             if (!settled) {
                 settled = true;
@@ -245,6 +247,18 @@ function _getGDriveAccessToken() {
                 reject(new Error('Google Drive authorisation timed out or the popup was closed.'));
             }
         }, 3 * 60 * 1000); // 3 minutes
+
+        // Poll so we detect popup.close() within ~1 s instead of waiting 3 min
+        const closedPoll = setInterval(function () {
+            if (popup.closed && !settled) {
+                settled = true;
+                clearTimeout(timeoutId);
+                clearInterval(closedPoll);
+                window.removeEventListener('message', onPostMessage);
+                if (bc) { try { bc.close(); } catch(e) {} }
+                reject(new Error('Google Drive authorisation was cancelled.'));
+            }
+        }, 800);
     });
 }
 
@@ -313,6 +327,13 @@ async function _handlePickerSelection(doc, accessToken, buttonEl, oldHtml) {
             throw new Error('Could not download from Google Drive (HTTP ' + driveResp.status + ').');
         }
         const blob = await driveResp.blob();
+
+        // Guard: 25 MB limit (Django's DATA_UPLOAD_MAX_MEMORY_SIZE default is 2.5 MB;
+        // the vault upload view may accept larger via FILE_UPLOAD_MAX_MEMORY_SIZE)
+        const MAX_BYTES = 25 * 1024 * 1024;
+        if (blob.size > MAX_BYTES) {
+            throw new Error('File is too large (' + (blob.size / 1024 / 1024).toFixed(1) + ' MB). Maximum allowed is 25 MB.');
+        }
 
         const ext        = fileName.includes('.') ? '' : (mimeType === 'application/pdf' ? '.pdf' : '.jpg');
         const uploadName = fileName + ext;

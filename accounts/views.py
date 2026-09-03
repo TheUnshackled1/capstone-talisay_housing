@@ -1,6 +1,8 @@
 import calendar
 import csv
 import json
+import secrets
+import urllib.request as _drive_urlreq
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_GET
@@ -1705,7 +1707,6 @@ def google_drive_auth_start(request):
     drive.readonly scope.  On completion Google redirects back to
     google_drive_auth_callback.
     """
-    import secrets
     from django.conf import settings as django_settings
 
     state = secrets.token_urlsafe(16)
@@ -1730,11 +1731,9 @@ def google_drive_auth_callback(request):
     OAuth callback — Google redirects here with ?code=... after the user
     grants Drive access.  We exchange the code for an access token and send
     it back to the parent window via BroadcastChannel + postMessage, then close.
-    No login_required — Google redirects here without session cookies in
-    some browser configs, but the state param provides CSRF protection.
+    No @login_required — Google redirects here without session cookies in
+    some browser configs; CSRF is handled by the state parameter.
     """
-    import urllib.request as _urlreq
-    import json as _json
     from django.conf import settings as django_settings
 
     error = request.GET.get('error', '')
@@ -1747,7 +1746,7 @@ def google_drive_auth_callback(request):
         cleared after cross-origin navigation) and postMessage as fallback.
         Shows a human-readable error if something went wrong.
         """
-        payload_js = _json.dumps(payload)
+        payload_js = json.dumps(payload)
 
         if payload.get('error'):
             error_msg = payload['error']
@@ -1756,7 +1755,7 @@ def google_drive_auth_callback(request):
                 f'<p style="font-family:sans-serif">This window will close shortly.</p>'
             )
         else:
-            body_html = '<p style="font-family:sans-serif">Authorised \u2713 \u2014 closing\u2026</p>'
+            body_html = '<p style="font-family:sans-serif">Authorised &#10003; &mdash; closing&hellip;</p>'
 
         html = (
             f'<!DOCTYPE html><html><body>{body_html}<script>'
@@ -1769,6 +1768,12 @@ def google_drive_auth_callback(request):
             f'</script></body></html>'
         )
         return HttpResponse(html, content_type='text/html')
+
+    # ── CSRF check: state must match what we stored in the session ──────────────
+    state_received = request.GET.get('state', '')
+    state_expected = request.session.pop('gdrive_oauth_state', '')
+    if not state_received or not state_expected or not secrets.compare_digest(state_received, state_expected):
+        return _close_with({'type': 'google_drive_token', 'error': 'state_mismatch — possible CSRF attempt'})
 
     if error or not code:
         return _close_with({'type': 'google_drive_token', 'error': error or 'no_code'})
@@ -1784,14 +1789,14 @@ def google_drive_auth_callback(request):
     }).encode()
 
     try:
-        req = _urlreq.Request(
+        req = _drive_urlreq.Request(
             'https://oauth2.googleapis.com/token',
             data=post_data,
             headers={'Content-Type': 'application/x-www-form-urlencoded'},
             method='POST',
         )
-        with _urlreq.urlopen(req, timeout=10) as resp:
-            token_data = _json.loads(resp.read())
+        with _drive_urlreq.urlopen(req, timeout=10) as resp:
+            token_data = json.loads(resp.read())
     except Exception as exc:
         return _close_with({'type': 'google_drive_token', 'error': f'token_exchange_failed: {exc}'})
 
@@ -1801,5 +1806,11 @@ def google_drive_auth_callback(request):
         google_desc  = token_data.get('error_description', '')
         return _close_with({'type': 'google_drive_token', 'error': f'{google_error}: {google_desc}'})
 
-    # Send token to parent and close popup
-    return _close_with({'type': 'google_drive_token', 'access_token': access_token})
+    # Return token + server-reported expiry so the JS side can schedule cache
+    # invalidation to the exact second instead of guessing 55 minutes.
+    expires_in = int(token_data.get('expires_in', 3600))
+    return _close_with({
+        'type':         'google_drive_token',
+        'access_token': access_token,
+        'expires_in':   expires_in,
+    })
