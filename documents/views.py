@@ -7,7 +7,7 @@ from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
-wfrom django.conf import settings
+from django.conf import settings
 from django.views.decorators.http import require_http_methods, require_POST
 from functools import wraps
 from collections import defaultdict
