@@ -3941,6 +3941,15 @@ ROLE-SPECIFIC DASHBOARD WIDGETS STYLES
         padding-bottom: 0.35rem;
         border-bottom: 1px solid rgba(226,232,240,0.6);
     }
+    .rep-card-title-center,
+    .rep-card-title.rep-card-title-center {
+        justify-content: center;
+        text-align: center;
+    }
+    .rep-card-title-center + .rep-card-sub,
+    .rep-card-title.rep-card-title-center + .rep-card-sub {
+        text-align: center;
+    }
     .rep-card-sub {
         margin: 0 0 0.4rem;
         font-size: 0.68rem;
@@ -4048,8 +4057,23 @@ ROLE-SPECIFIC DASHBOARD WIDGETS STYLES
         padding: 0.28rem 0.3rem;
         font-size: 0.6rem;
     }
+    .rep-chart-canvas,
+    .rep-ops-chart-canvas {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .rep-chart-canvas canvas,
+    .rep-ops-chart-canvas canvas {
+        margin: 0 auto !important;
+        display: block;
+    }
     .rep-grid-4 .rep-chart-canvas,
-    .rep-grid-4 .rep-ops-chart-canvas { height: 165px; }
+    .rep-grid-4 .rep-ops-chart-canvas,
+    .rep-grid-4.rep-grid-charts .rep-chart-canvas {
+        height: 165px;
+    }
     @media (max-width: 1200px) {
         .rep-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -4061,7 +4085,9 @@ ROLE-SPECIFIC DASHBOARD WIDGETS STYLES
         grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
         gap: 0.85rem;
     }
+    .rep-grid-3.rep-grid-charts .rep-chart-canvas,
     .rep-grid-charts .rep-chart-canvas { height: 180px; position: relative; }
+    .rep-grid-4.rep-grid-charts .rep-chart-canvas { height: 165px; }
 
     .rep-pipeline-row {
         display: grid;

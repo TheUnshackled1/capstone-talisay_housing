@@ -1064,6 +1064,8 @@ document.addEventListener('DOMContentLoaded', function () {
         canvas.style.maxWidth = '';
         canvas.style.maxHeight = '';
         canvas.style.minWidth = '';
+        canvas.style.margin = '0 auto';
+        canvas.style.display = 'block';
 
         // Remove any stale bottom legend
         var card = canvas.closest('.rep-card');
@@ -1073,6 +1075,10 @@ document.addEventListener('DOMContentLoaded', function () {
         chartInstances[canvasId] = new Chart(canvas, config);
 
         if (mode === 'pie' || mode === 'donut') {
+            canvasWrapForLegend.style.display = 'flex';
+            canvasWrapForLegend.style.justifyContent = 'center';
+            canvasWrapForLegend.style.alignItems = 'center';
+            canvas.style.margin = '0 auto';
             chartInstances[canvasId].resize();
         }
 
