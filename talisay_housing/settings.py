@@ -293,7 +293,7 @@ else:
     _sms_boot = f'{SMS_SERVICE!r} (check SMS_SERVICE / SEMAPHORE_API_KEY in .env)'
 import sys as _sys  # noqa: E402
 
-_sys.stderr.write(f'\n[IHSMS] SMS mode: {_sms_boot}. Restart runserver after any .env change.\n\n')
+# _sys.stderr.write(f'\n[IHSMS] SMS mode: {_sms_boot}. Restart runserver after any .env change.\n\n')
 _sys.stderr.flush()
 # =============================================================================
 # Jazzmin Admin Configuration
@@ -362,3 +362,5 @@ JAZZMIN_UI_TWEAKS = {
     "tooltip_class": "tooltip-lg",
     "button_size_class": "btn-md",
 }
+
+SILENCED_SYSTEM_CHECKS = ['accounts.W001']
