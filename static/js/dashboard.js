@@ -1091,16 +1091,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 : dataset.labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; });
 
             var isTwoItem = dataset.labels.length <= 2;
+            var isChannels = canvasId === 'chartChannels';
             var bottomLegend = document.createElement('div');
-            bottomLegend.className = 'chart-bottom-legend';
-            bottomLegend.style.cssText = [
-                'display:flex',
-                isTwoItem ? 'flex-wrap:nowrap' : 'flex-wrap:wrap',
-                isTwoItem ? 'gap:0.25rem 0.45rem' : 'gap:0.35rem 0.65rem',
-                'justify-content:center', 'align-items:center',
-                'margin-top:0.55rem',
-                'padding:0 0.1rem'
-            ].join(';') + ';';
+            bottomLegend.className = 'chart-bottom-legend' + (isChannels ? ' chart-legend-2col' : '');
+            if (isChannels) {
+                bottomLegend.style.cssText = [
+                    'display:grid',
+                    'grid-template-columns:repeat(2, auto)',
+                    'gap:0.35rem 1rem',
+                    'justify-content:center',
+                    'align-items:center',
+                    'margin-top:0.55rem',
+                    'padding:0 0.25rem'
+                ].join(';') + ';';
+            } else {
+                bottomLegend.style.cssText = [
+                    'display:flex',
+                    isTwoItem ? 'flex-wrap:nowrap' : 'flex-wrap:wrap',
+                    isTwoItem ? 'gap:0.25rem 0.45rem' : 'gap:0.35rem 0.65rem',
+                    'justify-content:center', 'align-items:center',
+                    'margin-top:0.55rem',
+                    'padding:0 0.1rem'
+                ].join(';') + ';';
+            }
 
             dataset.labels.forEach(function (lbl, i) {
                 var pill = document.createElement('span');
