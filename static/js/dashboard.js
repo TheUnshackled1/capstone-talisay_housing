@@ -1092,8 +1092,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var isTwoItem = dataset.labels.length <= 2;
             var isChannels = canvasId === 'chartChannels';
+            var isApplicants = canvasId === 'chartApplicants';
             var bottomLegend = document.createElement('div');
-            bottomLegend.className = 'chart-bottom-legend' + (isChannels ? ' chart-legend-2col' : '');
+            var legendClass = 'chart-bottom-legend';
+            if (isChannels) legendClass += ' chart-legend-2col';
+            if (isApplicants) legendClass += ' chart-legend-applicants';
+            bottomLegend.className = legendClass;
+
             if (isChannels) {
                 bottomLegend.style.cssText = [
                     'display:grid',
@@ -1103,6 +1108,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     'align-items:center',
                     'margin-top:0.55rem',
                     'padding:0 0.25rem'
+                ].join(';') + ';';
+            } else if (isApplicants) {
+                bottomLegend.style.cssText = [
+                    'display:grid',
+                    'grid-template-columns:auto auto',
+                    'grid-auto-flow:column',
+                    'grid-template-rows:repeat(2, auto)',
+                    'gap:0.3rem 0.65rem',
+                    'justify-content:center',
+                    'align-items:center',
+                    'margin-top:0.55rem',
+                    'padding:0 0.15rem'
                 ].join(';') + ';';
             } else {
                 bottomLegend.style.cssText = [
@@ -1117,12 +1134,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             dataset.labels.forEach(function (lbl, i) {
                 var pill = document.createElement('span');
+                var fontSize = isTwoItem ? 'font-size:0.65rem' : (isApplicants ? 'font-size:0.62rem' : 'font-size:0.68rem');
+                var letterSpacing = isApplicants ? 'letter-spacing:-0.01em' : '';
                 pill.style.cssText = [
                     'display:inline-flex', 'align-items:center', 'gap:0.25rem',
-                    isTwoItem ? 'font-size:0.65rem' : 'font-size:0.68rem',
+                    fontSize,
+                    letterSpacing,
                     'color:var(--text-secondary,#64748b)',
                     'white-space:nowrap'
-                ].join(';') + ';';
+                ].filter(Boolean).join(';') + ';';
 
                 var dot = document.createElement('span');
                 dot.style.cssText = [
