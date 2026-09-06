@@ -331,7 +331,8 @@
     {{ analytics_charts_data|json_script:"tha-analytics-charts" }}
 
 
-    <div class="rep-grid-3 rep-grid-charts">
+    <!-- Row 1: 4 cards — Applicants · Situation · ISF Overall · Registered Voters -->
+    <div class="rep-grid-4 rep-grid-charts">
         <div class="rep-card">
             <p class="rep-card-title">Applicants by status</p>
             <p class="rep-card-sub">All Module 1 records grouped by current status.</p>
@@ -346,20 +347,6 @@
             <p class="rep-card-title">ISF Population Overall</p>
             <p class="rep-card-sub">Lot-awarded families and total on-site population · {{ isf_site_name }} · active lot awards from housing units / GK Masterlist.</p>
             <div class="rep-chart-canvas" style="height: 280px;"><canvas id="chartISFOverall"></canvas></div>
-        </div>
-    </div>
-
-
-    <div class="rep-grid-4 rep-grid-charts">
-        <div class="rep-card">
-            <p class="rep-card-title">ISF Population</p>
-            <p class="rep-card-sub">Male &amp; female individuals on lot-awarded units · {{ isf_site_name }} · heads plus registered household members.</p>
-            <div class="rep-chart-canvas"><canvas id="chartISFPopulation"></canvas></div>
-        </div>
-        <div class="rep-card">
-            <p class="rep-card-title">Housing units by status</p>
-            <p class="rep-card-sub">Module 4 inventory occupancy / notice state.</p>
-            <div class="rep-chart-canvas"><canvas id="chartHousing"></canvas></div>
         </div>
         <div class="rep-card">
             <p class="rep-card-title">Registered Voters</p>
@@ -377,6 +364,26 @@
                 <div class="rep-empty-state-sub">Voter data will appear once lot awards are recorded.</div>
             </div>
             {% endif %}
+        </div>
+    </div>
+
+
+    <!-- Row 2: 4 cards — ISF Population · Top barangays · Housing units · Blacklisted -->
+    <div class="rep-grid-4 rep-grid-charts">
+        <div class="rep-card">
+            <p class="rep-card-title">ISF Population</p>
+            <p class="rep-card-sub">Male &amp; female individuals on lot-awarded units · {{ isf_site_name }} · heads plus registered household members.</p>
+            <div class="rep-chart-canvas"><canvas id="chartISFPopulation"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Top barangays</p>
+            <p class="rep-card-sub">Top 12 barangays by applicant count.</p>
+            <div class="rep-chart-canvas"><canvas id="chartBarangays"></canvas></div>
+        </div>
+        <div class="rep-card">
+            <p class="rep-card-title">Housing units by status</p>
+            <p class="rep-card-sub">Module 4 inventory occupancy / notice state.</p>
+            <div class="rep-chart-canvas"><canvas id="chartHousing"></canvas></div>
         </div>
         <div class="rep-card">
             <p class="rep-card-title">Blacklisted</p>
@@ -396,15 +403,9 @@
         </div>
     </div>
 
-    <div class="rep-grid-4 rep-grid-charts" style="margin-top: 0.85rem;">
-        <!-- Card 1: Top barangays -->
-        <div class="rep-card">
-            <p class="rep-card-title">Top barangays</p>
-            <p class="rep-card-sub">Top 12 barangays by applicant count.</p>
-            <div class="rep-chart-canvas"><canvas id="chartBarangays"></canvas></div>
-        </div>
-
-        <!-- Card 2: Case aging distribution -->
+    <!-- Row 3: 3 cards — Case aging · Cases by status · Cases by type -->
+    <div class="rep-grid-3 rep-grid-charts" style="margin-top: 0.85rem;">
+        <!-- Card 1: Case aging distribution -->
         <div class="rep-card">
             <p class="rep-card-title">Case aging distribution</p>
             <p class="rep-card-sub">{{ open_cases_count|default:0 }} open case{{ open_cases_count|pluralize }} by age band.</p>
@@ -426,14 +427,14 @@
             <div class="rep-ops-chart-canvas" style="margin-top:0.5rem;"><canvas id="chartCaseAging"></canvas></div>
         </div>
 
-        <!-- Card 3: Cases by status -->
+        <!-- Card 2: Cases by status -->
         <div class="rep-card">
             <p class="rep-card-title">Cases by status</p>
             <p class="rep-card-sub">Open / resolved / closed across all case types.</p>
             <div class="rep-ops-chart-canvas"><canvas id="chartCasesStatus"></canvas></div>
         </div>
 
-        <!-- Card 4: Cases by type -->
+        <!-- Card 3: Cases by type -->
         <div class="rep-card">
             <p class="rep-card-title">Cases by type</p>
             <p class="rep-card-sub">Distribution by case category.</p>
