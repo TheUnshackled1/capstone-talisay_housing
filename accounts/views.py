@@ -741,8 +741,16 @@ def _staff_reports_analytics_payload(request):
         ),
         key=lambda x: (-x['count'], x['status'] or ''),
     )
+    status_display_overrides = {
+        'pending': 'Pending Eligibility',
+        'application': 'Pending Application',
+    }
     for row in applicant_by_status:
-        row['label'] = applicant_status_labels.get(row['status'], row['status'] or '—')
+        st = row.get('status') or ''
+        row['label'] = status_display_overrides.get(
+            st,
+            applicant_status_labels.get(st, st or '—')
+        )
 
     application_by_status = sorted(
         (
