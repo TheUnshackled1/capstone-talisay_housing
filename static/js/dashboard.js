@@ -1057,29 +1057,21 @@ document.addEventListener('DOMContentLoaded', function () {
         Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
         Chart.defaults.color = '#475569';
 
+        // Reset canvas wrap layout — canvas always takes full width, legend goes below
         var canvasWrapForLegend = canvas.parentNode;
-        var stale = canvasWrapForLegend.querySelector('.custom-html-legend');
-        if (stale) stale.remove();
+        canvasWrapForLegend.style.display = '';
+        canvasWrapForLegend.style.alignItems = '';
+        canvasWrapForLegend.style.justifyContent = '';
+        canvasWrapForLegend.style.overflow = '';
+        canvas.style.flex = '';
+        canvas.style.maxWidth = '';
+        canvas.style.maxHeight = '';
+        canvas.style.minWidth = '';
 
-        if ((mode === 'pie' || mode === 'donut') && dataset.type === 'single') {
-            canvasWrapForLegend.style.display = 'flex';
-            canvasWrapForLegend.style.alignItems = 'center';
-            canvasWrapForLegend.style.justifyContent = 'center';
-            canvasWrapForLegend.style.overflow = 'visible';
-            canvas.style.flex = '0 0 auto';
-            canvas.style.maxWidth = '55%';
-            canvas.style.maxHeight = '100%';
-            canvas.style.minWidth = '0';
-        } else {
-            canvasWrapForLegend.style.display = '';
-            canvasWrapForLegend.style.alignItems = '';
-            canvasWrapForLegend.style.justifyContent = '';
-            canvasWrapForLegend.style.overflow = '';
-            canvas.style.flex = '';
-            canvas.style.maxWidth = '';
-            canvas.style.maxHeight = '';
-            canvas.style.minWidth = '';
-        }
+        // Remove any stale bottom legend
+        var card = canvas.closest('.rep-card');
+        var staleLegend = card && card.querySelector('.chart-bottom-legend');
+        if (staleLegend) staleLegend.remove();
 
         chartInstances[canvasId] = new Chart(canvas, config);
 
@@ -1087,61 +1079,66 @@ document.addEventListener('DOMContentLoaded', function () {
             chartInstances[canvasId].resize();
         }
 
-        if ((mode === 'pie' || mode === 'donut') && dataset.type === 'single') {
-            var labels = dataset.labels;
-            var legendEl = document.createElement('div');
-            legendEl.className = 'custom-html-legend';
-            legendEl.style.cssText = [
-                'flex:1', 'min-width:0', 'display:flex', 'flex-direction:column',
-                'gap:0.4rem', 'padding-left:0.6rem', 'overflow-y:auto',
-                'max-height:240px', 'align-self:center'
+        // Inject bottom legend for ALL donut/pie single-series charts
+        if ((mode === 'pie' || mode === 'donut') && dataset.type === 'single' && card) {
+            var sliceColors = (dataset.colors && dataset.colors.length)
+                ? dataset.colors
+                : dataset.labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; });
+
+            var bottomLegend = document.createElement('div');
+            bottomLegend.className = 'chart-bottom-legend';
+            bottomLegend.style.cssText = [
+                'display:flex', 'flex-wrap:wrap', 'gap:0.45rem 0.75rem',
+                'justify-content:center', 'margin-top:0.55rem',
+                'padding:0 0.25rem'
             ].join(';') + ';';
 
-            labels.forEach(function (lbl, i) {
-                var row = document.createElement('div');
-                row.style.cssText = 'display:flex;align-items:flex-start;gap:0.4rem;';
-
-                var dot = document.createElement('div');
-                dot.style.cssText = [
-                    'width:9px', 'height:9px', 'border-radius:50%',
-                    'flex-shrink:0', 'margin-top:0.18rem',
-                    'background:' + PALETTE[i % PALETTE.length]
+            dataset.labels.forEach(function (lbl, i) {
+                var pill = document.createElement('span');
+                pill.style.cssText = [
+                    'display:inline-flex', 'align-items:center', 'gap:0.3rem',
+                    'font-size:0.7rem', 'color:var(--text-secondary,#64748b)',
+                    'white-space:nowrap'
                 ].join(';') + ';';
 
-                var txt = document.createElement('span');
+                var dot = document.createElement('span');
+                dot.style.cssText = [
+                    'width:9px', 'height:9px', 'border-radius:50%',
+                    'flex-shrink:0', 'display:inline-block',
+                    'background:' + sliceColors[i % sliceColors.length]
+                ].join(';') + ';';
+
                 var displayLbl = String(lbl || '');
                 if (displayLbl.indexOf(' — ') !== -1) {
                     displayLbl = displayLbl.split(' — ')[0].trim();
                 } else if (displayLbl.indexOf(' - ') !== -1 && /^option\s+[a-d]/i.test(displayLbl)) {
                     displayLbl = displayLbl.split(' - ')[0].trim();
                 }
-
-                var acronyms = ['CDRRMO', 'ISF', 'COMELEC', 'GK', 'ID', 'PHP', 'SMS', 'M2', 'M1', 'M4', 'CDRRM'];
-                displayLbl = displayLbl.split(' ').map(function (word) {
-                    var cleanWord = word.replace(/[^a-zA-Z0-9]/g, '');
-                    if (acronyms.indexOf(cleanWord.toUpperCase()) >= 0) {
-                        return word.replace(cleanWord, cleanWord.toUpperCase());
-                    }
-                    if (word === word.toUpperCase() && word.length > 1) {
-                        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                    }
-                    if (word.length > 0) {
-                        return word.charAt(0).toUpperCase() + word.slice(1);
-                    }
-                    return word;
+                var acronyms = ['CDRRMO', 'ISF', 'COMELEC', 'GK', 'ID', 'PHP', 'SMS', 'M2', 'M1', 'M4'];
+                displayLbl = displayLbl.split(' ').map(function (w) {
+                    var cw = w.replace(/[^a-zA-Z0-9]/g, '');
+                    if (acronyms.indexOf(cw.toUpperCase()) >= 0) return w.replace(cw, cw.toUpperCase());
+                    if (w === w.toUpperCase() && w.length > 1) return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+                    if (w.length > 0) return w.charAt(0).toUpperCase() + w.slice(1);
+                    return w;
                 }).join(' ');
 
-                txt.textContent = displayLbl;
-                txt.style.cssText = [
-                    'font-size:0.7rem', 'color:#475569', 'line-height:1.35',
-                    'white-space:normal', 'word-break:normal', 'overflow-wrap:break-word'
-                ].join(';') + ';';
+                var labelTxt = document.createElement('span');
+                labelTxt.textContent = displayLbl + ':';
+                labelTxt.style.cssText = 'color:var(--text-secondary,#64748b);';
 
-                row.appendChild(dot);
-                row.appendChild(txt);
-                legendEl.appendChild(row);
+                var countTxt = document.createElement('strong');
+                countTxt.textContent = dataset.values[i] !== undefined ? dataset.values[i] : '—';
+                countTxt.style.cssText = 'color:var(--text-primary,#f1f5f9);font-weight:600;';
+
+                pill.appendChild(dot);
+                pill.appendChild(labelTxt);
+                pill.appendChild(countTxt);
+                bottomLegend.appendChild(pill);
             });
-            canvasWrapForLegend.appendChild(legendEl);
+
+            // Insert after the canvas wrapper (rep-chart-canvas div)
+            canvasWrapForLegend.insertAdjacentElement('afterend', bottomLegend);
         }
     }
 
