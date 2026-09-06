@@ -1088,25 +1088,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? dataset.colors
                 : dataset.labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; });
 
+            var isTwoItem = dataset.labels.length <= 2;
             var bottomLegend = document.createElement('div');
             bottomLegend.className = 'chart-bottom-legend';
             bottomLegend.style.cssText = [
-                'display:flex', 'flex-wrap:wrap', 'gap:0.45rem 0.75rem',
-                'justify-content:center', 'margin-top:0.55rem',
-                'padding:0 0.25rem'
+                'display:flex',
+                isTwoItem ? 'flex-wrap:nowrap' : 'flex-wrap:wrap',
+                isTwoItem ? 'gap:0.25rem 0.45rem' : 'gap:0.35rem 0.65rem',
+                'justify-content:center', 'align-items:center',
+                'margin-top:0.55rem',
+                'padding:0 0.1rem'
             ].join(';') + ';';
 
             dataset.labels.forEach(function (lbl, i) {
                 var pill = document.createElement('span');
                 pill.style.cssText = [
-                    'display:inline-flex', 'align-items:center', 'gap:0.3rem',
-                    'font-size:0.7rem', 'color:var(--text-secondary,#64748b)',
+                    'display:inline-flex', 'align-items:center', 'gap:0.25rem',
+                    isTwoItem ? 'font-size:0.65rem' : 'font-size:0.68rem',
+                    'color:var(--text-secondary,#64748b)',
                     'white-space:nowrap'
                 ].join(';') + ';';
 
                 var dot = document.createElement('span');
                 dot.style.cssText = [
-                    'width:9px', 'height:9px', 'border-radius:50%',
+                    'width:8px', 'height:8px', 'border-radius:50%',
                     'flex-shrink:0', 'display:inline-block',
                     'background:' + sliceColors[i % sliceColors.length]
                 ].join(';') + ';';
