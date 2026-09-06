@@ -486,8 +486,8 @@ def _build_analytics_charts_data(
         # ISF Overall - comprehensive breakdown
         data['isfOverall'] = {
             'labels': [
-                'Lot-awarded families',
-                'Total on-site population',
+                'Total Beneficiaries',
+                'Total Population',
             ],
             'values': [
                 int(isf_population_data.get('total_isf', 0)),
