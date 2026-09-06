@@ -1125,11 +1125,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 var labelTxt = document.createElement('span');
                 labelTxt.textContent = displayLbl + ':';
-                labelTxt.style.cssText = 'color:var(--text-secondary,#64748b);';
+                labelTxt.style.cssText = 'color:#475569;';
 
                 var countTxt = document.createElement('strong');
                 countTxt.textContent = dataset.values[i] !== undefined ? dataset.values[i] : '—';
-                countTxt.style.cssText = 'color:var(--text-primary,#f1f5f9);font-weight:600;';
+                countTxt.style.cssText = 'color:#1e293b;font-weight:700;';
 
                 pill.appendChild(dot);
                 pill.appendChild(labelTxt);
