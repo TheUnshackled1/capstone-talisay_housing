@@ -778,6 +778,16 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'chartRequirements': return getSingleSeriesDataset('requirementsByStatus');
             case 'chartCasesStatus': return getSingleSeriesDataset('casesByStatus');
             case 'chartCasesType': return getSingleSeriesDataset('casesByType');
+            case 'chartVoterRegistration':
+                return {
+                    type: 'single',
+                    labels: ['Registered Voter', 'Not Registered'],
+                    values: [
+                        (D.voterRegistration && D.voterRegistration.values) ? (D.voterRegistration.values[0] || 0) : 0,
+                        (D.voterRegistration && D.voterRegistration.values) ? (D.voterRegistration.values[1] || 0) : 0,
+                    ],
+                    colors: ['#22C55E', '#F43F5E']
+                };
             default: return null;
         }
     }
@@ -795,6 +805,7 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'chartRequirements':
             case 'chartCasesStatus':
             case 'chartCasesType':
+            case 'chartVoterRegistration':
                 return 'donut';
             case 'chartBarangays':
             case 'chartFunnel':
@@ -947,7 +958,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     labels: dataset.labels,
                     datasets: [{
                         data: dataset.values,
-                        backgroundColor: dataset.labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; }),
+                        backgroundColor: (dataset.colors && dataset.colors.length)
+                            ? dataset.colors
+                            : dataset.labels.map(function (_, i) { return PALETTE[i % PALETTE.length]; }),
                         borderWidth: 2,
                         borderColor: '#ffffff',
                         hoverOffset: 6

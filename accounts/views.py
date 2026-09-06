@@ -410,6 +410,7 @@ def _build_analytics_charts_data(
     case_aging_bands=None,
     funnel_stages=None,
     isf_population_data=None,
+    voter_registration_counts=None,
 ):
     """
     Build a JSON-serializable dict for Chart.js (staff analytics page).
@@ -489,6 +490,16 @@ def _build_analytics_charts_data(
             'values': [
                 int(isf_population_data.get('total_isf', 0)),
                 int(isf_population_data.get('total_population', 0))
+            ]
+        }
+
+    # Voter registration status breakdown
+    if voter_registration_counts:
+        data['voterRegistration'] = {
+            'labels': ['Registered Voter', 'Not Registered'],
+            'values': [
+                int(voter_registration_counts.get('registered', 0)),
+                int(voter_registration_counts.get('not_registered', 0)),
             ]
         }
 
@@ -978,6 +989,22 @@ def _staff_reports_analytics_payload(request):
     # Active lot awards
     active_lot_awards = LotAward.objects.filter(status='active').count()
 
+    # ===== VOTER REGISTRATION STATUS (Descriptive Analytics) =====
+    # Count beneficiaries (awarded applicants) by voter registration status
+    voter_reg_data = (
+        Applicant.objects.filter(status='awarded')
+        .values('is_registered_voter_talisay')
+        .annotate(count=Count('id'))
+    )
+    voter_registered_count = 0
+    voter_not_registered_count = 0
+    for row in voter_reg_data:
+        if row['is_registered_voter_talisay']:
+            voter_registered_count = int(row['count'])
+        else:
+            voter_not_registered_count = int(row['count'])
+    voter_total = voter_registered_count + voter_not_registered_count
+
     analytics_charts_data = _build_analytics_charts_data(
         intake_registration_trend,
         monthly_upload_trend,
@@ -997,6 +1024,10 @@ def _staff_reports_analytics_payload(request):
         case_aging_bands=case_aging_bands,
         funnel_stages=funnel_stages,
         isf_population_data=isf_population_data,
+        voter_registration_counts={
+            'registered': voter_registered_count,
+            'not_registered': voter_not_registered_count,
+        },
     )
 
     year_options = list(range(now.year - 5, now.year + 2))
@@ -1068,6 +1099,10 @@ def _staff_reports_analytics_payload(request):
         'construction_delayed': construction_delayed,
         'blacklist_count': blacklist_count,
         'active_lot_awards': active_lot_awards,
+        # Voter registration analytics
+        'voter_registered_count': voter_registered_count,
+        'voter_not_registered_count': voter_not_registered_count,
+        'voter_total': voter_total,
         # SVG gauge ring offsets — circumference = 2πr ≈ 97.4; offset = circ × (1 − pct/100)
         'housing_occupancy_offset': round(97.4 * (1 - housing_occupancy_rate / 100), 1),
         'req_verification_offset': round(97.4 * (1 - req_verification_rate / 100), 1),
