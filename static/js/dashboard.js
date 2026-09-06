@@ -737,6 +737,8 @@ document.addEventListener('DOMContentLoaded', function () {
             type: 'single',
             labels: spec.labels.map(function (l) {
                 var s = String(l);
+                var acronyms = ['CDRRMO', 'ISF', 'COMELEC', 'GK', 'ID', 'PHP', 'SMS', 'M2', 'M1', 'M4'];
+                if (acronyms.indexOf(s.toUpperCase()) >= 0) return s.toUpperCase();
                 if (s === s.toUpperCase() && s.length > 1) {
                     s = s.replace(/\w\S*/g, function (w) {
                         return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();

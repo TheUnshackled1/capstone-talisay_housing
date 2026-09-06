@@ -820,22 +820,22 @@ def _staff_reports_analytics_payload(request):
     applicants_by_channel = [
         {
             'channel': 'danger_zone',
-            'label': 'Option A',
+            'label': 'CDRRMO',
             'count': situation_counts_map.get('danger_zone', 0),
         },
         {
             'channel': 'ejected',
-            'label': 'Option B',
+            'label': 'Ejected',
             'count': situation_counts_map.get('ejected', 0),
         },
         {
             'channel': 'relocated',
-            'label': 'Option C',
+            'label': 'Displaced',
             'count': situation_counts_map.get('relocated', 0),
         },
         {
             'channel': 'not_abc',
-            'label': 'Option D',
+            'label': 'None',
             'count': situation_counts_map.get('not_abc', 0),
         },
     ]
