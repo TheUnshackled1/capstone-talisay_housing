@@ -411,6 +411,8 @@ def _build_analytics_charts_data(
     funnel_stages=None,
     isf_population_data=None,
     voter_registration_counts=None,
+    blacklist_by_reason=None,
+    construction_stages=None,
 ):
     """
     Build a JSON-serializable dict for Chart.js (staff analytics page).
@@ -500,6 +502,22 @@ def _build_analytics_charts_data(
             'values': [
                 int(voter_registration_counts.get('registered', 0)),
                 int(voter_registration_counts.get('not_registered', 0)),
+            ]
+        }
+
+    # Blacklist breakdown by reason (real DB data)
+    if blacklist_by_reason is not None:
+        data['blacklistByReason'] = pair_labels_counts(blacklist_by_reason)
+
+    # Construction progress stages
+    if construction_stages:
+        data['constructionProgress'] = {
+            'labels': ['Not Started', 'In Progress', 'Completed', 'Delayed'],
+            'values': [
+                int(construction_stages.get('not_started', 0)),
+                int(construction_stages.get('in_progress', 0)),
+                int(construction_stages.get('completed', 0)),
+                int(construction_stages.get('delayed', 0)),
             ]
         }
 
@@ -982,9 +1000,23 @@ def _staff_reports_analytics_payload(request):
         stage__in=['not_started', 'completed']
     ).count()
     construction_delayed = ConstructionProgress.objects.filter(is_delayed=True).count()
+    construction_not_started = ConstructionProgress.objects.filter(stage='not_started').count()
+    construction_stages = {
+        'not_started': construction_not_started,
+        'in_progress': construction_in_progress,
+        'completed': construction_completed,
+        'delayed': construction_delayed,
+    }
 
-    # Blacklist count
-    blacklist_count = UnitsBlacklist.objects.count()
+    # Blacklist breakdown by reason (real DB grouping — not hardcoded)
+    blacklist_reason_labels = dict(UnitsBlacklist.REASON_CHOICES)
+    blacklist_by_reason = sorted(
+        UnitsBlacklist.objects.values('reason').annotate(count=Count('id')),
+        key=lambda x: -int(x.get('count') or 0),
+    )
+    for row in blacklist_by_reason:
+        row['label'] = blacklist_reason_labels.get(row['reason'], row['reason'] or '—')
+    blacklist_count = sum(int(r.get('count') or 0) for r in blacklist_by_reason)
 
     # Active lot awards
     active_lot_awards = LotAward.objects.filter(status='active').count()
@@ -1028,6 +1060,8 @@ def _staff_reports_analytics_payload(request):
             'registered': voter_registered_count,
             'not_registered': voter_not_registered_count,
         },
+        blacklist_by_reason=blacklist_by_reason,
+        construction_stages=construction_stages,
     )
 
     year_options = list(range(now.year - 5, now.year + 2))
@@ -1097,7 +1131,9 @@ def _staff_reports_analytics_payload(request):
         'construction_completed': construction_completed,
         'construction_in_progress': construction_in_progress,
         'construction_delayed': construction_delayed,
+        'construction_not_started': construction_not_started,
         'blacklist_count': blacklist_count,
+        'blacklist_by_reason': blacklist_by_reason,
         'active_lot_awards': active_lot_awards,
         # Voter registration analytics
         'voter_registered_count': voter_registered_count,

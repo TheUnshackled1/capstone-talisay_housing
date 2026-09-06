@@ -441,6 +441,53 @@
             <div class="rep-ops-chart-canvas"><canvas id="chartCasesType"></canvas></div>
         </div>
     </div>
+    <!-- Row 4: 3 cards — Workflow Funnel · Construction Progress · Active Queue -->
+    <div class="rep-grid-3 rep-grid-charts">
+        <!-- Card 1: Applicant Workflow Funnel -->
+        <div class="rep-card">
+            <p class="rep-card-title">Applicant Workflow Funnel</p>
+            <p class="rep-card-sub">6-stage pipeline from registration to lot award.</p>
+            <div class="rep-chart-canvas"><canvas id="chartFunnel"></canvas></div>
+        </div>
+
+        <!-- Card 2: Construction Progress -->
+        <div class="rep-card">
+            <p class="rep-card-title">Construction Progress</p>
+            <p class="rep-card-sub">House construction stages across all lot-awarded units.</p>
+            {% if construction_total > 0 %}
+            <div class="rep-chart-canvas"><canvas id="chartConstruction"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <div class="rep-empty-state-title">No construction records yet</div>
+                <div class="rep-empty-state-sub">Data will appear once lot awards are linked to construction progress.</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Card 3: Active Queue by Type -->
+        <div class="rep-card">
+            <p class="rep-card-title">Active Queue by Type</p>
+            <p class="rep-card-sub">Current queue entries by category (priority vs walk-in).</p>
+            {% if queue_active_rows %}
+            <div class="rep-chart-canvas"><canvas id="chartQueue"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/>
+                    <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                <div class="rep-empty-state-title">No active queue entries</div>
+                <div class="rep-empty-state-sub">Queue data will appear when applicants are active in a queue.</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 
     <div class="rep-footer">
         Generated {{ timestamp|date:"M j, Y g:i A" }}

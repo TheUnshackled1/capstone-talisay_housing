@@ -767,12 +767,9 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'chartHousing': return getSingleSeriesDataset('housingByStatus');
             case 'chartISFPopulation': return getSingleSeriesDataset('isfPopulation');
             case 'chartISFOverall': return getSingleSeriesDataset('isfOverall');
-            case 'chartBlacklist':
-                return {
-                    type: 'single',
-                    labels: ['Unit Repossessed', 'Other Violations'],
-                    values: [blacklistCount, 0]
-                };
+            case 'chartBlacklist': return getSingleSeriesDataset('blacklistByReason');
+            case 'chartConstruction': return getSingleSeriesDataset('constructionProgress');
+            case 'chartQueue': return getSingleSeriesDataset('activeQueues');
             case 'chartFunnel': return getSingleSeriesDataset('workflowFunnel');
             case 'chartCaseAging': return getSingleSeriesDataset('caseAging');
             case 'chartRequirements': return getSingleSeriesDataset('requirementsByStatus');
