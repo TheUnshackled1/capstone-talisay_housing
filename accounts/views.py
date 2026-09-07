@@ -341,10 +341,14 @@ def _six_month_sequence_end(year: int, month: int):
     return pairs
 
 
-def _staff_analytics_ready_for_form_count(user):
+def _staff_analytics_module2_counts(user):
     """
-    Cardinality of the Ready for Form queue — same routing rules as ``ready_for_form_queue``.
-    Uses lazy imports to avoid tight coupling at module load time.
+    Returns (evaluation_count, ready_for_form_count) in a single pass over the
+    Module 2 queryset — matching the exact Python-level filtering logic used by
+    applications_list.html and ready_for_form_list.html respectively.
+
+    - evaluation_count  → matches 'Total List' on applications_list.html
+    - ready_for_form_count → matches the Form queue count on ready_for_form_list.html
     """
     from documents.models import Requirement
     from applications.views import (
@@ -360,14 +364,27 @@ def _staff_analytics_ready_for_form_count(user):
         is_active=True,
         is_required_for_form=True,
     ).count()
-    n = 0
+    rfq_count = 0
+    eval_count = 0
     for applicant in _module2_evaluations_applicants_queryset().iterator(chunk_size=200):
         row = _module2_applicant_row_payload(applicant, permissions, required_total, user)
         if row is None:
             continue
-        if _module2_on_ready_for_form_queue_track(applicant, row['application']):
-            n += 1
-    return n
+        on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
+        if on_rfq_track:
+            rfq_count += 1
+            continue  # mirrors applications_list.html: rfq applicants are removed from the list
+        app_status = (getattr(row.get('application'), 'status', '') or '').strip()
+        if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
+            continue  # mirrors applications_list.html: awarded/standby routed applicants are removed
+        eval_count += 1
+    return eval_count, rfq_count
+
+
+def _staff_analytics_ready_for_form_count(user):
+    """Kept for backward compatibility — returns only the ready-for-form count."""
+    _, rfq = _staff_analytics_module2_counts(user)
+    return rfq
 
 
 def _analytics_rows_bar_pct(rows, count_key='count'):
@@ -883,19 +900,29 @@ def _staff_reports_analytics_payload(request):
     ready_for_form_queue_count = _staff_analytics_ready_for_form_count(request.user)
     pending_final_signature_count = Application.objects.filter(status='completed').count()
 
-    # Pipeline-stage applicant counts for the dashboard "Applicants by Status" chart.
-    # Replaces raw status breakdown with module-based pipeline stages.
-    _registered_count = Applicant.objects.filter(
-        module2_handoff_at__isnull=True,
-    ).exclude(status='disqualified').count()
+    # Pipeline-stage applicant counts — uses the EXACT same queries as each module page
+    # so the dashboard numbers always match what staff see when they navigate to each section.
+    from units.historical_beneficiary import intake_registration_exclude_q
+    from applications.views import _module2_evaluations_applicants_queryset
+
+    # Registered = what applicants.html (REGISTERED APPLICANTS table) shows
+    _registered_count = (
+        Archive.objects
+        .filter(formally_archived=False)
+        .exclude(intake_registration_exclude_q(prefix='applicant__'))
+        .exclude(applicant__application__isnull=False)
+        .count()
+    )
+    # Evaluation & Eligibility = what applications_list.html (Total List) shows
+    _evaluation_count = _module2_evaluations_applicants_queryset().count()
     _awarded_count = Applicant.objects.filter(status='awarded').count()
     _disqualified_count = Applicant.objects.filter(status='disqualified').count()
     applicant_by_status = [
-        {'status': 'registered',   'label': 'Registered',                'count': _registered_count},
-        {'status': 'evaluation',   'label': 'Evaluation & Eligibility',  'count': module2_handoff_count},
-        {'status': 'form',         'label': 'Form',                      'count': ready_for_form_queue_count},
-        {'status': 'awarded',      'label': 'Lot Awarded',               'count': _awarded_count},
-        {'status': 'disqualified', 'label': 'Disqualified',              'count': _disqualified_count},
+        {'status': 'registered',   'label': 'Registered',               'count': _registered_count},
+        {'status': 'evaluation',   'label': 'Evaluation & Eligibility', 'count': _evaluation_count},
+        {'status': 'form',         'label': 'Form',                     'count': ready_for_form_queue_count},
+        {'status': 'awarded',      'label': 'Lot Awarded',              'count': _awarded_count},
+        {'status': 'disqualified', 'label': 'Disqualified',             'count': _disqualified_count},
     ]
 
     requirement_submission_labels = dict(RequirementSubmission.STATUS_CHOICES)
