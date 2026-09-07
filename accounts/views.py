@@ -733,7 +733,8 @@ def _staff_reports_analytics_payload(request):
     total_applicants = Applicant.objects.count()
     housing_application_records = Application.objects.count()
 
-    applicant_by_status = sorted(
+    # Raw status breakdown — kept for CSV export only
+    applicant_status_raw = sorted(
         (
             Applicant.objects.values('status')
             .annotate(count=Count('id'))
@@ -745,12 +746,14 @@ def _staff_reports_analytics_payload(request):
         'pending': 'Pending Eligibility',
         'application': 'Pending Application',
     }
-    for row in applicant_by_status:
+    for row in applicant_status_raw:
         st = row.get('status') or ''
         row['label'] = status_display_overrides.get(
             st,
             applicant_status_labels.get(st, st or '—')
         )
+    # applicant_by_status will be rebuilt as a pipeline list below (after ready_for_form_queue_count)
+    applicant_by_status = applicant_status_raw
 
     application_by_status = sorted(
         (
@@ -879,6 +882,21 @@ def _staff_reports_analytics_payload(request):
     module2_handoff_count = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
     ready_for_form_queue_count = _staff_analytics_ready_for_form_count(request.user)
     pending_final_signature_count = Application.objects.filter(status='completed').count()
+
+    # Pipeline-stage applicant counts for the dashboard "Applicants by Status" chart.
+    # Replaces raw status breakdown with module-based pipeline stages.
+    _registered_count = Applicant.objects.filter(
+        module2_handoff_at__isnull=True,
+    ).exclude(status='disqualified').count()
+    _awarded_count = Applicant.objects.filter(status='awarded').count()
+    _disqualified_count = Applicant.objects.filter(status='disqualified').count()
+    applicant_by_status = [
+        {'status': 'registered',   'label': 'Registered',                'count': _registered_count},
+        {'status': 'evaluation',   'label': 'Evaluation & Eligibility',  'count': module2_handoff_count},
+        {'status': 'form',         'label': 'Form',                      'count': ready_for_form_queue_count},
+        {'status': 'awarded',      'label': 'Lot Awarded',               'count': _awarded_count},
+        {'status': 'disqualified', 'label': 'Disqualified',              'count': _disqualified_count},
+    ]
 
     requirement_submission_labels = dict(RequirementSubmission.STATUS_CHOICES)
     requirement_by_status = sorted(
@@ -1090,7 +1108,7 @@ def _staff_reports_analytics_payload(request):
         'year_options': year_options,
         'month_options': month_options,
         'months_for_select': months_for_select,
-        'applicant_by_status': applicant_by_status,
+        'applicant_by_status': applicant_status_raw,  # CSV export uses raw status breakdown
         'application_by_status': application_by_status,
         'documents_by_type': documents_by_type,
         # ISF Population Statistics
