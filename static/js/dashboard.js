@@ -770,9 +770,6 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'chartISFPopulation': return getSingleSeriesDataset('isfPopulation');
             case 'chartISFOverall': return getSingleSeriesDataset('isfOverall');
             case 'chartBlacklist': return getSingleSeriesDataset('blacklistByReason');
-            case 'chartConstruction': return getSingleSeriesDataset('constructionProgress');
-            case 'chartQueue': return getSingleSeriesDataset('activeQueues');
-            case 'chartFunnel': return getSingleSeriesDataset('workflowFunnel');
             case 'chartCaseAging': return getSingleSeriesDataset('caseAging');
             case 'chartRequirements': return getSingleSeriesDataset('requirementsByStatus');
             case 'chartCasesStatus': return getSingleSeriesDataset('casesByStatus');
@@ -807,7 +804,6 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'chartVoterRegistration':
                 return 'donut';
             case 'chartBarangays':
-            case 'chartFunnel':
             case 'chartCaseAging':
                 return 'bar';
             default: return 'bar';
@@ -910,7 +906,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     x: { grid: { display: false } }
                 };
             } else if (mode === 'bar') {
-                var isHorizontal = ['chartBarangays', 'chartFunnel'].indexOf(canvasId) >= 0;
+                var isHorizontal = ['chartBarangays'].indexOf(canvasId) >= 0;
                 config.type = 'bar';
                 config.data = {
                     labels: dataset.labels,
@@ -933,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
             } else if (mode === 'stacked') {
                 config.type = 'bar';
-                var isHorizontal = ['chartBarangays', 'chartFunnel'].indexOf(canvasId) >= 0;
+                var isHorizontal = ['chartBarangays'].indexOf(canvasId) >= 0;
                 config.data = {
                     labels: isHorizontal ? ['Total Distribution'] : dataset.labels,
                     datasets: isHorizontal ? dataset.labels.map(function (lbl, i) {
@@ -1347,7 +1343,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 dataset.labels.forEach(function (lbl, i) {
                     items.push({ label: lbl, value: dataset.values[i], originalIndex: i });
                 });
-                var sequentialCharts = ['chartFunnel', 'chartCaseAging'];
+                var sequentialCharts = ['chartCaseAging'];
                 if (sequentialCharts.indexOf(canvasId) === -1) {
                     items.sort(function (a, b) { return b.value - a.value; });
                 }
