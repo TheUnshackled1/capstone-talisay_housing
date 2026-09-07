@@ -343,9 +343,9 @@ def _six_month_sequence_end(year: int, month: int):
 
 def _staff_analytics_module2_counts(user):
     """
-    Returns (evaluation_count, ready_for_form_count) in a single pass over the
-    Module 2 queryset — matching the exact Python-level filtering logic used by
-    applications_list.html and ready_for_form_list.html respectively.
+    Returns (evaluation_count, ready_for_form_count, evaluation_ids, ready_for_form_ids)
+    in a single pass over the Module 2 queryset — matching the exact Python-level
+    filtering logic used by applications_list.html and ready_for_form_list.html respectively.
 
     - evaluation_count  → matches 'Total List' on applications_list.html
     - ready_for_form_count → matches the Form queue count on ready_for_form_list.html
@@ -364,27 +364,27 @@ def _staff_analytics_module2_counts(user):
         is_active=True,
         is_required_for_form=True,
     ).count()
-    rfq_count = 0
-    eval_count = 0
+    rfq_ids = []
+    eval_ids = []
     for applicant in _module2_evaluations_applicants_queryset().iterator(chunk_size=200):
         row = _module2_applicant_row_payload(applicant, permissions, required_total, user)
         if row is None:
             continue
         on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
         if on_rfq_track:
-            rfq_count += 1
+            rfq_ids.append(applicant.id)
             continue  # mirrors applications_list.html: rfq applicants are removed from the list
         app_status = (getattr(row.get('application'), 'status', '') or '').strip()
         if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
             continue  # mirrors applications_list.html: awarded/standby routed applicants are removed
-        eval_count += 1
-    return eval_count, rfq_count
+        eval_ids.append(applicant.id)
+    return len(eval_ids), len(rfq_ids), eval_ids, rfq_ids
 
 
 def _staff_analytics_ready_for_form_count(user):
     """Kept for backward compatibility — returns only the ready-for-form count."""
-    _, rfq = _staff_analytics_module2_counts(user)
-    return rfq
+    res = _staff_analytics_module2_counts(user)
+    return res[1]
 
 
 def _analytics_rows_bar_pct(rows, count_key='count'):
@@ -439,7 +439,10 @@ def _build_analytics_charts_data(
     def pair_labels_counts(rows, label_key='label', count_key='count'):
         labels = [_chart_label(r.get(label_key)) for r in rows]
         values = [int(r.get(count_key) or 0) for r in rows]
-        return {'labels': labels, 'values': values}
+        res = {'labels': labels, 'values': values}
+        if any('breakdown' in r for r in rows):
+            res['breakdowns'] = [r.get('breakdown') or {} for r in rows]
+        return res
 
     queue_chart_rows = [
         {
@@ -841,34 +844,6 @@ def _staff_reports_analytics_payload(request):
     vacant_units_count = HousingUnit.objects.filter(status='Vacant — available').count()
     pending_cdrrmo_count = CDRRMOCertification.objects.filter(status='pending').count()
 
-    situation_counts_map = {
-        (row.get('displacement_reason') or '').strip(): int(row.get('count') or 0)
-        for row in Applicant.objects.values('displacement_reason').annotate(count=Count('id'))
-    }
-    applicants_by_channel = [
-        {
-            'channel': 'danger_zone',
-            'label': 'CDRRMO',
-            'count': situation_counts_map.get('danger_zone', 0),
-        },
-        {
-            'channel': 'ejected',
-            'label': 'Ejected',
-            'count': situation_counts_map.get('ejected', 0),
-        },
-        {
-            'channel': 'relocated',
-            'label': 'Displaced',
-            'count': situation_counts_map.get('relocated', 0),
-        },
-        {
-            'channel': 'not_abc',
-            'label': 'None',
-            'count': situation_counts_map.get('not_abc', 0),
-        },
-    ]
-    _analytics_rows_bar_pct(applicants_by_channel)
-
     applicants_top_barangays = list(
         Applicant.objects.exclude(barangay_id__isnull=True)
         .values(place_name=F('barangay__name'))
@@ -898,8 +873,8 @@ def _staff_reports_analytics_payload(request):
 
     module2_handoff_count = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
     # Single pass: get both evaluation_count (matches applications_list.html Total List)
-    # and ready_for_form_queue_count (matches ready_for_form_list.html) together.
-    _evaluation_count, ready_for_form_queue_count = _staff_analytics_module2_counts(request.user)
+    # and ready_for_form_queue_count (matches ready_for_form_list.html) together, along with IDs.
+    _evaluation_count, ready_for_form_queue_count, _eval_ids, _rfq_ids = _staff_analytics_module2_counts(request.user)
     pending_final_signature_count = Application.objects.filter(status='completed').count()
 
     # Pipeline-stage applicant counts — uses the EXACT same queries as each module page
@@ -907,15 +882,18 @@ def _staff_reports_analytics_payload(request):
     from units.historical_beneficiary import intake_registration_exclude_q
 
     # Registered = what applicants.html (REGISTERED APPLICANTS table) shows
-    _registered_count = (
+    _registered_ids = list(
         Archive.objects
         .filter(formally_archived=False)
         .exclude(intake_registration_exclude_q(prefix='applicant__'))
         .exclude(applicant__application__isnull=False)
-        .count()
+        .values_list('applicant_id', flat=True)
     )
-    _awarded_count = Applicant.objects.filter(status='awarded').count()
-    _disqualified_count = Applicant.objects.filter(status='disqualified').count()
+    _registered_count = len(_registered_ids)
+    _awarded_ids = list(Applicant.objects.filter(status='awarded').values_list('id', flat=True))
+    _awarded_count = len(_awarded_ids)
+    _disqualified_ids = list(Applicant.objects.filter(status='disqualified').values_list('id', flat=True))
+    _disqualified_count = len(_disqualified_ids)
     applicant_by_status = [
         {'status': 'registered',   'label': 'Registered',               'count': _registered_count},
         {'status': 'evaluation',   'label': 'Evaluation & Eligibility', 'count': _evaluation_count},
@@ -923,6 +901,72 @@ def _staff_reports_analytics_payload(request):
         {'status': 'awarded',      'label': 'Lot Awarded',              'count': _awarded_count},
         {'status': 'disqualified', 'label': 'Disqualified',             'count': _disqualified_count},
     ]
+
+    # Active pipeline applicants for Applicant Situation (CDRRMO, Ejected, Displaced, None)
+    active_pipeline_ids = (
+        set(_registered_ids)
+        | set(_eval_ids)
+        | set(_rfq_ids)
+        | set(_awarded_ids)
+        | set(_disqualified_ids)
+    )
+
+    applicant_stage_map = {}
+    for aid in _registered_ids:
+        applicant_stage_map[aid] = 'Registered'
+    for aid in _eval_ids:
+        applicant_stage_map[aid] = 'Evaluation & Eligibility'
+    for aid in _rfq_ids:
+        applicant_stage_map[aid] = 'Form'
+    for aid in _awarded_ids:
+        applicant_stage_map[aid] = 'Lot Awarded'
+    for aid in _disqualified_ids:
+        applicant_stage_map[aid] = 'Disqualified'
+
+    situation_breakdowns = {
+        'danger_zone': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Disqualified': 0},
+        'ejected': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Disqualified': 0},
+        'relocated': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Disqualified': 0},
+        'not_abc': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Disqualified': 0},
+    }
+
+    situation_counts_map = {'danger_zone': 0, 'ejected': 0, 'relocated': 0, 'not_abc': 0}
+    active_applicants_qs = Applicant.objects.filter(id__in=active_pipeline_ids).values('id', 'displacement_reason')
+    for app_row in active_applicants_qs:
+        reason = (app_row.get('displacement_reason') or '').strip()
+        if reason in situation_counts_map:
+            situation_counts_map[reason] += 1
+            st = applicant_stage_map.get(app_row['id'])
+            if st and reason in situation_breakdowns and st in situation_breakdowns[reason]:
+                situation_breakdowns[reason][st] += 1
+
+    applicants_by_channel = [
+        {
+            'channel': 'danger_zone',
+            'label': 'CDRRMO',
+            'count': situation_counts_map.get('danger_zone', 0),
+            'breakdown': situation_breakdowns.get('danger_zone', {}),
+        },
+        {
+            'channel': 'ejected',
+            'label': 'Ejected',
+            'count': situation_counts_map.get('ejected', 0),
+            'breakdown': situation_breakdowns.get('ejected', {}),
+        },
+        {
+            'channel': 'relocated',
+            'label': 'Displaced',
+            'count': situation_counts_map.get('relocated', 0),
+            'breakdown': situation_breakdowns.get('relocated', {}),
+        },
+        {
+            'channel': 'not_abc',
+            'label': 'None',
+            'count': situation_counts_map.get('not_abc', 0),
+            'breakdown': situation_breakdowns.get('not_abc', {}),
+        },
+    ]
+    _analytics_rows_bar_pct(applicants_by_channel)
 
     requirement_submission_labels = dict(RequirementSubmission.STATUS_CHOICES)
     requirement_by_status = sorted(

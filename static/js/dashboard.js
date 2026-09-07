@@ -746,7 +746,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 return s;
             }),
-            values: spec.values.map(function (v) { return Number(v) || 0; })
+            values: spec.values.map(function (v) { return Number(v) || 0; }),
+            breakdowns: spec.breakdowns || null
         };
     }
 
@@ -970,7 +971,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         var i = items[0] && items[0].dataIndex;
                         if (i == null || !total) return '';
                         var pct = Math.round((dataset.values[i] / total) * 1000) / 10;
-                        return pct + '% of total';
+                        var lines = [pct + '% of total'];
+                        if (dataset.breakdowns && dataset.breakdowns[i]) {
+                            var bd = dataset.breakdowns[i];
+                            Object.keys(bd).forEach(function (k) {
+                                if (bd[k] > 0) {
+                                    lines.push('• ' + k + ': ' + bd[k]);
+                                }
+                            });
+                        }
+                        return lines;
                     }
                 };
             }
