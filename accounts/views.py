@@ -897,13 +897,14 @@ def _staff_reports_analytics_payload(request):
         row['bar_pct'] = min(100, int(round(100 * row['count'] / reg_max))) if reg_max else 0
 
     module2_handoff_count = Applicant.objects.filter(module2_handoff_at__isnull=False).count()
-    ready_for_form_queue_count = _staff_analytics_ready_for_form_count(request.user)
+    # Single pass: get both evaluation_count (matches applications_list.html Total List)
+    # and ready_for_form_queue_count (matches ready_for_form_list.html) together.
+    _evaluation_count, ready_for_form_queue_count = _staff_analytics_module2_counts(request.user)
     pending_final_signature_count = Application.objects.filter(status='completed').count()
 
     # Pipeline-stage applicant counts — uses the EXACT same queries as each module page
     # so the dashboard numbers always match what staff see when they navigate to each section.
     from units.historical_beneficiary import intake_registration_exclude_q
-    from applications.views import _module2_evaluations_applicants_queryset
 
     # Registered = what applicants.html (REGISTERED APPLICANTS table) shows
     _registered_count = (
@@ -913,8 +914,6 @@ def _staff_reports_analytics_payload(request):
         .exclude(applicant__application__isnull=False)
         .count()
     )
-    # Evaluation & Eligibility = what applications_list.html (Total List) shows
-    _evaluation_count = _module2_evaluations_applicants_queryset().count()
     _awarded_count = Applicant.objects.filter(status='awarded').count()
     _disqualified_count = Applicant.objects.filter(status='disqualified').count()
     applicant_by_status = [
