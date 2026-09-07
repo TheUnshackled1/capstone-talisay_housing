@@ -1117,11 +1117,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 ].join(';') + ';';
             } else if (isApplicants) {
                 bottomLegend.style.cssText = [
-                    'display:grid',
-                    'grid-template-columns:auto auto',
-                    'grid-auto-flow:column',
-                    'grid-template-rows:repeat(2, auto)',
-                    'gap:0.3rem 0.65rem',
+                    'display:flex',
+                    'flex-wrap:wrap',
+                    'gap:0.35rem 0.75rem',
                     'justify-content:center',
                     'align-items:center',
                     'margin-top:0.55rem',
@@ -1184,6 +1182,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 pill.appendChild(labelTxt);
                 pill.appendChild(countTxt);
                 bottomLegend.appendChild(pill);
+
+                if (isApplicants && i === 1) {
+                    var breakEl = document.createElement('div');
+                    breakEl.className = 'chart-legend-break';
+                    breakEl.style.cssText = 'flex-basis:100%;height:0;margin:0;border:none;';
+                    bottomLegend.appendChild(breakEl);
+                }
             });
 
             // Insert after the canvas wrapper (rep-chart-canvas div)
