@@ -14,7 +14,8 @@ from django.contrib import messages
 from datetime import timedelta, datetime
 from zoneinfo import ZoneInfo
 from collections import OrderedDict
-from functools import wraps
+from functools import wraps, lru_cache
+from pathlib import Path
 import json
 
 from intake.models import Applicant, Barangay, HouseholdMember
@@ -748,6 +749,17 @@ def create_relocation_site(request, position):
     except ValueError:
         return JsonResponse({'success': False, 'error': 'Total blocks/lots must be whole numbers.'}, status=400)
 
+    map_phase_raw = (request.POST.get('map_phase') or str(RelocationSite.MAP_PHASE_1)).strip()
+    try:
+        map_phase = int(map_phase_raw)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Invalid map phase.'}, status=400)
+    if map_phase not in (RelocationSite.MAP_PHASE_1, RelocationSite.MAP_PHASE_2):
+        return JsonResponse(
+            {'success': False, 'error': 'Map phase must be 1 (Blocks 1–12) or 2 (Blocks 13–21).'},
+            status=400,
+        )
+
     if not name or not code or not address or not barangay_id:
         return JsonResponse(
             {'success': False, 'error': 'Name, code, barangay, and address are required.'},
@@ -774,6 +786,7 @@ def create_relocation_site(request, position):
             is_active=True,
             notes=notes,
             caretaker=request.user,
+            map_phase=map_phase,
         )
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -811,6 +824,36 @@ def _housing_unit_inventory_deletable(user, unit):
     return True
 
 
+def _housing_unit_block_sequence_error(site, block_number, exclude_unit_id=None):
+    """
+    Enforce sequential block numbers within a site.
+    Phase 2 sites start at block 13 (no need to invent Blocks 1–12 first).
+    Returns error message or None.
+    """
+    if not str(block_number).isdigit():
+        return None
+    new_block = int(block_number)
+    existing_qs = HousingUnit.objects.filter(site=site)
+    if exclude_unit_id:
+        existing_qs = existing_qs.exclude(id=exclude_unit_id)
+    existing_blocks = existing_qs.values_list('block_number', flat=True).distinct()
+    numeric_blocks = sorted(int(b) for b in existing_blocks if str(b).isdigit())
+    phase_floor = 13 if getattr(site, 'map_phase', 1) == RelocationSite.MAP_PHASE_2 else 1
+    if not numeric_blocks:
+        # Empty inventory: first block must be the phase floor (1 or 13).
+        if new_block != phase_floor:
+            return (
+                f'This Phase {site.map_phase} site starts at Block {phase_floor}. '
+                f'Add Block {phase_floor} first before Block {new_block}.'
+            )
+        return None
+    max_block = numeric_blocks[-1]
+    if new_block > max_block + 1:
+        next_block = max_block + 1
+        return f'Add Block {next_block} first before Block {new_block}.'
+    return None
+
+
 def _validate_housing_unit_block_lot(site, block_number, lot_number, exclude_unit_id=None):
     """Shared block/lot validation for create and update. Returns error message or None."""
     if not block_number or not lot_number:
@@ -818,16 +861,9 @@ def _validate_housing_unit_block_lot(site, block_number, lot_number, exclude_uni
     if not block_number.isdigit() or not lot_number.isdigit():
         return 'Block and lot must be digits only (0-9).'
 
-    new_block = int(block_number)
-    existing_qs = HousingUnit.objects.filter(site=site)
-    if exclude_unit_id:
-        existing_qs = existing_qs.exclude(id=exclude_unit_id)
-    existing_blocks = existing_qs.values_list('block_number', flat=True).distinct()
-    numeric_blocks = sorted(int(b) for b in existing_blocks if str(b).isdigit())
-    max_block = numeric_blocks[-1] if numeric_blocks else 0
-    if new_block > max_block + 1:
-        next_block = max_block + 1
-        return f'Add Block {next_block} first before Block {new_block}.'
+    seq_err = _housing_unit_block_sequence_error(site, block_number, exclude_unit_id)
+    if seq_err:
+        return seq_err
 
     dup_qs = HousingUnit.objects.filter(
         site=site,
@@ -853,6 +889,41 @@ def _parse_plan_polygon_index(raw):
     if idx < 0 or idx > 9999:
         return None
     return idx
+
+
+@lru_cache(maxsize=4)
+def _lot_plan_polygon_count(map_phase: int) -> int:
+    """Count of lots[] in the static polygon JSON for this map phase."""
+    name = (
+        'lot_plan_polygons_p2.json'
+        if int(map_phase) == RelocationSite.MAP_PHASE_2
+        else 'lot_plan_polygons.json'
+    )
+    path = Path(settings.BASE_DIR) / 'static' / 'units' / name
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return 0
+    lots = data.get('lots') if isinstance(data, dict) else None
+    return len(lots) if isinstance(lots, list) else 0
+
+
+def _validate_plan_polygon_index_for_site(site, plan_polygon_index):
+    """
+    Ensure plan_polygon_index is in range for the site's map overlay.
+    Returns error message or None. None index is always allowed.
+    """
+    if plan_polygon_index is None:
+        return None
+    count = _lot_plan_polygon_count(getattr(site, 'map_phase', RelocationSite.MAP_PHASE_1))
+    if count <= 0:
+        return 'Lot plan map data is unavailable for this site.'
+    if plan_polygon_index >= count:
+        return (
+            f'Map polygon index {plan_polygon_index} is out of range '
+            f'(this site has {count} plan lots, indices 0-{count - 1}).'
+        )
+    return None
 
 
 @login_required
@@ -898,25 +969,9 @@ def create_housing_unit(request, position):
             status=400,
         )
 
-    new_block = int(block_number)
-    existing_blocks = HousingUnit.objects.filter(site=site).values_list(
-        'block_number', flat=True,
-    ).distinct()
-    numeric_blocks = sorted(
-        int(b) for b in existing_blocks if str(b).isdigit()
-    )
-    max_block = numeric_blocks[-1] if numeric_blocks else 0
-    if new_block > max_block + 1:
-        next_block = max_block + 1
-        return JsonResponse(
-            {
-                'success': False,
-                'error': (
-                    f'Add Block {next_block} first before Block {new_block}.'
-                ),
-            },
-            status=400,
-        )
+    seq_err = _housing_unit_block_sequence_error(site, block_number)
+    if seq_err:
+        return JsonResponse({'success': False, 'error': seq_err}, status=400)
 
     existing = HousingUnit.objects.filter(
         site=site,
@@ -939,16 +994,28 @@ def create_housing_unit(request, position):
             status=400,
         )
 
+    plan_polygon_index = _parse_plan_polygon_index(
+        request.POST.get('plan_polygon_index'),
+    )
+    poly_err = _validate_plan_polygon_index_for_site(site, plan_polygon_index)
+    if poly_err:
+        return JsonResponse({'success': False, 'error': poly_err}, status=400)
+
     try:
+        # One map box → one inventory row (same rule as link_housing_unit_plan_polygon)
+        if plan_polygon_index is not None:
+            HousingUnit.objects.filter(
+                site=site,
+                plan_polygon_index=plan_polygon_index,
+            ).update(plan_polygon_index=None)
+
         unit = HousingUnit.objects.create(
             site=site,
             block_number=block_number,
             lot_number=lot_number,
             status='Vacant — available',
             location_notes='',
-            plan_polygon_index=_parse_plan_polygon_index(
-                request.POST.get('plan_polygon_index'),
-            ),
+            plan_polygon_index=plan_polygon_index,
         )
     except IntegrityError:
         existing = HousingUnit.objects.filter(
@@ -1104,6 +1171,10 @@ def link_housing_unit_plan_polygon(request, position, unit_id):
             },
             status=400,
         )
+
+    poly_err = _validate_plan_polygon_index_for_site(unit.site, plan_polygon_index)
+    if poly_err:
+        return JsonResponse({'success': False, 'error': poly_err}, status=400)
 
     HousingUnit.objects.filter(
         site=unit.site,

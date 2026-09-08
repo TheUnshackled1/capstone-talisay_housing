@@ -164,7 +164,13 @@ class HousingUnit(models.Model):
             models.UniqueConstraint(
                 fields=['site', 'block_number', 'lot_number'],
                 name='unique_unit_per_site'
-            )
+            ),
+            # One clickable map box → at most one inventory row (NULLs allowed many times)
+            models.UniqueConstraint(
+                fields=['site', 'plan_polygon_index'],
+                condition=models.Q(plan_polygon_index__isnull=False),
+                name='unique_plan_polygon_per_site',
+            ),
         ]
     
     def __str__(self):

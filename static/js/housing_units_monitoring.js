@@ -306,27 +306,31 @@ function openAddUnitModal(blockNumber, lotNumber, polygonIndex) {
     const b = document.getElementById('addUnitBlock');
     const l = document.getElementById('addUnitLot');
     const polyIdxEl = document.getElementById('addUnitPlanPolygonIndex');
+    const siteHid = document.getElementById('addUnitSiteId');
     const hasPrefill = blockNumber != null && blockNumber !== ''
         && lotNumber != null && lotNumber !== '';
 
     if (!hasPrefill) {
         const f = document.getElementById('addUnitForm');
         if (f) f.reset();
-        if (window.HOUSING_CONFIG.singleSiteMode) {
-        const hid = document.getElementById('addUnitSiteId');
-        if (hid && hid.type === 'hidden') hid.value = window.HOUSING_CONFIG.siteId;
-        }
-        if (polyIdxEl) {
-            polyIdxEl.value = (polygonIndex != null && polygonIndex !== '')
-                ? String(polygonIndex) : '';
-        }
     } else {
         if (b) b.value = String(blockNumber).replace(/\D/g, '');
         if (l) l.value = String(lotNumber).replace(/\D/g, '');
-        if (polyIdxEl) {
-            polyIdxEl.value = (polygonIndex != null && polygonIndex !== '')
-                ? String(polygonIndex) : '';
-        }
+    }
+
+    // Always pin to the site currently on the map when adding from a polygon click
+    if (siteHid && window.HOUSING_CONFIG && window.HOUSING_CONFIG.siteId) {
+        siteHid.value = String(window.HOUSING_CONFIG.siteId);
+    }
+    if (polyIdxEl) {
+        polyIdxEl.value = (polygonIndex != null && polygonIndex !== '')
+            ? String(polygonIndex) : '';
+    }
+
+    // Phase 2 empty inventory hint: first block should be 13
+    if (!hasPrefill && window.HOUSING_CONFIG && Number(window.HOUSING_CONFIG.mapPhase) === 2 && b && !b.value) {
+        b.placeholder = b.placeholder || '13';
+        b.title = 'Phase 2 sites start at Block 13';
     }
 
     m.style.display = 'flex';
@@ -614,31 +618,64 @@ function lotPlanStatusClassFrom(sourceLot) {
 }
 
 let lotPlanPolygonsPromise = null;
+let lotPlanPolygonsPromiseUrl = null;
 function loadLotPlanPolygons(url) {
-    if (!lotPlanPolygonsPromise) {
+    const cacheKey = String(url || '').split('?')[0];
+    if (!lotPlanPolygonsPromise || lotPlanPolygonsPromiseUrl !== cacheKey) {
+        lotPlanPolygonsPromiseUrl = cacheKey;
         lotPlanPolygonsPromise = fetch(url)
-            .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
-            .catch(() => ({ lots: [] }));
+            .then(r => {
+                if (!r.ok) throw new Error('polygons HTTP ' + r.status);
+                return r.json();
+            })
+            .catch(err => {
+                console.warn('[lotplan] polygons load failed', err);
+                lotPlanPolygonsPromise = null;
+                lotPlanPolygonsPromiseUrl = null;
+                return { lots: [] };
+            });
     }
     return lotPlanPolygonsPromise;
 }
 
 let lotPlanSlotsPromise = null;
+let lotPlanSlotsPromiseUrl = null;
 function loadLotPlanSlots(url) {
-    if (!lotPlanSlotsPromise) {
+    const cacheKey = String(url || '').split('?')[0];
+    if (!lotPlanSlotsPromise || lotPlanSlotsPromiseUrl !== cacheKey) {
+        lotPlanSlotsPromiseUrl = cacheKey;
         lotPlanSlotsPromise = fetch(url)
-            .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
-            .catch(() => ({ blocks: {} }));
+            .then(r => {
+                if (!r.ok) throw new Error('slots HTTP ' + r.status);
+                return r.json();
+            })
+            .catch(err => {
+                console.warn('[lotplan] slots load failed', err);
+                lotPlanSlotsPromise = null;
+                lotPlanSlotsPromiseUrl = null;
+                return { blocks: {} };
+            });
     }
     return lotPlanSlotsPromise;
 }
 
 let lotPlanClustersPromise = null;
+let lotPlanClustersPromiseUrl = null;
 function loadLotPlanClusters(url) {
-    if (!lotPlanClustersPromise) {
+    const cacheKey = String(url || '').split('?')[0];
+    if (!lotPlanClustersPromise || lotPlanClustersPromiseUrl !== cacheKey) {
+        lotPlanClustersPromiseUrl = cacheKey;
         lotPlanClustersPromise = fetch(url)
-            .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
-            .catch(() => ({ blocks: {} }));
+            .then(r => {
+                if (!r.ok) throw new Error('clusters HTTP ' + r.status);
+                return r.json();
+            })
+            .catch(err => {
+                console.warn('[lotplan] clusters load failed', err);
+                lotPlanClustersPromise = null;
+                lotPlanClustersPromiseUrl = null;
+                return { blocks: {} };
+            });
     }
     return lotPlanClustersPromise;
 }
@@ -863,8 +900,17 @@ function lotPlanWireInertLot(g, polygonIndex, poly) {
         g.setAttribute('data-polygon-index', String(polygonIndex));
     }
 
-    const prefillBlock = poly && poly.block != null ? poly.block : null;
-    const prefillLot = poly && poly.lot != null ? poly.lot : null;
+    // Only prefill when both tags exist and look like digits (avoid poisoned B22/L259 labels)
+    let prefillBlock = null;
+    let prefillLot = null;
+    if (poly && poly.block != null && poly.lot != null) {
+        const b = String(poly.block).replace(/\D/g, '');
+        const l = String(poly.lot).replace(/\D/g, '');
+        if (b && l) {
+            prefillBlock = b;
+            prefillLot = l;
+        }
+    }
 
     const openAdd = function () {
         openAddUnitModal(prefillBlock, prefillLot, polygonIndex);
@@ -877,6 +923,12 @@ function lotPlanWireInertLot(g, polygonIndex, poly) {
         }
     });
     g.addEventListener('mousedown', function (e) {
+        e.stopPropagation();
+    });
+    g.addEventListener('touchstart', function (e) {
+        e.stopPropagation();
+    }, { passive: true });
+    g.addEventListener('pointerdown', function (e) {
         e.stopPropagation();
     });
 }
@@ -4046,7 +4098,9 @@ document.addEventListener('keydown', e => {
 document.addEventListener('DOMContentLoaded', () => {
     // Build lot-plan zones up front so status syncs work even before the
     // plan view is opened (zones live-recolor via applyVmapLotMapBadge).
-    try { buildLotPlan(); } catch (e) { /* lot plan optional */ }
+    Promise.resolve()
+        .then(() => buildLotPlan())
+        .catch(err => console.warn('[lotplan] buildLotPlan failed', err));
     try { initLotPlanZoom(); } catch (e) { /* zoom optional */ }
     try { initLotPlanSearch(); } catch (e) { /* search optional */ }
 

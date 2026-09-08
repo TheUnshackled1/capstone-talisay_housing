@@ -338,6 +338,15 @@
                         style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;box-sizing:border-box;font-family:inherit;">
                 </div>
             </div>
+            <div style="margin-bottom:0.75rem;">
+                <label for="siteMapPhaseInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Lot plan map</label>
+                <select id="siteMapPhaseInput" name="map_phase" required
+                    style="width:100%;padding:0.55rem 0.65rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.82rem;box-sizing:border-box;font-family:inherit;">
+                    <option value="1" selected>Phase 1 — Blocks 1–12</option>
+                    <option value="2">Phase 2 — Blocks 13–21</option>
+                </select>
+                <p style="margin:0.35rem 0 0;font-size:0.68rem;color:#64748b;line-height:1.35;">Chooses which road plan overlay and empty-lot click targets staff see.</p>
+            </div>
             <div style="margin-bottom:0.85rem;">
                 <label for="siteNotesInput" style="display:block;font-size:0.68rem;font-weight:600;color:#374151;margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.04em;">Notes <span style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(optional)</span></label>
                 <textarea id="siteNotesInput" name="notes" rows="2" maxlength="500" placeholder="Internal notes"
@@ -931,6 +940,7 @@
     window.HOUSING_CONFIG = {
         userPosition: '{{ request.user.position }}',
         siteId: '{{ site.id|default:"" }}',
+        mapPhase: {{ site.map_phase|default:1 }},
 
         casesListUrl: '{% if request.user.position == "second_member" or request.user.position == "fourth_member" %}{% url "accounts:second_member_cases" %}{% else %}{% url "accounts:field_cases" %}{% endif %}',
         createSiteUrl: '{% if can_create_relocation_site %}{% url "units:create_relocation_site" request.user.position %}{% else %}""{% endif %}',
