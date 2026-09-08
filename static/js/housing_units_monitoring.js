@@ -851,8 +851,8 @@ function lotPlanWireLinkedLot(g, poly, unit, blockNum, lotNum, V) {
     if (unit.style.display === 'none') g.style.display = 'none';
 }
 
-/** Empty traced lot on the plan — open Add housing unit with blank block/lot fields. */
-function lotPlanWireInertLot(g, polygonIndex) {
+/** Empty traced lot on the plan — open Add housing unit (prefill block/lot from polygon metadata when present). */
+function lotPlanWireInertLot(g, polygonIndex, poly) {
     if (!document.getElementById('addUnitModal')) return;
 
     g.classList.add('lotplan-lot--addable');
@@ -863,8 +863,11 @@ function lotPlanWireInertLot(g, polygonIndex) {
         g.setAttribute('data-polygon-index', String(polygonIndex));
     }
 
+    const prefillBlock = poly && poly.block != null ? poly.block : null;
+    const prefillLot = poly && poly.lot != null ? poly.lot : null;
+
     const openAdd = function () {
-        openAddUnitModal(null, null, polygonIndex);
+        openAddUnitModal(prefillBlock, prefillLot, polygonIndex);
     };
     g.addEventListener('click', openAdd);
     g.addEventListener('keydown', function (e) {
@@ -1018,7 +1021,7 @@ async function buildLotPlan() {
             parent.appendChild(g);
         } else {
             g.classList.add('lotplan-lot--inert');
-            lotPlanWireInertLot(g, i);
+            lotPlanWireInertLot(g, i, poly);
             inertLayer.appendChild(g);
         }
     });

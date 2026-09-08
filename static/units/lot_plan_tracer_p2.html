@@ -2,39 +2,36 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Phase 2 Lot Plan — Polygon Tracer</title>
+<title>Phase 2 Lot Tracer — Fast Rectangle Mode</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#1e293b;font-family:system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;color:#e2e8f0}
-#toolbar{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.75rem;background:#0f172a;border-bottom:1px solid #334155;flex-shrink:0;flex-wrap:wrap}
-#toolbar h1{font-size:0.85rem;font-weight:700;color:#60a5fa;margin-right:0.4rem}
-label{font-size:0.72rem;color:#94a3b8;font-weight:600}
-input[type=number]{width:52px;padding:0.25rem 0.4rem;background:#1e293b;border:1px solid #475569;border-radius:5px;color:#e2e8f0;font-size:0.78rem}
-.sep{width:1px;height:20px;background:#334155;margin:0 0.2rem}
-button{padding:0.28rem 0.65rem;border:none;border-radius:5px;font-size:0.72rem;font-weight:700;cursor:pointer}
-#btnUndo{background:#374151;color:#e2e8f0}
-#btnUndo:hover{background:#4b5563}
-#btnClose{background:#0369a1;color:#fff}
-#btnClose:hover{background:#0284c7}
-#btnSave{background:#059669;color:#fff}
-#btnSave:hover{background:#10b981}
-#btnClear{background:#7f1d1d;color:#fff}
-#btnClear:hover{background:#991b1b}
-#btnExport{background:#7c3aed;color:#fff;padding:0.28rem 0.9rem}
-#btnExport:hover{background:#6d28d9}
-#status{font-size:0.7rem;color:#94a3b8;margin-left:0.5rem}
-#counter{font-size:0.7rem;background:#1e3a5f;color:#7dd3fc;padding:0.2rem 0.5rem;border-radius:4px}
+body{background:#1e293b;font-family:system-ui,sans-serif;display:flex;flex-direction:column;height:100vh;color:#e2e8f0;user-select:none}
+#toolbar{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.75rem;background:#0f172a;border-bottom:1px solid #334155;flex-shrink:0;flex-wrap:wrap}
+#toolbar h1{font-size:0.82rem;font-weight:700;color:#60a5fa;margin-right:0.3rem;white-space:nowrap}
+label{font-size:0.7rem;color:#94a3b8;font-weight:600}
+input[type=number]{width:48px;padding:0.22rem 0.35rem;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;font-size:0.75rem}
+.sep{width:1px;height:18px;background:#334155;margin:0 0.15rem;flex-shrink:0}
+button{padding:0.25rem 0.6rem;border:none;border-radius:4px;font-size:0.7rem;font-weight:700;cursor:pointer;white-space:nowrap}
+#btnUndo{background:#374151;color:#e2e8f0}#btnUndo:hover{background:#4b5563}
+#btnSkip{background:#1e3a5f;color:#7dd3fc}#btnSkip:hover{background:#1e4a7f}
+#btnClear{background:#7f1d1d;color:#fff}#btnClear:hover{background:#991b1b}
+#btnExport{background:#7c3aed;color:#fff;padding:0.25rem 0.9rem}#btnExport:hover{background:#6d28d9}
+#btnLoad{background:#065f46;color:#fff}#btnLoad:hover{background:#047857}
+#status{font-size:0.68rem;color:#94a3b8;flex:1}
+#counter{font-size:0.68rem;background:#1e3a5f;color:#7dd3fc;padding:0.18rem 0.45rem;border-radius:3px;white-space:nowrap}
 #main{display:flex;flex:1;overflow:hidden}
-#canvas-wrap{flex:1;overflow:auto;position:relative;background:#334155}
-canvas{display:block;cursor:crosshair}
-#sidebar{width:220px;background:#0f172a;border-left:1px solid #1e293b;overflow-y:auto;flex-shrink:0}
-#sidebar h2{font-size:0.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;padding:0.6rem 0.75rem;border-bottom:1px solid #1e293b}
-.lot-item{padding:0.35rem 0.75rem;font-size:0.7rem;color:#cbd5e1;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center}
+#canvas-wrap{flex:1;overflow:auto;position:relative;background:#334155;cursor:crosshair}
+canvas{display:block}
+#sidebar{width:210px;background:#0f172a;border-left:1px solid #1e293b;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
+#sidebar h2{font-size:0.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;padding:0.5rem 0.65rem;border-bottom:1px solid #1e293b;flex-shrink:0}
+#lot-list{flex:1;overflow-y:auto}
+.lot-item{padding:0.3rem 0.65rem;font-size:0.67rem;color:#cbd5e1;border-bottom:1px solid #0f172a;display:flex;justify-content:space-between;align-items:center;gap:0.3rem}
 .lot-item:hover{background:#1e293b}
-.lot-item span{color:#60a5fa;font-weight:700}
-.lot-del{background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem;padding:0 0.25rem;font-weight:700}
-#export-area{padding:0.5rem;background:#0f172a;border-top:1px solid #1e293b}
-#json-out{width:100%;height:120px;background:#111827;border:1px solid #1e293b;color:#6ee7b7;font-size:0.62rem;resize:vertical;padding:0.4rem;border-radius:4px;font-family:monospace}
+.lot-item span{color:#60a5fa;font-weight:700;white-space:nowrap}
+.lot-del{background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.8rem;padding:0 0.2rem;font-weight:700;line-height:1}
+#export-area{padding:0.45rem;background:#0f172a;border-top:1px solid #1e293b;flex-shrink:0}
+#json-out{width:100%;height:90px;background:#111827;border:1px solid #1e293b;color:#6ee7b7;font-size:0.6rem;resize:vertical;padding:0.35rem;border-radius:3px;font-family:monospace}
+.hint{font-size:0.62rem;color:#64748b;padding:0.35rem 0.65rem;border-top:1px solid #1e293b;line-height:1.5}
 </style>
 </head>
 <body>
@@ -46,15 +43,17 @@ canvas{display:block;cursor:crosshair}
   <label>Lot</label>
   <input type="number" id="inLot" min="1" max="99" value="1">
   <div class="sep"></div>
+  <label style="font-size:0.68rem;color:#fbbf24;">▶ Click &amp; drag to draw rectangle</label>
+  <div class="sep"></div>
   <button id="btnUndo">↩ Undo</button>
-  <button id="btnClose">Close polygon</button>
-  <button id="btnSave">✓ Save lot</button>
+  <button id="btnSkip">Skip →</button>
+  <button id="btnClear">🗑 Clear All</button>
   <div class="sep"></div>
-  <button id="btnClear">Clear current</button>
+  <button id="btnLoad">📂 Load JSON</button>
+  <button id="btnExport">💾 Export JSON</button>
   <div class="sep"></div>
-  <button id="btnExport">⬇ Export JSON</button>
-  <span id="counter">0 lots traced</span>
-  <span id="status">Click on the image to place polygon vertices</span>
+  <span id="counter">0 lots</span>
+  <span id="status">Draw a rectangle over each lot</span>
 </div>
 <div id="main">
   <div id="canvas-wrap">
@@ -63,228 +62,228 @@ canvas{display:block;cursor:crosshair}
   <div id="sidebar">
     <h2>Traced Lots</h2>
     <div id="lot-list"></div>
+    <div class="hint">
+      <b>How to use:</b><br>
+      1. Set Block &amp; Lot number<br>
+      2. Click &amp; drag over a lot box<br>
+      3. Release — it saves automatically<br>
+      4. Lot# auto-increments<br>
+      5. Export when done
+    </div>
     <div id="export-area">
-      <textarea id="json-out" placeholder="Exported JSON will appear here…" readonly></textarea>
+      <textarea id="json-out" readonly placeholder="JSON will appear here after export..."></textarea>
     </div>
   </div>
 </div>
-<script>
-const IMG_SRC = '../images/lot_plan_roads_p2.png';
-const VIEW = 1000; // SVG viewBox units (matches lot_plan_polygons.json convention)
 
-let img = new Image();
-let scale = 1;      // canvas px per SVG unit
-let lots = [];      // { block, lot, points:[[x,y]…] } — all saved lots
-let current = [];   // [[x,y]…] — vertices of polygon being drawn
-let closed = false;
+<script>
+const IMG_SRC = '/static/images/lot_plan_roads_p2.png';
+const SCALE = 1.4; // display scale factor (zoom)
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const status = document.getElementById('status');
-const counter = document.getElementById('counter');
+const statusEl = document.getElementById('status');
+const counterEl = document.getElementById('counter');
+const listEl = document.getElementById('lot-list');
+const jsonOut = document.getElementById('json-out');
 
+let IMG_W = 0, IMG_H = 0;
+let lots = []; // {block, lot, x1, y1, x2, y2} in IMAGE pixel coords
+let drawing = false;
+let startX = 0, startY = 0, curX = 0, curY = 0;
+
+const img = new Image();
 img.onload = () => {
-  scale = Math.min(window.innerWidth * 0.75, img.width) / VIEW;
-  canvas.width  = VIEW * scale;
-  canvas.height = (img.height / img.width) * VIEW * scale;
+  IMG_W = img.naturalWidth;
+  IMG_H = img.naturalHeight;
+  canvas.width = Math.round(IMG_W * SCALE);
+  canvas.height = Math.round(IMG_H * SCALE);
   redraw();
+  statusEl.textContent = `Image loaded (${IMG_W}×${IMG_H}). Draw rectangles over each lot.`;
 };
+img.onerror = () => statusEl.textContent = 'Error loading image!';
 img.src = IMG_SRC;
 
-function svgPt(e) {
-  const r = canvas.getBoundingClientRect();
-  return [(e.clientX - r.left) / scale, (e.clientY - r.top) / scale];
+function toImg(cx, cy) {
+  return [cx / SCALE, cy / SCALE];
 }
-
-canvas.addEventListener('click', e => {
-  if (closed) return;
-  const pt = svgPt(e);
-  // snap close if clicking near first point
-  if (current.length >= 3) {
-    const [fx, fy] = current[0];
-    const dist = Math.hypot(pt[0]-fx, pt[1]-fy);
-    if (dist < 8) { closePoly(); return; }
-  }
-  current.push(pt);
-  redraw();
-  status.textContent = `${current.length} vertices. Double-click last OR click first vertex to close.`;
-});
-
-canvas.addEventListener('dblclick', e => {
-  if (closed || current.length < 3) return;
-  closePoly();
-});
-
-function closePoly() {
-  closed = true;
-  redraw();
-  status.textContent = '✓ Polygon closed — verify block/lot then click "Save lot"';
-}
-
-document.getElementById('btnUndo').onclick = () => {
-  if (closed) { closed = false; }
-  else { current.pop(); }
-  redraw();
-  status.textContent = 'Vertex removed.';
-};
-
-document.getElementById('btnClose').onclick = () => {
-  if (current.length >= 3) closePoly();
-};
-
-document.getElementById('btnSave').onclick = () => {
-  if (!closed || current.length < 3) { alert('Close the polygon first.'); return; }
-  const block = parseInt(document.getElementById('inBlock').value, 10);
-  const lot   = parseInt(document.getElementById('inLot').value, 10);
-  if (!block || !lot) { alert('Enter valid block and lot numbers.'); return; }
-  // Normalise to 0-1 (same as lot_plan_polygons.json)
-  const imgH = (img.height / img.width) * VIEW;
-  const points = current.map(([x, y]) => [
-    Math.round(x / VIEW * 10000) / 10000,
-    Math.round(y / imgH * 10000) / 10000,
-  ]);
-  const cx = Math.round(points.reduce((s,[x])=>s+x,0)/points.length * 10000)/10000;
-  const cy = Math.round(points.reduce((s,[,y])=>s+y,0)/points.length * 10000)/10000;
-  lots.push({ block, lot, points, cx, cy });
-  // Auto-increment lot number
-  document.getElementById('inLot').value = lot + 1;
-  current = [];
-  closed = false;
-  counter.textContent = lots.length + ' lots traced';
-  renderList();
-  redraw();
-  status.textContent = `Saved B${block}-L${lot}. Start next polygon.`;
-};
-
-document.getElementById('btnClear').onclick = () => {
-  current = [];
-  closed = false;
-  redraw();
-  status.textContent = 'Current polygon cleared.';
-};
-
-document.getElementById('btnExport').onclick = () => {
-  const imgW = img.width || 1024;
-  const imgH = img.height || 1024;
-  const out = {
-    image: { w: imgW, h: imgH },
-    lots: lots.map(l => ({
-      points: l.points,
-      cx: l.cx,
-      cy: l.cy,
-      area: Math.abs(l.points.reduce((s,p,i,a)=>{
-        const n=a[(i+1)%a.length];
-        return s+(p[0]*n[1]-n[0]*p[1]);
-      },0))/2,
-      block: l.block,
-      lot: l.lot,
-    }))
-  };
-  document.getElementById('json-out').value = JSON.stringify(out);
-  // also copy to clipboard
-  navigator.clipboard.writeText(JSON.stringify(out))
-    .then(()=>status.textContent='✅ JSON copied to clipboard! Paste into lot_plan_polygons_p2.json')
-    .catch(()=>status.textContent='JSON ready in the sidebar text area. Copy it manually.');
-};
-
-function renderList() {
-  const list = document.getElementById('lot-list');
-  list.innerHTML = '';
-  lots.forEach((l, i) => {
-    const div = document.createElement('div');
-    div.className = 'lot-item';
-    div.innerHTML = `<span>B${l.block}-L${l.lot}</span><span style="color:#64748b">${l.points.length}pts</span><button class="lot-del" data-i="${i}">✕</button>`;
-    list.appendChild(div);
-  });
-  list.querySelectorAll('.lot-del').forEach(btn => {
-    btn.onclick = () => { lots.splice(+btn.dataset.i, 1); counter.textContent = lots.length + ' lots traced'; renderList(); redraw(); };
-  });
+function toCan(ix, iy) {
+  return [ix * SCALE, iy * SCALE];
 }
 
 function redraw() {
-  if (!img.complete) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-  // Draw already-saved lots
-  const imgH = (img.height / img.width) * VIEW;
-  const COLORS = [
-    '#60a5fa','#f472b6','#34d399','#fbbf24','#a78bfa',
-    '#f87171','#2dd4bf','#fb923c','#c084fc','#4ade80'
-  ];
+  // Draw saved lots
   lots.forEach((l, i) => {
-    const col = COLORS[l.block % COLORS.length];
-    ctx.beginPath();
-    l.points.forEach(([nx,ny],pi) => {
-      const px = nx * VIEW * scale;
-      const py = ny * imgH * scale;
-      pi===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
-    });
-    ctx.closePath();
-    ctx.fillStyle = col + '55';
-    ctx.fill();
-    ctx.strokeStyle = col;
+    const [cx1, cy1] = toCan(l.x1, l.y1);
+    const [cx2, cy2] = toCan(l.x2, l.y2);
+    ctx.fillStyle = 'rgba(59,130,246,0.30)';
+    ctx.fillRect(cx1, cy1, cx2-cx1, cy2-cy1);
+    ctx.strokeStyle = '#2563eb';
     ctx.lineWidth = 1.5;
-    ctx.stroke();
-    // label
-    const cx = l.cx * VIEW * scale;
-    const cy = l.cy * imgH * scale;
-    ctx.font = `bold ${Math.round(6*scale)}px system-ui`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#000';
+    ctx.strokeRect(cx1, cy1, cx2-cx1, cy2-cy1);
+    ctx.fillStyle = '#1d4ed8';
+    ctx.font = `bold ${Math.max(9, Math.round(SCALE*7))}px system-ui`;
+    ctx.fillText(`B${l.block}-L${l.lot}`, cx1+3, cy1+11);
+  });
+
+  // Draw current drag rectangle
+  if (drawing) {
+    const x1 = Math.min(startX, curX), y1 = Math.min(startY, curY);
+    const x2 = Math.max(startX, curX), y2 = Math.max(startY, curY);
+    ctx.fillStyle = 'rgba(234,179,8,0.25)';
+    ctx.fillRect(x1, y1, x2-x1, y2-y1);
+    ctx.strokeStyle = '#eab308';
     ctx.lineWidth = 2;
-    ctx.strokeText(`B${l.block}-L${l.lot}`, cx, cy);
-    ctx.fillText(`B${l.block}-L${l.lot}`, cx, cy);
-  });
-
-  // Draw current in-progress polygon
-  if (current.length === 0) return;
-  ctx.beginPath();
-  current.forEach(([x,y], pi) => {
-    const px = x * scale, py = y * scale;
-    pi===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
-  });
-  if (closed) ctx.closePath();
-  ctx.fillStyle = 'rgba(234,179,8,0.25)';
-  if (closed) ctx.fill();
-  ctx.strokeStyle = '#facc15';
-  ctx.lineWidth = 2;
-  ctx.setLineDash(closed ? [] : [6,3]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Draw vertex dots
-  current.forEach(([x,y], i) => {
-    const px = x * scale, py = y * scale;
-    ctx.beginPath();
-    ctx.arc(px, py, i===0 ? 5 : 3.5, 0, Math.PI*2);
-    ctx.fillStyle = i===0 ? '#ef4444' : '#facc15';
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  });
+    ctx.strokeRect(x1, y1, x2-x1, y2-y1);
+  }
 }
 
-window.addEventListener('resize', () => {
-  if (!img.complete) return;
-  scale = Math.min(window.innerWidth * 0.75, img.width) / VIEW;
-  canvas.width  = VIEW * scale;
-  canvas.height = (img.height / img.width) * VIEW * scale;
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return [e.clientX - rect.left, e.clientY - rect.top];
+}
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  const [cx, cy] = getCanvasPos(e);
+  drawing = true;
+  startX = cx; startY = cy; curX = cx; curY = cy;
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!drawing) return;
+  const [cx, cy] = getCanvasPos(e);
+  curX = cx; curY = cy;
   redraw();
 });
 
-// Keyboard shortcuts
-window.addEventListener('keydown', e => {
-  if (e.key === 'z' && (e.ctrlKey||e.metaKey)) document.getElementById('btnUndo').click();
-  if (e.key === 'Enter') {
-    if (!closed && current.length>=3) document.getElementById('btnClose').click();
-    else if (closed) document.getElementById('btnSave').click();
-  }
-  if (e.key === 'Escape') document.getElementById('btnClear').click();
+canvas.addEventListener('mouseup', e => {
+  if (!drawing) return;
+  drawing = false;
+  const [cx, cy] = getCanvasPos(e);
+  curX = cx; curY = cy;
+
+  const ix1 = Math.min(startX, curX) / SCALE;
+  const iy1 = Math.min(startY, curY) / SCALE;
+  const ix2 = Math.max(startX, curX) / SCALE;
+  const iy2 = Math.max(startY, curY) / SCALE;
+
+  if ((ix2-ix1) < 5 || (iy2-iy1) < 5) { redraw(); return; } // too small, ignore
+
+  const block = parseInt(document.getElementById('inBlock').value) || 13;
+  const lot   = parseInt(document.getElementById('inLot').value) || 1;
+
+  // Remove existing same block/lot if any
+  lots = lots.filter(l => !(l.block === block && l.lot === lot));
+  lots.push({block, lot, x1: ix1, y1: iy1, x2: ix2, y2: iy2});
+
+  // Auto-advance lot number
+  const lotInp = document.getElementById('inLot');
+  lotInp.value = parseInt(lotInp.value) + 1;
+
+  redraw();
+  updateList();
+  statusEl.textContent = `Saved B${block}-L${lot}. Now draw B${block}-L${lotInp.value}.`;
 });
+
+function updateList() {
+  const sorted = [...lots].sort((a,b) => a.block-b.block || a.lot-b.lot);
+  counterEl.textContent = `${lots.length} lots`;
+  listEl.innerHTML = '';
+  sorted.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'lot-item';
+    div.innerHTML = `<span>B${l.block}-L${l.lot}</span>
+      <span style="color:#94a3b8;font-size:0.62rem">${Math.round(l.x2-l.x1)}×${Math.round(l.y2-l.y1)}</span>
+      <button class="lot-del" data-b="${l.block}" data-l="${l.lot}">✕</button>`;
+    listEl.appendChild(div);
+  });
+  listEl.querySelectorAll('.lot-del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const b = parseInt(btn.dataset.b), l = parseInt(btn.dataset.l);
+      lots = lots.filter(x => !(x.block===b && x.lot===l));
+      redraw(); updateList();
+    });
+  });
+}
+
+document.getElementById('btnUndo').addEventListener('click', () => {
+  if (!lots.length) return;
+  const last = lots[lots.length-1];
+  lots.pop();
+  // Revert lot number
+  const lotInp = document.getElementById('inLot');
+  const blkInp = document.getElementById('inBlock');
+  lotInp.value = last.lot;
+  blkInp.value = last.block;
+  redraw(); updateList();
+});
+
+document.getElementById('btnSkip').addEventListener('click', () => {
+  const lotInp = document.getElementById('inLot');
+  lotInp.value = parseInt(lotInp.value) + 1;
+  statusEl.textContent = `Skipped to lot ${lotInp.value}`;
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  if (!confirm('Clear ALL traced lots?')) return;
+  lots = [];
+  document.getElementById('inBlock').value = 13;
+  document.getElementById('inLot').value = 1;
+  redraw(); updateList();
+});
+
+document.getElementById('btnExport').addEventListener('click', () => {
+  const lotsOut = lots.map(l => {
+    const nx1 = round4(l.x1 / IMG_W), ny1 = round4(l.y1 / IMG_H);
+    const nx2 = round4(l.x2 / IMG_W), ny2 = round4(l.y2 / IMG_H);
+    return {
+      points: [[nx1,ny1],[nx2,ny1],[nx2,ny2],[nx1,ny2]],
+      cx: round4((nx1+nx2)/2), cy: round4((ny1+ny2)/2),
+      area: round4((nx2-nx1)*(ny2-ny1)),
+      block: l.block, lot: l.lot
+    };
+  });
+  lotsOut.sort((a,b) => a.block-b.block || a.lot-b.lot);
+  const output = JSON.stringify({image:{w:IMG_W,h:IMG_H},lots:lotsOut}, null, 2);
+  jsonOut.value = output;
+  // Also trigger a download
+  const blob = new Blob([output], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'lot_plan_polygons_p2.json'; a.click();
+  URL.revokeObjectURL(url);
+  statusEl.textContent = `Exported ${lotsOut.length} lots to JSON (and downloaded).`;
+});
+
+document.getElementById('btnLoad').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        const newLots = (data.lots || []).map(l => {
+          const x1 = l.points[0][0] * IMG_W, y1 = l.points[0][1] * IMG_H;
+          const x2 = l.points[1][0] * IMG_W, y2 = l.points[2][1] * IMG_H;
+          return {block: l.block, lot: l.lot, x1, y1, x2, y2};
+        });
+        lots = newLots;
+        redraw(); updateList();
+        statusEl.textContent = `Loaded ${lots.length} lots from file.`;
+      } catch(err) { alert('Invalid JSON: ' + err.message); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
+
+function round4(v) { return Math.round(v * 10000) / 10000; }
 </script>
 </body>
 </html>
