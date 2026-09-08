@@ -892,14 +892,11 @@ def _staff_reports_analytics_payload(request):
     _registered_count = len(_registered_ids)
     _awarded_ids = list(Applicant.objects.filter(status='awarded').values_list('id', flat=True))
     _awarded_count = len(_awarded_ids)
-    _disqualified_ids = list(UnitsBlacklist.objects.values_list('applicant_id', flat=True).distinct())
-    _disqualified_count = len(_disqualified_ids)
     applicant_by_status = [
         {'status': 'registered',   'label': 'Registered',               'count': _registered_count},
         {'status': 'evaluation',   'label': 'Evaluation & Eligibility', 'count': _evaluation_count},
         {'status': 'form',         'label': 'Form',                     'count': ready_for_form_queue_count},
         {'status': 'awarded',      'label': 'Lot Awarded',              'count': _awarded_count},
-        {'status': 'blacklisted',  'label': 'Blacklisted',              'count': _disqualified_count},
     ]
 
     # Active pipeline applicants for Applicant Situation (CDRRMO, Ejected, Displaced, None)
@@ -908,7 +905,6 @@ def _staff_reports_analytics_payload(request):
         | set(_eval_ids)
         | set(_rfq_ids)
         | set(_awarded_ids)
-        | set(_disqualified_ids)
     )
 
     applicant_stage_map = {}
@@ -920,14 +916,12 @@ def _staff_reports_analytics_payload(request):
         applicant_stage_map[aid] = 'Form'
     for aid in _awarded_ids:
         applicant_stage_map[aid] = 'Lot Awarded'
-    for aid in _disqualified_ids:
-        applicant_stage_map[aid] = 'Blacklisted'
 
     situation_breakdowns = {
-        'danger_zone': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Blacklisted': 0},
-        'ejected': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Blacklisted': 0},
-        'relocated': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Blacklisted': 0},
-        'not_abc': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0, 'Blacklisted': 0},
+        'danger_zone': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
+        'ejected': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
+        'relocated': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
+        'not_abc': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
     }
 
     situation_counts_map = {'danger_zone': 0, 'ejected': 0, 'relocated': 0, 'not_abc': 0}
