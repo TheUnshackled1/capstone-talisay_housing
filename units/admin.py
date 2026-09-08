@@ -20,7 +20,7 @@ class RelocationSiteAdmin(admin.ModelAdmin):
     list_display = ('name', 'code', 'barangay', 'total_lots', 'occupied_units_count', 'vacant_units_count', 'is_active')
     list_filter = ('is_active', 'barangay')
     search_fields = ('name', 'code', 'address')
-    inlines = [HousingUnitInline]
+    # inlines = [HousingUnitInline]  # removed: 170+ units causes TooManyFieldsSent
 
     fieldsets = (
         ('🏗️ SITE INFORMATION', {
@@ -33,7 +33,7 @@ class RelocationSiteAdmin(admin.ModelAdmin):
             'fields': ('total_blocks', 'total_lots'),
         }),
         ('⚙️ STATUS', {
-            'fields': ('is_active', 'caretaker'),
+            'fields': ('is_active', 'caretaker', 'map_phase'),
         }),
         ('📝 NOTES', {
             'fields': ('notes',),

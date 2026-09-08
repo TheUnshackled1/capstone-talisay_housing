@@ -85,16 +85,53 @@
         <!-- Action Buttons Toolbar -->
         <div class="units-page-header__toolbar" style="display: inline-flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-left: auto;">
             {% if all_sites|length > 1 and site %}
-            <label class="units-header-site-select" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:#475569;">
-                <span style="font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Site</span>
-                <select id="monitoringSiteSelect" onchange="if(this.value){window.location.href='?site_id='+encodeURIComponent(this.value);}"
-                    style="padding:0.35rem 0.5rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.78rem;font-family:inherit;background:#fff;max-width:12rem;">
-                    {% for s in all_sites %}
-                    <option value="{{ s.id }}" {% if s.id == site.id %}selected{% endif %}>{{ s.name }}</option>
-                    {% endfor %}
-                </select>
-            </label>
+            <!-- Site carousel -->
+            <div style="display:flex;align-items:center;gap:0.35rem;">
+                <span style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;white-space:nowrap;">Site</span>
+                <div style="position:relative;display:flex;align-items:center;">
+                    <button type="button" id="siteCarouselPrev" aria-label="Previous site"
+                        style="flex-shrink:0;width:1.5rem;height:1.5rem;border-radius:50%;border:1px solid #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#475569;box-shadow:0 1px 2px rgba(0,0,0,0.06);z-index:1;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div id="siteCarouselTrack"
+                        style="display:flex;gap:0.4rem;overflow:hidden;max-width:min(60vw,420px);scroll-behavior:smooth;padding:0.1rem 0.2rem;">
+                        {% for s in all_sites %}
+                        <a href="?site_id={{ s.id }}"
+                            id="siteCard-{{ s.id }}"
+                            style="flex-shrink:0;display:inline-flex;flex-direction:column;align-items:flex-start;gap:0.1rem;
+                                   padding:0.32rem 0.62rem;border-radius:8px;text-decoration:none;
+                                   border:1.5px solid {% if s.id == site.id %}#3b82f6{% else %}#e2e8f0{% endif %};
+                                   background:{% if s.id == site.id %}linear-gradient(135deg,#eff6ff,#dbeafe){% else %}#fff{% endif %};
+                                   box-shadow:{% if s.id == site.id %}0 0 0 2px rgba(59,130,246,0.18){% else %}0 1px 2px rgba(0,0,0,0.05){% endif %};
+                                   transition:border-color 0.15s,box-shadow 0.15s;">
+                            <span style="font-size:0.72rem;font-weight:{% if s.id == site.id %}700{% else %}600{% endif %};
+                                         color:{% if s.id == site.id %}#1d4ed8{% else %}#374151{% endif %};
+                                         white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;">{{ s.name }}</span>
+                            <span style="font-size:0.6rem;font-weight:600;letter-spacing:0.04em;border-radius:3px;padding:0 0.3rem;
+                                         {% if s.map_phase == 2 %}background:#fdf4ff;color:#7e22ce;border:1px solid #e9d5ff;{% else %}background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;{% endif %}">
+                                Phase {{ s.map_phase }}
+                            </span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="siteCarouselNext" aria-label="Next site"
+                        style="flex-shrink:0;width:1.5rem;height:1.5rem;border-radius:50%;border:1px solid #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#475569;box-shadow:0 1px 2px rgba(0,0,0,0.06);z-index:1;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+            <script>
+            (function(){
+                const track = document.getElementById('siteCarouselTrack');
+                document.getElementById('siteCarouselPrev').addEventListener('click',()=>track.scrollBy({left:-160,behavior:'smooth'}));
+                document.getElementById('siteCarouselNext').addEventListener('click',()=>track.scrollBy({left:160,behavior:'smooth'}));
+                // Scroll active card into view on load
+                const active = track.querySelector('[style*="1d4ed8"]');
+                if(active) active.scrollIntoView({block:'nearest',inline:'center'});
+            })();
+            </script>
             {% endif %}
+
             {% if can_create_relocation_site and no_relocation_sites %}
             <button type="button" class="summary-chip-card summary-chip-card--solid-emerald is-clickable" style="padding-right: 0.85rem;" onclick="openCreateSiteModal()">
                 <div class="summary-icon-wrap">
@@ -215,12 +252,21 @@
             </div>
             <div class="lotplan-stage" id="lotplan-zoomable">
                 <div class="lotplan-roads-base" aria-hidden="true"></div>
+                {% if site.map_phase == 2 %}
+                <img class="lotplan-img" src="{% static 'images/lot_plan_roads_p2.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }} (Phase 2)">
+                <svg id="lotplan-svg" class="lotplan-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"
+                     role="group" aria-label="Interactive lot zones"
+                     data-polygons-url="{% static 'units/lot_plan_polygons_p2.json' %}"
+                     data-slots-url="{% static 'units/lot_plan_slots_p2.json' %}"
+                     data-clusters-url="{% static 'units/lot_plan_clusters_p2.json' %}"></svg>
+                {% else %}
                 <img class="lotplan-img" src="{% static 'images/lot_plan_roads.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}">
                 <svg id="lotplan-svg" class="lotplan-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"
                      role="group" aria-label="Interactive lot zones"
                      data-polygons-url="{% static 'units/lot_plan_polygons.json' %}"
                      data-slots-url="{% static 'units/lot_plan_slots.json' %}"
                      data-clusters-url="{% static 'units/lot_plan_clusters.json' %}"></svg>
+                {% endif %}
             </div>
             <div class="lotplan-zoom-controls">
                 <button type="button" class="lotplan-zoom-btn" id="lotplan-zoom-in" title="Zoom in" aria-label="Zoom in"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>

@@ -364,3 +364,6 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 SILENCED_SYSTEM_CHECKS = ['accounts.W001']
+
+# Allow large admin forms (e.g. sites with many housing units)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
