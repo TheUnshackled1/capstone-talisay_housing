@@ -1,8 +1,9 @@
 """
 Detect lot fill regions on static/images/lot_plan_roads.png and write
-static/units/lot_plan_polygons.json (normalized points, no block/lot labels).
+static/units/lot_plan_polygons.json.
 
-Also resets slots/clusters to empty blocks (old spatial regions invalid).
+Rotated min-area quads follow tilted lots. No block/lot labels.
+Resets slots/clusters to empty.
 
 Run: python scratch/gen_lot_polygons.py
 """
@@ -23,76 +24,132 @@ SLOTS_PATH = ROOT / "static" / "units" / "lot_plan_slots.json"
 CLUSTERS_PATH = ROOT / "static" / "units" / "lot_plan_clusters.json"
 DEBUG_PATH = ROOT / "scratch" / "lot_map_polygons_debug.png"
 
-# Tuned for lot_map.png (906x543, thick black roads, white + shaded lot fills)
-BRIGHT_THRESH = 180
-MID_GRAY_LO = 130
-MID_GRAY_HI = 175
-INK_THRESH = 100
-MIN_AREA = 90
-MAX_AREA = 4500
-MIN_SIDE = 8
-MAX_SIDE = 95
-MARGIN = 6
+BRIGHT_THRESH = 185
+INK_THRESH = 90
+MIN_AREA = 140
+MAX_AREA = 2400
+MIN_SIDE = 11
+MAX_SIDE = 58
+MAX_ASPECT = 2.8
+MIN_SOLIDITY = 0.72
+MARGIN = 10
+SHRINK = 0.82
 
 
 def r4(v: float) -> float:
     return round(float(v), 4)
 
 
-def detect_rects(gray: np.ndarray) -> list[tuple[int, int, int, int]]:
-    H, W = gray.shape
+def build_mask(gray: np.ndarray) -> np.ndarray:
     bright = (gray > BRIGHT_THRESH).astype(np.uint8) * 255
-    mid = ((gray >= MID_GRAY_LO) & (gray <= MID_GRAY_HI)).astype(np.uint8) * 255
+    mid = ((gray >= 135) & (gray <= 178)).astype(np.uint8) * 255
     ink = (gray < INK_THRESH).astype(np.uint8) * 255
-    ink = cv2.dilate(ink, np.ones((2, 2), np.uint8), iterations=1)
+    # Seal broken lot borders so interiors become separate cells
+    ink = cv2.dilate(ink, np.ones((3, 3), np.uint8), iterations=1)
+    ink = cv2.morphologyEx(ink, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1)
     fill = cv2.bitwise_or(bright, mid)
     mask = cv2.bitwise_and(fill, cv2.bitwise_not(ink))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8), iterations=1)
+    return mask
 
-    n, _labels, stats, _centroids = cv2.connectedComponentsWithStats(mask, connectivity=4)
-    rects: list[tuple[int, int, int, int]] = []
+
+def shrink_quad(pts: np.ndarray, factor: float) -> np.ndarray:
+    c = pts.mean(axis=0)
+    return c + (pts - c) * factor
+
+
+def order_quad(pts: list[list[float]]) -> list[list[float]]:
+    arr = np.array(pts, dtype=float)
+    angles = np.arctan2(arr[:, 1] - arr[:, 1].mean(), arr[:, 0] - arr[:, 0].mean())
+    return [pts[int(j)] for j in np.argsort(angles)]
+
+
+def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray]]:
+    H, W = gray.shape
+    mask = build_mask(gray)
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=4)
+
+    lots: list[dict] = []
+    debug_quads: list[np.ndarray] = []
+
     for i in range(1, n):
         x, y, w, h, area = stats[i]
         if not (MIN_AREA <= area <= MAX_AREA):
             continue
         if not (MIN_SIDE <= w <= MAX_SIDE and MIN_SIDE <= h <= MAX_SIDE):
             continue
-        aspect = max(w, h) / max(min(w, h), 1)
-        if aspect > 4.5:
+        if max(w, h) / max(min(w, h), 1) > MAX_ASPECT:
             continue
-        x1 = x + 1
-        y1 = y + 1
-        x2 = x + w - 1
-        y2 = y + h - 1
-        if x2 - x1 < 6 or y2 - y1 < 6:
+        if x < MARGIN or y < MARGIN or (x + w) > W - MARGIN or (y + h) > H - MARGIN:
             continue
-        # Drop thin edge artifacts outside the site drawing
-        if x1 < MARGIN or y1 < MARGIN or x2 > W - MARGIN or y2 > H - MARGIN:
-            if (x2 - x1) < 12 or (y2 - y1) < 12:
-                continue
-        rects.append((x1, y1, x2, y2))
-    return rects
+
+        comp = (labels == i).astype(np.uint8) * 255
+        contours, _ = cv2.findContours(comp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours:
+            continue
+        cnt = max(contours, key=cv2.contourArea)
+        c_area = float(cv2.contourArea(cnt))
+        if c_area < MIN_AREA * 0.75:
+            continue
+        hull = cv2.convexHull(cnt)
+        hull_area = float(cv2.contourArea(hull)) or 1.0
+        if c_area / hull_area < MIN_SOLIDITY:
+            continue
+
+        rect = cv2.minAreaRect(cnt)
+        (cx, cy), (rw, rh), _ang = rect
+        side_a, side_b = sorted([rw, rh])
+        if side_a < MIN_SIDE or side_b > MAX_SIDE:
+            continue
+        if side_b / max(side_a, 1) > MAX_ASPECT:
+            continue
+
+        # Reject road scraps: rect fill should stay mostly bright
+        box = cv2.boxPoints(rect)
+        box_i = np.int32(box)
+        probe = np.zeros((H, W), dtype=np.uint8)
+        cv2.fillConvexPoly(probe, box_i, 255)
+        ys, xs = np.where(probe > 0)
+        if len(xs) < 20:
+            continue
+        mean_g = float(gray[ys, xs].mean())
+        if mean_g < 150:
+            continue
+        dark_frac = float((gray[ys, xs] < INK_THRESH).mean())
+        if dark_frac > 0.22:
+            continue
+        bright_frac = float((gray[ys, xs] > 180).mean())
+        # Shaded lots are mid-gray; allow either bright or mid fill dominance
+        mid_frac = float(((gray[ys, xs] >= 135) & (gray[ys, xs] <= 178)).mean())
+        if bright_frac + mid_frac < 0.75:
+            continue
+
+        box = shrink_quad(box, SHRINK)
+        icx, icy = int(round(cx)), int(round(cy))
+        if not (MARGIN <= icx < W - MARGIN and MARGIN <= icy < H - MARGIN):
+            continue
+        if gray[icy, icx] < 140:
+            continue
+
+        pts = order_quad([[r4(float(px) / W), r4(float(py) / H)] for px, py in box])
+        lots.append(
+            {
+                "points": pts,
+                "cx": r4(float(cx) / W),
+                "cy": r4(float(cy) / H),
+                "area": r4((side_a * side_b) / (W * H)),
+            }
+        )
+        debug_quads.append(np.int32(box))
+
+    paired = sorted(zip(lots, debug_quads), key=lambda t: (t[0]["cy"], t[0]["cx"]))
+    return [t[0] for t in paired], [t[1] for t in paired]
 
 
-def rect_to_lot(rect: tuple[int, int, int, int], W: int, H: int) -> dict:
-    x1, y1, x2, y2 = rect
-    nx1, ny1, nx2, ny2 = x1 / W, y1 / H, x2 / W, y2 / H
-    return {
-        "points": [
-            [r4(nx1), r4(ny1)],
-            [r4(nx2), r4(ny1)],
-            [r4(nx2), r4(ny2)],
-            [r4(nx1), r4(ny2)],
-        ],
-        "cx": r4((nx1 + nx2) / 2),
-        "cy": r4((ny1 + ny2) / 2),
-        "area": r4((nx2 - nx1) * (ny2 - ny1)),
-    }
-
-
-def write_debug(rgb: np.ndarray, rects: list[tuple[int, int, int, int]]) -> None:
+def write_debug(rgb: np.ndarray, quads: list[np.ndarray]) -> None:
     out = rgb.copy()
-    for x1, y1, x2, y2 in rects:
-        cv2.rectangle(out, (x1, y1), (x2, y2), (0, 180, 255), 1)
+    for q in quads:
+        cv2.polylines(out, [q.reshape(-1, 1, 2)], True, (0, 200, 255), 1, cv2.LINE_AA)
     Image.fromarray(out).save(DEBUG_PATH)
 
 
@@ -105,34 +162,26 @@ def main() -> None:
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     H, W = gray.shape
 
-    rects = detect_rects(gray)
-    # Stable order: top-to-bottom, then left-to-right
-    rects.sort(key=lambda r: (r[1], r[0]))
-
-    lots = [rect_to_lot(r, W, H) for r in rects]
-    payload = {"image": {"w": W, "h": H}, "lots": lots}
-    OUT_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
+    lots, quads = detect_lots(gray)
+    OUT_PATH.write_text(
+        json.dumps({"image": {"w": W, "h": H}, "lots": lots}, indent=2),
+        encoding="utf-8",
+    )
     empty = {"blocks": {}}
     SLOTS_PATH.write_text(json.dumps(empty, indent=2) + "\n", encoding="utf-8")
     CLUSTERS_PATH.write_text(json.dumps(empty, indent=2) + "\n", encoding="utf-8")
+    write_debug(rgb, quads)
 
-    write_debug(rgb, rects)
-
-    ws = [r[2] - r[0] for r in rects]
-    hs = [r[3] - r[1] for r in rects]
-    print(f"Image {W}x{H}; lots={len(lots)}", file=sys.stderr)
     if lots:
+        sides = [np.sqrt(L["area"] * W * H) for L in lots]
         print(
-            f"Median box ~{float(np.median(ws)):.1f}x{float(np.median(hs)):.1f}px",
+            f"Image {W}x{H}; lots={len(lots)}; median~{float(np.median(sides)):.1f}px",
             file=sys.stderr,
         )
     print(f"Wrote {OUT_PATH}", file=sys.stderr)
-    print(f"QA overlay {DEBUG_PATH}", file=sys.stderr)
-    print("Reset slots/clusters to empty blocks", file=sys.stderr)
-
-    if len(lots) < 50:
-        print("WARNING: very few lots detected — check thresholds / QA PNG.", file=sys.stderr)
+    print(f"QA {DEBUG_PATH}", file=sys.stderr)
+    if len(lots) < 80:
+        print("WARNING: low lot count", file=sys.stderr)
         sys.exit(2)
 
 

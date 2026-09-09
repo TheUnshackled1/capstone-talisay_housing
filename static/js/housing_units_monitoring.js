@@ -1075,58 +1075,8 @@ async function buildLotPlan() {
 }
 
 function lotPlanRenderUnmappedPanel() {
-    const panel = document.getElementById('lotplan-unmapped-panel');
-    const list = document.getElementById('lotplan-unmapped-list');
-    const countEl = document.getElementById('lotplan-unmapped-count');
-    if (!panel || !list) return;
-
-    const linkedIds = new Set(
-        Array.from(document.querySelectorAll('.lotplan-lot--linked[data-unit-id]'))
-            .map(g => g.getAttribute('data-unit-id'))
-            .filter(Boolean)
-    );
-
-    const unmapped = Array.from(document.querySelectorAll('#gridView-content .vmap-lot'))
-        .filter(el => {
-            const uid = el.dataset.unitId;
-            return uid && !linkedIds.has(uid);
-        })
-        .sort((a, b) => {
-            const ba = parseInt(a.dataset.block || '0', 10);
-            const bb = parseInt(b.dataset.block || '0', 10);
-            if (ba !== bb) return ba - bb;
-            return parseInt(a.dataset.lot || '0', 10) - parseInt(b.dataset.lot || '0', 10);
-        });
-
-    list.innerHTML = '';
-    if (!unmapped.length) {
-        panel.hidden = true;
-        return;
-    }
-
-    unmapped.forEach(el => {
-        const li = document.createElement('li');
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'lotplan-unmapped-item';
-        btn.textContent = 'B' + (el.dataset.block || '?') + ' - L' + (el.dataset.lot || '?');
-        const unitId = el.dataset.unitId;
-        if (unitId) {
-            btn.addEventListener('click', () => openUnitModal(unitId));
-        }
-        li.appendChild(btn);
-        const tag = el.querySelector('.vmap-lot-tag');
-        if (tag && tag.textContent.trim()) {
-            const status = document.createElement('span');
-            status.className = 'lotplan-unmapped-status';
-            status.textContent = tag.textContent.trim();
-            li.appendChild(status);
-        }
-        list.appendChild(li);
-    });
-
-    if (countEl) countEl.textContent = String(unmapped.length);
-    panel.hidden = false;
+    // Unmapped inventory list UI removed — keep stub so buildLotPlan() stays safe.
+    return;
 }
 
 /* ==========================================================
