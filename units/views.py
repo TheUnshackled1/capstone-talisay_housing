@@ -14,7 +14,7 @@ from django.contrib import messages
 from datetime import timedelta, datetime
 from zoneinfo import ZoneInfo
 from collections import OrderedDict
-from functools import wraps, lru_cache
+from functools import wraps
 from pathlib import Path
 import json
 
@@ -874,9 +874,12 @@ def _parse_plan_polygon_index(raw):
     return idx
 
 
-@lru_cache(maxsize=1)
 def _lot_plan_polygon_count() -> int:
-    """Count of lots[] in static/units/lot_plan_polygons.json."""
+    """Count of lots[] in static/units/lot_plan_polygons.json.
+
+    Uncached: staff edit the JSON while tracing; a stale count rejects
+    valid map clicks (e.g. index 410 vs a cached 407).
+    """
     path = Path(settings.BASE_DIR) / 'static' / 'units' / 'lot_plan_polygons.json'
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
