@@ -49,17 +49,6 @@ class RelocationSite(models.Model):
     
     notes = models.TextField(blank=True)
 
-    # Lot plan map configuration (Phase 1 overlay only; Phase 2 assets removed)
-    MAP_PHASE_1 = 1
-    MAP_PHASE_CHOICES = [
-        (MAP_PHASE_1, 'Phase 1'),
-    ]
-    map_phase = models.PositiveSmallIntegerField(
-        default=MAP_PHASE_1,
-        choices=MAP_PHASE_CHOICES,
-        help_text='Lot-plan map overlay for this site (Phase 1 only).',
-    )
-
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

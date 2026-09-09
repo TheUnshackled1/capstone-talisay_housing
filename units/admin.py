@@ -33,7 +33,7 @@ class RelocationSiteAdmin(admin.ModelAdmin):
             'fields': ('total_blocks', 'total_lots'),
         }),
         ('⚙️ STATUS', {
-            'fields': ('is_active', 'caretaker', 'map_phase'),
+            'fields': ('is_active', 'caretaker'),
         }),
         ('📝 NOTES', {
             'fields': ('notes',),

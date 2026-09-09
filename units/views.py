@@ -749,9 +749,6 @@ def create_relocation_site(request, position):
     except ValueError:
         return JsonResponse({'success': False, 'error': 'Total blocks/lots must be whole numbers.'}, status=400)
 
-    # Lot-plan overlay is Phase 1 only (Phase 2 map assets removed).
-    map_phase = RelocationSite.MAP_PHASE_1
-
     if not name or not code or not address or not barangay_id:
         return JsonResponse(
             {'success': False, 'error': 'Name, code, barangay, and address are required.'},
@@ -778,7 +775,6 @@ def create_relocation_site(request, position):
             is_active=True,
             notes=notes,
             caretaker=request.user,
-            map_phase=map_phase,
         )
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -890,9 +886,9 @@ def _lot_plan_polygon_count() -> int:
     return len(lots) if isinstance(lots, list) else 0
 
 
-def _validate_plan_polygon_index_for_site(site, plan_polygon_index):
+def _validate_plan_polygon_index(plan_polygon_index):
     """
-    Ensure plan_polygon_index is in range for the lot-plan overlay.
+    Ensure plan_polygon_index is in range for lot_plan_polygons.json.
     Returns error message or None. None index is always allowed.
     """
     if plan_polygon_index is None:
@@ -979,7 +975,7 @@ def create_housing_unit(request, position):
     plan_polygon_index = _parse_plan_polygon_index(
         request.POST.get('plan_polygon_index'),
     )
-    poly_err = _validate_plan_polygon_index_for_site(site, plan_polygon_index)
+    poly_err = _validate_plan_polygon_index(plan_polygon_index)
     if poly_err:
         return JsonResponse({'success': False, 'error': poly_err}, status=400)
 
@@ -1154,7 +1150,7 @@ def link_housing_unit_plan_polygon(request, position, unit_id):
             status=400,
         )
 
-    poly_err = _validate_plan_polygon_index_for_site(unit.site, plan_polygon_index)
+    poly_err = _validate_plan_polygon_index(plan_polygon_index)
     if poly_err:
         return JsonResponse({'success': False, 'error': poly_err}, status=400)
 
