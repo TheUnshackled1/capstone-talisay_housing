@@ -3,7 +3,7 @@ Detect lot fill regions on static/images/lot_plan_roads.png and write
 static/units/lot_plan_polygons.json.
 
 Multi-pass ink thresholds recover missed cells; AABB-IoU dedupes.
-Rotated quads follow tilted lots. No block/lot labels.
+Drops cul-de-sac / circular marker traces. No block/lot labels.
 
 Run: python scratch/gen_lot_polygons.py
 """
@@ -31,12 +31,30 @@ MAX_SIDE = 95
 MAX_ASPECT = 3.6
 MIN_SOLIDITY = 0.55
 MARGIN = 4
-SHRINK = 0.92
+SHRINK = 0.85
 IOU_DEDUP = 0.35
 
 
 def r4(v: float) -> float:
     return round(float(v), 4)
+
+
+def find_map_circles(gray: np.ndarray) -> np.ndarray:
+    """Detect drawn circular markers (cul-de-sacs / junctions)."""
+    blur = cv2.medianBlur(gray, 5)
+    circles = cv2.HoughCircles(
+        blur,
+        cv2.HOUGH_GRADIENT,
+        dp=1.2,
+        minDist=18,
+        param1=85,
+        param2=24,
+        minRadius=5,
+        maxRadius=16,
+    )
+    if circles is None:
+        return np.zeros((0, 3), dtype=np.float32)
+    return circles[0].astype(np.float32)
 
 
 def build_mask(gray: np.ndarray, *, dilate: int, close: bool, bright_t: int, ink_t: int) -> np.ndarray:
@@ -102,6 +120,11 @@ def extract_from_mask(gray: np.ndarray, mask: np.ndarray) -> list[tuple[dict, np
         c_area = float(cv2.contourArea(cnt))
         if c_area < MIN_AREA * 0.6:
             continue
+        peri = float(cv2.arcLength(cnt, True)) or 1.0
+        circularity = 4.0 * np.pi * c_area / (peri * peri)
+        # Only reject clearly circular marker blobs (not rectangular lots)
+        if circularity >= 0.85 and max(w, h) <= 28:
+            continue
         hull_area = float(cv2.contourArea(cv2.convexHull(cnt))) or 1.0
         if c_area / hull_area < MIN_SOLIDITY:
             continue
@@ -157,24 +180,101 @@ def dedupe(cands: list[tuple[dict, np.ndarray]]) -> tuple[list[dict], list[np.nd
     return [t[0] for t in kept], [np.int32(t[1]) for t in kept]
 
 
-def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray]]:
+def drop_circle_traces(
+    lots: list[dict],
+    quads: list[np.ndarray],
+    circles: np.ndarray,
+    shape: tuple[int, int],
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Remove traces that are the circular markers themselves."""
+    if circles.size == 0:
+        return lots, quads
+    H, W = shape
+    kept_lots: list[dict] = []
+    kept_quads: list[np.ndarray] = []
+    for lot, quad in zip(lots, quads):
+        lx, ly = lot["cx"] * W, lot["cy"] * H
+        bw = float(quad[:, 0].max() - quad[:, 0].min())
+        bh = float(quad[:, 1].max() - quad[:, 1].min())
+        aspect = max(bw, bh) / max(min(bw, bh), 1.0)
+        drop = False
+        for cx, cy, r in circles:
+            if np.hypot(lx - cx, ly - cy) <= max(6.0, float(r) * 0.75):
+                drop = True
+                break
+            if aspect <= 1.35 and max(bw, bh) <= float(r) * 2.4:
+                if cv2.pointPolygonTest(quad.astype(np.float32), (float(cx), float(cy)), False) >= 0:
+                    drop = True
+                    break
+        if drop:
+            continue
+        kept_lots.append(lot)
+        kept_quads.append(quad)
+    return kept_lots, kept_quads
+
+
+def mask_out_circles(mask: np.ndarray, circles: np.ndarray, pad: int = 3) -> np.ndarray:
+    """Erase fill under circular markers so they never become lot traces."""
+    if circles.size == 0:
+        return mask
+    out = mask.copy()
+    for cx, cy, r in circles:
+        cv2.circle(out, (int(round(cx)), int(round(cy))), int(round(r)) + pad, 0, -1)
+    return out
+
+
+def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndarray]:
     masks = [
         build_mask(gray, dilate=3, close=True, bright_t=185, ink_t=90),
         build_mask(gray, dilate=2, close=True, bright_t=178, ink_t=100),
         build_mask(gray, dilate=2, close=False, bright_t=170, ink_t=110),
-        # Shaded/hatched lots: ignore light hatch ink, keep real borders only
         build_mask(gray, dilate=2, close=True, bright_t=155, ink_t=70),
     ]
     cands: list[tuple[dict, np.ndarray]] = []
     for m in masks:
         cands.extend(extract_from_mask(gray, m))
-    return dedupe(cands)
+    lots, quads = dedupe(cands)
+
+    # Prefer road-junction circles: bright ring around the marker
+    blur = cv2.medianBlur(gray, 5)
+    raw = cv2.HoughCircles(
+        blur,
+        cv2.HOUGH_GRADIENT,
+        dp=1.2,
+        minDist=20,
+        param1=85,
+        param2=22,
+        minRadius=5,
+        maxRadius=16,
+    )
+    circles_all = raw[0].astype(np.float32) if raw is not None else np.zeros((0, 3), dtype=np.float32)
+    H, W = gray.shape
+    road_circles = []
+    for cx, cy, r in circles_all:
+        x, y, rr = int(round(cx)), int(round(cy)), int(round(r))
+        if not (rr + 4 < x < W - rr - 4 and rr + 4 < y < H - rr - 4):
+            continue
+        # Sample ring outside the circle
+        ring = np.zeros((H, W), dtype=np.uint8)
+        cv2.circle(ring, (x, y), rr + 4, 255, 3)
+        ys, xs = np.where(ring > 0)
+        if len(xs) < 8:
+            continue
+        if float(gray[ys, xs].mean()) < 160:
+            continue  # not a road-embedded marker
+        road_circles.append([cx, cy, r])
+    circles = np.array(road_circles, dtype=np.float32) if road_circles else np.zeros((0, 3), dtype=np.float32)
+
+    lots, quads = drop_circle_traces(lots, quads, circles, gray.shape)
+    return lots, quads, circles
 
 
-def write_debug(rgb: np.ndarray, quads: list[np.ndarray]) -> None:
+def write_debug(rgb: np.ndarray, quads: list[np.ndarray], circles: np.ndarray) -> None:
     out = rgb.copy()
     for q in quads:
         cv2.polylines(out, [q.reshape(-1, 1, 2)], True, (0, 200, 255), 1, cv2.LINE_AA)
+    for cx, cy, r in circles.astype(int):
+        cv2.circle(out, (int(cx), int(cy)), int(r), (0, 80, 255), 1, cv2.LINE_AA)
     Image.fromarray(out).save(DEBUG_PATH)
 
 
@@ -187,7 +287,7 @@ def main() -> None:
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     H, W = gray.shape
 
-    lots, quads = detect_lots(gray)
+    lots, quads, circles = detect_lots(gray)
     OUT_PATH.write_text(
         json.dumps({"image": {"w": W, "h": H}, "lots": lots}, indent=2),
         encoding="utf-8",
@@ -195,12 +295,13 @@ def main() -> None:
     empty = {"blocks": {}}
     SLOTS_PATH.write_text(json.dumps(empty, indent=2) + "\n", encoding="utf-8")
     CLUSTERS_PATH.write_text(json.dumps(empty, indent=2) + "\n", encoding="utf-8")
-    write_debug(rgb, quads)
+    write_debug(rgb, quads, circles)
 
     if lots:
         sides = [np.sqrt(L["area"] * W * H) for L in lots]
         print(
-            f"Image {W}x{H}; lots={len(lots)}; median~{float(np.median(sides)):.1f}px",
+            f"Image {W}x{H}; lots={len(lots)}; circles={len(circles)}; "
+            f"median~{float(np.median(sides)):.1f}px",
             file=sys.stderr,
         )
     print(f"Wrote {OUT_PATH}", file=sys.stderr)
