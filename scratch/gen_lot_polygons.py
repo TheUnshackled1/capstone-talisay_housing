@@ -309,15 +309,17 @@ def _enclosure_hits(gray: np.ndarray, sx: float, sy: float, med: float) -> int:
 
 
 def is_road_center(gray: np.ndarray, sx: float, sy: float, med: float) -> bool:
-    """True if seed sits in an open road corridor rather than a lot cell."""
+    """True if seed sits in an open road / empty field rather than a lot cell."""
     H, W = gray.shape
     ix, iy = int(round(sx)), int(round(sy))
     if not (0 <= ix < W and 0 <= iy < H):
         return True
     g = int(gray[iy, ix])
-    # Mid-gray interiors are shaded lots — never treat as road
+    hits = _enclosure_hits(gray, sx, sy, med)
+
+    # Mid-gray: real shaded lots have ink walls; empty fields do not.
     if 130 <= g <= 178:
-        return False
+        return hits <= 2
 
     ink = (gray < 108).astype(np.uint8)
     clear_dirs = 0
@@ -338,7 +340,6 @@ def is_road_center(gray: np.ndarray, sx: float, sy: float, med: float) -> bool:
             clear_dirs += 1
     if clear_dirs >= 2:
         return True
-    hits = _enclosure_hits(gray, sx, sy, med)
     # Bright open strip with weak walls = road
     if g >= 185 and max_clear >= int(med * 1.5) and hits < 6:
         return True
@@ -362,7 +363,6 @@ def drop_merged_shaded(
 ) -> tuple[list[dict], list[np.ndarray]]:
     """Drop oversized mid-gray traces that swallowed multiple shaded cells."""
     H, W = gray.shape
-    sides = [np.sqrt(L["area"] * W * H) for L in lots] or [21.0]
     med_area = float(np.median([L["area"] for L in lots])) if lots else 0.001
     kept_lots: list[dict] = []
     kept_quads: list[np.ndarray] = []
@@ -378,30 +378,83 @@ def drop_merged_shaded(
     return kept_lots, kept_quads
 
 
+def drop_open_field(
+    lots: list[dict],
+    quads: list[np.ndarray],
+    gray: np.ndarray,
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Remove ghost boxes in empty mid-gray regions (no drawn lot walls)."""
+    H, W = gray.shape
+    sides = [np.sqrt(L["area"] * W * H) for L in lots] or [21.0]
+    med = float(np.median(sides))
+    kept_lots: list[dict] = []
+    kept_quads: list[np.ndarray] = []
+    for lot, quad in zip(lots, quads):
+        sx, sy = lot["cx"] * W, lot["cy"] * H
+        ix, iy = int(round(sx)), int(round(sy))
+        if not (0 <= ix < W and 0 <= iy < H):
+            continue
+        g = int(gray[iy, ix])
+        hits = _enclosure_hits(gray, sx, sy, med)
+        # Empty field: mid-gray + almost no surrounding ink walls
+        if 130 <= g <= 178 and hits <= 2:
+            continue
+        # Tiny mid-gray crumbs from aggressive recovery
+        if 130 <= g <= 178 and lot["area"] < 0.00055 and hits <= 4:
+            continue
+        kept_lots.append(lot)
+        kept_quads.append(quad)
+    return kept_lots, kept_quads
+
+
+def dedupe_close_centers(
+    lots: list[dict],
+    quads: list[np.ndarray],
+    min_dist: float = 12.0,
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Keep larger lot when two centers land almost on top of each other."""
+    order = sorted(range(len(lots)), key=lambda i: -lots[i]["area"])
+    kept_idx: list[int] = []
+    centers: list[tuple[float, float]] = []
+    for i in order:
+        q = quads[i]
+        px = float(q[:, 0].mean())
+        py = float(q[:, 1].mean())
+        if any((px - ox) ** 2 + (py - oy) ** 2 < min_dist**2 for ox, oy in centers):
+            continue
+        centers.append((px, py))
+        kept_idx.append(i)
+    kept_idx.sort(key=lambda i: (lots[i]["cy"], lots[i]["cx"]))
+    return [lots[i] for i in kept_idx], [quads[i] for i in kept_idx]
+
+
 def recover_shaded_lots(
     gray: np.ndarray,
     lots: list[dict],
     quads: list[np.ndarray],
 ) -> tuple[list[dict], list[np.ndarray]]:
-    """Recover mid-gray lot cells. Erode to split thick-border merges first."""
+    """Recover enclosed mid-gray lot cells only (never empty open fields)."""
     H, W = gray.shape
     cov = np.zeros((H, W), dtype=np.uint8)
     for q in quads:
         cv2.fillConvexPoly(cov, np.int32(q), 255)
 
     shaded = _shaded_mask(gray)
-    # Thick hatch merges cells into one CC — erode to re-split, then seed each
+    # Thick hatch merges cells — light erode to split, then seed each enclosed cell
     split = cv2.erode(shaded, np.ones((3, 3), np.uint8), 1)
     n, _labels, stats, cents = cv2.connectedComponentsWithStats(split, connectivity=8)
+
+    sides = [np.sqrt(L["area"] * W * H) for L in lots] or [21.0]
+    med = float(np.median(sides))
 
     seeds: list[tuple[float, float]] = []
     for i in range(1, n):
         x, y, w, h, area = stats[i]
-        if not (40 <= area <= 1200):
+        if not (80 <= area <= 900):
             continue
-        if not (6 <= w <= 70 and 6 <= h <= 70):
+        if not (8 <= w <= 55 and 8 <= h <= 55):
             continue
-        if max(w, h) / max(min(w, h), 1) > 3.2:
+        if max(w, h) / max(min(w, h), 1) > 2.8:
             continue
         cx, cy = float(cents[i][0]), float(cents[i][1])
         ix, iy = int(round(cx)), int(round(cy))
@@ -409,32 +462,10 @@ def recover_shaded_lots(
             continue
         if cov[iy, ix]:
             continue
-        # Prefer original shaded gray at seed (erosion can drift onto ink)
-        if not (125 <= int(gray[iy, ix]) <= 185):
-            continue
-        seeds.append((cx, cy))
-
-    # Dist-transform peaks catch cells erosion still merges
-    dist = cv2.distanceTransform(shaded, cv2.DIST_L2, 5)
-    dil = cv2.dilate(dist, np.ones((13, 13), np.uint8))
-    peak = (dist == dil) & (dist >= 3.8) & (shaded > 0)
-    ys, xs = np.where(peak)
-    peak_pts = sorted(
-        zip(xs.tolist(), ys.tolist(), dist[ys, xs].tolist()),
-        key=lambda t: -t[2],
-    )
-    peak_kept: list[tuple[float, float, float]] = []
-    for x, y, d in peak_pts:
-        if any((x - px) ** 2 + (y - py) ** 2 < 12**2 for px, py, _ in peak_kept):
-            continue
-        peak_kept.append((float(x), float(y), float(d)))
-    for cx, cy, _d in peak_kept:
-        ix, iy = int(round(cx)), int(round(cy))
-        if cov[iy, ix]:
-            continue
         if not (130 <= int(gray[iy, ix]) <= 178):
             continue
-        if any((cx - sx) ** 2 + (cy - sy) ** 2 < 10**2 for sx, sy in seeds):
+        # Must look like a real lot cell (ink on most sides) — kills empty fields
+        if _enclosure_hits(gray, cx, cy, med) < 4:
             continue
         seeds.append((cx, cy))
 
@@ -488,6 +519,8 @@ def force_seed_lots(
         if g0 < (130 if shaded_seed else 140):
             continue
         if is_road_center(gray, sx, sy, med):
+            continue
+        if shaded_seed and _enclosure_hits(gray, sx, sy, med) < 4:
             continue
         # Nudge only for near-ink bright lots — keep shaded mid-gray seeds put
         if not shaded_seed and g0 < 160:
@@ -571,6 +604,9 @@ def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndar
     before_road = len(lots)
     lots, quads = drop_road_traces(lots, quads, gray)
     print(f"dropped road FPs -{before_road - len(lots)}", file=sys.stderr)
+    before_field = len(lots)
+    lots, quads = drop_open_field(lots, quads, gray)
+    print(f"dropped open-field FPs -{before_field - len(lots)}", file=sys.stderr)
     before_merge = len(lots)
     lots, quads = drop_merged_shaded(lots, quads, gray)
     print(f"dropped merged shaded -{before_merge - len(lots)}", file=sys.stderr)
@@ -580,11 +616,12 @@ def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndar
     before = len(lots)
     lots, quads = force_seed_lots(gray, lots, quads, [(163.4, 407.4)])
     print(f"surgical seeds +{len(lots) - before}", file=sys.stderr)
-    # Final pass: recovery can still land on roads / markers
     before_c = len(lots)
     lots, quads = drop_circle_traces(lots, quads, circles, gray.shape)
     lots, quads = drop_road_traces(lots, quads, gray)
-    print(f"final road/circle drop -{before_c - len(lots)}", file=sys.stderr)
+    lots, quads = drop_open_field(lots, quads, gray)
+    lots, quads = dedupe_close_centers(lots, quads, min_dist=12.0)
+    print(f"final cleanup -{before_c - len(lots)}", file=sys.stderr)
     return lots, quads, circles
 
 
