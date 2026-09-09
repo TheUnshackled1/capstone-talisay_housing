@@ -749,16 +749,8 @@ def create_relocation_site(request, position):
     except ValueError:
         return JsonResponse({'success': False, 'error': 'Total blocks/lots must be whole numbers.'}, status=400)
 
-    map_phase_raw = (request.POST.get('map_phase') or str(RelocationSite.MAP_PHASE_1)).strip()
-    try:
-        map_phase = int(map_phase_raw)
-    except ValueError:
-        return JsonResponse({'success': False, 'error': 'Invalid map phase.'}, status=400)
-    if map_phase not in (RelocationSite.MAP_PHASE_1, RelocationSite.MAP_PHASE_2):
-        return JsonResponse(
-            {'success': False, 'error': 'Map phase must be 1 (Blocks 1–12) or 2 (Blocks 13–21).'},
-            status=400,
-        )
+    # Lot-plan overlay is Phase 1 only (Phase 2 map assets removed).
+    map_phase = RelocationSite.MAP_PHASE_1
 
     if not name or not code or not address or not barangay_id:
         return JsonResponse(
@@ -827,7 +819,7 @@ def _housing_unit_inventory_deletable(user, unit):
 def _housing_unit_block_sequence_error(site, block_number, exclude_unit_id=None):
     """
     Enforce sequential block numbers within a site.
-    Phase 2 sites start at block 13 (no need to invent Blocks 1–12 first).
+    Empty inventory must start at Block 1.
     Returns error message or None.
     """
     if not str(block_number).isdigit():
@@ -838,14 +830,9 @@ def _housing_unit_block_sequence_error(site, block_number, exclude_unit_id=None)
         existing_qs = existing_qs.exclude(id=exclude_unit_id)
     existing_blocks = existing_qs.values_list('block_number', flat=True).distinct()
     numeric_blocks = sorted(int(b) for b in existing_blocks if str(b).isdigit())
-    phase_floor = 13 if getattr(site, 'map_phase', 1) == RelocationSite.MAP_PHASE_2 else 1
     if not numeric_blocks:
-        # Empty inventory: first block must be the phase floor (1 or 13).
-        if new_block != phase_floor:
-            return (
-                f'This Phase {site.map_phase} site starts at Block {phase_floor}. '
-                f'Add Block {phase_floor} first before Block {new_block}.'
-            )
+        if new_block != 1:
+            return f'Add Block 1 first before Block {new_block}.'
         return None
     max_block = numeric_blocks[-1]
     if new_block > max_block + 1:
@@ -891,15 +878,10 @@ def _parse_plan_polygon_index(raw):
     return idx
 
 
-@lru_cache(maxsize=4)
-def _lot_plan_polygon_count(map_phase: int) -> int:
-    """Count of lots[] in the static polygon JSON for this map phase."""
-    name = (
-        'lot_plan_polygons_p2.json'
-        if int(map_phase) == RelocationSite.MAP_PHASE_2
-        else 'lot_plan_polygons.json'
-    )
-    path = Path(settings.BASE_DIR) / 'static' / 'units' / name
+@lru_cache(maxsize=1)
+def _lot_plan_polygon_count() -> int:
+    """Count of lots[] in static/units/lot_plan_polygons.json."""
+    path = Path(settings.BASE_DIR) / 'static' / 'units' / 'lot_plan_polygons.json'
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
     except (OSError, json.JSONDecodeError, TypeError, ValueError):
@@ -910,12 +892,12 @@ def _lot_plan_polygon_count(map_phase: int) -> int:
 
 def _validate_plan_polygon_index_for_site(site, plan_polygon_index):
     """
-    Ensure plan_polygon_index is in range for the site's map overlay.
+    Ensure plan_polygon_index is in range for the lot-plan overlay.
     Returns error message or None. None index is always allowed.
     """
     if plan_polygon_index is None:
         return None
-    count = _lot_plan_polygon_count(getattr(site, 'map_phase', RelocationSite.MAP_PHASE_1))
+    count = _lot_plan_polygon_count()
     if count <= 0:
         return 'Lot plan map data is unavailable for this site.'
     if plan_polygon_index >= count:

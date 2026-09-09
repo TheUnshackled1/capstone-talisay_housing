@@ -327,12 +327,6 @@ function openAddUnitModal(blockNumber, lotNumber, polygonIndex) {
             ? String(polygonIndex) : '';
     }
 
-    // Phase 2 empty inventory hint: first block should be 13
-    if (!hasPrefill && window.HOUSING_CONFIG && Number(window.HOUSING_CONFIG.mapPhase) === 2 && b && !b.value) {
-        b.placeholder = b.placeholder || '13';
-        b.title = 'Phase 2 sites start at Block 13';
-    }
-
     m.style.display = 'flex';
     const focusEl = hasPrefill ? document.getElementById('addUnitSubmitBtn') : b;
     if (focusEl) setTimeout(() => focusEl.focus(), 50);
