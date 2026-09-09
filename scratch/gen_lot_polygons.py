@@ -2,8 +2,8 @@
 Detect lot fill regions on static/images/lot_plan_roads.png and write
 static/units/lot_plan_polygons.json.
 
-Rotated min-area quads follow tilted lots. No block/lot labels.
-Resets slots/clusters to empty.
+Multi-pass ink thresholds recover missed cells; AABB-IoU dedupes.
+Rotated quads follow tilted lots. No block/lot labels.
 
 Run: python scratch/gen_lot_polygons.py
 """
@@ -24,33 +24,31 @@ SLOTS_PATH = ROOT / "static" / "units" / "lot_plan_slots.json"
 CLUSTERS_PATH = ROOT / "static" / "units" / "lot_plan_clusters.json"
 DEBUG_PATH = ROOT / "scratch" / "lot_map_polygons_debug.png"
 
-BRIGHT_THRESH = 185
-INK_THRESH = 90
-MIN_AREA = 140
-MAX_AREA = 2400
-MIN_SIDE = 11
-MAX_SIDE = 58
-MAX_ASPECT = 2.8
-MIN_SOLIDITY = 0.72
-MARGIN = 10
-SHRINK = 0.82
+MIN_AREA = 100
+MAX_AREA = 3600
+MIN_SIDE = 9
+MAX_SIDE = 95
+MAX_ASPECT = 3.6
+MIN_SOLIDITY = 0.55
+MARGIN = 4
+SHRINK = 0.92
+IOU_DEDUP = 0.35
 
 
 def r4(v: float) -> float:
     return round(float(v), 4)
 
 
-def build_mask(gray: np.ndarray) -> np.ndarray:
-    bright = (gray > BRIGHT_THRESH).astype(np.uint8) * 255
-    mid = ((gray >= 135) & (gray <= 178)).astype(np.uint8) * 255
-    ink = (gray < INK_THRESH).astype(np.uint8) * 255
-    # Seal broken lot borders so interiors become separate cells
-    ink = cv2.dilate(ink, np.ones((3, 3), np.uint8), iterations=1)
-    ink = cv2.morphologyEx(ink, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1)
+def build_mask(gray: np.ndarray, *, dilate: int, close: bool, bright_t: int, ink_t: int) -> np.ndarray:
+    bright = (gray > bright_t).astype(np.uint8) * 255
+    mid = ((gray >= 120) & (gray <= 185)).astype(np.uint8) * 255
+    ink = (gray < ink_t).astype(np.uint8) * 255
+    ink = cv2.dilate(ink, np.ones((dilate, dilate), np.uint8), iterations=1)
+    if close:
+        ink = cv2.morphologyEx(ink, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1)
     fill = cv2.bitwise_or(bright, mid)
     mask = cv2.bitwise_and(fill, cv2.bitwise_not(ink))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8), iterations=1)
-    return mask
+    return cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8), iterations=1)
 
 
 def shrink_quad(pts: np.ndarray, factor: float) -> np.ndarray:
@@ -64,13 +62,26 @@ def order_quad(pts: list[list[float]]) -> list[list[float]]:
     return [pts[int(j)] for j in np.argsort(angles)]
 
 
-def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray]]:
-    H, W = gray.shape
-    mask = build_mask(gray)
-    n, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=4)
+def aabb_iou(a: np.ndarray, b: np.ndarray) -> float:
+    ax1, ay1 = float(a[:, 0].min()), float(a[:, 1].min())
+    ax2, ay2 = float(a[:, 0].max()), float(a[:, 1].max())
+    bx1, by1 = float(b[:, 0].min()), float(b[:, 1].min())
+    bx2, by2 = float(b[:, 0].max()), float(b[:, 1].max())
+    ix1, iy1 = max(ax1, bx1), max(ay1, by1)
+    ix2, iy2 = min(ax2, bx2), min(ay2, by2)
+    iw, ih = max(0.0, ix2 - ix1), max(0.0, iy2 - iy1)
+    inter = iw * ih
+    if inter <= 0:
+        return 0.0
+    area_a = max(0.0, ax2 - ax1) * max(0.0, ay2 - ay1)
+    area_b = max(0.0, bx2 - bx1) * max(0.0, by2 - by1)
+    return inter / max(area_a + area_b - inter, 1e-9)
 
-    lots: list[dict] = []
-    debug_quads: list[np.ndarray] = []
+
+def extract_from_mask(gray: np.ndarray, mask: np.ndarray) -> list[tuple[dict, np.ndarray]]:
+    H, W = gray.shape
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=4)
+    out: list[tuple[dict, np.ndarray]] = []
 
     for i in range(1, n):
         x, y, w, h, area = stats[i]
@@ -89,61 +100,75 @@ def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray]]:
             continue
         cnt = max(contours, key=cv2.contourArea)
         c_area = float(cv2.contourArea(cnt))
-        if c_area < MIN_AREA * 0.75:
+        if c_area < MIN_AREA * 0.6:
             continue
-        hull = cv2.convexHull(cnt)
-        hull_area = float(cv2.contourArea(hull)) or 1.0
+        hull_area = float(cv2.contourArea(cv2.convexHull(cnt))) or 1.0
         if c_area / hull_area < MIN_SOLIDITY:
             continue
 
         rect = cv2.minAreaRect(cnt)
         (cx, cy), (rw, rh), _ang = rect
         side_a, side_b = sorted([rw, rh])
-        if side_a < MIN_SIDE or side_b > MAX_SIDE:
+        if side_a < MIN_SIDE - 1 or side_b > MAX_SIDE:
             continue
         if side_b / max(side_a, 1) > MAX_ASPECT:
             continue
 
-        # Reject road scraps: rect fill should stay mostly bright
         box = cv2.boxPoints(rect)
-        box_i = np.int32(box)
         probe = np.zeros((H, W), dtype=np.uint8)
-        cv2.fillConvexPoly(probe, box_i, 255)
+        cv2.fillConvexPoly(probe, np.int32(box), 255)
         ys, xs = np.where(probe > 0)
-        if len(xs) < 20:
+        if len(xs) < 16:
             continue
-        mean_g = float(gray[ys, xs].mean())
-        if mean_g < 150:
+        vals = gray[ys, xs]
+        if float((vals < 95).mean()) > 0.35:
             continue
-        dark_frac = float((gray[ys, xs] < INK_THRESH).mean())
-        if dark_frac > 0.22:
-            continue
-        bright_frac = float((gray[ys, xs] > 180).mean())
-        # Shaded lots are mid-gray; allow either bright or mid fill dominance
-        mid_frac = float(((gray[ys, xs] >= 135) & (gray[ys, xs] <= 178)).mean())
-        if bright_frac + mid_frac < 0.75:
+        bright_frac = float((vals > 175).mean())
+        mid_frac = float(((vals >= 120) & (vals <= 185)).mean())
+        if bright_frac + mid_frac < 0.55:
             continue
 
         box = shrink_quad(box, SHRINK)
         icx, icy = int(round(cx)), int(round(cy))
         if not (MARGIN <= icx < W - MARGIN and MARGIN <= icy < H - MARGIN):
             continue
-        if gray[icy, icx] < 140:
+        if gray[icy, icx] < 110:
             continue
 
         pts = order_quad([[r4(float(px) / W), r4(float(py) / H)] for px, py in box])
-        lots.append(
-            {
-                "points": pts,
-                "cx": r4(float(cx) / W),
-                "cy": r4(float(cy) / H),
-                "area": r4((side_a * side_b) / (W * H)),
-            }
-        )
-        debug_quads.append(np.int32(box))
+        lot = {
+            "points": pts,
+            "cx": r4(float(cx) / W),
+            "cy": r4(float(cy) / H),
+            "area": r4((side_a * side_b) / (W * H)),
+        }
+        out.append((lot, box.astype(np.float32)))
+    return out
 
-    paired = sorted(zip(lots, debug_quads), key=lambda t: (t[0]["cy"], t[0]["cx"]))
-    return [t[0] for t in paired], [t[1] for t in paired]
+
+def dedupe(cands: list[tuple[dict, np.ndarray]]) -> tuple[list[dict], list[np.ndarray]]:
+    cands = sorted(cands, key=lambda t: -t[0]["area"])
+    kept: list[tuple[dict, np.ndarray]] = []
+    for lot, box in cands:
+        if any(aabb_iou(box, kbox) >= IOU_DEDUP for _, kbox in kept):
+            continue
+        kept.append((lot, box))
+    kept.sort(key=lambda t: (t[0]["cy"], t[0]["cx"]))
+    return [t[0] for t in kept], [np.int32(t[1]) for t in kept]
+
+
+def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray]]:
+    masks = [
+        build_mask(gray, dilate=3, close=True, bright_t=185, ink_t=90),
+        build_mask(gray, dilate=2, close=True, bright_t=178, ink_t=100),
+        build_mask(gray, dilate=2, close=False, bright_t=170, ink_t=110),
+        # Shaded/hatched lots: ignore light hatch ink, keep real borders only
+        build_mask(gray, dilate=2, close=True, bright_t=155, ink_t=70),
+    ]
+    cands: list[tuple[dict, np.ndarray]] = []
+    for m in masks:
+        cands.extend(extract_from_mask(gray, m))
+    return dedupe(cands)
 
 
 def write_debug(rgb: np.ndarray, quads: list[np.ndarray]) -> None:
@@ -180,7 +205,7 @@ def main() -> None:
         )
     print(f"Wrote {OUT_PATH}", file=sys.stderr)
     print(f"QA {DEBUG_PATH}", file=sys.stderr)
-    if len(lots) < 80:
+    if len(lots) < 100:
         print("WARNING: low lot count", file=sys.stderr)
         sys.exit(2)
 
