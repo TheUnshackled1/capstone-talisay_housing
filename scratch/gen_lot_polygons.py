@@ -204,11 +204,16 @@ def drop_circle_traces(
             continue
         drop = False
         for cx, cy, r in circles:
-            # Only drop compact near-square blobs centered on the marker
-            if aspect <= 1.3 and max(bw, bh) <= float(r) * 2.6:
-                if np.hypot(lx - cx, ly - cy) <= max(5.0, float(r) * 0.85):
+            dist = float(np.hypot(lx - cx, ly - cy))
+            # Compact blob centered on marker
+            if aspect <= 1.35 and max(bw, bh) <= float(r) * 2.8:
+                if dist <= max(6.0, float(r) * 1.05):
                     drop = True
                     break
+            # Any lot whose center sits inside the marker disk
+            if dist <= float(r) * 0.75 and max(bw, bh) <= float(r) * 3.2:
+                drop = True
+                break
         if drop:
             continue
         kept_lots.append(lot)
@@ -309,12 +314,18 @@ def is_road_center(gray: np.ndarray, sx: float, sy: float, med: float) -> bool:
     ix, iy = int(round(sx)), int(round(sy))
     if not (0 <= ix < W and 0 <= iy < H):
         return True
+    g = int(gray[iy, ix])
+    # Mid-gray interiors are shaded lots — never treat as road
+    if 130 <= g <= 178:
+        return False
+
     ink = (gray < 108).astype(np.uint8)
     clear_dirs = 0
+    max_clear = 0
     for ang in (0.0, 90.0, 180.0, 270.0):
         rad = np.deg2rad(ang)
         clear = 0
-        for t in range(2, int(med * 2.2)):
+        for t in range(2, int(med * 2.5)):
             xx = int(round(sx + t * np.cos(rad)))
             yy = int(round(sy + t * np.sin(rad)))
             if not (0 <= xx < W and 0 <= yy < H):
@@ -322,13 +333,114 @@ def is_road_center(gray: np.ndarray, sx: float, sy: float, med: float) -> bool:
             if ink[yy, xx]:
                 break
             clear += 1
+        max_clear = max(max_clear, clear)
         if clear >= int(med * 1.35):
             clear_dirs += 1
     if clear_dirs >= 2:
         return True
-    if _enclosure_hits(gray, sx, sy, med) < 5:
+    hits = _enclosure_hits(gray, sx, sy, med)
+    # Bright open strip with weak walls = road
+    if g >= 185 and max_clear >= int(med * 1.5) and hits < 6:
+        return True
+    if hits < 5:
         return True
     return False
+
+
+def _shaded_mask(gray: np.ndarray) -> np.ndarray:
+    ink = (gray < 100).astype(np.uint8) * 255
+    ink = cv2.dilate(ink, np.ones((2, 2), np.uint8), 1)
+    shaded = ((gray >= 130) & (gray <= 178)).astype(np.uint8) * 255
+    shaded = cv2.bitwise_and(shaded, cv2.bitwise_not(ink))
+    return cv2.morphologyEx(shaded, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), 1)
+
+
+def drop_merged_shaded(
+    lots: list[dict],
+    quads: list[np.ndarray],
+    gray: np.ndarray,
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Drop oversized mid-gray traces that swallowed multiple shaded cells."""
+    H, W = gray.shape
+    sides = [np.sqrt(L["area"] * W * H) for L in lots] or [21.0]
+    med_area = float(np.median([L["area"] for L in lots])) if lots else 0.001
+    kept_lots: list[dict] = []
+    kept_quads: list[np.ndarray] = []
+    for lot, quad in zip(lots, quads):
+        sx, sy = lot["cx"] * W, lot["cy"] * H
+        ix, iy = int(round(sx)), int(round(sy))
+        g = int(gray[iy, ix]) if 0 <= ix < W and 0 <= iy < H else 0
+        # Merged shaded blob: mid-gray center + area well above typical lot
+        if 130 <= g <= 178 and lot["area"] >= max(0.0020, med_area * 1.85):
+            continue
+        kept_lots.append(lot)
+        kept_quads.append(quad)
+    return kept_lots, kept_quads
+
+
+def recover_shaded_lots(
+    gray: np.ndarray,
+    lots: list[dict],
+    quads: list[np.ndarray],
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Recover mid-gray lot cells. Erode to split thick-border merges first."""
+    H, W = gray.shape
+    cov = np.zeros((H, W), dtype=np.uint8)
+    for q in quads:
+        cv2.fillConvexPoly(cov, np.int32(q), 255)
+
+    shaded = _shaded_mask(gray)
+    # Thick hatch merges cells into one CC — erode to re-split, then seed each
+    split = cv2.erode(shaded, np.ones((3, 3), np.uint8), 1)
+    n, _labels, stats, cents = cv2.connectedComponentsWithStats(split, connectivity=8)
+
+    seeds: list[tuple[float, float]] = []
+    for i in range(1, n):
+        x, y, w, h, area = stats[i]
+        if not (40 <= area <= 1200):
+            continue
+        if not (6 <= w <= 70 and 6 <= h <= 70):
+            continue
+        if max(w, h) / max(min(w, h), 1) > 3.2:
+            continue
+        cx, cy = float(cents[i][0]), float(cents[i][1])
+        ix, iy = int(round(cx)), int(round(cy))
+        if not (MARGIN + 2 <= ix < W - MARGIN - 2 and MARGIN + 2 <= iy < H - MARGIN - 2):
+            continue
+        if cov[iy, ix]:
+            continue
+        # Prefer original shaded gray at seed (erosion can drift onto ink)
+        if not (125 <= int(gray[iy, ix]) <= 185):
+            continue
+        seeds.append((cx, cy))
+
+    # Dist-transform peaks catch cells erosion still merges
+    dist = cv2.distanceTransform(shaded, cv2.DIST_L2, 5)
+    dil = cv2.dilate(dist, np.ones((13, 13), np.uint8))
+    peak = (dist == dil) & (dist >= 3.8) & (shaded > 0)
+    ys, xs = np.where(peak)
+    peak_pts = sorted(
+        zip(xs.tolist(), ys.tolist(), dist[ys, xs].tolist()),
+        key=lambda t: -t[2],
+    )
+    peak_kept: list[tuple[float, float, float]] = []
+    for x, y, d in peak_pts:
+        if any((x - px) ** 2 + (y - py) ** 2 < 12**2 for px, py, _ in peak_kept):
+            continue
+        peak_kept.append((float(x), float(y), float(d)))
+    for cx, cy, _d in peak_kept:
+        ix, iy = int(round(cx)), int(round(cy))
+        if cov[iy, ix]:
+            continue
+        if not (130 <= int(gray[iy, ix]) <= 178):
+            continue
+        if any((cx - sx) ** 2 + (cy - sy) ** 2 < 10**2 for sx, sy in seeds):
+            continue
+        seeds.append((cx, cy))
+
+    if not seeds:
+        return lots, quads
+    return force_seed_lots(gray, lots, quads, seeds)
 
 
 def drop_road_traces(
@@ -370,13 +482,16 @@ def force_seed_lots(
         ix, iy = int(round(sx)), int(round(sy))
         if not (MARGIN <= ix < W - MARGIN and MARGIN <= iy < H - MARGIN):
             continue
-        if gray[iy, ix] < 140:
+        g0 = int(gray[iy, ix])
+        shaded_seed = 130 <= g0 <= 178
+        # Bright lots need >=140; shaded mid-gray cells are valid from 130
+        if g0 < (130 if shaded_seed else 140):
             continue
         if is_road_center(gray, sx, sy, med):
             continue
-        # Nudge onto brighter fill if seed sits on a thin ink fringe
-        if gray[iy, ix] < 160:
-            best = (ix, iy, int(gray[iy, ix]))
+        # Nudge only for near-ink bright lots — keep shaded mid-gray seeds put
+        if not shaded_seed and g0 < 160:
+            best = (ix, iy, g0)
             for yy in range(iy - 5, iy + 6):
                 for xx in range(ix - 5, ix + 6):
                     if 0 <= xx < W and 0 <= yy < H and int(gray[yy, xx]) > best[2]:
@@ -402,7 +517,9 @@ def force_seed_lots(
         ux = ux / (np.linalg.norm(ux) + 1e-9)
         uy = np.array([-ux[1], ux[0]])
         side = float(sides[ni])
-        half_w, half_h = side * 0.45, side * 0.40
+        # Slightly tighter boxes for shaded cells so they stay inside thick borders
+        scale = 0.88 if shaded_seed else 1.0
+        half_w, half_h = side * 0.45 * scale, side * 0.40 * scale
         box = np.array(
             [
                 [sx, sy] - ux * half_w - uy * half_h,
@@ -412,7 +529,7 @@ def force_seed_lots(
             ],
             dtype=np.float32,
         )
-        box = shrink_quad(box, SHRINK)
+        box = shrink_quad(box, SHRINK if not shaded_seed else max(SHRINK, 0.80))
         if any(aabb_iou(box, q.astype(np.float32)) >= IOU_DEDUP for q in quads):
             continue
         if any(aabb_iou(box, eb) >= IOU_DEDUP for _, eb in extra):
@@ -448,41 +565,26 @@ def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndar
         cands.extend(extract_from_mask(gray, m))
     lots, quads = dedupe(cands)
 
-    blur = cv2.medianBlur(gray, 5)
-    raw = cv2.HoughCircles(
-        blur,
-        cv2.HOUGH_GRADIENT,
-        dp=1.2,
-        minDist=20,
-        param1=85,
-        param2=24,
-        minRadius=5,
-        maxRadius=16,
-    )
-    strict = raw[0].astype(np.float32) if raw is not None else np.zeros((0, 3), dtype=np.float32)
-    H, W = gray.shape
-    road_circles = []
-    for cx, cy, r in strict:
-        x, y, rr = int(round(cx)), int(round(cy)), int(round(r))
-        if not (rr + 4 < x < W - rr - 4 and rr + 4 < y < H - rr - 4):
-            continue
-        ring = np.zeros((H, W), dtype=np.uint8)
-        cv2.circle(ring, (x, y), rr + 4, 255, 3)
-        ys, xs = np.where(ring > 0)
-        if len(xs) < 8:
-            continue
-        if float(gray[ys, xs].mean()) < 160:
-            continue
-        road_circles.append([cx, cy, r])
-    circles = np.array(road_circles, dtype=np.float32) if road_circles else np.zeros((0, 3), dtype=np.float32)
+    circles = find_map_circles(gray)
 
     lots, quads = drop_circle_traces(lots, quads, circles, gray.shape)
     before_road = len(lots)
     lots, quads = drop_road_traces(lots, quads, gray)
     print(f"dropped road FPs -{before_road - len(lots)}", file=sys.stderr)
+    before_merge = len(lots)
+    lots, quads = drop_merged_shaded(lots, quads, gray)
+    print(f"dropped merged shaded -{before_merge - len(lots)}", file=sys.stderr)
+    before_sh = len(lots)
+    lots, quads = recover_shaded_lots(gray, lots, quads)
+    print(f"shaded recovery +{len(lots) - before_sh}", file=sys.stderr)
     before = len(lots)
     lots, quads = force_seed_lots(gray, lots, quads, [(163.4, 407.4)])
     print(f"surgical seeds +{len(lots) - before}", file=sys.stderr)
+    # Final pass: recovery can still land on roads / markers
+    before_c = len(lots)
+    lots, quads = drop_circle_traces(lots, quads, circles, gray.shape)
+    lots, quads = drop_road_traces(lots, quads, gray)
+    print(f"final road/circle drop -{before_c - len(lots)}", file=sys.stderr)
     return lots, quads, circles
 
 
