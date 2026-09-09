@@ -474,6 +474,164 @@ def recover_shaded_lots(
     return force_seed_lots(gray, lots, quads, seeds)
 
 
+def _estimate_local_angle(gray: np.ndarray, sx: float, sy: float, win: int = 22) -> float:
+    """Dominant local edge angle (degrees) near a seed."""
+    H, W = gray.shape
+    ix, iy = int(round(sx)), int(round(sy))
+    x0, x1 = max(0, ix - win), min(W, ix + win)
+    y0, y1 = max(0, iy - win), min(H, iy + win)
+    edges = cv2.Canny(gray[y0:y1, x0:x1], 60, 140)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=18, minLineLength=10, maxLineGap=4)
+    if lines is None:
+        return 12.0
+    angs: list[float] = []
+    for x1l, y1l, x2l, y2l in lines[:, 0]:
+        a = float(np.degrees(np.arctan2(y2l - y1l, x2l - x1l)))
+        while a > 90:
+            a -= 180
+        while a < -90:
+            a += 180
+        if abs(a) < 40 or abs(abs(a) - 90) < 40:
+            angs.append(a if abs(a) <= 45 else a - 90 * np.sign(a))
+    if not angs:
+        return 12.0
+    med = float(np.median(angs))
+    return 12.0 if abs(med) < 3 else med
+
+
+def _ray_to_ink(ink: np.ndarray, sx: float, sy: float, ang_deg: float, max_t: float = 28.0) -> float:
+    H, W = ink.shape
+    rad = np.deg2rad(ang_deg)
+    hit = max_t
+    for t in np.linspace(2.0, max_t, 50):
+        xx = int(round(sx + t * np.cos(rad)))
+        yy = int(round(sy + t * np.sin(rad)))
+        if not (0 <= xx < W and 0 <= yy < H) or ink[yy, xx]:
+            hit = float(t)
+            break
+    return hit
+
+
+def fit_shaded_cell(gray: np.ndarray, sx: float, sy: float) -> tuple[dict, np.ndarray] | None:
+    """Fit hover polygon by ray-casting from seed to pad edge (against black ink)."""
+    H, W = gray.shape
+    ix, iy = int(round(sx)), int(round(sy))
+    if not (MARGIN <= ix < W - MARGIN and MARGIN <= iy < H - MARGIN):
+        return None
+
+    def is_pad(x: int, y: int) -> bool:
+        return 0 <= x < W and 0 <= y < H and 105 <= gray[y, x] <= 195
+
+    def is_ink(x: int, y: int) -> bool:
+        return 0 <= x < W and 0 <= y < H and gray[y, x] < 65
+
+    def ray(dx: float, dy: float, max_r: int = 26) -> tuple[int, int]:
+        last = (ix, iy)
+        n = (dx * dx + dy * dy) ** 0.5
+        dx, dy = dx / n, dy / n
+        for r in range(1, max_r + 1):
+            x = int(round(sx + dx * r))
+            y = int(round(sy + dy * r))
+            if is_ink(x, y):
+                return last
+            if is_pad(x, y):
+                last = (x, y)
+                continue
+            return last
+        return last
+
+    hits = []
+    for i in range(24):
+        ang = 2 * np.pi * i / 24
+        hits.append(ray(float(np.cos(ang)), float(np.sin(ang))))
+    hull = cv2.convexHull(np.array(hits, dtype=np.float32))
+    if hull is None or len(hull) < 3:
+        return None
+    peri = float(cv2.arcLength(hull, True))
+    approx = cv2.approxPolyDP(hull, max(0.8, 0.02 * peri), True)
+    if len(approx) < 3:
+        approx = hull
+    box = approx.reshape(-1, 2).astype(np.float32)
+    c = box.mean(axis=0)
+    box = c + (box - c) * 1.06
+    clamped = []
+    for x, y in box:
+        xi, yi = int(round(float(x))), int(round(float(y)))
+        if is_pad(xi, yi) and not is_ink(xi, yi):
+            clamped.append([xi, yi])
+            continue
+        for t in np.linspace(0.99, 0.55, 16):
+            xx = int(round(float(c[0] + (x - c[0]) * t)))
+            yy = int(round(float(c[1] + (y - c[1]) * t)))
+            if is_pad(xx, yy) and not is_ink(xx, yy):
+                clamped.append([xx, yy])
+                break
+        else:
+            clamped.append([int(c[0]), int(c[1])])
+    box = np.array(clamped, dtype=np.float32)
+    if len(box) < 3:
+        return None
+    area_px = float(cv2.contourArea(box))
+    if area_px < 80:
+        return None
+    pts_n = [[r4(float(px) / W), r4(float(py) / H)] for px, py in box]
+    if len(pts_n) == 4:
+        pts_n = order_quad(pts_n)
+    lot = {
+        "points": pts_n,
+        "cx": r4(float(box[:, 0].mean()) / W),
+        "cy": r4(float(box[:, 1].mean()) / H),
+        "area": r4(area_px / (W * H)),
+    }
+    return lot, box
+
+
+def normalize_shaded_cluster(
+    gray: np.ndarray,
+    lots: list[dict],
+    quads: list[np.ndarray],
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Replace misaligned shaded-block detections with ink-wall-fitted quads."""
+    H, W = gray.shape
+    x0, x1, y0, y1 = 95.0, 210.0, 85.0, 155.0
+    kept_lots: list[dict] = []
+    kept_quads: list[np.ndarray] = []
+    for lot, q in zip(lots, quads):
+        cx, cy = lot["cx"] * W, lot["cy"] * H
+        if x0 <= cx <= x1 and y0 <= cy <= y1:
+            continue
+        kept_lots.append(lot)
+        kept_quads.append(q)
+
+    seeds = [
+        (108.0, 96.0), (138.0, 101.0), (167.0, 106.0), (196.0, 111.0),
+        (104.0, 116.0), (133.0, 126.0), (161.0, 134.0), (194.0, 145.0),
+    ]
+    added: list[tuple[dict, np.ndarray]] = []
+    for sx, sy in seeds:
+        hit = fit_shaded_cell(gray, sx, sy)
+        if not hit:
+            continue
+        lot, box = hit
+        # Only block collisions with lots OUTSIDE this cluster — never drop a cluster cell
+        # just because it slightly overlaps a neighbor cell we just fitted.
+        if any(aabb_iou(box, q.astype(np.float32)) >= 0.55 for q in kept_quads):
+            continue
+        if any(
+            (lot["cx"] * W - ox) ** 2 + (lot["cy"] * H - oy) ** 2 < 10**2
+            for ox, oy in ((a[0]["cx"] * W, a[0]["cy"] * H) for a in added)
+        ):
+            continue
+        added.append((lot, box))
+
+    for lot, box in added:
+        kept_lots.append(lot)
+        kept_quads.append(np.int32(box))
+
+    order = sorted(range(len(kept_lots)), key=lambda i: (kept_lots[i]["cy"], kept_lots[i]["cx"]))
+    return [kept_lots[i] for i in order], [kept_quads[i] for i in order]
+
+
 def drop_road_traces(
     lots: list[dict],
     quads: list[np.ndarray],
@@ -613,6 +771,9 @@ def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndar
     before_sh = len(lots)
     lots, quads = recover_shaded_lots(gray, lots, quads)
     print(f"shaded recovery +{len(lots) - before_sh}", file=sys.stderr)
+    before_norm = len(lots)
+    lots, quads = normalize_shaded_cluster(gray, lots, quads)
+    print(f"shaded cluster normalized {before_norm}->{len(lots)}", file=sys.stderr)
     before = len(lots)
     lots, quads = force_seed_lots(gray, lots, quads, [(163.4, 407.4)])
     print(f"surgical seeds +{len(lots) - before}", file=sys.stderr)
@@ -622,6 +783,10 @@ def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndar
     lots, quads = drop_open_field(lots, quads, gray)
     lots, quads = dedupe_close_centers(lots, quads, min_dist=12.0)
     print(f"final cleanup -{before_c - len(lots)}", file=sys.stderr)
+    # Road/open-field passes can drop thick-border shaded cells — restore them last
+    before_fix = len(lots)
+    lots, quads = normalize_shaded_cluster(gray, lots, quads)
+    print(f"shaded cluster restore {before_fix}->{len(lots)}", file=sys.stderr)
     return lots, quads, circles
 
 
