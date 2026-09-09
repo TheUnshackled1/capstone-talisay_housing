@@ -1048,6 +1048,9 @@ async function buildLotPlan() {
     svg.appendChild(inertLayer);
 
     lots.forEach((poly, i) => {
+        const pts = poly.points || [];
+        if (pts.length < 3) return;
+
         const g = document.createElementNS(SVG_NS, 'g');
         g.setAttribute('class', 'lotplan-lot');
 
