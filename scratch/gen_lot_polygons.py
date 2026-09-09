@@ -186,7 +186,7 @@ def drop_circle_traces(
     circles: np.ndarray,
     shape: tuple[int, int],
 ) -> tuple[list[dict], list[np.ndarray]]:
-    """Remove traces that are the circular markers themselves."""
+    """Remove traces that are the circular markers themselves — keep real rectangular lots."""
     if circles.size == 0:
         return lots, quads
     H, W = shape
@@ -197,13 +197,16 @@ def drop_circle_traces(
         bw = float(quad[:, 0].max() - quad[:, 0].min())
         bh = float(quad[:, 1].max() - quad[:, 1].min())
         aspect = max(bw, bh) / max(min(bw, bh), 1.0)
+        # Real lots are usually elongated enough — never drop those
+        if aspect >= 1.35 and min(bw, bh) >= 12:
+            kept_lots.append(lot)
+            kept_quads.append(quad)
+            continue
         drop = False
         for cx, cy, r in circles:
-            if np.hypot(lx - cx, ly - cy) <= max(6.0, float(r) * 0.75):
-                drop = True
-                break
-            if aspect <= 1.35 and max(bw, bh) <= float(r) * 2.4:
-                if cv2.pointPolygonTest(quad.astype(np.float32), (float(cx), float(cy)), False) >= 0:
+            # Only drop compact near-square blobs centered on the marker
+            if aspect <= 1.3 and max(bw, bh) <= float(r) * 2.6:
+                if np.hypot(lx - cx, ly - cy) <= max(5.0, float(r) * 0.85):
                     drop = True
                     break
         if drop:
@@ -223,19 +226,228 @@ def mask_out_circles(mask: np.ndarray, circles: np.ndarray, pad: int = 3) -> np.
     return out
 
 
+def lot_from_seed(gray: np.ndarray, sx: float, sy: float, approx_side: float) -> tuple[dict, np.ndarray] | None:
+    """Build a shrunk axis-aligned-ish quad locked to the seed (no flood leak)."""
+    H, W = gray.shape
+    x, y = int(round(sx)), int(round(sy))
+    if not (MARGIN + 2 <= x < W - MARGIN - 2 and MARGIN + 2 <= y < H - MARGIN - 2):
+        return None
+    if gray[y, x] < 125:
+        return None
+
+    ink = (gray < 108).astype(np.uint8)
+    half = max(8.0, min(approx_side * 0.7, 28.0))
+    extents = []
+    for ang in (0.0, 90.0, 180.0, 270.0):
+        rad = np.deg2rad(ang)
+        hit = half
+        for t in np.linspace(3.0, half, 20):
+            xx = int(round(sx + t * np.cos(rad)))
+            yy = int(round(sy + t * np.sin(rad)))
+            if not (0 <= xx < W and 0 <= yy < H) or ink[yy, xx]:
+                hit = t
+                break
+        extents.append(hit)
+
+    right, down, left, up = extents
+    right = right if right < half * 0.95 else approx_side * 0.45
+    left = left if left < half * 0.95 else approx_side * 0.45
+    down = down if down < half * 0.95 else approx_side * 0.40
+    up = up if up < half * 0.95 else approx_side * 0.40
+
+    pad = 0.88
+    x0 = sx - left * pad
+    x1 = sx + right * pad
+    y0 = sy - up * pad
+    y1 = sy + down * pad
+    bw = x1 - x0
+    bh = y1 - y0
+    if bw < MIN_SIDE - 1 or bh < MIN_SIDE - 1:
+        return None
+    if max(bw, bh) / max(min(bw, bh), 1) > MAX_ASPECT:
+        return None
+    if bw * bh > MAX_AREA * 1.2 or bw * bh < MIN_AREA * 0.45:
+        return None
+
+    box = np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], dtype=np.float32)
+    box = shrink_quad(box, 0.97)
+    icx, icy = int(round(sx)), int(round(sy))
+    if gray[icy, icx] < 115:
+        return None
+
+    pts = order_quad([[r4(float(px) / W), r4(float(py) / H)] for px, py in box])
+    lot = {
+        "points": pts,
+        "cx": r4(sx / W),
+        "cy": r4(sy / H),
+        "area": r4((bw * bh) / (W * H)),
+    }
+    return lot, box.astype(np.float32)
+
+
+def _enclosure_hits(gray: np.ndarray, sx: float, sy: float, med: float) -> int:
+    H, W = gray.shape
+    ink = (gray < 108).astype(np.uint8)
+    hits = 0
+    for ang in (0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0):
+        rad = np.deg2rad(ang)
+        for t in np.linspace(med * 0.28, med * 0.70, 10):
+            xx = int(round(sx + t * np.cos(rad)))
+            yy = int(round(sy + t * np.sin(rad)))
+            if not (0 <= xx < W and 0 <= yy < H):
+                break
+            if ink[yy, xx]:
+                hits += 1
+                break
+    return hits
+
+
+
+def is_road_center(gray: np.ndarray, sx: float, sy: float, med: float) -> bool:
+    """True if seed sits in an open road corridor rather than a lot cell."""
+    H, W = gray.shape
+    ix, iy = int(round(sx)), int(round(sy))
+    if not (0 <= ix < W and 0 <= iy < H):
+        return True
+    ink = (gray < 108).astype(np.uint8)
+    clear_dirs = 0
+    for ang in (0.0, 90.0, 180.0, 270.0):
+        rad = np.deg2rad(ang)
+        clear = 0
+        for t in range(2, int(med * 2.2)):
+            xx = int(round(sx + t * np.cos(rad)))
+            yy = int(round(sy + t * np.sin(rad)))
+            if not (0 <= xx < W and 0 <= yy < H):
+                break
+            if ink[yy, xx]:
+                break
+            clear += 1
+        if clear >= int(med * 1.35):
+            clear_dirs += 1
+    if clear_dirs >= 2:
+        return True
+    if _enclosure_hits(gray, sx, sy, med) < 5:
+        return True
+    return False
+
+
+def drop_road_traces(
+    lots: list[dict],
+    quads: list[np.ndarray],
+    gray: np.ndarray,
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Remove false boxes that landed in road corridors."""
+    H, W = gray.shape
+    sides = [np.sqrt(L["area"] * W * H) for L in lots] or [21.0]
+    med = float(np.median(sides))
+    kept_lots: list[dict] = []
+    kept_quads: list[np.ndarray] = []
+    for lot, quad in zip(lots, quads):
+        sx, sy = lot["cx"] * W, lot["cy"] * H
+        if is_road_center(gray, sx, sy, med):
+            continue
+        kept_lots.append(lot)
+        kept_quads.append(quad)
+    return kept_lots, kept_quads
+
+
+def force_seed_lots(
+    gray: np.ndarray,
+    lots: list[dict],
+    quads: list[np.ndarray],
+    seeds: list[tuple[float, float]],
+) -> tuple[list[dict], list[np.ndarray]]:
+    """Add a few known missing lot cells (oriented from nearest neighbor)."""
+    if not seeds or not lots:
+        return lots, quads
+    H, W = gray.shape
+    sides = [np.sqrt(L["area"] * W * H) for L in lots]
+    med = float(np.median(sides))
+    centers = np.array([[L["cx"] * W, L["cy"] * H] for L in lots], dtype=np.float64)
+
+    extra: list[tuple[dict, np.ndarray]] = []
+    for sx, sy in seeds:
+        ix, iy = int(round(sx)), int(round(sy))
+        if not (MARGIN <= ix < W - MARGIN and MARGIN <= iy < H - MARGIN):
+            continue
+        if gray[iy, ix] < 140:
+            continue
+        if is_road_center(gray, sx, sy, med):
+            continue
+        # Nudge onto brighter fill if seed sits on a thin ink fringe
+        if gray[iy, ix] < 160:
+            best = (ix, iy, int(gray[iy, ix]))
+            for yy in range(iy - 5, iy + 6):
+                for xx in range(ix - 5, ix + 6):
+                    if 0 <= xx < W and 0 <= yy < H and int(gray[yy, xx]) > best[2]:
+                        best = (xx, yy, int(gray[yy, xx]))
+            if best[2] >= 155 and not is_road_center(gray, float(best[0]), float(best[1]), med):
+                sx, sy = float(best[0]), float(best[1])
+            else:
+                continue
+        d2 = (centers[:, 0] - sx) ** 2 + (centers[:, 1] - sy) ** 2
+        ni = int(np.argmin(d2))
+        covered = False
+        for q in quads:
+            if cv2.pointPolygonTest(q.astype(np.float32), (float(sx), float(sy)), False) >= 0:
+                covered = True
+                break
+        if covered:
+            continue
+        ref = lots[ni]
+        ref_pts = np.array(ref["points"], dtype=float) * np.array([W, H])
+        edges = np.array([b - a for a, b in zip(ref_pts, np.roll(ref_pts, -1, axis=0))])
+        lengths = np.linalg.norm(edges, axis=1)
+        ux = edges[int(np.argmax(lengths))]
+        ux = ux / (np.linalg.norm(ux) + 1e-9)
+        uy = np.array([-ux[1], ux[0]])
+        side = float(sides[ni])
+        half_w, half_h = side * 0.45, side * 0.40
+        box = np.array(
+            [
+                [sx, sy] - ux * half_w - uy * half_h,
+                [sx, sy] + ux * half_w - uy * half_h,
+                [sx, sy] + ux * half_w + uy * half_h,
+                [sx, sy] - ux * half_w + uy * half_h,
+            ],
+            dtype=np.float32,
+        )
+        box = shrink_quad(box, SHRINK)
+        if any(aabb_iou(box, q.astype(np.float32)) >= IOU_DEDUP for q in quads):
+            continue
+        if any(aabb_iou(box, eb) >= IOU_DEDUP for _, eb in extra):
+            continue
+        pts_n = order_quad([[r4(float(px) / W), r4(float(py) / H)] for px, py in box])
+        lot = {
+            "points": pts_n,
+            "cx": r4(sx / W),
+            "cy": r4(sy / H),
+            "area": r4((half_w * 2 * half_h * 2) / (W * H)),
+        }
+        extra.append((lot, box))
+
+    if not extra:
+        return lots, quads
+    for lot, box in extra:
+        lots.append(lot)
+        quads.append(np.int32(box))
+    order = sorted(range(len(lots)), key=lambda i: (lots[i]["cy"], lots[i]["cx"]))
+    return [lots[i] for i in order], [quads[i] for i in order]
+
+
 def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndarray]:
     masks = [
         build_mask(gray, dilate=3, close=True, bright_t=185, ink_t=90),
         build_mask(gray, dilate=2, close=True, bright_t=178, ink_t=100),
         build_mask(gray, dilate=2, close=False, bright_t=170, ink_t=110),
         build_mask(gray, dilate=2, close=True, bright_t=155, ink_t=70),
+        build_mask(gray, dilate=1, close=False, bright_t=160, ink_t=120),
     ]
     cands: list[tuple[dict, np.ndarray]] = []
     for m in masks:
         cands.extend(extract_from_mask(gray, m))
     lots, quads = dedupe(cands)
 
-    # Prefer road-junction circles: bright ring around the marker
     blur = cv2.medianBlur(gray, 5)
     raw = cv2.HoughCircles(
         blur,
@@ -243,29 +455,34 @@ def detect_lots(gray: np.ndarray) -> tuple[list[dict], list[np.ndarray], np.ndar
         dp=1.2,
         minDist=20,
         param1=85,
-        param2=22,
+        param2=24,
         minRadius=5,
         maxRadius=16,
     )
-    circles_all = raw[0].astype(np.float32) if raw is not None else np.zeros((0, 3), dtype=np.float32)
+    strict = raw[0].astype(np.float32) if raw is not None else np.zeros((0, 3), dtype=np.float32)
     H, W = gray.shape
     road_circles = []
-    for cx, cy, r in circles_all:
+    for cx, cy, r in strict:
         x, y, rr = int(round(cx)), int(round(cy)), int(round(r))
         if not (rr + 4 < x < W - rr - 4 and rr + 4 < y < H - rr - 4):
             continue
-        # Sample ring outside the circle
         ring = np.zeros((H, W), dtype=np.uint8)
         cv2.circle(ring, (x, y), rr + 4, 255, 3)
         ys, xs = np.where(ring > 0)
         if len(xs) < 8:
             continue
         if float(gray[ys, xs].mean()) < 160:
-            continue  # not a road-embedded marker
+            continue
         road_circles.append([cx, cy, r])
     circles = np.array(road_circles, dtype=np.float32) if road_circles else np.zeros((0, 3), dtype=np.float32)
 
     lots, quads = drop_circle_traces(lots, quads, circles, gray.shape)
+    before_road = len(lots)
+    lots, quads = drop_road_traces(lots, quads, gray)
+    print(f"dropped road FPs -{before_road - len(lots)}", file=sys.stderr)
+    before = len(lots)
+    lots, quads = force_seed_lots(gray, lots, quads, [(163.4, 407.4)])
+    print(f"surgical seeds +{len(lots) - before}", file=sys.stderr)
     return lots, quads, circles
 
 
