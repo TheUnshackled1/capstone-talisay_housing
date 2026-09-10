@@ -1358,6 +1358,11 @@ function initLotPlanZoom() {
     let panStartY = 0;
     let wheelTimer = null;
 
+    // ── 3D Tilt state ──
+    let is3D = false;
+    const TILT_X = 52;   // degrees of X-axis lean (board tilt)
+    const TILT_Z = -18;  // degrees of Z-axis twist (azimuth)
+
     function getNaturalStageH() {
         // Height of stage at scale=1 (offsetHeight before transform)
         return stage.offsetHeight;
@@ -1383,8 +1388,21 @@ function initLotPlanZoom() {
 
     function applyTransform() {
         clampPan();
-        stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        // Append 3D tilt rotation AFTER translate+scale so the tilt
+        // rotates the board around its own centre, not the world origin.
+        const tilt = is3D
+            ? ` rotateX(${TILT_X}deg) rotateZ(${TILT_Z}deg)`
+            : '';
+        stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})${tilt}`;
         if (levelEl) levelEl.textContent = Math.round(scale * 100) + '%';
+    }
+
+    function toggle3D() {
+        is3D = !is3D;
+        wrapper.classList.toggle('is-3d', is3D);
+        const btn3d = document.getElementById('lotplan-3d-toggle');
+        if (btn3d) btn3d.setAttribute('aria-pressed', String(is3D));
+        applyTransform();
     }
 
     function zoomTo(newScale, cx, cy) {
@@ -1424,6 +1442,9 @@ function initLotPlanZoom() {
     // --- Mouse wheel zoom (responsive — no transition during wheel) ---
     wrapper.addEventListener('wheel', function (e) {
         e.preventDefault();
+        // In 3D mode, cursor coordinates are warped by perspective
+        // projection — disable wheel zoom and use buttons only.
+        if (is3D) return;
         stage.classList.add('is-wheeling');
         clearTimeout(wheelTimer);
         wheelTimer = setTimeout(() => stage.classList.remove('is-wheeling'), 120);
@@ -1519,6 +1540,9 @@ function initLotPlanZoom() {
     if (btnReset) btnReset.addEventListener('click', resetZoom);
     // Clicking the zoom level label also resets
     if (levelEl) levelEl.addEventListener('click', resetZoom);
+    // 3D toggle button
+    const btn3DEl = document.getElementById('lotplan-3d-toggle');
+    if (btn3DEl) btn3DEl.addEventListener('click', toggle3D);
 
     // --- Keyboard shortcuts (only when map is in view) ---
     document.addEventListener('keydown', function (e) {
