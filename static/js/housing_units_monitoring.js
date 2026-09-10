@@ -1358,13 +1358,6 @@ function initLotPlanZoom() {
     let panStartY = 0;
     let wheelTimer = null;
 
-    // ── 3D Tilt state ──
-    let is3D = false;
-    const TILT_X = 52;   // degrees of X-axis lean (board tilt)
-    const TILT_Z = -18;  // degrees of Z-axis twist (azimuth)
-    // Cache the button reference once at init — avoids repeated DOM queries on toggle
-    const btn3DCached = document.getElementById('lotplan-3d-toggle');
-
     function getNaturalStageH() {
         // Height of stage at scale=1 (offsetHeight before transform)
         return stage.offsetHeight;
@@ -1390,21 +1383,8 @@ function initLotPlanZoom() {
 
     function applyTransform() {
         clampPan();
-        // Append 3D tilt rotation AFTER translate+scale so the tilt
-        // rotates the board around its own centre, not the world origin.
-        const tilt = is3D
-            ? ` rotateX(${TILT_X}deg) rotateZ(${TILT_Z}deg)`
-            : '';
-        stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})${tilt}`;
+        stage.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
         if (levelEl) levelEl.textContent = Math.round(scale * 100) + '%';
-    }
-
-    function toggle3D() {
-        is3D = !is3D;
-        wrapper.classList.toggle('is-3d', is3D);
-        // Use cached reference — no DOM query on every call
-        if (btn3DCached) btn3DCached.setAttribute('aria-pressed', String(is3D));
-        applyTransform();
     }
 
     function zoomTo(newScale, cx, cy) {
@@ -1439,14 +1419,11 @@ function initLotPlanZoom() {
         applyTransform();
     }
 
-    window.lotPlanMap = { flyTo, resetZoom, toggle3D };
+    window.lotPlanMap = { flyTo, resetZoom };
 
     // --- Mouse wheel zoom (responsive — no transition during wheel) ---
     wrapper.addEventListener('wheel', function (e) {
         e.preventDefault();
-        // In 3D mode, cursor coordinates are warped by perspective
-        // projection — disable wheel zoom and use buttons only.
-        if (is3D) return;
         stage.classList.add('is-wheeling');
         clearTimeout(wheelTimer);
         wheelTimer = setTimeout(() => stage.classList.remove('is-wheeling'), 120);
@@ -1510,9 +1487,6 @@ function initLotPlanZoom() {
     wrapper.addEventListener('touchmove', function (e) {
         if (e.touches.length === 2 && lastTouchDist) {
             e.preventDefault();
-            // In 3D mode, perspective projection warps touch coordinates
-            // the same way it does mouse coordinates — skip pinch zoom.
-            if (is3D) return;
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             const dist = Math.hypot(dx, dy);
@@ -1545,9 +1519,6 @@ function initLotPlanZoom() {
     if (btnReset) btnReset.addEventListener('click', resetZoom);
     // Clicking the zoom level label also resets
     if (levelEl) levelEl.addEventListener('click', resetZoom);
-    // 3D toggle button
-    const btn3DEl = document.getElementById('lotplan-3d-toggle');
-    if (btn3DEl) btn3DEl.addEventListener('click', toggle3D);
 
     // --- Keyboard shortcuts (only when map is in view) ---
     document.addEventListener('keydown', function (e) {
@@ -1569,9 +1540,6 @@ function initLotPlanZoom() {
         } else if (e.key === '0') {
             e.preventDefault();
             resetZoom();
-        } else if (e.key === 't' || e.key === 'T') {
-            e.preventDefault();
-            toggle3D();
         }
     });
 
