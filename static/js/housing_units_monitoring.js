@@ -1362,6 +1362,8 @@ function initLotPlanZoom() {
     let is3D = false;
     const TILT_X = 52;   // degrees of X-axis lean (board tilt)
     const TILT_Z = -18;  // degrees of Z-axis twist (azimuth)
+    // Cache the button reference once at init — avoids repeated DOM queries on toggle
+    const btn3DCached = document.getElementById('lotplan-3d-toggle');
 
     function getNaturalStageH() {
         // Height of stage at scale=1 (offsetHeight before transform)
@@ -1400,8 +1402,8 @@ function initLotPlanZoom() {
     function toggle3D() {
         is3D = !is3D;
         wrapper.classList.toggle('is-3d', is3D);
-        const btn3d = document.getElementById('lotplan-3d-toggle');
-        if (btn3d) btn3d.setAttribute('aria-pressed', String(is3D));
+        // Use cached reference — no DOM query on every call
+        if (btn3DCached) btn3DCached.setAttribute('aria-pressed', String(is3D));
         applyTransform();
     }
 
@@ -1437,7 +1439,7 @@ function initLotPlanZoom() {
         applyTransform();
     }
 
-    window.lotPlanMap = { flyTo, resetZoom };
+    window.lotPlanMap = { flyTo, resetZoom, toggle3D };
 
     // --- Mouse wheel zoom (responsive — no transition during wheel) ---
     wrapper.addEventListener('wheel', function (e) {
@@ -1508,6 +1510,9 @@ function initLotPlanZoom() {
     wrapper.addEventListener('touchmove', function (e) {
         if (e.touches.length === 2 && lastTouchDist) {
             e.preventDefault();
+            // In 3D mode, perspective projection warps touch coordinates
+            // the same way it does mouse coordinates — skip pinch zoom.
+            if (is3D) return;
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             const dist = Math.hypot(dx, dy);
@@ -1564,6 +1569,9 @@ function initLotPlanZoom() {
         } else if (e.key === '0') {
             e.preventDefault();
             resetZoom();
+        } else if (e.key === 't' || e.key === 'T') {
+            e.preventDefault();
+            toggle3D();
         }
     });
 
