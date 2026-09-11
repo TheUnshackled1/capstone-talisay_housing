@@ -385,29 +385,15 @@ function capturePhotoEvidence() {
         }
         return;
     }
-    let origWidth = video.videoWidth || 1280;
-    let origHeight = video.videoHeight || 720;
-    
-    /* Crop to 16:9 to match the UI's cinematic object-fit: cover on the original source */
-    let rect = video.getBoundingClientRect();
-    let targetAspect = rect.width / rect.height || (16 / 9);
-    let sourceAspect = origWidth / origHeight;
-    let srcCropWidth = origWidth;
-    let srcCropHeight = origHeight;
-    let srcOffsetX = 0;
-    let srcOffsetY = 0;
 
-    if (sourceAspect > targetAspect) {
-        srcCropWidth = Math.floor(origHeight * targetAspect);
-        srcOffsetX = Math.floor((origWidth - srcCropWidth) / 2);
-    } else if (sourceAspect < targetAspect) {
-        srcCropHeight = Math.floor(origWidth / targetAspect);
-        srcOffsetY = Math.floor((origHeight - srcCropHeight) / 2);
-    }
+    /* Capture the full native video frame — no UI-based cropping.
+       The previous getBoundingClientRect() crop was using the CSS display
+       box dimensions instead of the actual camera sensor dimensions,
+       which caused the captured image to be incorrectly cropped. */
+    let destWidth = video.videoWidth || 1280;
+    let destHeight = video.videoHeight || 720;
 
-    /* Optimization: Scale down 4K/high-res streams to max 1280px */
-    let destWidth = srcCropWidth;
-    let destHeight = srcCropHeight;
+    /* Optimization: Scale down 4K/high-res streams to max 1280px wide/tall */
     const MAX_DIMENSION = 1280;
     if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
         const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);
@@ -418,12 +404,12 @@ function capturePhotoEvidence() {
     canvas.width = destWidth;
     canvas.height = destHeight;
     const context = canvas.getContext('2d');
-    context.drawImage(video, srcOffsetX, srcOffsetY, srcCropWidth, srcCropHeight, 0, 0, destWidth, destHeight);
+    context.drawImage(video, 0, 0, destWidth, destHeight);
     canvas.toBlob((blob) => {
         if (!blob) return;
         const file = new File([blob], `monitoring-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
         setPhotoEvidenceFiles([...(input.files || []), file]);
-    }, 'image/jpeg', 0.8); /* Optimized from 0.9 for faster upload speed */
+    }, 'image/jpeg', 0.8); /* 0.8 quality for faster upload speed */
 }
 
 function openPhotoEvidencePicker() {
