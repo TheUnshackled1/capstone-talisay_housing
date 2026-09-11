@@ -743,29 +743,14 @@
             alert('Wait for the camera preview, then capture again.');
             return;
         }
-        let origWidth = v.videoWidth || 1280;
-        let origHeight = v.videoHeight || 720;
-        
-        /* Crop to 16:9 to match the UI's cinematic object-fit: cover on the original source */
-        let rect = v.getBoundingClientRect();
-        let targetAspect = rect.width / rect.height || (16 / 9);
-        let sourceAspect = origWidth / origHeight;
-        let srcCropWidth = origWidth;
-        let srcCropHeight = origHeight;
-        let srcOffsetX = 0;
-        let srcOffsetY = 0;
 
-        if (sourceAspect > targetAspect) {
-            srcCropWidth = Math.floor(origHeight * targetAspect);
-            srcOffsetX = Math.floor((origWidth - srcCropWidth) / 2);
-        } else if (sourceAspect < targetAspect) {
-            srcCropHeight = Math.floor(origWidth / targetAspect);
-            srcOffsetY = Math.floor((origHeight - srcCropHeight) / 2);
-        }
+        /* Capture the full native video frame — no UI-based cropping.
+           getBoundingClientRect() returns the CSS box size, not the camera
+           sensor size, which caused the captured image to be incorrectly cropped. */
+        let destWidth = v.videoWidth || 1280;
+        let destHeight = v.videoHeight || 720;
 
         /* Optimization: Scale down 4K/high-res streams to max 1280px */
-        let destWidth = srcCropWidth;
-        let destHeight = srcCropHeight;
         const MAX_DIMENSION = 1280;
         if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
             const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);
@@ -775,7 +760,7 @@
 
         c.width = destWidth;
         c.height = destHeight;
-        c.getContext('2d').drawImage(v, srcOffsetX, srcOffsetY, srcCropWidth, srcCropHeight, 0, 0, destWidth, destHeight);
+        c.getContext('2d').drawImage(v, 0, 0, destWidth, destHeight);
         c.toBlob((blob) => {
             if (!blob) return;
             const file = new File([blob], 'settlement-' + Date.now() + '.jpg', { type: 'image/jpeg' });
@@ -974,29 +959,14 @@
             alert('Wait for the camera preview, then capture again.');
             return;
         }
-        let origWidth = v.videoWidth || 1280;
-        let origHeight = v.videoHeight || 720;
-        
-        /* Crop to 16:9 to match the UI's cinematic object-fit: cover on the original source */
-        let rect = v.getBoundingClientRect();
-        let targetAspect = rect.width / rect.height || (16 / 9);
-        let sourceAspect = origWidth / origHeight;
-        let srcCropWidth = origWidth;
-        let srcCropHeight = origHeight;
-        let srcOffsetX = 0;
-        let srcOffsetY = 0;
 
-        if (sourceAspect > targetAspect) {
-            srcCropWidth = Math.floor(origHeight * targetAspect);
-            srcOffsetX = Math.floor((origWidth - srcCropWidth) / 2);
-        } else if (sourceAspect < targetAspect) {
-            srcCropHeight = Math.floor(origWidth / targetAspect);
-            srcOffsetY = Math.floor((origHeight - srcCropHeight) / 2);
-        }
+        /* Capture the full native video frame — no UI-based cropping.
+           getBoundingClientRect() returns the CSS box size, not the camera
+           sensor size, which caused the captured image to be incorrectly cropped. */
+        let destWidth = v.videoWidth || 1280;
+        let destHeight = v.videoHeight || 720;
 
         /* Optimization: Scale down 4K/high-res streams to max 1280px */
-        let destWidth = srcCropWidth;
-        let destHeight = srcCropHeight;
         const MAX_DIMENSION = 1280;
         if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
             const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);
@@ -1006,7 +976,7 @@
 
         c.width = destWidth;
         c.height = destHeight;
-        c.getContext('2d').drawImage(v, srcOffsetX, srcOffsetY, srcCropWidth, srcCropHeight, 0, 0, destWidth, destHeight);
+        c.getContext('2d').drawImage(v, 0, 0, destWidth, destHeight);
         c.toBlob((blob) => {
             if (!blob) return;
             const file = new File([blob], 'intake-' + Date.now() + '.jpg', { type: 'image/jpeg' });
