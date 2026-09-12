@@ -1,4 +1,4 @@
-"""Trace and refit lots 0 and 2 — circle notch at BOTTOM inner junction."""
+"""Trace and refit lots 0 and 2 — exclude mid-divider sketch circle."""
 import json
 import math
 import shutil
@@ -26,10 +26,10 @@ fillable = ((gray >= 145) & (gray <= 210)).astype(np.uint8) * 255
 fillable = cv2.bitwise_and(fillable, cv2.bitwise_not(ink))
 
 best = None
-for r_try in (4.5, 5.0, 5.5, 6.0, 6.5):
-    for cy in range(37, 43):
-        for cx in range(652, 658):
-            ang = np.linspace(0, 2 * math.pi, 40, endpoint=False)
+for r_try in (6.0, 6.5, 7.0, 7.5, 8.0):
+    for cy in range(24, 33):
+        for cx in range(649, 656):
+            ang = np.linspace(0, 2 * math.pi, 48, endpoint=False)
             ring = np.array(
                 [
                     gray[
@@ -40,14 +40,14 @@ for r_try in (4.5, 5.0, 5.5, 6.0, 6.5):
                 ]
             )
             ring_m = float(ring.mean())
-            if ring_m > 125:
-                continue
             core = float(gray[cy, cx])
+            if ring_m > 105 or core < 150:
+                continue
             score = core - ring_m
             if best is None or score > best[0]:
                 best = (score, cx, cy, r_try)
 CX, CY, R = float(best[1]), float(best[2]), float(best[3])
-R_ARC = R + 0.4
+R_ARC = R + 0.35
 print("circle", CX, CY, "R", R, "R_ARC", R_ARC, "score", round(best[0], 1))
 
 LOTS = {
@@ -105,14 +105,6 @@ def arc_pts_cw(a1: float, a2: float, n: int = 8) -> list[np.ndarray]:
     ]
 
 
-def bottom_circle_x(y: float, side: str) -> float:
-    dy = y - CY
-    if abs(dy) >= R_ARC:
-        return CX
-    dx = math.sqrt(R_ARC * R_ARC - dy * dy)
-    return (CX - dx) if side == "left" else (CX + dx)
-
-
 def push_out(xy: np.ndarray) -> np.ndarray:
     out: list[np.ndarray] = []
     n = len(xy)
@@ -133,10 +125,9 @@ def push_out(xy: np.ndarray) -> np.ndarray:
 
 
 def polygon_for(side: str, x0: float, y0: float, x1: float, y1: float) -> np.ndarray:
-    """CW polygon — straight top, circle notch at bottom inner corner on divider."""
-    x_bot = bottom_circle_x(y1, side)
-    a_bot = math.atan2(y1 - CY, x_bot - CX)
-    a_top = -math.pi / 2  # top of circle on divider (CX, CY - R)
+    """CW polygon — straight outer edges, circle cutout on shared divider."""
+    a_top = -math.pi / 2
+    a_bot = math.pi / 2
 
     if side == "left":
         pts: list[np.ndarray] = [
@@ -145,6 +136,7 @@ def polygon_for(side: str, x0: float, y0: float, x1: float, y1: float) -> np.nda
             np.array([CX, CY - R_ARC]),
         ]
         pts.extend(arc_pts_cw(a_top, a_bot)[1:])
+        pts.append(np.array([CX, y1]))
         pts.append(np.array([x0, y1]))
     else:
         pts = [
@@ -153,6 +145,7 @@ def polygon_for(side: str, x0: float, y0: float, x1: float, y1: float) -> np.nda
             np.array([CX, CY - R_ARC]),
         ]
         pts.extend(arc_pts(a_top, a_bot)[1:])
+        pts.append(np.array([CX, y1]))
         pts.append(np.array([x1, y1]))
     return np.array(pts, float)
 
@@ -229,8 +222,7 @@ POLY.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 vis = Image.fromarray(rgb.copy()).convert("RGBA")
 dr = ImageDraw.Draw(vis, "RGBA")
-dr.ellipse([CX - R, CY - R, CX + R, CY + R], outline=(255, 0, 0, 200), width=1)
-dr.ellipse([CX - 6, CY - 6, CX + 6, CY + 6], outline=(255, 255, 0, 200), width=1)
+dr.ellipse([CX - R, CY - R, CX + R, CY + R], outline=(0, 220, 0, 230), width=2)
 for i in IDS:
     L = lots[i]
     pts = [(p[0] * W, p[1] * H) for p in L["points"]]
@@ -238,7 +230,7 @@ for i in IDS:
     for x, y in pts:
         dr.ellipse([x - 1.5, y - 1.5, x + 1.5, y + 1.5], fill=(220, 0, 0, 255))
     dr.text((L["cx"] * W - 8, L["cy"] * H - 4), str(i), fill=(200, 0, 0, 255))
-vis.crop((625, 22, 685, 55)).resize((900, 700), Image.NEAREST).save("scratch/fix_0_2_circle_cut.png")
+vis.crop((625, 8, 685, 50)).resize((900, 840), Image.NEAREST).save("scratch/fix_0_2_circle_cut.png")
 
 ov = Path("scratch/lot_plan_all_indices.png")
 vis2 = Image.fromarray(rgb.copy()).convert("RGBA")
