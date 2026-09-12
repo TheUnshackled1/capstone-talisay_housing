@@ -1443,7 +1443,14 @@ function initLotPlanZoom() {
         panStartX = panX;
         panStartY = panY;
         stage.classList.add('is-dragging');
+        document.body.classList.add('lotplan-no-select');
         e.preventDefault();
+    });
+
+    // Prevent text selection from bleeding outside the map while panning
+    wrapper.addEventListener('selectstart', function (e) { e.preventDefault(); });
+    document.addEventListener('selectstart', function (e) {
+        if (isDragging) e.preventDefault();
     });
 
     document.addEventListener('mousemove', function (e) {
@@ -1457,6 +1464,7 @@ function initLotPlanZoom() {
         if (isDragging) {
             isDragging = false;
             stage.classList.remove('is-dragging');
+            document.body.classList.remove('lotplan-no-select');
         }
     });
 
