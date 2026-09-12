@@ -1,6 +1,5 @@
-"""Trace and refit lots 0 and 2 from ink flood contours; circle arc on ink ring."""
+"""Trace and refit lots 0, 1, and 2 from ink flood contours; circle excluded on 0/2."""
 import json
-import math
 import shutil
 from pathlib import Path
 
@@ -11,7 +10,7 @@ from PIL import Image, ImageDraw
 W, H = 906, 543
 POLY = Path("static/units/lot_plan_polygons.json")
 IMG = Path("static/images/lot_plan_roads.png")
-bak = Path("scratch/lot_plan_polygons_before_refit_0_2.json")
+bak = Path("scratch/lot_plan_polygons_before_refit_0_1_2.json")
 shutil.copy(POLY, bak)
 
 data = json.loads(POLY.read_text(encoding="utf-8"))
@@ -24,7 +23,7 @@ ink = cv2.dilate(ink, np.ones((2, 2), np.uint8), 1)
 fillable = ((gray >= 145) & (gray <= 210)).astype(np.uint8) * 255
 fillable = cv2.bitwise_and(fillable, cv2.bitwise_not(ink))
 
-CX, CY, R = 649.0, 16.0, 8.5  # ink ring radius at junction
+CX, CY, R = 649.0, 16.0, 9.0
 
 
 def r4(v: float) -> float:
@@ -35,7 +34,7 @@ def to_norm(xy: np.ndarray) -> list:
     return [[float(x / W), float(y / H)] for x, y in xy]
 
 
-def flood_cell(seed_x: float, seed_y: float, roi: tuple[int, int, int, int]) -> np.ndarray:
+def flood_cell(seed_x: float, seed_y: float, roi: tuple[int, int, int, int], cut_circle: bool = False) -> np.ndarray:
     x0, y0, x1, y1 = roi
     roi_m = np.zeros((H, W), np.uint8)
     roi_m[y0:y1, x0:x1] = 255
@@ -49,8 +48,9 @@ def flood_cell(seed_x: float, seed_y: float, roi: tuple[int, int, int, int]) -> 
     allow = cv2.bitwise_and(roi_m, cv2.bitwise_not(hard))
     for _ in range(2):
         cell = cv2.bitwise_and(cv2.dilate(cell, np.ones((3, 3), np.uint8), 1), allow)
-    yy, xx = np.mgrid[0:H, 0:W]
-    cell[((xx - CX) ** 2 + (yy - CY) ** 2) <= R ** 2] = 0
+    if cut_circle:
+        yy, xx = np.mgrid[0:H, 0:W]
+        cell[((xx - CX) ** 2 + (yy - CY) ** 2) <= R ** 2] = 0
     return cell
 
 
@@ -74,6 +74,21 @@ def snap_lot0(xy: np.ndarray) -> np.ndarray:
             y = 10.5
         elif y > 41:
             y = 42.5
+        out.append([x, y])
+    return np.array(out, float)
+
+
+def snap_lot1(xy: np.ndarray) -> np.ndarray:
+    out = []
+    for x, y in xy:
+        if x < 615:
+            x = 613.5
+        elif x > 629:
+            x = 631.5
+        if y < 14:
+            y = 12.5
+        elif y > 42:
+            y = 43.5
         out.append([x, y])
     return np.array(out, float)
 
@@ -109,78 +124,69 @@ def dedupe(xy: np.ndarray, tol: float = 0.35) -> np.ndarray:
     return np.array(out)
 
 
-def norm_ang(a: float) -> float:
-    while a > math.pi:
-        a -= 2 * math.pi
-    while a < -math.pi:
-        a += 2 * math.pi
-    return a
+def merge_targets(targets: np.ndarray, raw: np.ndarray) -> np.ndarray:
+    out = targets.copy()
+    for i, target in enumerate(out):
+        for p in raw:
+            if np.linalg.norm(p - target) < 2.5:
+                out[i] = p
+                break
+    return dedupe(out)
 
 
-def h_hit(y: float, x_lo: float, x_hi: float) -> np.ndarray | None:
-    d2 = R ** 2 - (y - CY) ** 2
-    if d2 < 0:
-        return None
-    xs = [CX - math.sqrt(d2), CX + math.sqrt(d2)]
-    xs = [x for x in xs if x_lo <= x <= x_hi]
-    return np.array([min(xs), y]) if xs else None
+raw0 = snap_lot0(extract_polygon(flood_cell(640, 28, (632, 8, 652, 48), True)))
+raw1 = snap_lot1(extract_polygon(flood_cell(620, 28, (610, 8, 632, 48), False)))
+raw2 = snap_lot2(extract_polygon(flood_cell(666, 28, (652, 8, 676, 48), True)))
 
+lot0 = merge_targets(
+    np.array(
+        [
+            [632.5, 10.5],
+            [641.0, 10.5],
+            [639.0, 16.0],
+            [644.0, 24.0],
+            [645.0, 33.0],
+            [650.5, 34.0],
+            [650.5, 42.5],
+            [632.5, 42.5],
+        ],
+        float,
+    ),
+    raw0,
+)
 
-def v_hit(x: float, y_lo: float, y_hi: float) -> np.ndarray | None:
-    d2 = R ** 2 - (x - CX) ** 2
-    if d2 < 0:
-        return None
-    ys = [CY - math.sqrt(d2), CY + math.sqrt(d2)]
-    ys = [y for y in ys if y_lo <= y <= y_hi]
-    return np.array([x, min(ys)]) if ys else None
+# lot 1: clockwise TL -> TR -> BR -> BL (angled bottom follows curved ink road)
+lot1 = merge_targets(
+    np.array(
+        [
+            [613.5, 14.0],
+            [631.5, 12.5],
+            [631.5, 42.5],
+            [618.0, 43.5],
+        ],
+        float,
+    ),
+    raw1,
+)
 
+lot2 = merge_targets(
+    np.array(
+        [
+            [658.0, 13.5],
+            [672.5, 13.5],
+            [672.5, 44.5],
+            [652.5, 42.5],
+            [652.5, 37.0],
+            [660.0, 31.0],
+            [660.0, 24.0],
+            [656.0, 22.0],
+        ],
+        float,
+    ),
+    raw2,
+)
 
-def arc_pts(a1: float, a2: float, steps: int = 5) -> list[np.ndarray]:
-    da = norm_ang(a2 - a1)
-    if abs(da) > math.pi:
-        da = da - 2 * math.pi if da > 0 else da + 2 * math.pi
-    return [
-        np.array([CX + R * math.cos(a1 + da * t), CY + R * math.sin(a1 + da * t)])
-        for t in np.linspace(0, 1, steps)
-    ]
-
-
-def build_lot0() -> np.ndarray:
-    p_top = h_hit(10.5, 632.5, 650.5)
-    p_right = v_hit(650.5, 10.5, 43.5)
-    a1 = math.atan2(p_top[1] - CY, p_top[0] - CX)
-    a2 = math.atan2(p_right[1] - CY, p_right[0] - CX)
-    pts = [
-        [632.5, 10.5],
-        p_top,
-        *arc_pts(a1, a2, 6),
-        p_right,
-        [650.5, 42.5],
-        [632.5, 42.5],
-    ]
-    return dedupe(np.array(pts, float))
-
-
-def build_lot2() -> np.ndarray:
-    p_left = v_hit(652.5, 13.5, 45.5)
-    p_top = h_hit(13.5, 652.5, 672.5)
-    b1 = math.atan2(p_left[1] - CY, p_left[0] - CX)
-    b2 = math.atan2(p_top[1] - CY, p_top[0] - CX)
-    pts = [
-        p_top,
-        [672.5, 13.5],
-        [672.5, 44.5],
-        [652.5, 42.5],
-        p_left,
-        *arc_pts(b1, b2, 6),
-    ]
-    return dedupe(np.array(pts, float))
-
-
-lot0 = build_lot0()
-lot2 = build_lot2()
-
-for idx, xy in [(0, lot0), (2, lot2)]:
+for idx, xy in [(0, lot0), (1, lot1), (2, lot2)]:
     lots[idx] = {
         "points": to_norm(xy),
         "cx": r4(xy[:, 0].mean() / W),
@@ -206,7 +212,7 @@ def point_in_poly(x, y, poly):
     return inside
 
 
-def coverage(rr=5):
+def coverage(rr=6):
     cov = {0: 0, 2: 0}
     for y in range(int(CY - rr), int(CY + rr) + 1):
         for x in range(int(CX - rr), int(CX + rr) + 1):
@@ -228,14 +234,14 @@ POLY.write_text(json.dumps(data, indent=2), encoding="utf-8")
 vis = Image.fromarray(rgb.copy()).convert("RGBA")
 dr = ImageDraw.Draw(vis, "RGBA")
 dr.ellipse([CX - R, CY - R, CX + R, CY + R], outline=(255, 0, 0, 140), width=1)
-for i in [0, 2]:
+for i in [0, 1, 2]:
     L = lots[i]
     pts = [(p[0] * W, p[1] * H) for p in L["points"]]
     dr.polygon(pts, fill=(30, 100, 255, 175), outline=(0, 40, 180, 255))
     for x, y in pts:
         dr.ellipse([x - 1.5, y - 1.5, x + 1.5, y + 1.5], fill=(220, 0, 0, 255))
     dr.text((L["cx"] * W - 8, L["cy"] * H - 4), str(i), fill=(200, 0, 0, 255))
-vis.crop((625, 0, 685, 55)).resize((700, 600), Image.NEAREST).save("scratch/fix_0_2_circle_cut.png")
+vis.crop((600, 0, 685, 55)).resize((750, 600), Image.NEAREST).save("scratch/fix_0_1_2_trace.png")
 
 ov = Path("scratch/lot_plan_all_indices.png")
 vis2 = Image.fromarray(rgb.copy()).convert("RGBA")
