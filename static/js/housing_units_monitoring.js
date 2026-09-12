@@ -1689,8 +1689,7 @@ function kpiFilter(card) {
     const showAll = reset || kind === 'all';
 
     function lotIsRecognizedHousingUnit(lot) {
-        return (lot.dataset.housingUnitOnFile || '') === '1'
-            || (lot.dataset.historicalBeneficiary || '') === '1';
+        return (lot.dataset.status || '') === 'Occupied';
     }
 
     document.querySelectorAll('.vmap-lot').forEach(lot => {

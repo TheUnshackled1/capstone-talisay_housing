@@ -442,6 +442,7 @@ def housing_units_monitoring(request, position):
         'notice_30_count': notice_30_count,
         'notice_10_count': notice_10_count,
         'repossessed_count': repossessed_count,
+        'housing_unit_kpi_count': occupied_count + sum(1 for u in units_list if getattr(u, 'is_historical_beneficiary', False)),
         'units_by_block': units_by_block,
         'all_units': units,
         'has_final_notice_alerts': has_final_notice_alerts,
