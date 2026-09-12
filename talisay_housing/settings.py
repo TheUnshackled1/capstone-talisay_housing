@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+
+import dj_database_url
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -107,6 +109,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Must stay directly after SecurityMiddleware — serves STATIC_ROOT in production.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 if DEBUG:
     MIDDLEWARE.append("accounts.middleware.LocalhostCanonicalizationMiddleware")
@@ -144,15 +148,13 @@ WSGI_APPLICATION = "talisay_housing.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# Reads DATABASE_URL when present (Railway injects it); falls back to local dev Postgres.
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "talisay_housing_db",
-        "USER": "postgres",
-        "PASSWORD": "1234",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
+    "default": dj_database_url.config(
+        default="postgres://postgres:1234@localhost:5432/talisay_housing_db",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
@@ -192,10 +194,14 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / 'static']
+# collectstatic target — WhiteNoise serves from here when DEBUG=False.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (User uploads)
+# MEDIA_ROOT is env-driven so Railway can point it at a mounted Volume (/app/media);
+# the local filesystem there is ephemeral and would lose uploads on every deploy.
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT') or (BASE_DIR / 'media'))
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
