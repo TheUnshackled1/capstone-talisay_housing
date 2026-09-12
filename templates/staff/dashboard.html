@@ -328,6 +328,7 @@
             {% if user.position == 'second_member' or user.position == 'fourth_member' %}
 
     <!-- Analytics Period Filter Bar -->
+    {{ available_periods_json|json_script:"analytics-available-periods" }}
     <form method="GET" action="" class="analytics-filter-bar" id="analyticsFilterBar">
         <div class="analytics-filter-label">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -377,9 +378,56 @@
                 <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
                 <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            {{ report_month }}/{{ report_year }}
+            {{ period_label }}
         </div>
     </form>
+    <script>
+    (function () {
+        // Available periods from Django: { "2025": [{num:1,name:"January"}, ...], "2026": [...] }
+        var _periodsEl = document.getElementById('analytics-available-periods');
+        if (!_periodsEl) return;
+        var availPeriods = JSON.parse(_periodsEl.textContent || '{}');
+
+        // Full 12-month fallback used when the selected year has no DB data
+        var ALL_MONTHS = [
+            {num:1,name:'January'},{num:2,name:'February'},{num:3,name:'March'},
+            {num:4,name:'April'},{num:5,name:'May'},{num:6,name:'June'},
+            {num:7,name:'July'},{num:8,name:'August'},{num:9,name:'September'},
+            {num:10,name:'October'},{num:11,name:'November'},{num:12,name:'December'}
+        ];
+
+        var yearSel  = document.getElementById('filter-year');
+        var monthSel = document.getElementById('filter-month');
+        if (!yearSel || !monthSel) return;
+
+        function updateMonths(selectedYear, keepMonth) {
+            var months = availPeriods[String(selectedYear)];
+            // Always fall back to all 12 months if the year has no DB data
+            if (!months || months.length === 0) months = ALL_MONTHS;
+
+            var prevVal = keepMonth || parseInt(monthSel.value) || {{ report_month }};
+            monthSel.innerHTML = '';
+            var matched = false;
+            months.forEach(function (m) {
+                var opt = document.createElement('option');
+                opt.value = m.num;
+                opt.textContent = m.name;
+                if (m.num === prevVal) { opt.selected = true; matched = true; }
+                monthSel.appendChild(opt);
+            });
+            // If prev month not available for new year, select the first available
+            if (!matched && months.length) monthSel.options[0].selected = true;
+        }
+
+        // When year changes: rebuild months, do NOT auto-submit
+        yearSel.addEventListener('change', function () {
+            updateMonths(parseInt(yearSel.value), parseInt(monthSel.value));
+        });
+
+        // Init: ensure the correct month is pre-selected on page load
+        updateMonths(parseInt(yearSel.value), {{ report_month }});
+    })();
+    </script>
 
 <div class="rep-page">
     {{ analytics_charts_data|json_script:"tha-analytics-charts" }}

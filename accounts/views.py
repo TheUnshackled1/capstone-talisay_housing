@@ -753,6 +753,43 @@ def _staff_reports_analytics_payload(request):
     total_applicants = Applicant.objects.count()
     housing_application_records = Application.objects.count()
 
+    # ── Smart dropdown: distinct (year, month) pairs that have any Applicant or Case data ──
+    from django.db.models.functions import ExtractYear, ExtractMonth
+    _ap_periods = (
+        Applicant.objects
+        .annotate(yr=ExtractYear('created_at'), mo=ExtractMonth('created_at'))
+        .values('yr', 'mo')
+        .distinct()
+        .order_by('yr', 'mo')
+    )
+    _case_periods = (
+        Case.objects
+        .filter(received_at__isnull=False)
+        .annotate(yr=ExtractYear('received_at'), mo=ExtractMonth('received_at'))
+        .values('yr', 'mo')
+        .distinct()
+        .order_by('yr', 'mo')
+    )
+    # Merge and deduplicate
+    _all_periods_set = set()
+    for _row in _ap_periods:
+        _all_periods_set.add((_row['yr'], _row['mo']))
+    for _row in _case_periods:
+        _all_periods_set.add((_row['yr'], _row['mo']))
+    # Always include the currently selected period so the filter never shows a blank
+    _all_periods_set.add((report_year, report_month))
+    available_periods = sorted(_all_periods_set)  # list of (year, month) tuples
+    available_years = sorted(set(y for y, m in available_periods))
+    # Map year → list of (month_num, month_name) for that year
+    available_months_by_year = {}
+    for y, m in available_periods:
+        available_months_by_year.setdefault(y, []).append((m, calendar.month_name[m]))
+    # Build JSON-safe structure for JS
+    available_periods_json = {
+        str(y): [{'num': m, 'name': calendar.month_name[m]} for m, _ in sorted(available_months_by_year[y])]
+        for y in available_years
+    }
+
     # Raw status breakdown — kept for CSV export only
     applicant_status_raw = sorted(
         (
@@ -846,6 +883,7 @@ def _staff_reports_analytics_payload(request):
 
     applicants_top_barangays = list(
         Applicant.objects.exclude(barangay_id__isnull=True)
+        .filter(created_at__gte=period_start, created_at__lte=period_end)
         .values(place_name=F('barangay__name'))
         .annotate(count=Count('id'))
         .order_by('-count')[:12]
@@ -892,6 +930,9 @@ def _staff_reports_analytics_payload(request):
     _registered_count = len(_registered_ids)
     _awarded_ids = list(Applicant.objects.filter(status='awarded').values_list('id', flat=True))
     _awarded_count = len(_awarded_ids)
+
+    # Applicants by Status — ALL-TIME pipeline snapshot (current state of the system)
+    # These numbers match what staff see in each module page, not filtered by period.
     applicant_by_status = [
         {'status': 'registered',   'label': 'Registered',               'count': _registered_count},
         {'status': 'evaluation',   'label': 'Evaluation & Eligibility', 'count': _evaluation_count},
@@ -899,7 +940,7 @@ def _staff_reports_analytics_payload(request):
         {'status': 'awarded',      'label': 'Lot Awarded',              'count': _awarded_count},
     ]
 
-    # Active pipeline applicants for Applicant Situation (CDRRMO, Ejected, Displaced, None)
+    # Applicant Situation — ALL-TIME active pipeline (CDRRMO / Ejected / Displaced / None)
     active_pipeline_ids = (
         set(_registered_ids)
         | set(_eval_ids)
@@ -919,9 +960,9 @@ def _staff_reports_analytics_payload(request):
 
     situation_breakdowns = {
         'danger_zone': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
-        'ejected': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
-        'relocated': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
-        'not_abc': {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
+        'ejected':     {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
+        'relocated':   {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
+        'not_abc':     {'Registered': 0, 'Evaluation & Eligibility': 0, 'Form': 0, 'Lot Awarded': 0},
     }
 
     situation_counts_map = {'danger_zone': 0, 'ejected': 0, 'relocated': 0, 'not_abc': 0}
@@ -991,8 +1032,13 @@ def _staff_reports_analytics_payload(request):
     cases_total = Case.objects.count()
     case_status_labels = dict(Case.STATUS_CHOICES)
     case_type_labels = dict(Case.CASE_TYPE_CHOICES)
+    # Filter cases by the selected period (cases received/opened in that month)
+    _period_cases_qs = Case.objects.filter(
+        received_at__gte=period_start,
+        received_at__lte=period_end,
+    )
     cases_by_status = sorted(
-        Case.objects.values('status').annotate(count=Count('id')),
+        _period_cases_qs.values('status').annotate(count=Count('id')),
         key=lambda x: (-x['count'], x['status'] or ''),
     )
     for row in cases_by_status:
@@ -1000,7 +1046,7 @@ def _staff_reports_analytics_payload(request):
     _analytics_rows_bar_pct(cases_by_status)
 
     cases_by_type = sorted(
-        Case.objects.values('case_type').annotate(count=Count('id')),
+        _period_cases_qs.values('case_type').annotate(count=Count('id')),
         key=lambda x: (-x['count'], x['case_type'] or ''),
     )
     for row in cases_by_type:
@@ -1154,9 +1200,10 @@ def _staff_reports_analytics_payload(request):
         construction_stages=construction_stages,
     )
 
-    year_options = list(range(now.year - 5, now.year + 2))
+    # Smart dropdowns: only years/months with real data (fallback to standard range if none)
+    year_options = available_years if available_years else list(range(now.year - 5, now.year + 2))
     month_options = list(range(1, 13))
-    months_for_select = [(i, calendar.month_name[i]) for i in range(1, 13)]
+    months_for_select = available_months_by_year.get(report_year, [(i, calendar.month_name[i]) for i in range(1, 13)])
 
     analytics_data = {
         'pending_notices': 0,
@@ -1238,6 +1285,8 @@ def _staff_reports_analytics_payload(request):
         ),
         # Session monitoring & security
         **_get_session_monitoring_data(),
+        # Smart filter dropdown data
+        'available_periods_json': available_periods_json,
     }
 
     # Add efficiency enhancements
