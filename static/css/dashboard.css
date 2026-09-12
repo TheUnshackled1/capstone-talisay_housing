@@ -1,4 +1,4 @@
-/* ==========================================
+﻿/* ==========================================
    IHSMS — Integrated Housing Services and Monitoring System
    Staff Portal Styles
    ========================================== */
@@ -4480,3 +4480,233 @@ ROLE-SPECIFIC DASHBOARD WIDGETS STYLES
         color: #94a3b8;
         margin-top: 0.2rem;
         letter-spacing: 0.01em;
+    }
+
+/* ===================================================================
+   Analytics Period Filter Bar
+   Glassmorphism card matching .rep-card design; emerald accent button.
+   =================================================================== */
+
+    .analytics-filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+        padding: 0.85rem 1.25rem;
+        background: linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(240,253,244,0.75) 100%);
+        backdrop-filter: blur(14px) saturate(170%);
+        -webkit-backdrop-filter: blur(14px) saturate(170%);
+        border: 1px solid rgba(16, 185, 129, 0.18);
+        border-radius: 14px;
+        box-shadow: 0 4px 16px rgba(4, 120, 87, 0.07), 0 1px 3px rgba(15, 23, 42, 0.05);
+        transition: box-shadow 0.2s ease;
+    }
+
+    .analytics-filter-bar:hover {
+        box-shadow: 0 6px 24px rgba(4, 120, 87, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Left label */
+    .analytics-filter-label {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #047857;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .analytics-filter-label svg {
+        width: 1rem;
+        height: 1rem;
+        stroke: #10b981;
+        flex-shrink: 0;
+    }
+
+    /* Controls row */
+    .analytics-filter-controls {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        flex: 1;
+    }
+
+    /* Individual field (label + select stacked) */
+    .analytics-filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .analytics-filter-field-label {
+        font-size: 0.67rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .analytics-filter-select {
+        appearance: none;
+        -webkit-appearance: none;
+        padding: 0.45rem 2rem 0.45rem 0.75rem;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: #1e293b;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.5rem center / 0.9rem,
+                    rgba(255,255,255,0.9);
+        border: 1px solid #d1fae5;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+        cursor: pointer;
+        min-width: 120px;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        outline: none;
+    }
+
+    .analytics-filter-select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+    }
+
+    .analytics-filter-select:hover {
+        border-color: #6ee7b7;
+    }
+
+    /* Apply Filter button */
+    .analytics-filter-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.48rem 1.05rem;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(4, 120, 87, 0.28);
+        transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
+        white-space: nowrap;
+        outline: none;
+        text-decoration: none;
+        flex-shrink: 0;
+    }
+
+    .analytics-filter-btn:hover {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 4px 16px rgba(4, 120, 87, 0.38);
+        transform: translateY(-1px);
+    }
+
+    .analytics-filter-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(4, 120, 87, 0.22);
+    }
+
+    .analytics-filter-btn:focus-visible {
+        outline: 2px solid #10b981;
+        outline-offset: 2px;
+    }
+
+    /* The custom filter.png icon inside the button */
+    .analytics-filter-icon {
+        width: 1.1rem;
+        height: 1.1rem;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+        flex-shrink: 0;
+        display: block;
+    }
+
+    /* Reset link — only shown when a filter is active */
+    .analytics-filter-reset {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: #64748b;
+        background: rgba(241,245,249,0.9);
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .analytics-filter-reset svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .analytics-filter-reset:hover {
+        background: #fee2e2;
+        color: #dc2626;
+        border-color: #fca5a5;
+    }
+
+    /* Right side badge — shows current active period */
+    .analytics-filter-badge {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #047857;
+        background: rgba(209, 250, 229, 0.55);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        border-radius: 20px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .analytics-filter-badge svg {
+        width: 0.85rem;
+        height: 0.85rem;
+        stroke: #10b981;
+        flex-shrink: 0;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 680px) {
+        .analytics-filter-bar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.9rem 1rem;
+        }
+
+        .analytics-filter-controls {
+            width: 100%;
+        }
+
+        .analytics-filter-select {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .analytics-filter-field {
+            flex: 1;
+            min-width: 110px;
+        }
+
+        .analytics-filter-badge {
+            margin-left: 0;
+        }
+    }

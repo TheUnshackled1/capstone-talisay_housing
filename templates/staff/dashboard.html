@@ -327,6 +327,60 @@
 
             {% if user.position == 'second_member' or user.position == 'fourth_member' %}
 
+    <!-- Analytics Period Filter Bar -->
+    <form method="GET" action="" class="analytics-filter-bar" id="analyticsFilterBar">
+        <div class="analytics-filter-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            <span>Analytics Period</span>
+        </div>
+
+        <div class="analytics-filter-controls">
+            <div class="analytics-filter-field">
+                <label for="filter-year" class="analytics-filter-field-label">Year</label>
+                <select name="year" id="filter-year" class="analytics-filter-select">
+                    {% for y in year_options %}
+                    <option value="{{ y }}" {% if y == report_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="analytics-filter-field">
+                <label for="filter-month" class="analytics-filter-field-label">Month</label>
+                <select name="month" id="filter-month" class="analytics-filter-select">
+                    {% for num, name in months_for_select %}
+                    <option value="{{ num }}" {% if num == report_month %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="analytics-filter-btn" id="analyticsFilterApplyBtn" title="Apply filter">
+                <img src="{% static 'images/filter.png' %}" alt="Filter" class="analytics-filter-icon">
+                <span>Apply Filter</span>
+            </button>
+
+            {% if request.GET.year or request.GET.month %}
+            <a href="{{ request.path }}" class="analytics-filter-reset" id="analyticsFilterResetBtn" title="Reset to current month">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="1 4 1 10 7 10"/>
+                    <path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
+                </svg>
+                Reset
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="analytics-filter-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {{ report_month }}/{{ report_year }}
+        </div>
+    </form>
+
 <div class="rep-page">
     {{ analytics_charts_data|json_script:"tha-analytics-charts" }}
 
