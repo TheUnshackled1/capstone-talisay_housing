@@ -25,33 +25,10 @@ ink = cv2.dilate(ink, np.ones((2, 2), np.uint8), 1)
 fillable = ((gray >= 145) & (gray <= 210)).astype(np.uint8) * 255
 fillable = cv2.bitwise_and(fillable, cv2.bitwise_not(ink))
 
-best = None
-for r_try in (4.5, 5.0, 5.5, 6.0):
-    for cy in range(186, 200):
-        for cx in range(32, 42):
-            ang = np.linspace(0, 2 * math.pi, 40, endpoint=False)
-            ring = np.array(
-                [
-                    gray[
-                        min(H - 1, max(0, int(cy + r_try * math.sin(a)))),
-                        min(W - 1, max(0, int(cx + r_try * math.cos(a)))),
-                    ]
-                    for a in ang
-                ]
-            )
-            ring_m = float(ring.mean())
-            core = float(gray[cy, cx])
-            if ring_m > 115 or core < 150:
-                continue
-            score = core - ring_m
-            if best is None or score > best[0]:
-                best = (score, cx, cy, r_try)
-CX, CY, R = float(best[1]), float(best[2]), float(best[3])
-# Gray sketch circle centroid sits east of ring-detector peak.
-CX += 1.5
-CY += 0.5
+# Aligned to gray sketch circle on left junction (see scratch/inspect_140_166.png).
+CX, CY, R = 41.0, 193.0, 4.5
 R_ARC = R + 0.55
-print("circle", CX, CY, "R", R, "score", round(best[0], 1))
+print("circle", CX, CY, "R", R)
 
 LOTS = {
     140: {"seed": (45, 188), "roi": (28, 172, 60, 204)},
@@ -112,6 +89,7 @@ def point_in_poly(x: float, y: float, poly: np.ndarray) -> bool:
 
 def bevel_inner(xy: np.ndarray) -> np.ndarray:
     n = len(xy)
+    lot_centroid = xy.mean(axis=0)
     dists = [np.linalg.norm(p - [CX, CY]) for p in xy]
     idx = int(np.argmin(dists))
     v = xy[idx]
@@ -128,10 +106,11 @@ def bevel_inner(xy: np.ndarray) -> np.ndarray:
     for da in (da_short, da_long):
         cand = [
             np.array([CX + R_ARC * math.cos(a1 + da * t), CY + R_ARC * math.sin(a1 + da * t)])
-            for t in np.linspace(0, 1, 5)
+            for t in np.linspace(0, 1, 7)
         ]
         mid = cand[len(cand) // 2]
-        if mid[0] > CX + 0.2:
+        toward_lot = lot_centroid - np.array([CX, CY])
+        if np.dot(mid - np.array([CX, CY]), toward_lot) > 0:
             arc = cand
             break
     if arc is None:
@@ -148,7 +127,7 @@ def bevel_inner(xy: np.ndarray) -> np.ndarray:
     xy2 = np.array(out)
     for k, p in enumerate(xy2):
         d = np.linalg.norm(p - [CX, CY])
-        if d < R:
+        if d < R_ARC:
             xy2[k] = np.array([CX, CY]) + (p - np.array([CX, CY])) / max(d, 1e-6) * R_ARC
     return xy2
 
@@ -219,6 +198,19 @@ for i in IDS:
     dr.text((L["cx"] * W - 12, L["cy"] * H - 4), str(i), fill=(200, 0, 0, 255))
 vis.crop((20, 165, 70, 235)).resize((900, 1000), Image.NEAREST).save(
     "scratch/fix_140_166_circle.png"
+)
+
+insp = Image.fromarray(rgb.copy()).convert("RGBA")
+idr = ImageDraw.Draw(insp, "RGBA")
+idr.ellipse([CX - R, CY - R, CX + R, CY + R], outline=(0, 220, 0, 255), width=2)
+for i in IDS:
+    L = lots[i]
+    pts = [(p[0] * W, p[1] * H) for p in L["points"]]
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    idr.rectangle([min(xs), min(ys), max(xs), max(ys)], outline=(220, 0, 0, 255), width=2)
+insp.crop((28, 168, 58, 230)).resize((900, 1200), Image.NEAREST).save(
+    "scratch/inspect_140_166.png"
 )
 
 ov = Path("scratch/lot_plan_all_indices.png")
