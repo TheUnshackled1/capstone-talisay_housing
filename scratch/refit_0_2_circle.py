@@ -1,6 +1,5 @@
-"""Refit lots 0 and 2: ink-edge quads with circle notch at (649, 16)."""
+"""Refit lots 0 and 2 from ink flood contours; circle excluded."""
 import json
-import math
 import shutil
 from pathlib import Path
 
@@ -17,8 +16,14 @@ shutil.copy(POLY, bak)
 data = json.loads(POLY.read_text(encoding="utf-8"))
 lots = data["lots"]
 rgb = np.array(Image.open(IMG).convert("RGB"))
+gray = np.array(Image.open(IMG).convert("L"))
 
-CX, CY, R = 649.0, 16.0, 9.5
+ink = (gray < 95).astype(np.uint8) * 255
+ink = cv2.dilate(ink, np.ones((2, 2), np.uint8), 1)
+fillable = ((gray >= 145) & (gray <= 210)).astype(np.uint8) * 255
+fillable = cv2.bitwise_and(fillable, cv2.bitwise_not(ink))
+
+CX, CY, R = 649.0, 16.0, 9.0
 
 
 def r4(v: float) -> float:
@@ -29,82 +34,88 @@ def to_norm(xy: np.ndarray) -> list:
     return [[float(x / W), float(y / H)] for x, y in xy]
 
 
-def arc_pts(a1: float, a2: float, steps: int = 4) -> list[np.ndarray]:
-    da = a2 - a1
-    while da > math.pi:
-        da -= 2 * math.pi
-    while da < -math.pi:
-        da += 2 * math.pi
-    if abs(da) > math.pi:
-        da = da - 2 * math.pi if da > 0 else da + 2 * math.pi
-    return [
-        np.array([CX + R * math.cos(a1 + da * t), CY + R * math.sin(a1 + da * t)])
-        for t in np.linspace(0, 1, steps)
-    ]
+def flood_cell(seed_x: float, seed_y: float, roi: tuple[int, int, int, int]) -> np.ndarray:
+    x0, y0, x1, y1 = roi
+    roi_m = np.zeros((H, W), np.uint8)
+    roi_m[y0:y1, x0:x1] = 255
+    region = cv2.bitwise_and(fillable, roi_m)
+    ix, iy = int(round(seed_x)), int(round(seed_y))
+    mask = np.zeros((H + 2, W + 2), np.uint8)
+    flood = region.copy()
+    cv2.floodFill(flood, mask, (ix, iy), 200)
+    cell = (flood == 200).astype(np.uint8) * 255
+    hard = (gray < 55).astype(np.uint8) * 255
+    allow = cv2.bitwise_and(roi_m, cv2.bitwise_not(hard))
+    for _ in range(2):
+        cell = cv2.bitwise_and(cv2.dilate(cell, np.ones((3, 3), np.uint8), 1), allow)
+    yy, xx = np.mgrid[0:H, 0:W]
+    cell[((xx - CX) ** 2 + (yy - CY) ** 2) <= R ** 2] = 0
+    return cell
 
 
-def h_line_y(y: float, x_lo: float, x_hi: float) -> np.ndarray | None:
-    d2 = R ** 2 - (y - CY) ** 2
-    if d2 < 0:
-        return None
-    xs = [CX - math.sqrt(d2), CX + math.sqrt(d2)]
-    xs = [x for x in xs if x_lo <= x <= x_hi]
-    return np.array([min(xs), y]) if xs else None
+def extract_polygon(cell: np.ndarray, eps: float = 0.015) -> np.ndarray:
+    cnts, _ = cv2.findContours(cell, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    cnt = max(cnts, key=cv2.contourArea).astype(np.float32)
+    peri = cv2.arcLength(cnt, True)
+    approx = cv2.approxPolyDP(cnt, eps * peri, True).reshape(-1, 2).astype(float)
+    return approx
 
 
-def v_line_x(x: float, y_lo: float, y_hi: float) -> np.ndarray | None:
-    d2 = R ** 2 - (x - CX) ** 2
-    if d2 < 0:
-        return None
-    ys = [CY - math.sqrt(d2), CY + math.sqrt(d2)]
-    ys = [y for y in ys if y_lo <= y <= y_hi]
-    return np.array([x, min(ys)]) if ys else None
+def snap_lot0(xy: np.ndarray) -> np.ndarray:
+    out = []
+    for x, y in xy:
+        if x < 634:
+            x = 632.5
+        elif x > 646 and y < 30:
+            pass  # keep notch points
+        elif x > 646:
+            x = 650.5
+        if y < 12.5:
+            y = 10.5
+        elif y > 41:
+            y = 42.5
+        out.append([x, y])
+    return np.array(out, float)
 
 
-# Lot 0 ink rect: left=632.5 top=10.5 right=650.5 bottom=43.5
-p0_top = h_line_y(10.5, 632.5, 650.5)          # (641.25, 10.5)
-p0_right = v_line_x(650.5, 10.5, 43.5)         # (650.5, 25.38)
-a1 = math.atan2(p0_top[1] - CY, p0_top[0] - CX)
-a2 = math.atan2(p0_right[1] - CY, p0_right[0] - CX)
-lot0 = np.array(
-    [
-        [632.5, 10.5],
-        p0_top,
-        *arc_pts(a1, a2, 4),
-        p0_right,
-        [650.5, 43.5],
-        [632.5, 43.5],
-    ],
-    float,
-)
+def snap_lot2(xy: np.ndarray) -> np.ndarray:
+    out = []
+    for x, y in xy:
+        if x < 655 and y > 30:
+            x = 652.5
+        elif x < 655 and y < 30:
+            pass
+        elif x > 670:
+            x = 672.5
+        if y < 14.5 and x > 665:
+            y = 13.5
+        elif y < 14.5 and x < 660:
+            y = 13.5
+        if y > 43 and x > 665:
+            y = 44.5
+        elif y > 41 and x < 655:
+            y = 42.5
+        out.append([x, y])
+    return np.array(out, float)
 
-# Lot 2 ink rect: left=652.5 top=13.5 right=672.5 bottom=45.5
-p2_left = v_line_x(652.5, 13.5, 45.5)          # (652.5, 25.09)
-p2_top = h_line_y(13.5, 652.5, 672.5)            # (658.17, 13.5)
-b1 = math.atan2(p2_left[1] - CY, p2_left[0] - CX)
-b2 = math.atan2(p2_top[1] - CY, p2_top[0] - CX)
-lot2 = np.array(
-    [
-        p2_left,
-        *arc_pts(b1, b2, 4),
-        p2_top,
-        [672.5, 13.5],
-        [672.5, 45.5],
-        [652.5, 45.5],
-    ],
-    float,
-)
 
-def dedupe(xy: np.ndarray, tol: float = 0.3) -> np.ndarray:
+def dedupe(xy: np.ndarray, tol: float = 0.35) -> np.ndarray:
     out = []
     for p in xy:
         if not out or np.linalg.norm(p - out[-1]) > tol:
             out.append(p)
+    if len(out) > 1 and np.linalg.norm(out[0] - out[-1]) <= tol:
+        out.pop()
     return np.array(out)
 
 
+cell0 = flood_cell(640, 28, (632, 8, 652, 48))
+cell2 = flood_cell(666, 28, (652, 8, 676, 48))
+
+lot0 = dedupe(snap_lot0(extract_polygon(cell0)))
+lot2 = dedupe(snap_lot2(extract_polygon(cell2)))
+
 for idx, xy in [(0, lot0), (2, lot2)]:
-    xy = dedupe(xy)
     lots[idx] = {
         "points": to_norm(xy),
         "cx": r4(xy[:, 0].mean() / W),
@@ -130,7 +141,7 @@ def point_in_poly(x, y, poly):
     return inside
 
 
-def coverage(rr=7):
+def coverage(rr=6):
     cov = {0: 0, 2: 0}
     for y in range(int(CY - rr), int(CY + rr) + 1):
         for x in range(int(CX - rr), int(CX + rr) + 1):
@@ -143,7 +154,7 @@ def coverage(rr=7):
 
 
 cov = coverage()
-print("coverage r=7", cov)
+print("coverage r=6", cov)
 assert cov[0] == 0 and cov[2] == 0
 assert len(lots) == 420
 data["lots"] = lots
@@ -151,7 +162,7 @@ POLY.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 vis = Image.fromarray(rgb.copy()).convert("RGBA")
 dr = ImageDraw.Draw(vis, "RGBA")
-dr.ellipse([CX - R, CY - R, CX + R, CY + R], outline=(255, 0, 0, 180), width=1)
+dr.ellipse([CX - R, CY - R, CX + R, CY + R], outline=(255, 0, 0, 140), width=1)
 for i in [0, 2]:
     L = lots[i]
     pts = [(p[0] * W, p[1] * H) for p in L["points"]]
