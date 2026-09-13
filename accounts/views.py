@@ -350,18 +350,24 @@ def _staff_analytics_module2_counts(user):
     - evaluation_count  → matches 'Total List' on applications_list.html
     - ready_for_form_count → matches the Form queue count on ready_for_form_list.html
 
-    Intentionally avoids ``_module2_applicant_row_payload`` / eligibility snapshots:
-    those are correct for the Module 2 pages but too heavy for the staff dashboard
-    (N eligibility passes + extra queries) and were timing out gunicorn workers on Railway.
+    Intentionally avoids ``_module2_applicant_row_payload`` / eligibility snapshots and
+    clears document/household prefetches — those are correct for Module 2 pages but too
+    heavy for the staff dashboard (Railway gunicorn WORKER TIMEOUT).
     """
     from applications.views import (
         _module2_evaluations_applicants_queryset,
         _module2_on_ready_for_form_queue_track,
     )
 
+    qs = (
+        _module2_evaluations_applicants_queryset()
+        .prefetch_related(None)
+        .select_related('application')
+    )
+
     rfq_ids = []
     eval_ids = []
-    for applicant in _module2_evaluations_applicants_queryset():
+    for applicant in qs.iterator(chunk_size=200):
         application = getattr(applicant, 'application', None)
         on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, application)
         if on_rfq_track:
@@ -622,102 +628,28 @@ def _calculate_analytics_enhancements(data):
 
 def _get_session_monitoring_data():
     """
-    Collect session monitoring data for analytics dashboard.
-    Returns dict with active sessions, statistics, and user activity.
+    Lightweight session stats for dashboard context keys.
+
+    The previous implementation ran 24+ hourly ``Session`` counts and decoded
+    session rows on every Second/Fourth Member dashboard load. With a restored
+    ``django_session`` table that aborted gunicorn (WORKER TIMEOUT) on Railway.
+    Templates do not render these fields today — keep cheap placeholders + a
+    few aggregate counts only.
     """
-    from django.utils import timezone
-
-    User = get_user_model()
     now = timezone.now()
-
-    # Active sessions (not expired)
-    active_sessions = Session.objects.filter(expire_date__gte=now)
-    expired_sessions = Session.objects.filter(expire_date__lt=now)
-
-    # Session statistics
+    active_count = Session.objects.filter(expire_date__gte=now).count()
     total_sessions = Session.objects.count()
-    active_count = active_sessions.count()
-    expired_count_total = expired_sessions.count()
-
-    # Sessions by time of day (peak times)
-    sessions_24h = Session.objects.filter(
-        expire_date__gte=now - timedelta(hours=24)
-    ).count()
-    sessions_7d = Session.objects.filter(
-        expire_date__gte=now - timedelta(days=7)
-    ).count()
-
-    # Active user sessions with details
-    active_user_sessions = []
-    for session in active_sessions[:10]:  # Limit to 10 most recent
-        try:
-            user_id = session.get_decoded().get('_auth_user_id')
-            if user_id:
-                user = User.objects.get(id=user_id)
-                session_age = now - (session.expire_date - timedelta(hours=5))
-                time_remaining = session.expire_date - now
-
-                active_user_sessions.append({
-                    'session_key': session.session_key[:16] + '...',
-                    'user_email': user.email,
-                    'user_position': getattr(user, 'position', 'N/A'),
-                    'session_age_minutes': int(session_age.total_seconds() / 60),
-                    'time_remaining_minutes': int(time_remaining.total_seconds() / 60),
-                    'expires_at': session.expire_date,
-                })
-        except Exception:
-            pass
-
-    # Login patterns (daily session creation trend)
-    login_trend = []
-    for i in range(6, -1, -1):
-        day = now - timedelta(days=i)
-        day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end = day_start + timedelta(days=1)
-        daily_count = Session.objects.filter(
-            expire_date__gte=day_start,
-            expire_date__lt=day_end,
-        ).count()
-        login_trend.append({
-            'date': day_start.strftime('%m/%d'),
-            'count': daily_count,
-        })
-
-    # Calculate bar widths for login trend (max 150px per bar)
-    max_logins = max([day['count'] for day in login_trend]) if login_trend else 1
-    for day in login_trend:
-        day['bar_width'] = int((day['count'] / max(max_logins, 1)) * 150)
-
-    # Security: Sessions expiring soon (within 30 minutes)
-    expiring_soon = Session.objects.filter(
-        expire_date__gte=now,
-        expire_date__lte=now + timedelta(minutes=30)
-    ).count()
-
-    # Peak hour sessions (when most users are online)
-    sessions_by_hour = {}
-    for hour in range(24):
-        hour_start = now.replace(hour=hour, minute=0, second=0, microsecond=0)
-        hour_end = hour_start + timedelta(hours=1)
-        sessions_by_hour[f"{hour:02d}:00"] = Session.objects.filter(
-            expire_date__gte=hour_start,
-            expire_date__lt=hour_end,
-        ).count()
-
-    peak_hour = max(sessions_by_hour.items(), key=lambda x: x[1])[0] if sessions_by_hour else "N/A"
-    peak_count = max(sessions_by_hour.values()) if sessions_by_hour else 0
-
     return {
         'total_sessions': total_sessions,
         'active_sessions': active_count,
-        'expired_sessions': expired_count_total,
-        'sessions_24h': sessions_24h,
-        'sessions_7d': sessions_7d,
-        'active_user_sessions': active_user_sessions,
-        'login_trend': login_trend,
-        'expiring_soon': expiring_soon,
-        'peak_hour': peak_hour,
-        'peak_count': peak_count,
+        'expired_sessions': max(total_sessions - active_count, 0),
+        'sessions_24h': Session.objects.filter(expire_date__gte=now - timedelta(hours=24)).count(),
+        'sessions_7d': Session.objects.filter(expire_date__gte=now - timedelta(days=7)).count(),
+        'active_user_sessions': [],
+        'login_trend': [],
+        'expiring_soon': 0,
+        'peak_hour': 'N/A',
+        'peak_count': 0,
     }
 
 

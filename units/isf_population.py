@@ -7,6 +7,7 @@ plus legacy occupant_name rows when no award record exists.
 
 from django.db.models import Prefetch
 
+from intake.models import HouseholdMember
 from units.models import HousingUnit, LotAward, RelocationSite
 
 
@@ -34,7 +35,12 @@ def isf_population_stats(site=None):
     active_award_qs = (
         LotAward.objects.filter(status='active')
         .select_related('application__applicant')
-        .prefetch_related('application__applicant__household_members')
+        .prefetch_related(
+            Prefetch(
+                'application__applicant__household_members',
+                queryset=HouseholdMember.objects.only('id', 'applicant_id', 'sex'),
+            )
+        )
     )
     units_qs = HousingUnit.objects.select_related('site')
     if site is not None:
@@ -42,7 +48,8 @@ def isf_population_stats(site=None):
     else:
         units_qs = units_qs.filter(site__is_active=True)
 
-    units = units_qs.prefetch_related(Prefetch('lot_awards', queryset=active_award_qs))
+    # Materialize once — do not use .iterator() here; it disables prefetch_related.
+    units = list(units_qs.prefetch_related(Prefetch('lot_awards', queryset=active_award_qs)))
 
     total_isf = 0
     total_population = 0
@@ -91,7 +98,7 @@ def isf_population_stats(site=None):
         'male_count': male_count,
         'female_count': female_count,
         'awarded_units': awarded_units,
-        'total_housing_units': units_qs.count(),
+        'total_housing_units': len(units),
         'site_id': site_id,
         'site_name': site_name,
     }

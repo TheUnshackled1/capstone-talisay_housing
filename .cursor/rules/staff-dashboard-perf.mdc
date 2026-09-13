@@ -1,6 +1,6 @@
 ---
 description: Keep staff dashboard and intake list pages light so Railway gunicorn workers do not time out
-globs: accounts/views.py,applications/views.py,intake/views.py,documents/models.py,Procfile
+globs: accounts/views.py,applications/views.py,intake/views.py,documents/models.py,units/isf_population.py,Procfile
 alwaysApply: false
 ---
 
@@ -9,7 +9,8 @@ alwaysApply: false
 ## Never do this on second/fourth-member dashboards
 
 - Do **not** call `_module2_applicant_row_payload` or `_module2_eligibility_snapshot` from `_staff_analytics_module2_counts` / `_staff_reports_analytics_payload`.
-- Those helpers are for Module 2 list pages only. Using them for dashboard KPI counts caused gunicorn worker abort → Django 500 on `/dashboard/second-member/`.
+- Clear document/household prefetches on the analytics path (`.prefetch_related(None)` + `.iterator()`).
+- Do **not** restore the old `_get_session_monitoring_data` (24 hourly Session counts + session decode). Keep the lightweight aggregate-only version.
 
 ## Never do this on intake Registered Applicants
 
@@ -22,10 +23,11 @@ alwaysApply: false
 - Dashboard counts: light pass over `_module2_evaluations_applicants_queryset()` + `_module2_on_ready_for_form_queue_track` only.
 - Prefer prefetched related collections (`.all()` in Python) over per-row `.filter().count()` when the queryset already `prefetch_related`s.
 - Cache stable Requirement lookups (see `_cached_required_group_a_vault_doc_types`) instead of querying inside per-applicant loops.
+- ISF population: never combine `.iterator()` with `prefetch_related` (iterator disables prefetch → N+1).
 
 ## Procfile
 
-Keep startup as: migrate `--skip-checks` → optional media seed into `$MEDIA_ROOT` → gunicorn with `--timeout 120`. Do not strip migrate/media seed when editing the Procfile.
+Keep startup as: migrate `--skip-checks` → optional media seed into `$MEDIA_ROOT` → gunicorn with `--timeout 180`. Do not strip migrate/media seed when editing the Procfile.
 
 ## Regression
 
