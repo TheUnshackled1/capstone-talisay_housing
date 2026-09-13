@@ -1208,8 +1208,19 @@ def _staff_reports_analytics_payload(request):
         'construction_progress_offset': round(
             97.4 * (1 - min(100, int(100 * construction_in_progress / max(construction_total, 1))) / 100), 1
         ),
-        # Session monitoring & security
-        **_get_session_monitoring_data(),
+        # Session monitoring removed from request path — previously caused Railway
+        # WORKER TIMEOUT (24 hourly Session scans). Context keys kept as cheap stubs
+        # so any leftover template references do not KeyError.
+        'total_sessions': 0,
+        'active_sessions': 0,
+        'expired_sessions': 0,
+        'sessions_24h': 0,
+        'sessions_7d': 0,
+        'active_user_sessions': [],
+        'login_trend': [],
+        'expiring_soon': 0,
+        'peak_hour': 'N/A',
+        'peak_count': 0,
         # Smart filter dropdown data
         'available_periods_json': available_periods_json,
     }
