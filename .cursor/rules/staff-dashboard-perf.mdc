@@ -1,15 +1,21 @@
 ---
-description: Keep staff dashboard analytics light so Railway gunicorn workers do not time out
-globs: accounts/views.py,applications/views.py,Procfile
+description: Keep staff dashboard and intake list pages light so Railway gunicorn workers do not time out
+globs: accounts/views.py,applications/views.py,intake/views.py,documents/models.py,Procfile
 alwaysApply: false
 ---
 
-# Staff dashboard performance (Railway)
+# Staff page performance (Railway)
 
 ## Never do this on second/fourth-member dashboards
 
 - Do **not** call `_module2_applicant_row_payload` or `_module2_eligibility_snapshot` from `_staff_analytics_module2_counts` / `_staff_reports_analytics_payload`.
 - Those helpers are for Module 2 list pages only. Using them for dashboard KPI counts caused gunicorn worker abort → Django 500 on `/dashboard/second-member/`.
+
+## Never do this on intake Registered Applicants
+
+- Do **not** `select_related('blob_record')` when building document download URLs for list pages. That loads `DocumentBlob.data` (tens of MB) into memory and aborts gunicorn.
+- Use `Exists(DocumentBlob…)` / annotated `has_blob` and `Document.absolute_download_url` (existence-only).
+- Do **not** call `check_blacklist_module2` once per archive row. Use `_intake_blacklist_payloads_for_applicants` (one Units blacklist prefetch + in-process match).
 
 ## Required pattern
 

@@ -1,6 +1,5 @@
 from django.db import models, transaction
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 import uuid
 
 
@@ -136,17 +135,21 @@ class Document(models.Model):
             return f"{self.file_size / (1024 * 1024):.1f} MB"
 
     def absolute_download_url(self, request):
-        """Staff-facing absolute URL: blob endpoint or MEDIA file URL."""
+        """Staff-facing absolute URL: blob endpoint or MEDIA file URL.
+
+        Never loads ``DocumentBlob.data`` — existence is enough to build the URL.
+        List pages must not ``select_related('blob_record')`` or they pull the
+        entire binary vault into memory and can abort gunicorn on Railway.
+        """
         from django.urls import reverse
 
         user = getattr(request, 'user', None)
         position = getattr(user, 'position', None) if user else None
         if position:
-            try:
-                self.blob_record
-            except ObjectDoesNotExist:
-                pass
-            else:
+            has_blob = getattr(self, 'has_blob', None)
+            if has_blob is None:
+                has_blob = DocumentBlob.objects.filter(document_id=self.pk).exists()
+            if has_blob:
                 path = reverse(
                     'documents:blob_download',
                     kwargs={'position': position, 'doc_id': self.pk},

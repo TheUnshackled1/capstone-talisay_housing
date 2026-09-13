@@ -24,7 +24,7 @@ from units.historical_beneficiary import (
     applicant_excluded_from_intake_registration,
     intake_registration_exclude_q,
 )
-from documents.models import Document, Requirement, document_filed_via_display, upsert_document_vault_upload
+from documents.models import Document, DocumentBlob, Requirement, document_filed_via_display, upsert_document_vault_upload
 from .forms import (
     HouseholdMemberForm,
     WalkInApplicantForm
@@ -77,6 +77,136 @@ def _intake_module2_blacklist_check_payload(applicant):
         'blacklistRegistryName': registry_name,
         'blacklistRegistryRef': registry_ref,
     }
+
+
+def _intake_blacklist_payloads_for_applicants(applicants):
+    """
+    Batch blacklist gates for list pages.
+
+    ``check_blacklist_module2`` can run up to 6 queries per applicant. On the
+    Registered Applicants page that aborted gunicorn workers once the vault grew.
+    Prefetch the (small) Units blacklist once and match in process.
+    """
+    from applications.utils import _UnitsBlacklistAdapter
+    from units.models import Blacklist as UnitsBlacklist
+
+    empty = {
+        'blacklistBlocked': False,
+        'blacklistReason': '',
+        'blacklistRegistryName': '',
+        'blacklistRegistryRef': '',
+    }
+
+    unique = []
+    seen = set()
+    for applicant in applicants:
+        if not applicant:
+            continue
+        aid = str(applicant.pk)
+        if aid in seen:
+            continue
+        seen.add(aid)
+        unique.append(applicant)
+    if not unique:
+        return {}
+
+    entries = list(
+        UnitsBlacklist.objects.select_related('applicant').order_by('-blacklisted_at')
+    )
+    if not entries:
+        return {str(a.pk): dict(empty) for a in unique}
+
+    def _payload(entry, applicant):
+        adapter = _UnitsBlacklistAdapter(entry)
+        registry_applicant = getattr(entry, 'applicant', None)
+        return {
+            'blacklistBlocked': True,
+            'blacklistReason': adapter.get_reason_display(),
+            'blacklistRegistryName': (
+                (registry_applicant.full_name if registry_applicant else applicant.full_name) or ''
+            ),
+            'blacklistRegistryRef': (
+                (registry_applicant.reference_number if registry_applicant else applicant.reference_number) or ''
+            ),
+        }
+
+    def _norm(value):
+        return (value or '').strip()
+
+    def _match(applicant):
+        aid = str(applicant.pk)
+        phone = _norm(applicant.phone_number)
+        last = _norm(applicant.last_name)
+        first = _norm(applicant.first_name)
+        dob = applicant.date_of_birth
+        brgy = applicant.barangay_id
+        if hasattr(brgy, 'pk'):
+            brgy = brgy.pk
+        full = _norm(applicant.full_name)
+        has_first_last = bool(first and last)
+
+        for entry in entries:
+            if entry.applicant_id and str(entry.applicant_id) == aid:
+                return _payload(entry, applicant)
+
+        if phone and has_first_last:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.phone_number) == phone
+                    and _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                ):
+                    return _payload(entry, applicant)
+
+        if has_first_last and dob and brgy:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                    and other.date_of_birth == dob
+                    and other.barangay_id == brgy
+                ):
+                    return _payload(entry, applicant)
+
+        if has_first_last and dob:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                    and other.date_of_birth == dob
+                ):
+                    return _payload(entry, applicant)
+
+        if has_first_last and brgy:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                    and other.barangay_id == brgy
+                ):
+                    return _payload(entry, applicant)
+
+        if full:
+            for entry in entries:
+                other = entry.applicant
+                if other and _norm(other.full_name).lower() == full.lower():
+                    return _payload(entry, applicant)
+
+        return dict(empty)
+
+    return {str(applicant.pk): _match(applicant) for applicant in unique}
 
 # Module 1 residency eligibility threshold (years residing in Talisay City).
 # Soft check only: applicants below this threshold are still allowed to register
@@ -179,7 +309,7 @@ def _latest_doc_meta_by_type_for_applicant(applicant, request):
     latest_docs = (
         Document.objects.filter(applicant_id=applicant.pk)
         .with_file_payload()
-        .select_related('blob_record')
+        .annotate(has_blob=Exists(DocumentBlob.objects.filter(document_id=OuterRef('pk'))))
         .order_by('document_type', '-uploaded_at')
     )
     for doc in latest_docs:
@@ -1527,7 +1657,7 @@ def applicants_list(request, position):
         latest_docs = (
             Document.objects.filter(applicant_id__in=applicant_ids_for_docs)
             .with_file_payload()
-            .select_related('blob_record')
+            .annotate(has_blob=Exists(DocumentBlob.objects.filter(document_id=OuterRef('pk'))))
             .order_by('applicant_id', 'document_type', '-uploaded_at')
         )
         for doc in latest_docs:
@@ -1547,6 +1677,16 @@ def applicants_list(request, position):
         'channel_b_no_hazard': ('B', 'Channel B — No hazard (No)'),
         'channel_b_hazard': ('B', 'Channel B — Hazard (Yes)'),
         'channel_c': ('C', 'Channel C — Landowner'),
+    }
+
+    blacklist_by_applicant_id = _intake_blacklist_payloads_for_applicants(
+        [archive.applicant for archive in archives if archive.applicant_id and archive.applicant]
+    )
+    empty_blacklist_gate = {
+        'blacklistBlocked': False,
+        'blacklistReason': '',
+        'blacklistRegistryName': '',
+        'blacklistRegistryRef': '',
     }
 
     for archive in archives:
@@ -1591,9 +1731,9 @@ def applicants_list(request, position):
             requirements_group_a,
         )
         bl_gate = (
-            _intake_module2_blacklist_check_payload(archive.applicant)
+            blacklist_by_applicant_id.get(str(archive.applicant_id), empty_blacklist_gate)
             if archive.applicant_id and archive.applicant
-            else _intake_module2_blacklist_check_payload(None)
+            else empty_blacklist_gate
         )
         _req_status_label, _req_status_tier = _archive_list_status_label_and_tier(
             scanned_required,
