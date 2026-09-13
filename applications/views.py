@@ -11,7 +11,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.urls import reverse
 from django.conf import settings
-from functools import wraps
+from functools import lru_cache, wraps
 from urllib.parse import urlencode
 import logging
 from accounts.models import FIELD_INSPECTOR_POSITIONS
@@ -44,6 +44,20 @@ from units.historical_beneficiary import document_vault_applicant_q
 from .form_pipeline import applicant_has_signed_application_payload
 from .utils import check_blacklist_module2, send_sms_for_applications
 from .application_form_pdf import build_filled_application_pdf
+
+
+@lru_cache(maxsize=1)
+def _cached_required_group_a_vault_doc_types():
+    """Stable Group A vault document types (invalidates on process restart)."""
+    return tuple(
+        Requirement.objects.filter(
+            group='A',
+            is_active=True,
+            is_required_for_form=True,
+        ).exclude(
+            vault_document_type='',
+        ).values_list('vault_document_type', flat=True)
+    )
 
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # Application & Evaluation ledger and Ready for Form queue: records per page
@@ -512,15 +526,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
         recommended_queue_type = 'walk_in'
 
     # Readiness checks that combine Applicant Profile + Documents + Queue/Application context.
-    required_group_a_doc_types = list(
-        Requirement.objects.filter(
-            group='A',
-            is_active=True,
-            is_required_for_form=True,
-        ).exclude(
-            vault_document_type='',
-        ).values_list('vault_document_type', flat=True)
-    )
+    required_group_a_doc_types = list(_cached_required_group_a_vault_doc_types())
     required_docs_total = len(required_group_a_doc_types)
     scanned_required_docs = 0
     if required_docs_total > 0:
@@ -803,15 +809,7 @@ def _module2_evaluations_applicants_queryset():
         evaluation_approval_status='approved'
     )
 
-    required_group_a_doc_types = list(
-        Requirement.objects.filter(
-            group='A',
-            is_active=True,
-            is_required_for_form=True,
-        ).exclude(
-            vault_document_type='',
-        ).values_list('vault_document_type', flat=True)
-    )
+    required_group_a_doc_types = list(_cached_required_group_a_vault_doc_types())
     required_group_a_total = len(required_group_a_doc_types)
     if required_group_a_total > 0:
         applicants = applicants.annotate(
@@ -919,11 +917,11 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     application = getattr(applicant, 'application', None)
 
     # RequirementSubmission counts reflect Module 1 "List of Applicants" only - informational on this screen.
-    group_a_verified = RequirementSubmission.objects.filter(
-        applicant_id=applicant.id,
-        requirement__group='A',
-        status='verified',
-    ).count()
+    group_a_verified = sum(
+        1
+        for s in applicant.requirement_submissions.all()
+        if getattr(s.requirement, 'group', None) == 'A' and s.status == 'verified'
+    )
 
     can_generate_form = (
         permissions['can_generate_form']

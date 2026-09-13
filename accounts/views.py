@@ -349,32 +349,25 @@ def _staff_analytics_module2_counts(user):
 
     - evaluation_count  → matches 'Total List' on applications_list.html
     - ready_for_form_count → matches the Form queue count on ready_for_form_list.html
+
+    Intentionally avoids ``_module2_applicant_row_payload`` / eligibility snapshots:
+    those are correct for the Module 2 pages but too heavy for the staff dashboard
+    (N eligibility passes + extra queries) and were timing out gunicorn workers on Railway.
     """
-    from documents.models import Requirement
     from applications.views import (
         _module2_evaluations_applicants_queryset,
-        _module2_applicant_row_payload,
         _module2_on_ready_for_form_queue_track,
-        get_module2_permissions,
     )
 
-    permissions = get_module2_permissions(user)
-    required_total = Requirement.objects.filter(
-        group='A',
-        is_active=True,
-        is_required_for_form=True,
-    ).count()
     rfq_ids = []
     eval_ids = []
     for applicant in _module2_evaluations_applicants_queryset():
-        row = _module2_applicant_row_payload(applicant, permissions, required_total, user)
-        if row is None:
-            continue
-        on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
+        application = getattr(applicant, 'application', None)
+        on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, application)
         if on_rfq_track:
             rfq_ids.append(applicant.id)
             continue  # mirrors applications_list.html: rfq applicants are removed from the list
-        app_status = (getattr(row.get('application'), 'status', '') or '').strip()
+        app_status = (getattr(application, 'status', '') or '').strip()
         if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
             continue  # mirrors applications_list.html: awarded/standby routed applicants are removed
         eval_ids.append(applicant.id)
