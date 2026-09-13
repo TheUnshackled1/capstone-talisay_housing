@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.fallback import FallbackStorage
@@ -524,3 +524,34 @@ class LocalhostCanonicalizationMiddlewareTests(TestCase):
         response = client.get(url, HTTP_HOST='127.0.0.1:8000')
         self.assertEqual(response.status_code, 301)
         self.assertIn('localhost:8000', response['Location'])
+
+
+class StaffDashboardAnalyticsPerfGuardTests(TestCase):
+    """
+    Regression: second/fourth-member dashboards timed out on Railway when
+    analytics rebuilt full Module 2 eligibility payloads for every applicant.
+    Keep ``_staff_analytics_module2_counts`` on the light path only.
+    """
+
+    def test_module2_counts_never_builds_row_payloads(self):
+        from accounts.views import _staff_analytics_module2_counts
+
+        user = User.objects.create_user(
+            username='analytics.guard',
+            password='tha2026',
+            position='second_member',
+        )
+        with patch(
+            'applications.views._module2_applicant_row_payload',
+            side_effect=AssertionError('dashboard analytics must not build row payloads'),
+        ) as row_payload, patch(
+            'applications.views._module2_eligibility_snapshot',
+            side_effect=AssertionError('dashboard analytics must not run eligibility snapshots'),
+        ):
+            eval_count, rfq_count, eval_ids, rfq_ids = _staff_analytics_module2_counts(user)
+
+        self.assertIsInstance(eval_count, int)
+        self.assertIsInstance(rfq_count, int)
+        self.assertEqual(len(eval_ids), eval_count)
+        self.assertEqual(len(rfq_ids), rfq_count)
+        row_payload.assert_not_called()

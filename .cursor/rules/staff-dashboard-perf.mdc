@@ -1,0 +1,26 @@
+---
+description: Keep staff dashboard analytics light so Railway gunicorn workers do not time out
+globs: accounts/views.py,applications/views.py,Procfile
+alwaysApply: false
+---
+
+# Staff dashboard performance (Railway)
+
+## Never do this on second/fourth-member dashboards
+
+- Do **not** call `_module2_applicant_row_payload` or `_module2_eligibility_snapshot` from `_staff_analytics_module2_counts` / `_staff_reports_analytics_payload`.
+- Those helpers are for Module 2 list pages only. Using them for dashboard KPI counts caused gunicorn worker abort → Django 500 on `/dashboard/second-member/`.
+
+## Required pattern
+
+- Dashboard counts: light pass over `_module2_evaluations_applicants_queryset()` + `_module2_on_ready_for_form_queue_track` only.
+- Prefer prefetched related collections (`.all()` in Python) over per-row `.filter().count()` when the queryset already `prefetch_related`s.
+- Cache stable Requirement lookups (see `_cached_required_group_a_vault_doc_types`) instead of querying inside per-applicant loops.
+
+## Procfile
+
+Keep startup as: migrate `--skip-checks` → optional media seed into `$MEDIA_ROOT` → gunicorn with `--timeout 120`. Do not strip migrate/media seed when editing the Procfile.
+
+## Regression
+
+`StaffDashboardAnalyticsPerfGuardTests` in `accounts/tests.py` must keep passing.
