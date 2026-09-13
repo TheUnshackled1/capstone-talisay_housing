@@ -1,11 +1,13 @@
 [build]
 builder = "nixpacks"
+# WhiteNoise needs collected static files in the image.
+buildCommand = "python manage.py collectstatic --noinput"
 
 [deploy]
-startCommand = "gunicorn talisay_housing.wsgi:application --bind 0.0.0.0:$PORT"
+# Must match scripts/start.sh — do NOT use a bare gunicorn line here.
+# A previous startCommand overrode the Procfile and forced sync/1-worker/default
+# timeout, which caused WORKER TIMEOUT on staff dashboards.
+startCommand = "bash scripts/start.sh"
 healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
-
-[[deploy.releaseCommand]]
-command = "python manage.py migrate --noinput && python manage.py collectstatic --noinput"
