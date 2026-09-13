@@ -448,14 +448,12 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     property_ok = not bool(applicant.has_property_in_talisay)
 
     declared_household = int(applicant.household_size or 0)
-    listed_household = applicant.household_members.count() + 1
+    listed_household = len(applicant.household_members.all()) + 1
     has_min_household = declared_household >= 1
     if not has_min_household:
         advisories.append('Declared household size must be at least 1.')
 
-    live_in_partner_count = applicant.household_members.filter(
-        relationship='live_in_partner'
-    ).count()
+    live_in_partner_count = sum(1 for m in applicant.household_members.all() if m.relationship == 'live_in_partner')
     household_has_live_in_partner = live_in_partner_count > 0
     household_ok = has_min_household and not household_has_live_in_partner
 
@@ -526,9 +524,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     required_docs_total = len(required_group_a_doc_types)
     scanned_required_docs = 0
     if required_docs_total > 0:
-        scanned_required_docs = applicant.documents.filter(
-            document_type__in=required_group_a_doc_types,
-        ).values('document_type').distinct().count()
+        scanned_required_docs = len({d.document_type for d in applicant.documents.all() if d.document_type in required_group_a_doc_types})
     required_docs_complete = (required_docs_total == 0) or (scanned_required_docs >= required_docs_total)
 
     if requires_cdrrmo:
@@ -559,7 +555,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     else:
         field_evidence_status = 'missing'
 
-    active_queue = applicant.queue_entries.filter(status='active').exists()
+    active_queue = any(q.status == 'active' for q in applicant.queue_entries.all())
     queue_ready = bool(active_queue or applicant.status != 'eligible')
     # Layer 2 no longer gates "readiness" for queue / workflow handoffs.
     basic_eligibility_ok = True
@@ -569,7 +565,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
     # Option A uses CDRRMO + field verification gates (not ISF situational uploads).
     # Options B/C require at least one ISF situational supporting document.
     situation_docs_required = displacement_reason in ('ejected', 'relocated')
-    situation_docs_count = applicant.documents.filter(document_type='isf_situational_docs').count() if situation_docs_required else 0
+    situation_docs_count = sum(1 for d in applicant.documents.all() if d.document_type == 'isf_situational_docs') if situation_docs_required else 0
     situation_docs_ready = (not situation_docs_required) or (situation_docs_count > 0)
 
     # Module 2 eligibility checklist aggregation.
@@ -837,6 +833,11 @@ def _module2_evaluations_applicants_queryset():
     ).prefetch_related(
         'requirement_submissions',
         'requirement_submissions__requirement',
+        'queue_entries',
+        'documents',
+        'eligibility_check_decisions',
+        'household_members',
+        'archives',
     ).order_by('module2_handoff_at', 'created_at', 'id')
 
 

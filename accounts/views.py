@@ -366,7 +366,7 @@ def _staff_analytics_module2_counts(user):
     ).count()
     rfq_ids = []
     eval_ids = []
-    for applicant in _module2_evaluations_applicants_queryset().iterator(chunk_size=200):
+    for applicant in _module2_evaluations_applicants_queryset():
         row = _module2_applicant_row_payload(applicant, permissions, required_total, user)
         if row is None:
             continue
