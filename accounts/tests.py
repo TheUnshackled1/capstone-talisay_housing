@@ -462,6 +462,7 @@ class GoogleOAuthViewTests(TestCase):
         response = client.get(url)
         self.assertEqual(response.status_code, 302)
         self.assertIn('accounts.google.com', response.url)
+        self.assertIn('prompt=select_account', response.url)
 
 
 class LoginPortalPersistenceTests(TestCase):
