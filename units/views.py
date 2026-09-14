@@ -64,6 +64,13 @@ _MODULE4_MONITORING_COMPLIANCE_STAFF = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIE
 
 _NOTICE_STATUS_VALUES = frozenset({'Under notice (30-day)', 'Final notice (10-day)'})
 
+_HOUSING_UNITS_AWARD_PREFETCH = Prefetch(
+    'lot_awards',
+    queryset=LotAward.objects.select_related(
+        'application__applicant__barangay',
+    ),
+)
+
 _HOUSEHOLD_RELATIONSHIP_OPTIONS = [
     {'value': key, 'label': label} for key, label in HouseholdMember.RELATIONSHIP_CHOICES
 ]
@@ -324,7 +331,7 @@ def housing_units_monitoring(request, position):
         units = (
             HousingUnit.objects
             .filter(site=site)
-            .prefetch_related('lot_awards__application__applicant')
+            .prefetch_related(_HOUSING_UNITS_AWARD_PREFETCH)
             .order_by('block_number', 'lot_number')
         )
 
@@ -336,19 +343,24 @@ def housing_units_monitoring(request, position):
         1 for u in units_list
         if u.status == 'Occupied' and not getattr(u, 'is_historical_beneficiary', False)
     )
-    vacant_count = units.filter(status='Vacant — available').count()
-    notice_30_count = units.filter(status='Under notice (30-day)').count()
-    notice_10_count = units.filter(status='Final notice (10-day)').count()
-    repossessed_count = units.filter(status='Repossessed').count()
+    vacant_count = sum(
+        1 for u in units_list if HousingUnit.is_vacant_available_status(u.status)
+    )
+    notice_30_count = sum(1 for u in units_list if u.status == 'Under notice (30-day)')
+    notice_10_count = sum(1 for u in units_list if u.status == 'Final notice (10-day)')
+    repossessed_count = sum(1 for u in units_list if u.status == 'Repossessed')
 
-    # Find critical alerts (final notices escalated)
-    escalated_units = units.filter(
-        status='Final notice (10-day)',
-        is_escalated=True
-    ).first()
+    # Find critical alerts (final notices escalated) without extra SQL.
+    escalated_units = next(
+        (
+            u for u in units_list
+            if u.status == 'Final notice (10-day)' and u.is_escalated
+        ),
+        None,
+    )
 
     critical_alert_message = ""
-    has_final_notice_alerts = notice_10_count > 0 or units.filter(is_escalated=True).exists()
+    has_final_notice_alerts = notice_10_count > 0 or any(u.is_escalated for u in units_list)
 
     if escalated_units:
         critical_alert_message = (
@@ -440,7 +452,7 @@ def housing_units_monitoring(request, position):
         'all_sites': all_sites,
         'no_relocation_sites': no_relocation_sites,
         'show_dev_seed_hint': no_relocation_sites and settings.DEBUG,
-        'total_units': units.count(),
+        'total_units': len(units_list),
         'occupied_count': occupied_count,
         'vacant_count': vacant_count,
         'notice_30_count': notice_30_count,
@@ -448,7 +460,7 @@ def housing_units_monitoring(request, position):
         'repossessed_count': repossessed_count,
         'housing_unit_kpi_count': occupied_count + sum(1 for u in units_list if getattr(u, 'is_historical_beneficiary', False)),
         'units_by_block': units_by_block,
-        'all_units': units,
+        'all_units': units_list,
         'has_final_notice_alerts': has_final_notice_alerts,
         'critical_alert_message': critical_alert_message,
         # Aliases for template compatibility

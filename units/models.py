@@ -186,9 +186,23 @@ class HousingUnit(models.Model):
 
     @property
     def current_occupant(self):
-        """Return current active lot award if occupied."""
-        active_award = self.lot_awards.filter(status='active').first()
-        return active_award.application.applicant if active_award else None
+        """Active award applicant.
+
+        Walks ``lot_awards.all()`` so a ``prefetch_related`` on the page query
+        is reused. ``.filter()`` would ignore that cache and hit the DB per lot
+        (N+1). Result is cached on the instance for repeated template access.
+        """
+        if hasattr(self, '_current_occupant_cache'):
+            return self._current_occupant_cache
+        occupant = None
+        for award in self.lot_awards.all():
+            if award.status != 'active':
+                continue
+            application = getattr(award, 'application', None)
+            occupant = getattr(application, 'applicant', None) if application else None
+            break
+        self._current_occupant_cache = occupant
+        return occupant
 
     @property
     def construction_progress_snapshot(self):
@@ -200,10 +214,13 @@ class HousingUnit(models.Model):
         if attached is not None:
             return attached
         try:
-            active_award = self.lot_awards.select_related('construction_progress').filter(status='active').first()
-            return getattr(active_award, 'construction_progress', None) if active_award else None
+            for award in self.lot_awards.all():
+                if award.status != 'active':
+                    continue
+                return getattr(award, 'construction_progress', None)
         except Exception:
             return None
+        return None
 
 
 class LotAward(models.Model):
