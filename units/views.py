@@ -390,6 +390,10 @@ def housing_units_monitoring(request, position):
                 lot_award__status='active',
             )
             .select_related('lot_award__unit')
+            .prefetch_related(
+                'lot_award__monitoring_tasks__reports',
+                'lot_award__monitoring_cycles'
+            )
         )
         for p in progress_qs:
             uid = getattr(p.lot_award, 'unit_id', None)
@@ -1271,12 +1275,15 @@ def _unit_ids_with_extension_month_2_failed(units_list):
         lot_award__status='active',
         task_type=TASK_TYPE_EXTENSION_FINAL,
         status='completed',
-    ).select_related('lot_award')
+    ).select_related('lot_award').prefetch_related('reports')
     for t in tasks:
-        report = t.reports.order_by('-submitted_at').first()
+        reports = list(t.reports.all())
+        if not reports:
+            continue
+        reports.sort(key=lambda r: r.submitted_at or timezone.now(), reverse=True)
+        report = reports[0]
         if (
-            report
-            and report.progress_assessment == 'no_progress'
+            report.progress_assessment == 'no_progress'
             and report.assessed_at
         ):
             failed.add(t.lot_award.unit_id)
