@@ -1589,7 +1589,6 @@ def applicants_list(request, position):
         ).distinct().select_related(
             'barangay', 'eligibility_checked_by', 'registered_by'
         ).prefetch_related(
-            'household_members',
             Prefetch(
                 'queue_entries',
                 queryset=QueueEntry.objects.filter(status='active'),
@@ -2224,10 +2223,8 @@ def archive_list(request, position):
             'archived_by',
             'applicant__module2_handoff_by',
             'applicant__application__form_generated_by',
-            'applicant__barangay',
         )
         .prefetch_related(
-            'applicant__household_members',
             Prefetch(
                 'applicant__application__lot_awards',
                 queryset=LotAward.objects.select_related('unit', 'construction_progress'),
