@@ -828,14 +828,17 @@ def _module2_evaluations_applicants_queryset():
         'cdrrmo_certification',
         'registered_by',
         'module2_handoff_by',
+        'barangay',
     ).prefetch_related(
         'requirement_submissions',
         'requirement_submissions__requirement',
         'queue_entries',
         'documents',
+        'documents__blob_record',
         'eligibility_check_decisions',
         'household_members',
         'archives',
+        'cdrrmo_certification__field_photos',
     ).order_by('module2_handoff_at', 'created_at', 'id')
 
 
@@ -953,30 +956,33 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     if permissions['can_award_lot'] and application and application.status == 'standby':
         user_actions.append('award_lot')
 
-    signed_scan_present = (
-        applicant_has_signed_application_payload(applicant)
-        if application is not None
-        else False
-    )
+    signed_scan_present = False
+    _sa_doc = None
+    if application is not None:
+        _sa_docs = sorted(
+            [d for d in applicant.documents.all() if d.document_type == 'signed_application'],
+            key=lambda d: (d.uploaded_at or timezone.now(), d.id),
+            reverse=True
+        )
+        if _sa_docs:
+            _sa_doc = _sa_docs[0]
+            if _sa_doc.file and getattr(_sa_doc.file, 'name', None):
+                signed_scan_present = True
+            elif hasattr(_sa_doc, 'blob_record'):
+                signed_scan_present = True
 
     signed_application_view_url = ''
     signed_application_existing_file_label = ''
-    if signed_scan_present:
-        _sa_doc = (
-            Document.objects.filter(applicant=applicant, document_type='signed_application')
-            .order_by('-uploaded_at', '-id')
-            .first()
+    if signed_scan_present and _sa_doc:
+        signed_application_view_url = reverse(
+            'documents:blob_download',
+            kwargs={'position': acted_by_user.position, 'doc_id': _sa_doc.pk},
         )
-        if _sa_doc:
-            signed_application_view_url = reverse(
-                'documents:blob_download',
-                kwargs={'position': acted_by_user.position, 'doc_id': _sa_doc.pk},
-            )
-            signed_application_existing_file_label = (
-                (_sa_doc.file_name or '').strip()
-                or (_sa_doc.title or '').strip()
-                or 'Signed application'
-            )
+        signed_application_existing_file_label = (
+            (_sa_doc.file_name or '').strip()
+            or (_sa_doc.title or '').strip()
+            or 'Signed application'
+        )
 
     signed_form_vault_url = ''
     signed_form_vault_url_scan = ''
@@ -2429,12 +2435,10 @@ def _situation_certification_gate(applicant):
 
     if dr == 'danger_zone':
         base['requires_documents'] = True
-        has_cdrrmo_doc = applicant.documents.filter(document_type='cdrrmo_cert').exists()
+        has_cdrrmo_doc = any(d.document_type == 'cdrrmo_cert' for d in applicant.documents.all())
         field_photo_count = 0
-        try:
-            field_photo_count = applicant.cdrrmo_certification.field_photos.count()
-        except CDRRMOCertification.DoesNotExist:
-            field_photo_count = 0
+        if getattr(applicant, 'cdrrmo_certification', None):
+            field_photo_count = len(applicant.cdrrmo_certification.field_photos.all())
         checks = [
             {
                 'key': 'cdrrmo_cert_document',
@@ -2467,7 +2471,7 @@ def _situation_certification_gate(applicant):
 
     if dr == 'ejected':
         base['requires_documents'] = True
-        n = applicant.documents.filter(document_type='isf_situational_docs').count()
+        n = len([d for d in applicant.documents.all() if d.document_type == 'isf_situational_docs'])
         done = n >= 1
         base['checks'] = [{
             'key': 'option_b_supporting',
@@ -2484,7 +2488,7 @@ def _situation_certification_gate(applicant):
 
     if dr == 'relocated':
         base['requires_documents'] = True
-        n = applicant.documents.filter(document_type='isf_situational_docs').count()
+        n = len([d for d in applicant.documents.all() if d.document_type == 'isf_situational_docs'])
         done = n >= 1
         base['checks'] = [{
             'key': 'option_c_supporting',
