@@ -508,7 +508,7 @@
         const hasExistingDocAttr = docUrl ? '1' : '0';
         const safeExistingDocNameAttr = escapeHtml(docName || 'Document');
         const isFieldSitePhotosRow = String(c.key || '').trim() === 'field_site_photos';
-        const sitUploadHtml = (!ok && vaultUploadUrl) 
+        const sitUploadHtml = (!ok && vaultUploadUrl && !String(c.label || '').toLowerCase().includes('cdrrmo'))
             ? `<button type="button" class="eligibility-decision-btn" title="Upload document" data-intake-doc-key="${sitDwtMapping ? escapeHtml(sitDwtMapping.doc_key) : ''}" data-intake-doc-code="${sitDwtMapping ? escapeHtml(sitDwtMapping.doc_code) : ''}" data-has-existing-doc="${hasExistingDocAttr}" data-existing-doc-name="${safeExistingDocNameAttr}" onclick="m2SituationCertificationFileUpload(this)"><span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span><span>Upload</span></button>`
             : '';
         const sitScanControlHtml = (!ok && vaultScanUrl && !isFieldSitePhotosRow)
