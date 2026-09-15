@@ -2438,7 +2438,7 @@ def _situation_certification_gate(applicant):
         checks = [
             {
                 'key': 'cdrrmo_cert_document',
-                'label': 'CDRRMO certification',
+                'label': 'CDRRMO Certificate',
                 'detail': (
                     'Vault slot: CDRRMO Certification.'
                 ),
