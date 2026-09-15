@@ -77,7 +77,7 @@ ELIGIBILITY_CHECK_LABELS = {
     'age_residency': 'Age and residency',
     'income': 'Income details',
     'household': 'Household composition',
-    'voter': 'Registered voters',
+    'voter': "Voter's Certificate",
 }
 
 logger = logging.getLogger(__name__)
@@ -2447,7 +2447,7 @@ def _situation_certification_gate(applicant):
             },
             {
                 'key': 'field_site_photos',
-                'label': 'Site photographs',
+                'label': 'Site Photographs',
                 'detail': (
                     f"Field record: {field_photo_count} photo(s)."
                 ),
@@ -2706,7 +2706,7 @@ def eligibility_snapshot(request, position):
             'view_document': _latest_doc_for_req('R03'),
         },
         'voter': {
-            'title': 'Registered voters',
+            'title': "Voter's Certificate",
             'status': _status(bool(rules.get('voter_ok')), pending=(not voter_value_known)),
             'reason': (
                 'Registered voter in Talisay City.'
