@@ -732,7 +732,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function getSingleSeriesDataset(key) {
         var spec = D[key];
-        if (!spec || !spec.labels || !spec.values || !spec.labels.length) return null;
+        if (!spec || !spec.labels || !spec.values) return null;
         return {
             type: 'single',
             labels: spec.labels.map(function (l) {
@@ -1432,7 +1432,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var canvasId = canvas.id;
         var dataset = getStandardizedDataset(canvasId);
         if (!dataset) {
-            if (['chartRequirements', 'chartCasesStatus', 'chartCasesType'].indexOf(canvasId) >= 0) {
+            if (['chartRequirements'].indexOf(canvasId) >= 0) {
                 card.style.display = 'none';
             }
             return;

@@ -342,6 +342,7 @@
             <div class="analytics-filter-field">
                 <label for="filter-year" class="analytics-filter-field-label">Year</label>
                 <select name="year" id="filter-year" class="analytics-filter-select">
+                    <option value="all" {% if report_year == 'all' %}selected{% endif %}>All Time</option>
                     {% for y in year_options %}
                     <option value="{{ y }}" {% if y == report_year %}selected{% endif %}>{{ y }}</option>
                     {% endfor %}
@@ -402,11 +403,17 @@
         if (!yearSel || !monthSel) return;
 
         function updateMonths(selectedYear, keepMonth) {
+            if (selectedYear === 'all' || isNaN(selectedYear)) {
+                monthSel.innerHTML = '<option value="all">All Months</option>';
+                return;
+            }
             var months = availPeriods[String(selectedYear)];
             // Always fall back to all 12 months if the year has no DB data
             if (!months || months.length === 0) months = ALL_MONTHS;
 
-            var prevVal = keepMonth || parseInt(monthSel.value) || {{ report_month }};
+            var prevVal = keepMonth || monthSel.value || '{{ report_month }}';
+            if (prevVal !== 'all') prevVal = parseInt(prevVal);
+            
             monthSel.innerHTML = '';
             var matched = false;
             months.forEach(function (m) {
@@ -422,11 +429,13 @@
 
         // When year changes: rebuild months, do NOT auto-submit
         yearSel.addEventListener('change', function () {
-            updateMonths(parseInt(yearSel.value), parseInt(monthSel.value));
+            var selectedYear = yearSel.value;
+            var keepMonth = monthSel.value;
+            updateMonths(selectedYear === 'all' ? 'all' : parseInt(selectedYear), keepMonth === 'all' ? 'all' : parseInt(keepMonth));
         });
 
         // Init: ensure the correct month is pre-selected on page load
-        updateMonths(parseInt(yearSel.value), {{ report_month }});
+        updateMonths(yearSel.value === 'all' ? 'all' : parseInt(yearSel.value), '{{ report_month }}' === 'all' ? 'all' : parseInt('{{ report_month }}'));
     })();
     </script>
 

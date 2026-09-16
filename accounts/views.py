@@ -660,16 +660,27 @@ def _staff_reports_analytics_payload(request):
     Returns a dict suitable for ``staff_reports_analytics.html`` and CSV export.
     """
     now = timezone.localtime(timezone.now())
-    try:
-        report_year = int(request.GET.get('year', now.year))
-        report_month = int(request.GET.get('month', now.month))
-    except (TypeError, ValueError):
-        report_year, report_month = now.year, now.month
-    report_year = max(2000, min(report_year, 2100))
-    report_month = max(1, min(report_month, 12))
+    year_param = request.GET.get('year')
+    month_param = request.GET.get('month')
 
-    period_start, period_end = _report_month_bounds(report_year, report_month)
-    period_label = f'{calendar.month_name[report_month]} {report_year}'
+    if year_param == 'all' or month_param == 'all' or (not year_param and not month_param):
+        report_year = 'all'
+        report_month = 'all'
+        period_start = now.replace(year=2000, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        period_end = now
+        period_label = 'All Time'
+    else:
+        try:
+            report_year = int(year_param)
+            report_month = int(month_param)
+        except (TypeError, ValueError):
+            report_year = now.year
+            report_month = now.month
+
+        report_year = max(2000, min(report_year, 2100))
+        report_month = max(1, min(report_month, 12))
+        period_start, period_end = _report_month_bounds(report_year, report_month)
+        period_label = f'{calendar.month_name[report_month]} {report_year}'
 
     doc_type_labels = dict(Document.DOCUMENT_TYPE_CHOICES)
     applicant_status_labels = dict(Applicant.STATUS_CHOICES)
@@ -702,7 +713,8 @@ def _staff_reports_analytics_payload(request):
     for _row in _case_periods:
         _all_periods_set.add((_row['yr'], _row['mo']))
     # Always include the currently selected period so the filter never shows a blank
-    _all_periods_set.add((report_year, report_month))
+    if report_year != 'all' and report_month != 'all':
+        _all_periods_set.add((report_year, report_month))
     available_periods = sorted(_all_periods_set)  # list of (year, month) tuples
     available_years = sorted(set(y for y, m in available_periods))
     # Map year → list of (month_num, month_name) for that year
@@ -769,7 +781,9 @@ def _staff_reports_analytics_payload(request):
 
     monthly_upload_trend = []
     trend_max = 1
-    for y, m, lbl in _six_month_sequence_end(report_year, report_month):
+    trend_end_y = report_year if report_year != 'all' else now.year
+    trend_end_m = report_month if report_month != 'all' else now.month
+    for y, m, lbl in _six_month_sequence_end(trend_end_y, trend_end_m):
         ms, me = _report_month_bounds(y, m)
         c = Document.objects.filter(uploaded_at__gte=ms, uploaded_at__lte=me).count()
         trend_max = max(trend_max, c)
@@ -826,7 +840,9 @@ def _staff_reports_analytics_payload(request):
 
     intake_registration_trend = []
     reg_max = 1
-    for y, m, lbl in _six_month_sequence_end(report_year, report_month):
+    trend_end_y = report_year if report_year != 'all' else now.year
+    trend_end_m = report_month if report_month != 'all' else now.month
+    for y, m, lbl in _six_month_sequence_end(trend_end_y, trend_end_m):
         ms, me = _report_month_bounds(y, m)
         c = Applicant.objects.filter(created_at__gte=ms, created_at__lte=me).count()
         reg_max = max(reg_max, c)
@@ -1128,7 +1144,10 @@ def _staff_reports_analytics_payload(request):
     # Smart dropdowns: only years/months with real data (fallback to standard range if none)
     year_options = available_years if available_years else list(range(now.year - 5, now.year + 2))
     month_options = list(range(1, 13))
-    months_for_select = available_months_by_year.get(report_year, [(i, calendar.month_name[i]) for i in range(1, 13)])
+    if report_year == 'all':
+        months_for_select = []
+    else:
+        months_for_select = available_months_by_year.get(report_year, [(i, calendar.month_name[i]) for i in range(1, 13)])
 
     analytics_data = {
         'pending_notices': 0,
@@ -1241,9 +1260,12 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
     monthly_upload_trend = data['monthly_upload_trend']
 
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = (
-        f'attachment; filename="{filename_prefix}_{report_year}_{report_month:02d}.csv"'
-    )
+    if report_year == 'all' or report_month == 'all':
+        filename = f"{filename_prefix}_all_time.csv"
+    else:
+        filename = f"{filename_prefix}_{report_year}_{report_month:02d}.csv"
+    
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     response.write('\ufeff')
     writer = csv.writer(response)
     writer.writerow([f'THA {export_role_title} — data export (shared intake & operations metrics)'])
