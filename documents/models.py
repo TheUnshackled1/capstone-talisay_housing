@@ -30,7 +30,7 @@ class Document(models.Model):
         ('house_sketch', 'Sketch of House Location'),
         (
             'voter_certification',
-            'Voter Certification',
+            "Voter's Certificate",
         ),
         (
             'isf_situational_docs',
