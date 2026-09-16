@@ -2140,7 +2140,7 @@ def walkin_register(request, position):
             'doc_no_property': 'Certificate of No Property',
             'doc_2x2_picture': '2x2 Picture',
             'doc_sketch_location': 'Sketch of House Location',
-            'doc_voter_cert': 'Voter Certification',
+            'doc_voter_cert': "Voter's Certificate",
         }
 
         documents_submitted = {}

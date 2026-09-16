@@ -3192,7 +3192,7 @@ function getCsrfToken() {
         ];
         requirements.push({
             code: 'RVT',
-            name: 'Voter Certification',
+            name: "Voter's Certificate",
             group: 'Applicant Requirements',
             dbKey: 'doc_voter_cert',
             isRequired: false,
