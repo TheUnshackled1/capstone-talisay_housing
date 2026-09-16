@@ -526,21 +526,14 @@
         const chipClass = ok ? 'passed' : 'failed';
         const chipLabel = ok ? 'Done' : 'Missing';
         const reasonLine = situationCertReasonForCheck(checks, sc, idx, ok, suppressReasonDup);
-        const markPassedTitle = ok
-            ? 'Requirement satisfied on record. When every row shows Done, click Mark Situation Certified below.'
-            : 'Upload or scan the required document in the vault until this row shows Done.';
-        const markPassedButtonsHtml = (isFieldSitePhotosRow || ok)
-            ? ''
-            : `<button type="button" class="eligibility-decision-btn m2-sit-mark-passed" disabled title="${escapeHtml(markPassedTitle)}"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Mark</span></button>`;
         const viewSitDocBtnHtml = docUrl ? `<a class="eligibility-view-doc-btn m2-sit-action-view" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}"><span class="btn-icon-block">${M2_VIEW_ICON_SVG}</span><span>View</span></a>` : '';
-        const actionsRow = (viewSitDocBtnHtml || viewFieldPhotosHtml || sitUploadHtml || sitScanControlHtml || markPassedButtonsHtml)
+        const actionsRow = (viewSitDocBtnHtml || viewFieldPhotosHtml || sitUploadHtml || sitScanControlHtml)
             ? `<div class="m2-elig-actions m2-sit-actions">
                 <div class="m2-elig-decision-actions">
                     ${viewSitDocBtnHtml}
                     ${viewFieldPhotosHtml}
                     ${sitScanControlHtml}
                     ${sitUploadHtml}
-                    ${markPassedButtonsHtml}
                 </div>
             </div>`
             : '';
