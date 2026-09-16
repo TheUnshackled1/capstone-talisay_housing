@@ -324,7 +324,7 @@ class Applicant(models.Model):
     doc_no_property = models.BooleanField(default=False, verbose_name="Certificate of No Property")
     doc_2x2_picture = models.BooleanField(default=False, verbose_name="2x2 Picture")
     doc_sketch_location = models.BooleanField(default=False, verbose_name="Sketch of House Location")
-    doc_voter_cert = models.BooleanField(default=False, verbose_name="Voter Certification")
+    doc_voter_cert = models.BooleanField(default=False, verbose_name="Voter's Certificate")
 
     # Document submission deadline tracking
     document_deadline = models.DateTimeField(
