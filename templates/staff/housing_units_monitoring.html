@@ -9,6 +9,9 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/housing_units_monitoring.css' %}">
+
+<!-- Preload LCP Image for map view -->
+<link rel="preload" as="image" href="{% static 'images/lot_plan_roads.png' %}">
 {% endblock %}
 
 {% block content %}
@@ -248,7 +251,7 @@
             </div>
             <div class="lotplan-stage" id="lotplan-zoomable">
                 <div class="lotplan-roads-base" aria-hidden="true"></div>
-                <img class="lotplan-img" src="{% static 'images/lot_plan_roads.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}">
+                <img class="lotplan-img" src="{% static 'images/lot_plan_roads.png' %}" alt="Subdivision lot plan for {{ site.name|default:'relocation site' }}" fetchpriority="high">
                 <svg id="lotplan-svg" class="lotplan-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none"
                      role="group" aria-label="Interactive lot zones"
                      data-polygons-url="{% static 'units/lot_plan_polygons.json' %}"
