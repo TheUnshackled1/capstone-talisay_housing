@@ -1,47 +1,47 @@
-# IHSMS Staff User Guide
+﻿# IHSMS Staff User Guide
 ### Integrated Housing Services and Monitoring System
-**Talisay City Housing Authority** · Talisay City, Negros Occidental
+**Talisay City Housing Authority** Â· Talisay City, Negros Occidental
 
 ---
 
-> This guide is intended for **Second Member** and **Fourth Member** staff of the Talisay City Housing Authority. It covers the complete workflow — from logging in to monitoring housing unit occupancy.
+> This guide is intended for **Second Member** and **Fourth Member** staff of the Talisay City Housing Authority. It covers the complete workflow â€” from logging in to monitoring housing unit occupancy.
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#1-overview)
-2. [Step 1 — Homepage](#2-step-1--homepage)
-3. [Step 2 — Staff Login](#3-step-2--staff-login)
-4. [Step 3 — Dashboard](#4-step-3--dashboard)
-5. [Step 4 — Applicant Registration](#5-step-4--applicant-registration)
-6. [Step 5 — Document Scanning](#6-step-5--document-scanning)
-7. [Step 6 — Applicant Evaluation & Eligibility](#7-step-6--applicant-evaluation--eligibility)
-8. [Step 7 — Form Generation](#8-step-7--form-generation)
-9. [Step 8 — Lot Awarding & SMS Notification](#9-step-8--lot-awarding--sms-notification)
-10. [Step 9 — Housing Unit & Occupancy Monitoring](#10-step-9--housing-unit--occupancy-monitoring)
+2. [Step 1 â€” Homepage](#2-step-1--homepage)
+3. [Step 2 â€” Staff Login](#3-step-2--staff-login)
+4. [Step 3 â€” Dashboard](#4-step-3--dashboard)
+5. [Step 4 â€” Applicant Registration](#5-step-4--applicant-registration)
+6. [Step 5 â€” Document Scanning](#6-step-5--document-scanning)
+7. [Step 6 â€” Applicant Evaluation & Eligibility](#7-step-6--applicant-evaluation--eligibility)
+8. [Step 7 â€” Form Generation](#8-step-7--form-generation)
+9. [Step 8 â€” Lot Awarding & SMS Notification](#9-step-8--lot-awarding--sms-notification)
+10. [Step 9 â€” Housing Unit & Occupancy Monitoring](#10-step-9--housing-unit--occupancy-monitoring)
 11. [Frequently Asked Questions](#11-frequently-asked-questions)
 
 ---
 
 ## 1. Overview
 
-The **IHSMS** (Integrated Housing Services and Monitoring System) is the official digital platform of the Talisay City Housing Authority. It manages the full lifecycle of housing applicants — from initial registration, document collection, eligibility evaluation, form generation, lot awarding, and finally housing unit monitoring.
+The **IHSMS** (Integrated Housing Services and Monitoring System) is the official digital platform of the Talisay City Housing Authority. It manages the full lifecycle of housing applicants â€” from initial registration, document collection, eligibility evaluation, form generation, lot awarding, and finally housing unit monitoring.
 
 ### Workflow Summary
 
 ```
-Homepage → Login → Dashboard → Register Applicant → Scan Documents
-→ Evaluate Eligibility → Generate Form → Lot Awarding → Housing Monitoring
+Homepage â†’ Login â†’ Dashboard â†’ Register Applicant â†’ Scan Documents
+â†’ Evaluate Eligibility â†’ Generate Form â†’ Lot Awarding â†’ Housing Monitoring
 ```
 
 ---
 
-## 2. Step 1 — Homepage
+## 2. Step 1 â€” Homepage
 
 **URL:** `https://ihsms.up.railway.app/`
 
-![IHSMS Homepage](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/homepage_screenshot_1789620152721.png)
+![IHSMS Homepage](docs/screenshots/01_homepage.png)
 
 The homepage is the public-facing landing page of the IHSMS system.
 
@@ -55,7 +55,7 @@ The homepage is the public-facing landing page of the IHSMS system.
 1. Click the **"Staff Log In"** button in the top-right corner.
 2. A dropdown menu will appear showing three options:
 
-![Staff Login Dropdown](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/homepage_dropdown_screenshot_1789620175566.png)
+![Staff Login Dropdown](docs/screenshots/02_homepage_dropdown.png)
 
 3. Click on your position (**Second Member** or **Fourth Member**).
 4. You will be redirected to the Staff Login page.
@@ -66,16 +66,16 @@ The homepage is the public-facing landing page of the IHSMS system.
 
 ---
 
-## 3. Step 2 — Staff Login
+## 3. Step 2 â€” Staff Login
 
 **URL:** `https://ihsms.up.railway.app/login/?role=second_member`
 
-![Login Page](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/login_page_screenshot_1789620248847.png)
+![Login Page](docs/screenshots/03_login_page.png)
 
 ### How to Log In
 
 1. Enter your **Username** (e.g., `joie.tingson`).
-2. Enter your **Password** (default: `tha2026` — change this after first login).
+2. Enter your **Password** (default: `tha2026` â€” change this after first login).
 3. Click **"Sign In"**.
 4. If your credentials are correct, you will be redirected to the **Dashboard**.
 
@@ -84,16 +84,16 @@ The homepage is the public-facing landing page of the IHSMS system.
 | Problem | Solution |
 |---|---|
 | "Invalid username or password" | Verify you are on the correct portal (Second Member vs. Fourth Member). Check Caps Lock. |
-| Account created via Google — password not working | Ask your administrator to run `python manage.py seed_users` on the server to set the default password. |
+| Account created via Google â€” password not working | Ask your administrator to run `python manage.py seed_users` on the server to set the default password. |
 | Forgot password | Contact your system administrator to reset it. |
 
 ---
 
-## 4. Step 3 — Dashboard
+## 4. Step 3 â€” Dashboard
 
 **URL:** `https://ihsms.up.railway.app/dashboard/`
 
-![Dashboard](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/dashboard_screenshot_1789620220667.png)
+![Dashboard](docs/screenshots/04_dashboard.png)
 
 The dashboard is the main control panel showing a real-time statistical overview.
 
@@ -116,8 +116,8 @@ The dashboard is the main control panel showing a real-time statistical overview
 ### Filter by Year and Month
 
 At the top of the analytics section is a **filter bar**:
-- **Year** — defaults to "All Year". Only years with actual data appear in the dropdown.
-- **Month** — Only months with actual data for the selected year appear.
+- **Year** â€” defaults to "All Year". Only years with actual data appear in the dropdown.
+- **Month** â€” Only months with actual data for the selected year appear.
 
 **To use the filter:**
 1. Select a **Year** from the dropdown.
@@ -127,11 +127,11 @@ At the top of the analytics section is a **filter bar**:
 
 ---
 
-## 5. Step 4 — Applicant Registration
+## 5. Step 4 â€” Applicant Registration
 
 **URL:** `https://ihsms.up.railway.app/intake/staff/second_member/applicants/`
 
-![Applicant Registration](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/applicants_page_1789619908100.png)
+![Applicant Registration](docs/screenshots/05_applicants.png)
 
 This is where staff register new housing applicants.
 
@@ -151,7 +151,7 @@ This is where staff register new housing applicants.
 
 ---
 
-## 6. Step 5 — Document Scanning
+## 6. Step 5 â€” Document Scanning
 
 After registering the applicant, collect and scan their supporting documents.
 
@@ -183,17 +183,17 @@ After registering the applicant, collect and scan their supporting documents.
 
 1. Click **"SCAN"** next to each document name.
 2. Select the scanned image or PDF file from your computer.
-3. The document status changes to a checkmark (✓) once uploaded.
+3. The document status changes to a checkmark (âœ“) once uploaded.
 4. Repeat for all required documents.
 5. Click **"Proceed to Applicant Evaluation & Eligibility"** at the bottom when done.
 
 ---
 
-## 7. Step 6 — Applicant Evaluation & Eligibility
+## 7. Step 6 â€” Applicant Evaluation & Eligibility
 
 **URL:** `https://ihsms.up.railway.app/applications/staff/second_member/`
 
-![Applicant Evaluation](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/evaluation_page_1789619976184.png)
+![Applicant Evaluation](docs/screenshots/07_evaluation.png)
 
 Page title: **"APPLICANT EVALUATION AND ELIGIBILITY"**
 
@@ -209,24 +209,24 @@ Page title: **"APPLICANT EVALUATION AND ELIGIBILITY"**
 
 1. Find the applicant in the list (use the search bar if needed).
 2. Click on their row to open the evaluation panel.
-3. Review all uploaded documents — verify they are:
+3. Review all uploaded documents â€” verify they are:
    - Legible and valid
    - Matching the applicant's information
    - Not expired (Cedula, Police Clearance, etc.)
 4. Make your evaluation decision:
-   - **Approve** → applicant automatically moves to Form Generation queue
-   - **Return for Documents** → applicant must resubmit documents
-   - **Reject** → applicant does not qualify
+   - **Approve** â†’ applicant automatically moves to Form Generation queue
+   - **Return for Documents** â†’ applicant must resubmit documents
+   - **Reject** â†’ applicant does not qualify
 5. Add notes or remarks if needed.
 6. Click **"Submit Evaluation"** to save your decision.
 
 ---
 
-## 8. Step 7 — Form Generation
+## 8. Step 7 â€” Form Generation
 
 **URL:** `https://ihsms.up.railway.app/applications/staff/second_member/ready-for-form/`
 
-![Form Generation](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/form_generation_page_1789620057469.png)
+![Form Generation](docs/screenshots/08_form_generation.png)
 
 Page title: **"FORM GENERATION"**
 
@@ -251,11 +251,11 @@ After generating the PDF:
 
 ---
 
-## 9. Step 8 — Lot Awarding & SMS Notification
+## 9. Step 8 â€” Lot Awarding & SMS Notification
 
 **URL:** `https://ihsms.up.railway.app/applications/staff/second_member/lot-awarding-queue/`
 
-![Lot Awarding](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/lot_awarding_page_1789620086244.png)
+![Lot Awarding](docs/screenshots/09_lot_awarding.png)
 
 Page title: **"LOT AWARDING"**
 
@@ -273,11 +273,11 @@ Page title: **"LOT AWARDING"**
 
 ---
 
-## 10. Step 9 — Housing Unit & Occupancy Monitoring
+## 10. Step 9 â€” Housing Unit & Occupancy Monitoring
 
 **URL:** `https://ihsms.up.railway.app/units/housing-units/second_member/`
 
-![Housing Units Monitoring](C:/Users/jtcor/.gemini/antigravity-ide/brain/7b746d4d-757d-4952-a7c1-57f6606a2717/housing_units_page_1789620113885.png)
+![Housing Units Monitoring](docs/screenshots/10_housing_units.png)
 
 Page title: **"HOUSING UNIT & OCCUPANCY MONITORING"**
 
@@ -303,8 +303,8 @@ Each unit record shows:
 1. Find the housing unit using the list or filters (by status, site, block/lot).
 2. Click on the unit to open its detail panel.
 3. Update as needed:
-   - **Occupancy status** (e.g., Vacant → Occupied after move-in)
-   - **Construction stage** (Foundation → Roofing → Completed)
+   - **Occupancy status** (e.g., Vacant â†’ Occupied after move-in)
+   - **Construction stage** (Foundation â†’ Roofing â†’ Completed)
    - **Linked beneficiary** (assign the lot-awarded applicant to this unit)
 4. Click **"Save"** to apply changes.
 
@@ -341,4 +341,5 @@ If an occupant violates housing terms:
 
 ---
 
-*Last Updated: September 2026 · Talisay City Housing Authority · IHSMS v1.0*
+*Last Updated: September 2026 Â· Talisay City Housing Authority Â· IHSMS v1.0*
+
