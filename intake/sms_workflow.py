@@ -129,7 +129,7 @@ def message_ready_for_form_queue_reminder(applicant, base_url: str = '') -> str:
         base_url = _get_default_base_url()
     link = _status_link_suffix(ref, base_url)
     return (
-        f'{head}: Ang imo aplikasyon yara sa Form Generation magahulat nalang kita sang ila nga perma nga ini paga permahan sang mga opisyales na nagahulugan sang eligibility '
+        f'{head}: Ang imo aplikasyon yara na sa Form Generation. Maghulat sang pirma sang mga opisyales. '
         f'Mag-hulat sang updates ukon magdu-aw sa Talisay Housing Authority kon kinahanglan. Salamat!{link}'
     )
 
