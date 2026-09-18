@@ -1,4 +1,4 @@
-# IHSMS Staff User Guide
+x`# IHSMS Staff User Guide
 ### Integrated Housing Services and Monitoring System
 **Talisay City Housing Authority** · Talisay City, Negros Occidental
 
@@ -131,7 +131,9 @@ At the top of the analytics section is a **filter bar**:
 
 **URL:** `https://ihsms.up.railway.app/intake/staff/second_member/applicants/`
 
-![Applicant Registration](docs/screenshots/05_applicants.png)
+![Applicant Registration List](docs/screenshots/application-stage/05_applicants.png)
+![Applicant Registration Sheet](docs/screenshots/application-stage/05_applicant_registration_sheet.png)
+![Applicant Record Sheet](docs/screenshots/application-stage/applicant_record_sheet.png)
 
 This is where staff register new housing applicants.
 
@@ -160,6 +162,8 @@ After registering the applicant, collect and scan their supporting documents.
 1. From the Applicants page, find the applicant (search by name or reference number).
 2. Click **"Scan Documents"** to open the **Document Scan Checklist**.
 
+![Document Scan Checklist](docs/screenshots/application-stage/05_document_scan_checklist.png)
+
 ### Required Documents (must all be completed before proceeding)
 
 | # | Document |
@@ -183,7 +187,9 @@ After registering the applicant, collect and scan their supporting documents.
 
 1. Click **"SCAN"** next to each document name.
 2. Select the scanned image or PDF file from your computer.
-3. The document status changes to a checkmark (âœ“) once uploaded.
+3. The document status changes to a checkmark (✓) once uploaded.
+
+![Document Scan Successful](docs/screenshots/application-stage/06_document_scan_successful.png)
 4. Repeat for all required documents.
 5. Click **"Proceed to Applicant Evaluation & Eligibility"** at the bottom when done.
 
@@ -193,7 +199,9 @@ After registering the applicant, collect and scan their supporting documents.
 
 **URL:** `https://ihsms.up.railway.app/applications/staff/second_member/`
 
-![Applicant Evaluation](docs/screenshots/07_evaluation.png)
+![Applicant Evaluation List](docs/screenshots/evaluation/evaluation_list.png)
+![Evaluation Pre-check](docs/screenshots/evaluation/evaluation_precheck.png)
+![Eligibility Evaluation Checklist](docs/screenshots/evaluation/eligibility_evaluation_checklist.png)
 
 Page title: **"APPLICANT EVALUATION AND ELIGIBILITY"**
 
@@ -226,7 +234,11 @@ Page title: **"APPLICANT EVALUATION AND ELIGIBILITY"**
 
 **URL:** `https://ihsms.up.railway.app/applications/staff/second_member/ready-for-form/`
 
-![Form Generation](docs/screenshots/08_form_generation.png)
+![Form Generation List](docs/screenshots/form-generation/01_form_generation_list.png)
+![Application Form PDF - Page 1 Top](docs/screenshots/form-generation/application_form_page1_1789715670792.png)
+![Application Form PDF - Page 1 Bottom](docs/screenshots/form-generation/application_form_page1_bottom_1789715699839.png)
+![Application Form PDF - Page 2 Top](docs/screenshots/form-generation/application_form_page2_1789715731086.png)
+![Application Form PDF - Page 2 Bottom](docs/screenshots/form-generation/application_form_page2_bottom_1789715768980.png)
 
 Page title: **"FORM GENERATION"**
 
