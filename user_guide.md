@@ -1,4 +1,4 @@
-﻿# IHSMS Staff User Guide
+# IHSMS Staff User Guide
 ### Integrated Housing Services and Monitoring System
 **Talisay City Housing Authority** · Talisay City, Negros Occidental
 
@@ -105,7 +105,7 @@ The dashboard is the main control panel showing a real-time statistical overview
 | **Applicant Situation** | CDRRMO, Ejected, Displaced, None breakdown |
 | **ISF Population Overall** | Total beneficiaries and total population |
 | **Registered Voters** | Registered vs. not-registered voters |
-| **ISF Population** | Gender breakdown (Male / Female) |
+| **Gender Distribution** | Gender breakdown (Male / Female) |
 | **Top Barangays** | Bar chart of barangays with most applicants |
 | **Housing Units by Status** | Vacant vs. Occupied units |
 | **Blacklisted** | Units repossessed due to non-compliance |
