@@ -1438,6 +1438,25 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        var hasData = false;
+        if (dataset.type === 'single') {
+            hasData = dataset.values && dataset.values.length > 0 && sum(dataset.values) > 0;
+        } else if (dataset.type === 'multi') {
+            hasData = dataset.datasets && dataset.datasets.length > 0 &&
+                (sum(dataset.datasets[0].values) > 0 || sum(dataset.datasets[1].values) > 0);
+        }
+        if (!hasData) {
+            canvas.style.display = 'none';
+            if (canvas.parentNode) canvas.parentNode.style.display = 'none';
+            if (!card.querySelector('.rep-empty-state')) {
+                var emptyDiv = document.createElement('div');
+                emptyDiv.className = 'rep-empty-state';
+                emptyDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div class="rep-empty-state-title">No violations found</div><div class="rep-empty-state-sub">0 blacklisted applicants<br>All records are in good standing.</div>';
+                card.appendChild(emptyDiv);
+            }
+            return;
+        }
+
         var titleEl = card.querySelector('.rep-card-title');
         var subEl = card.querySelector('.rep-card-sub');
         var header = document.createElement('div');

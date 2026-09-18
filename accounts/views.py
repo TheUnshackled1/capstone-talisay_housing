@@ -1044,6 +1044,8 @@ def _staff_reports_analytics_payload(request):
             if st and reason in situation_breakdowns and st in situation_breakdowns[reason]:
                 situation_breakdowns[reason][st] += 1
 
+    situation_total = sum(situation_counts_map.values())
+
     applicants_by_channel = [
         {
             'channel': 'danger_zone',
@@ -1347,6 +1349,7 @@ def _staff_reports_analytics_payload(request):
         'queue_active_rows': queue_active_rows,
         'vacant_units_count': vacant_units_count,
         'pending_cdrrmo_count': pending_cdrrmo_count,
+        'situation_total': situation_total,
         'applicants_by_channel': applicants_by_channel,
         'applicants_top_barangays': applicants_top_barangays,
         'intake_registration_trend': intake_registration_trend,

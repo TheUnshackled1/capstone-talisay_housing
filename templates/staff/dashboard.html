@@ -466,7 +466,18 @@
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Applicant Situation</p>
             <p class="rep-card-sub" style="text-align: center;">Displacement categories · CDRRMO, Ejected, Displaced, and None.</p>
+            {% if situation_total > 0 %}
             <div class="rep-chart-canvas"><canvas id="chartChannels"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <div class="rep-empty-state-title">No situation data</div>
+                <div class="rep-empty-state-sub">0 applicants recorded<br>No displacement records available.</div>
+            </div>
+            {% endif %}
         </div>
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">ISF Population Overall</p>
@@ -556,14 +567,36 @@
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Cases by Status</p>
             <p class="rep-card-sub" style="text-align: center;">Open / resolved / closed across all case types.</p>
+            {% if cases_by_status %}
             <div class="rep-ops-chart-canvas"><canvas id="chartCasesStatus"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <div class="rep-empty-state-title">No cases recorded</div>
+                <div class="rep-empty-state-sub">0 open cases<br>All records are in good standing.</div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Card 3: Cases by type -->
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Cases by Type</p>
             <p class="rep-card-sub" style="text-align: center;">Distribution by case category.</p>
+            {% if cases_by_type %}
             <div class="rep-ops-chart-canvas"><canvas id="chartCasesType"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <div class="rep-empty-state-title">No case categories found</div>
+                <div class="rep-empty-state-sub">0 open cases<br>All records are in good standing.</div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
