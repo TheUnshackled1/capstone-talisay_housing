@@ -1080,23 +1080,18 @@ def upload_document(request, position):
         # Get applicant
         applicant = Applicant.objects.get(id=applicant_id)
 
-        existing_doc = Document.objects.filter(applicant=applicant, document_type=doc_type).first()
-        if existing_doc:
-            DocumentBlob.objects.filter(document_id=existing_doc.pk).delete()
+        # One vault row per type: replace blob (and drop duplicate rows) so
+        # Ready-for-Form PDF overlays (2x2) always match Document Management.
+        from documents.models import upsert_document_vault_upload
 
-        # Create or update document
-        doc, created = Document.objects.update_or_create(
+        label = dict(Document.DOCUMENT_TYPE_CHOICES).get(doc_type, doc_type)
+        doc, created = upsert_document_vault_upload(
             applicant=applicant,
             document_type=doc_type,
-            defaults={
-                'title': f"{applicant.full_name} - {dict(Document.DOCUMENT_TYPE_CHOICES).get(doc_type, doc_type)}",
-                'file': file,
-                'file_name': file.name,
-                'file_size': file.size,
-                'mime_type': file.content_type,
-                'uploaded_by': request.user,
-                'capture_method': Document.CAPTURE_UPLOAD,
-            }
+            uploaded_file=file,
+            title=f'{applicant.full_name} - {label}',
+            uploaded_by=request.user,
+            capture_method=Document.CAPTURE_UPLOAD,
         )
 
         pipeline_note = ''
@@ -1104,6 +1099,8 @@ def upload_document(request, position):
         if doc_type == 'signed_application':
             from applications.form_pipeline import apply_signed_application_scan_if_ready
 
+            # upsert already invoked the pipeline; call again is idempotent and
+            # returns whether this request advanced the application.
             info = apply_signed_application_scan_if_ready(applicant.id)
             application_advanced = bool(info.get('updated'))
             if application_advanced:

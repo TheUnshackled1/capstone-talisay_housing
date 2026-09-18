@@ -116,6 +116,12 @@ class Document(models.Model):
             models.Index(fields=['applicant', 'document_type']),
             models.Index(fields=['document_type']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['applicant', 'document_type'],
+                name='unique_document_per_applicant_type',
+            ),
+        ]
     
     def __str__(self):
         return f"{self.applicant.full_name} - {self.get_document_type_display()}"
@@ -202,42 +208,92 @@ def upsert_document_vault_upload(
     capture_method='',
 ):
     """
-    Create or replace a vault Document for this applicant/type.
-    Stores bytes in DocumentBlob and clears FileField so scans do not require disk writes.
+    Create or replace the single vault Document for this applicant/type.
+
+    Always stores bytes in DocumentBlob (clears FileField). Deletes duplicate
+    rows of the same type so Ready-for-Form PDF overlays (e.g. 2x2 photo) always
+    read the latest replacement from Document Management or intake Scan.
     """
+    from django.utils import timezone
+
     raw = uploaded_file.read()
+    if hasattr(uploaded_file, 'seek'):
+        try:
+            uploaded_file.seek(0)
+        except Exception:
+            pass
     if not raw:
         raise ValueError('Empty upload')
-
-    existing = Document.objects.filter(
-        applicant=applicant,
-        document_type=document_type,
-    ).first()
-    if existing and existing.file:
-        existing.file.delete(save=False)
 
     method = (capture_method or '').strip().lower()
     if method not in (Document.CAPTURE_UPLOAD, Document.CAPTURE_SCAN):
         method = ''
 
-    doc, created = Document.objects.update_or_create(
-        applicant=applicant,
-        document_type=document_type,
-        defaults={
-            'title': title,
-            'file_name': uploaded_file.name,
-            'file_size': len(raw),
-            'mime_type': getattr(uploaded_file, 'content_type', '') or '',
-            'uploaded_by': uploaded_by,
-            'file': None,
-            'capture_method': method,
-        },
+    existing_qs = (
+        Document.objects.filter(applicant=applicant, document_type=document_type)
+        .order_by('-uploaded_at', '-id')
     )
+    existing_list = list(existing_qs)
+    keep = existing_list[0] if existing_list else None
+
+    # Drop older duplicates so PDF / vault drawer never latch onto a stale row.
+    for dup in existing_list[1:]:
+        if dup.file:
+            try:
+                dup.file.delete(save=False)
+            except Exception:
+                pass
+        dup.delete()
+
+    if keep and keep.file:
+        try:
+            keep.file.delete(save=False)
+        except Exception:
+            pass
+
+    defaults = {
+        'title': title,
+        'file_name': getattr(uploaded_file, 'name', None) or 'document',
+        'file_size': len(raw),
+        'mime_type': getattr(uploaded_file, 'content_type', '') or '',
+        'uploaded_by': uploaded_by,
+        'file': None,
+        'capture_method': method,
+    }
+
+    if keep:
+        for field, value in defaults.items():
+            setattr(keep, field, value)
+        keep.save()
+        # auto_now_add does not bump on update — force so "latest" queries stay correct
+        Document.objects.filter(pk=keep.pk).update(uploaded_at=timezone.now())
+        keep.refresh_from_db()
+        doc = keep
+        created = False
+    else:
+        doc = Document.objects.create(applicant=applicant, document_type=document_type, **defaults)
+        created = True
 
     DocumentBlob.objects.update_or_create(
         document=doc,
         defaults={'data': raw},
     )
+
+    # Keep Module 1 checklist flags in sync when vault types map to Applicant booleans
+    _VAULT_TYPE_TO_APPLICANT_FLAG = {
+        'barangay_residency': 'doc_brgy_residency',
+        'barangay_indigency': 'doc_brgy_indigency',
+        'cedula': 'doc_cedula',
+        'police_clearance': 'doc_police_clearance',
+        'no_property': 'doc_no_property',
+        'photo_2x2': 'doc_2x2_picture',
+        'house_sketch': 'doc_sketch_location',
+        'voter_certification': 'doc_voter_cert',
+    }
+    flag = _VAULT_TYPE_TO_APPLICANT_FLAG.get(document_type)
+    if flag and hasattr(applicant, flag) and not getattr(applicant, flag):
+        setattr(applicant, flag, True)
+        applicant.save(update_fields=[flag, 'updated_at'])
 
     if document_type == 'signed_application':
         from applications.form_pipeline import apply_signed_application_scan_if_ready
@@ -245,6 +301,32 @@ def upsert_document_vault_upload(
         apply_signed_application_scan_if_ready(applicant.id)
 
     return doc, created
+
+
+def latest_vault_document(applicant, document_type: str):
+    """Newest Document row for this applicant/type (safe when duplicates exist)."""
+    return (
+        Document.objects.filter(applicant=applicant, document_type=document_type)
+        .order_by('-uploaded_at', '-id')
+        .first()
+    )
+
+
+def latest_vault_document_bytes(applicant, document_type: str) -> bytes | None:
+    """Raw file bytes for the newest vault document of this type, or None."""
+    photo_doc = latest_vault_document(applicant, document_type)
+    if photo_doc is None:
+        return None
+    try:
+        return bytes(photo_doc.blob_record.data)
+    except DocumentBlob.DoesNotExist:
+        if photo_doc.file:
+            try:
+                with photo_doc.file.open('rb') as fh:
+                    return fh.read()
+            except FileNotFoundError:
+                return None
+    return None
 
 
 class Requirement(models.Model):

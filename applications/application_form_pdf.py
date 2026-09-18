@@ -345,28 +345,14 @@ def _overlay_2x2_photo(doc, page, applicant):
     Uses an Optional Content Group (OCG) so the image is visible on-screen
     but hidden when the PDF is printed — preserving the original blank form
     for physical signatures.
+
+    Always reads the latest vault ``photo_2x2`` (intake Scan or Document
+    Management replace) so Ready-for-Form PDF stays in sync.
     """
     try:
-        from documents.models import Document, DocumentBlob
+        from documents.models import latest_vault_document_bytes
 
-        photo_doc = (
-            Document.objects
-            .filter(applicant=applicant, document_type='photo_2x2')
-            .order_by('-uploaded_at')
-            .first()
-        )
-        if photo_doc is None:
-            return
-
-        try:
-            blob = photo_doc.blob_record
-            img_bytes = bytes(blob.data)
-        except DocumentBlob.DoesNotExist:
-            if photo_doc.file:
-                img_bytes = photo_doc.file.read()
-            else:
-                return
-
+        img_bytes = latest_vault_document_bytes(applicant, 'photo_2x2')
         if not img_bytes:
             return
 

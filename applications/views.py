@@ -3437,6 +3437,10 @@ def application_form_pdf(request, position, applicant_id):
     filename = f'THA-Application-{application.application_number}.pdf'
     response = FileResponse(io.BytesIO(pdf_bytes), as_attachment=False, filename=filename)
     response['Content-Type'] = 'application/pdf'
+    # Rebuild PDF on every open so a replaced 2x2 (or other vault fields) shows immediately
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
     return response
 
 
