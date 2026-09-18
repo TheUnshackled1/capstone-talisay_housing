@@ -26,11 +26,13 @@ def resolve_isf_population_site(site_id_param):
     return None, 'all'
 
 
-def isf_population_stats(site=None):
+def isf_population_stats(site=None, period_start=None, period_end=None):
     """
     Aggregate ISF population for analytics charts.
 
     site: RelocationSite instance, or None for all active relocation sites.
+    period_start / period_end: when set, only count lot awards with awarded_at
+    in that window (and skip undated legacy occupant_name rows).
     """
     active_award_qs = (
         LotAward.objects.filter(status='active')
@@ -42,6 +44,12 @@ def isf_population_stats(site=None):
             )
         )
     )
+    if period_start is not None and period_end is not None:
+        active_award_qs = active_award_qs.filter(
+            awarded_at__gte=period_start,
+            awarded_at__lte=period_end,
+        )
+
     units_qs = HousingUnit.objects.select_related('site')
     if site is not None:
         units_qs = units_qs.filter(site=site)
@@ -56,6 +64,7 @@ def isf_population_stats(site=None):
     male_count = 0
     female_count = 0
     awarded_units = 0
+    period_filter = period_start is not None and period_end is not None
 
     def _count_person(sex):
         nonlocal total_population, male_count, female_count
@@ -82,6 +91,10 @@ def isf_population_stats(site=None):
                     _count_person(member.sex)
                 continue
 
+        # Legacy occupant rows have no award date — omit when a period filter is active
+        if period_filter:
+            continue
+
         occupant = (unit.occupant_name or '').strip()
         if occupant:
             total_isf += 1
@@ -98,7 +111,7 @@ def isf_population_stats(site=None):
         'male_count': male_count,
         'female_count': female_count,
         'awarded_units': awarded_units,
-        'total_housing_units': len(units),
+        'total_housing_units': len(units) if not period_filter else awarded_units,
         'site_id': site_id,
         'site_name': site_name,
     }

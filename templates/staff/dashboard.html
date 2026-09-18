@@ -363,15 +363,13 @@
                 <span>Apply Filter</span>
             </button>
 
-            {% if request.GET.year or request.GET.month %}
-            <a href="{{ request.path }}" class="analytics-filter-reset" id="analyticsFilterResetBtn" title="Reset to current month">
+            <a href="{{ request.path }}" class="analytics-filter-reset" id="analyticsFilterResetBtn" title="Reset filter to all years">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <polyline points="1 4 1 10 7 10"/>
                     <path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
                 </svg>
                 <span>Reset</span>
             </a>
-            {% endif %}
         </div>
 
         <div class="analytics-filter-badge">
@@ -403,19 +401,28 @@
         if (!yearSel || !monthSel) return;
 
         function updateMonths(selectedYear, keepMonth) {
+            var prevVal = (keepMonth !== undefined && keepMonth !== null && keepMonth !== '')
+                ? keepMonth
+                : (monthSel.value || '{{ report_month }}');
+            if (prevVal !== 'all') prevVal = parseInt(prevVal, 10);
+
             if (selectedYear === 'all' || isNaN(selectedYear)) {
                 monthSel.innerHTML = '<option value="all">All Months</option>';
                 return;
             }
+
             var months = availPeriods[String(selectedYear)];
             // Always fall back to all 12 months if the year has no DB data
             if (!months || months.length === 0) months = ALL_MONTHS;
 
-            var prevVal = keepMonth || monthSel.value || '{{ report_month }}';
-            if (prevVal !== 'all') prevVal = parseInt(prevVal);
-            
             monthSel.innerHTML = '';
-            var matched = false;
+            var allOpt = document.createElement('option');
+            allOpt.value = 'all';
+            allOpt.textContent = 'All Months';
+            if (prevVal === 'all') allOpt.selected = true;
+            monthSel.appendChild(allOpt);
+
+            var matched = (prevVal === 'all');
             months.forEach(function (m) {
                 var opt = document.createElement('option');
                 opt.value = m.num;
@@ -423,19 +430,25 @@
                 if (m.num === prevVal) { opt.selected = true; matched = true; }
                 monthSel.appendChild(opt);
             });
-            // If prev month not available for new year, select the first available
-            if (!matched && months.length) monthSel.options[0].selected = true;
+            // If prev month not available for new year, keep All Months
+            if (!matched) monthSel.options[0].selected = true;
         }
 
-        // When year changes: rebuild months, do NOT auto-submit
+        // When year changes: rebuild months, do NOT auto-submit (Apply Filter does that)
         yearSel.addEventListener('change', function () {
             var selectedYear = yearSel.value;
             var keepMonth = monthSel.value;
-            updateMonths(selectedYear === 'all' ? 'all' : parseInt(selectedYear), keepMonth === 'all' ? 'all' : parseInt(keepMonth));
+            updateMonths(
+                selectedYear === 'all' ? 'all' : parseInt(selectedYear, 10),
+                keepMonth === 'all' ? 'all' : parseInt(keepMonth, 10)
+            );
         });
 
         // Init: ensure the correct month is pre-selected on page load
-        updateMonths(yearSel.value === 'all' ? 'all' : parseInt(yearSel.value), '{{ report_month }}' === 'all' ? 'all' : parseInt('{{ report_month }}'));
+        updateMonths(
+            yearSel.value === 'all' ? 'all' : parseInt(yearSel.value, 10),
+            '{{ report_month }}' === 'all' ? 'all' : parseInt('{{ report_month }}', 10)
+        );
     })();
     </script>
 

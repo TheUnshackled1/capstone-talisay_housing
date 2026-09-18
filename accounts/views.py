@@ -327,6 +327,76 @@ def _report_month_bounds(year: int, month: int):
     return start, end
 
 
+def _report_year_bounds(year: int):
+    """First and last instant of calendar year in the active timezone."""
+    tz = timezone.get_current_timezone()
+    start = datetime(year, 1, 1, 0, 0, 0, tzinfo=tz)
+    end = datetime(year, 12, 31, 23, 59, 59, 999999, tzinfo=tz)
+    return start, end
+
+
+def _parse_analytics_period(request, now=None):
+    """
+    Resolve dashboard ?year=&month= filter.
+
+    - no params / year=all → all-time
+    - year=Y & month=all (or missing month) → full calendar year Y
+    - year=Y & month=M → that calendar month
+    """
+    if now is None:
+        now = timezone.localtime(timezone.now())
+
+    year_param = (request.GET.get('year') or '').strip()
+    month_param = (request.GET.get('month') or '').strip()
+
+    # Default / All Year
+    if not year_param or year_param == 'all':
+        period_start = now.replace(year=2000, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return {
+            'report_year': 'all',
+            'report_month': 'all',
+            'period_start': period_start,
+            'period_end': now,
+            'period_label': 'All Year',
+            'filter_active': False,
+        }
+
+    try:
+        report_year = int(year_param)
+    except (TypeError, ValueError):
+        report_year = now.year
+    report_year = max(2000, min(report_year, 2100))
+
+    # Full year when month is omitted or explicitly "all"
+    if not month_param or month_param == 'all':
+        period_start, period_end = _report_year_bounds(report_year)
+        if report_year == now.year:
+            period_end = min(period_end, now)
+        return {
+            'report_year': report_year,
+            'report_month': 'all',
+            'period_start': period_start,
+            'period_end': period_end,
+            'period_label': str(report_year),
+            'filter_active': True,
+        }
+
+    try:
+        report_month = int(month_param)
+    except (TypeError, ValueError):
+        report_month = now.month
+    report_month = max(1, min(report_month, 12))
+    period_start, period_end = _report_month_bounds(report_year, report_month)
+    return {
+        'report_year': report_year,
+        'report_month': report_month,
+        'period_start': period_start,
+        'period_end': period_end,
+        'period_label': f'{calendar.month_name[report_month]} {report_year}',
+        'filter_active': True,
+    }
+
+
 def _six_month_sequence_end(year: int, month: int):
     """Six (year, month, label) tuples, chronological order, ending at year/month."""
     pairs = []
@@ -660,27 +730,13 @@ def _staff_reports_analytics_payload(request):
     Returns a dict suitable for ``staff_reports_analytics.html`` and CSV export.
     """
     now = timezone.localtime(timezone.now())
-    year_param = request.GET.get('year')
-    month_param = request.GET.get('month')
-
-    if year_param == 'all' or month_param == 'all' or (not year_param and not month_param):
-        report_year = 'all'
-        report_month = 'all'
-        period_start = now.replace(year=2000, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        period_end = now
-        period_label = 'All Year'
-    else:
-        try:
-            report_year = int(year_param)
-            report_month = int(month_param)
-        except (TypeError, ValueError):
-            report_year = now.year
-            report_month = now.month
-
-        report_year = max(2000, min(report_year, 2100))
-        report_month = max(1, min(report_month, 12))
-        period_start, period_end = _report_month_bounds(report_year, report_month)
-        period_label = f'{calendar.month_name[report_month]} {report_year}'
+    period = _parse_analytics_period(request, now=now)
+    report_year = period['report_year']
+    report_month = period['report_month']
+    period_start = period['period_start']
+    period_end = period['period_end']
+    period_label = period['period_label']
+    filter_active = period['filter_active']
 
     doc_type_labels = dict(Document.DOCUMENT_TYPE_CHOICES)
     applicant_status_labels = dict(Applicant.STATUS_CHOICES)
@@ -689,10 +745,19 @@ def _staff_reports_analytics_payload(request):
     total_applicants = Applicant.objects.count()
     housing_application_records = Application.objects.count()
 
-    # ── Smart dropdown: distinct (year, month) pairs that have any Applicant or Case data ──
+    # ── Smart dropdown: distinct (year, month) pairs that have real remaining data ──
+    from django.db.models import Exists, OuterRef, Q
     from django.db.models.functions import ExtractYear, ExtractMonth
+    from units.historical_beneficiary import HISTORICAL_BACKFILL_NOTE
+
+    # Historical GK backfill rows with no lot award left are orphans — do not
+    # keep their created_at year in the filter after the unit/beneficiary is removed.
+    _has_lot_award = LotAward.objects.filter(application__applicant_id=OuterRef('pk'))
+    _ap_for_periods = Applicant.objects.exclude(
+        Q(application__notes__icontains=HISTORICAL_BACKFILL_NOTE) & ~Exists(_has_lot_award)
+    )
     _ap_periods = (
-        Applicant.objects
+        _ap_for_periods
         .annotate(yr=ExtractYear('created_at'), mo=ExtractMonth('created_at'))
         .values('yr', 'mo')
         .distinct()
@@ -706,24 +771,37 @@ def _staff_reports_analytics_payload(request):
         .distinct()
         .order_by('yr', 'mo')
     )
-    # Merge and deduplicate
+    _award_periods = (
+        LotAward.objects
+        .annotate(yr=ExtractYear('awarded_at'), mo=ExtractMonth('awarded_at'))
+        .values('yr', 'mo')
+        .distinct()
+        .order_by('yr', 'mo')
+    )
+    # Merge and deduplicate (skip null extracts from bad/empty timestamps)
     _all_periods_set = set()
     for _row in _ap_periods:
-        _all_periods_set.add((_row['yr'], _row['mo']))
+        if _row['yr'] and _row['mo']:
+            _all_periods_set.add((int(_row['yr']), int(_row['mo'])))
     for _row in _case_periods:
-        _all_periods_set.add((_row['yr'], _row['mo']))
-    # Always include the currently selected period so the filter never shows a blank
-    if report_year != 'all' and report_month != 'all':
-        _all_periods_set.add((report_year, report_month))
+        if _row['yr'] and _row['mo']:
+            _all_periods_set.add((int(_row['yr']), int(_row['mo'])))
+    for _row in _award_periods:
+        if _row['yr'] and _row['mo']:
+            _all_periods_set.add((int(_row['yr']), int(_row['mo'])))
+    # Do NOT inject the currently selected year/month — if that data was deleted
+    # (e.g. GK 2002 removed), the year must disappear from the dropdown.
     available_periods = sorted(_all_periods_set)  # list of (year, month) tuples
     available_years = sorted(set(y for y, m in available_periods))
     # Map year → list of (month_num, month_name) for that year
     available_months_by_year = {}
     for y, m in available_periods:
         available_months_by_year.setdefault(y, []).append((m, calendar.month_name[m]))
+    for y in available_months_by_year:
+        available_months_by_year[y] = sorted(set(available_months_by_year[y]), key=lambda t: t[0])
     # Build JSON-safe structure for JS
     available_periods_json = {
-        str(y): [{'num': m, 'name': calendar.month_name[m]} for m, _ in sorted(available_months_by_year[y])]
+        str(y): [{'num': m, 'name': calendar.month_name[m]} for m, _ in available_months_by_year[y]]
         for y in available_years
     }
 
@@ -832,8 +910,42 @@ def _staff_reports_analytics_payload(request):
     _analytics_rows_bar_pct(applicants_top_barangays)
 
     # ISF population — lot-awarded beneficiaries (Module 4 / GK Masterlist source)
+    # When a year/month filter is active, only count awards in that period.
     isf_site, isf_site_id = resolve_isf_population_site(request.GET.get('site_id'))
-    isf_population_data = isf_population_stats(isf_site)
+    if filter_active:
+        isf_population_data = isf_population_stats(
+            isf_site, period_start=period_start, period_end=period_end
+        )
+        # Edge case: awarded applicants created in the period with no LotAward row yet
+        # (e.g. legacy 2002 record) — include them so Status/ISF stay consistent.
+        _awarded_in_period = list(
+            Applicant.objects.filter(
+                status='awarded',
+                created_at__gte=period_start,
+                created_at__lte=period_end,
+            ).prefetch_related('household_members')
+        )
+        if isf_population_data.get('total_isf', 0) == 0 and _awarded_in_period:
+            for ap in _awarded_in_period:
+                isf_population_data['total_isf'] = int(isf_population_data.get('total_isf') or 0) + 1
+                isf_population_data['awarded_units'] = int(isf_population_data.get('awarded_units') or 0) + 1
+                isf_population_data['total_population'] = int(isf_population_data.get('total_population') or 0) + 1
+                if ap.sex == 'M':
+                    isf_population_data['male_household'] = int(isf_population_data.get('male_household') or 0) + 1
+                    isf_population_data['male_count'] = int(isf_population_data.get('male_count') or 0) + 1
+                elif ap.sex == 'F':
+                    isf_population_data['female_household'] = int(isf_population_data.get('female_household') or 0) + 1
+                    isf_population_data['female_count'] = int(isf_population_data.get('female_count') or 0) + 1
+                for member in ap.household_members.all():
+                    isf_population_data['total_population'] = int(isf_population_data.get('total_population') or 0) + 1
+                    if member.sex == 'M':
+                        isf_population_data['male_household'] = int(isf_population_data.get('male_household') or 0) + 1
+                        isf_population_data['male_count'] = int(isf_population_data.get('male_count') or 0) + 1
+                    elif member.sex == 'F':
+                        isf_population_data['female_household'] = int(isf_population_data.get('female_household') or 0) + 1
+                        isf_population_data['female_count'] = int(isf_population_data.get('female_count') or 0) + 1
+    else:
+        isf_population_data = isf_population_stats(isf_site)
     relocation_sites = list(
         RelocationSite.objects.filter(is_active=True).order_by('name').values('id', 'name')
     )
@@ -868,12 +980,28 @@ def _staff_reports_analytics_payload(request):
         .exclude(applicant__application__isnull=False)
         .values_list('applicant_id', flat=True)
     )
-    _registered_count = len(_registered_ids)
     _awarded_ids = list(Applicant.objects.filter(status='awarded').values_list('id', flat=True))
+
+    # When a year/month filter is active, scope Status & Situation to applicants
+    # created in that period so Apply Filter visibly changes the charts.
+    if filter_active:
+        _period_id_set = set(
+            Applicant.objects.filter(
+                created_at__gte=period_start,
+                created_at__lte=period_end,
+            ).values_list('id', flat=True)
+        )
+        _registered_ids = [i for i in _registered_ids if i in _period_id_set]
+        _eval_ids = [i for i in _eval_ids if i in _period_id_set]
+        _rfq_ids = [i for i in _rfq_ids if i in _period_id_set]
+        _awarded_ids = [i for i in _awarded_ids if i in _period_id_set]
+        _evaluation_count = len(_eval_ids)
+        ready_for_form_queue_count = len(_rfq_ids)
+
+    _registered_count = len(_registered_ids)
     _awarded_count = len(_awarded_ids)
 
-    # Applicants by Status — ALL-TIME pipeline snapshot (current state of the system)
-    # These numbers match what staff see in each module page, not filtered by period.
+    # Applicants by Status — all-time by default; period-scoped when filter is active
     applicant_by_status = [
         {'status': 'registered',   'label': 'Registered',               'count': _registered_count},
         {'status': 'evaluation',   'label': 'Evaluation & Eligibility', 'count': _evaluation_count},
@@ -881,7 +1009,7 @@ def _staff_reports_analytics_payload(request):
         {'status': 'awarded',      'label': 'Lot Awarded',              'count': _awarded_count},
     ]
 
-    # Applicant Situation — ALL-TIME active pipeline (CDRRMO / Ejected / Displaced / None)
+    # Applicant Situation — active pipeline (CDRRMO / Ejected / Displaced / None)
     active_pipeline_ids = (
         set(_registered_ids)
         | set(_eval_ids)
@@ -962,10 +1090,25 @@ def _staff_reports_analytics_payload(request):
 
     housing_units_total = HousingUnit.objects.count()
     housing_status_labels = dict(HousingUnit.STATUS_CHOICES)
-    housing_units_by_status = sorted(
-        HousingUnit.objects.values('status').annotate(count=Count('id')),
-        key=lambda x: (-x['count'], x['status'] or ''),
-    )
+    if filter_active:
+        # Period view: only units awarded in this window (not full current inventory)
+        _period_unit_ids = list(
+            LotAward.objects.filter(
+                awarded_at__gte=period_start,
+                awarded_at__lte=period_end,
+            ).values_list('unit_id', flat=True)
+        )
+        _housing_qs = HousingUnit.objects.filter(id__in=_period_unit_ids)
+        housing_units_by_status = sorted(
+            _housing_qs.values('status').annotate(count=Count('id')),
+            key=lambda x: (-x['count'], x['status'] or ''),
+        )
+        housing_units_total = len(set(_period_unit_ids))
+    else:
+        housing_units_by_status = sorted(
+            HousingUnit.objects.values('status').annotate(count=Count('id')),
+            key=lambda x: (-x['count'], x['status'] or ''),
+        )
     for row in housing_units_by_status:
         row['label'] = housing_status_labels.get(row['status'], row['status'] or '—')
     _analytics_rows_bar_pct(housing_units_by_status)
@@ -1085,10 +1228,16 @@ def _staff_reports_analytics_payload(request):
         'delayed': construction_delayed,
     }
 
-    # Blacklist breakdown by reason (real DB grouping — not hardcoded)
+    # Blacklist breakdown by reason — period-scoped when filter is active
     blacklist_reason_labels = dict(UnitsBlacklist.REASON_CHOICES)
+    _blacklist_qs = UnitsBlacklist.objects.all()
+    if filter_active:
+        _blacklist_qs = _blacklist_qs.filter(
+            blacklisted_at__gte=period_start,
+            blacklisted_at__lte=period_end,
+        )
     blacklist_by_reason = sorted(
-        UnitsBlacklist.objects.values('reason').annotate(count=Count('id')),
+        _blacklist_qs.values('reason').annotate(count=Count('id')),
         key=lambda x: -int(x.get('count') or 0),
     )
     for row in blacklist_by_reason:
@@ -1096,12 +1245,25 @@ def _staff_reports_analytics_payload(request):
     blacklist_count = sum(int(r.get('count') or 0) for r in blacklist_by_reason)
 
     # Active lot awards
-    active_lot_awards = LotAward.objects.filter(status='active').count()
+    if filter_active:
+        active_lot_awards = LotAward.objects.filter(
+            status='active',
+            awarded_at__gte=period_start,
+            awarded_at__lte=period_end,
+        ).count()
+    else:
+        active_lot_awards = LotAward.objects.filter(status='active').count()
 
     # ===== VOTER REGISTRATION STATUS (Descriptive Analytics) =====
     # Count beneficiaries (awarded applicants) by voter registration status
+    _voter_qs = Applicant.objects.filter(status='awarded')
+    if filter_active:
+        _voter_qs = _voter_qs.filter(
+            created_at__gte=period_start,
+            created_at__lte=period_end,
+        )
     voter_reg_data = (
-        Applicant.objects.filter(status='awarded')
+        _voter_qs
         .values('is_registered_voter_talisay')
         .annotate(count=Count('id'))
     )
@@ -1145,9 +1307,14 @@ def _staff_reports_analytics_payload(request):
     year_options = available_years if available_years else list(range(now.year - 5, now.year + 2))
     month_options = list(range(1, 13))
     if report_year == 'all':
-        months_for_select = []
+        months_for_select = [('all', 'All Months')]
     else:
-        months_for_select = available_months_by_year.get(report_year, [(i, calendar.month_name[i]) for i in range(1, 13)])
+        _year_months = available_months_by_year.get(
+            report_year,
+            [(i, calendar.month_name[i]) for i in range(1, 13)],
+        )
+        # Prepend All Months so staff can filter by year only
+        months_for_select = [('all', 'All Months')] + list(_year_months)
 
     analytics_data = {
         'pending_notices': 0,
@@ -1160,6 +1327,7 @@ def _staff_reports_analytics_payload(request):
         'period_label': period_label,
         'report_year': report_year,
         'report_month': report_month,
+        'filter_active': filter_active,
         'year_options': year_options,
         'month_options': month_options,
         'months_for_select': months_for_select,
@@ -1260,8 +1428,10 @@ def _staff_reports_analytics_csv_response(data, export_role_title, filename_pref
     monthly_upload_trend = data['monthly_upload_trend']
 
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    if report_year == 'all' or report_month == 'all':
+    if report_year == 'all':
         filename = f"{filename_prefix}_all_time.csv"
+    elif report_month == 'all':
+        filename = f"{filename_prefix}_{report_year}.csv"
     else:
         filename = f"{filename_prefix}_{report_year}_{report_month:02d}.csv"
     
