@@ -290,21 +290,52 @@ function _loadGooglePickerApi() {
  * Handles the actual Drive file download + Django vault upload after the user
  * picks a file. Kept separate so the Picker callback stays synchronous.
  */
+const _GDRIVE_ALLOWED_MIME_PREFIXES = ['image/', 'application/pdf'];
+const _GDRIVE_ALLOWED_MIME_EXACT = new Set([
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+    'image/heic', 'image/heif', 'application/pdf',
+]);
+
+function _isVaultAllowedDriveMime(mimeType) {
+    const mime = String(mimeType || '').toLowerCase();
+    if (!mime) return true; // let Drive download decide
+    if (_GDRIVE_ALLOWED_MIME_EXACT.has(mime)) return true;
+    return _GDRIVE_ALLOWED_MIME_PREFIXES.some(function (p) { return mime.startsWith(p); });
+}
+
 async function _handlePickerSelection(doc, accessToken, buttonEl, oldHtml) {
     const fileId   = doc[google.picker.Document.ID];
     const mimeType = doc[google.picker.Document.MIME_TYPE] || 'application/octet-stream';
     const fileName = doc[google.picker.Document.NAME]      || ('gdrive_' + fileId);
 
-    buttonEl.disabled    = true;
-    buttonEl.textContent = 'Downloading…';
+    if (!_isVaultAllowedDriveMime(mimeType) && !String(mimeType).startsWith('application/vnd.google-apps.')) {
+        vaultMgmtNotify(
+            'Choose a PDF or image (JPG, PNG, GIF, WEBP). Selected type: ' + mimeType,
+            'Unsupported file',
+            'error'
+        );
+        if (buttonEl) {
+            buttonEl.disabled = false;
+            buttonEl.innerHTML = oldHtml;
+        }
+        return;
+    }
+
+    if (buttonEl) {
+        buttonEl.disabled    = true;
+        buttonEl.textContent = 'Downloading…';
+    }
 
     try {
         let downloadUrl;
-        if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
-            downloadUrl = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media';
-        } else {
+        const isGoogleNative = String(mimeType).startsWith('application/vnd.google-apps.');
+        if (isGoogleNative) {
             // Google Doc / Sheet / Slide → export as PDF
-            downloadUrl = 'https://www.googleapis.com/drive/v3/files/' + fileId + '/export?mimeType=application/pdf';
+            downloadUrl = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(fileId)
+                + '/export?mimeType=application/pdf&supportsAllDrives=true';
+        } else {
+            downloadUrl = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(fileId)
+                + '?alt=media&supportsAllDrives=true';
         }
 
         console.log('[GooglePicker] Downloading file:', fileName, mimeType, downloadUrl);
@@ -313,6 +344,9 @@ async function _handlePickerSelection(doc, accessToken, buttonEl, oldHtml) {
             headers: { Authorization: 'Bearer ' + accessToken },
         });
         if (!driveResp.ok) {
+            let detail = '';
+            try { detail = await driveResp.text(); } catch (e) { /* ignore */ }
+            console.error('[GooglePicker] download failed body:', detail);
             throw new Error('Could not download from Google Drive (HTTP ' + driveResp.status + ').');
         }
         const blob = await driveResp.blob();
@@ -324,14 +358,20 @@ async function _handlePickerSelection(doc, accessToken, buttonEl, oldHtml) {
             throw new Error('File is too large (' + (blob.size / 1024 / 1024).toFixed(1) + ' MB). Maximum allowed is 25 MB.');
         }
 
-        const ext        = fileName.includes('.') ? '' : (mimeType === 'application/pdf' ? '.pdf' : '.jpg');
+        const exportAsPdf = isGoogleNative;
+        const ext = fileName.includes('.')
+            ? ''
+            : (exportAsPdf || mimeType === 'application/pdf' ? '.pdf' : '.jpg');
         const uploadName = fileName + ext;
 
-        buttonEl.textContent = 'Uploading…';
+        if (buttonEl) buttonEl.textContent = 'Uploading…';
         console.log('[GooglePicker] Uploading to vault:', uploadName, 'size:', blob.size);
 
         const ctx = vaultDrawerPendingUploadContext;
         vaultDrawerPendingUploadContext = null;
+        if (!ctx || !ctx.docKey || !vaultDrawerApplicantId) {
+            throw new Error('Upload context expired. Close the picker and click Upload again.');
+        }
 
         const formData = new FormData();
         formData.append('applicant_id', vaultDrawerApplicantId);
@@ -357,14 +397,17 @@ async function _handlePickerSelection(doc, accessToken, buttonEl, oldHtml) {
     } catch (err) {
         console.error('[GooglePicker] error:', err);
         vaultMgmtNotify(err.message || 'Upload failed.');
-        buttonEl.disabled  = false;
-        buttonEl.innerHTML = oldHtml;
+        if (buttonEl) {
+            buttonEl.disabled  = false;
+            buttonEl.innerHTML = oldHtml;
+        }
         vaultDrawerPendingUploadContext = null;
     }
 }
 
 /**
- * Opens the native Google Picker modal (Drive + Photos).
+ * Opens the native Google Picker modal (Drive).
+ * Requires GOOGLE_PICKER_API_KEY + Drive OAuth (drive.readonly) from the same GCP project.
  */
 async function vaultDrawerTriggerUpload(buttonEl) {
     if (!buttonEl) return;
@@ -386,6 +429,14 @@ async function vaultDrawerTriggerUpload(buttonEl) {
     buttonEl.textContent = 'Opening Drive…';
 
     try {
+        const apiKey = String((window.MANAGEMENT_CONFIG || {}).googlePickerApiKey || '').trim();
+        if (!apiKey) {
+            throw new Error(
+                'Google Picker API key is not configured. Set GOOGLE_PICKER_API_KEY in .env '
+                + '(same Google Cloud project as GOOGLE_OAUTH_CLIENT_ID, with Picker API enabled).'
+            );
+        }
+
         console.log('[GooglePicker] Loading Picker API + fetching token…');
 
         // Load Picker API and OAuth token in parallel
@@ -396,37 +447,66 @@ async function vaultDrawerTriggerUpload(buttonEl) {
 
         console.log('[GooglePicker] Token obtained, building Picker…');
 
-        const apiKey = (window.MANAGEMENT_CONFIG || {}).googlePickerApiKey || '';
+        // Origin must match Authorized JavaScript origins in Google Cloud Console.
+        // Without setOrigin, Select often does nothing (callback never reaches this page).
+        const origin = window.location.origin;
 
-        // Plain DocsView — works across all Picker API versions
-        const driveView = new google.picker.DocsView()
+        // Folders browsable; allow common vault mime types (incl. image/jpg alias).
+        const mimeCsv = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+            'image/heic', 'image/heif', 'application/pdf',
+        ].join(',');
+
+        const driveView = new google.picker.DocsView(google.picker.ViewId.DOCS)
             .setIncludeFolders(true)
             .setSelectFolderEnabled(false)
-            .setMimeTypes('image/jpeg,image/png,image/gif,image/webp,application/pdf');
+            .setMode(google.picker.DocsViewMode.LIST)
+            .setMimeTypes(mimeCsv);
+
+        // Images-only shortcut view (helps when browsing photo dumps)
+        const imagesView = new google.picker.DocsView(google.picker.ViewId.DOCS_IMAGES)
+            .setIncludeFolders(true)
+            .setSelectFolderEnabled(false)
+            .setMode(google.picker.DocsViewMode.LIST);
 
         // Synchronous callback — the Picker API does NOT support async callbacks
-        const picker = new google.picker.PickerBuilder()
+        const pickerBuilder = new google.picker.PickerBuilder()
             .setOAuthToken(accessToken)
             .setDeveloperKey(apiKey)
+            .setOrigin(origin)
             .setTitle('Select a document from Google Drive')
             .addView(driveView)
+            .addView(imagesView)
+            .addView(google.picker.ViewId.RECENTLY_PICKED)
             .setCallback(function (data) {
                 const action = data[google.picker.Response.ACTION];
                 console.log('[GooglePicker] callback action:', action);
 
                 if (action === google.picker.Action.PICKED) {
-                    const doc = data[google.picker.Response.DOCUMENTS][0];
+                    const docs = data[google.picker.Response.DOCUMENTS] || [];
+                    if (!docs.length) {
+                        vaultMgmtNotify('No file was selected in Google Drive.');
+                        return;
+                    }
                     // Hand off to async handler — Picker callback must stay sync
-                    _handlePickerSelection(doc, accessToken, buttonEl, oldHtml);
+                    _handlePickerSelection(docs[0], accessToken, buttonEl, oldHtml);
                 } else if (action === google.picker.Action.CANCEL) {
                     buttonEl.disabled  = false;
                     buttonEl.innerHTML = oldHtml;
                     vaultDrawerPendingUploadContext = null;
                 }
-            })
-            .build();
+            });
 
-        console.log('[GooglePicker] Picker built, showing…');
+        // Shared drives support when the feature exists in this Picker build
+        try {
+            if (google.picker.Feature && google.picker.Feature.SUPPORT_DRIVES) {
+                pickerBuilder.enableFeature(google.picker.Feature.SUPPORT_DRIVES);
+            }
+        } catch (e) { /* older picker builds */ }
+
+        const picker = pickerBuilder.build();
+
+        console.log('[GooglePicker] Picker built, showing… origin=', origin);
         picker.setVisible(true);
 
         // Restore button while picker overlay is open
