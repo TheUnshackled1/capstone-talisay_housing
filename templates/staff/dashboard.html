@@ -461,7 +461,18 @@
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Applicants by Status</p>
             <p class="rep-card-sub" style="text-align: center;">All Module 1 records grouped by current status.</p>
+            {% if total_applications > 0 %}
             <div class="rep-chart-canvas"><canvas id="chartApplicants"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <div class="rep-empty-state-title">No applicants found</div>
+                <div class="rep-empty-state-sub">0 registered applicants<br>No records to display.</div>
+            </div>
+            {% endif %}
         </div>
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Applicant Situation</p>
@@ -482,7 +493,20 @@
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">ISF Population Overall</p>
             <p class="rep-card-sub" style="text-align: center;">Total beneficiaries and total population · {{ isf_site_name }} · active lot awards from housing units / GK Masterlist.</p>
+            {% if isf_population_data.total_population > 0 %}
             <div class="rep-chart-canvas"><canvas id="chartISFOverall"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <div class="rep-empty-state-title">No population data</div>
+                <div class="rep-empty-state-sub">0 total population<br>No beneficiaries recorded.</div>
+            </div>
+            {% endif %}
         </div>
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Registered Voters</p>
@@ -509,17 +533,50 @@
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Gender Distribution</p>
             <p class="rep-card-sub" style="text-align: center;">Male &amp; female individuals on lot-awarded units · {{ isf_site_name }} · heads plus registered household members.</p>
+            {% if isf_population_data.total_population > 0 %}
             <div class="rep-chart-canvas"><canvas id="chartISFPopulation"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="7" r="4"/>
+                    <path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+                </svg>
+                <div class="rep-empty-state-title">No gender data</div>
+                <div class="rep-empty-state-sub">0 individuals<br>No beneficiaries recorded.</div>
+            </div>
+            {% endif %}
         </div>
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Top Barangays</p>
             <p class="rep-card-sub" style="text-align: center;">Top 12 barangays by applicant count.</p>
+            {% if applicants_top_barangays %}
             <div class="rep-chart-canvas"><canvas id="chartBarangays"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <div class="rep-empty-state-title">No barangay data</div>
+                <div class="rep-empty-state-sub">0 applicants<br>No location records available.</div>
+            </div>
+            {% endif %}
         </div>
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Housing Units by Status</p>
             <p class="rep-card-sub" style="text-align: center;">Module 4 inventory occupancy / notice state.</p>
+            {% if housing_units_total > 0 %}
             <div class="rep-chart-canvas"><canvas id="chartHousing"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <div class="rep-empty-state-title">No housing units found</div>
+                <div class="rep-empty-state-sub">0 housing units<br>Inventory is currently empty.</div>
+            </div>
+            {% endif %}
         </div>
         <div class="rep-card">
             <p class="rep-card-title rep-card-title-center" style="justify-content: center; text-align: center;">Blacklisted</p>
@@ -559,8 +616,17 @@
                 <span class="rep-aging-legend-item"><span class="rep-aging-legend-dot" style="background:#f97316;"></span>15-30 d</span>
                 <span class="rep-aging-legend-item"><span class="rep-aging-legend-dot" style="background:#ef4444;"></span>30+ d</span>
             </div>
-            {% endif %}
             <div class="rep-ops-chart-canvas" style="margin-top:0.5rem;"><canvas id="chartCaseAging"></canvas></div>
+            {% else %}
+            <div class="rep-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <div class="rep-empty-state-title">No open cases</div>
+                <div class="rep-empty-state-sub">0 cases aging<br>All cases have been resolved.</div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Card 2: Cases by status -->
