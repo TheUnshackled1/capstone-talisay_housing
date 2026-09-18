@@ -783,7 +783,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         (D.voterRegistration && D.voterRegistration.values) ? (D.voterRegistration.values[0] || 0) : 0,
                         (D.voterRegistration && D.voterRegistration.values) ? (D.voterRegistration.values[1] || 0) : 0,
                     ],
-                    colors: ['#22C55E', '#F43F5E']
+                    colors: ['#22C55E', '#2F6FD6']
                 };
             default: return null;
         }
