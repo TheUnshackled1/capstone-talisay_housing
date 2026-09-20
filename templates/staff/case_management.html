@@ -80,63 +80,69 @@
 
         <div class="cases-controls-bar" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
             <!-- Total List -->
-            <button type="button" class="summary-chip-card summary-chip-card--blue is-clickable" id="totalListKpiBtn"
+            <button type="button" class="summary-chip-card summary-chip-card--blue is-clickable kpi-card-premium" id="totalListKpiBtn"
                 onclick="setQuickStatusFilter('all')">
-                <div class="summary-icon-wrap">
-                    <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <div class="summary-icon-wrap kpi-icon-block kpi-icon-block--blue">
+                    <!-- Multi-layered polygon stack: Total List -->
+                    <svg style="width: 1.15rem; height: 1.15rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                         <polyline points="2 17 12 22 22 17"></polyline>
                         <polyline points="2 12 12 17 22 12"></polyline>
                     </svg>
                 </div>
-                <div>
-                    <p>Total List</p>
-                    <p id="caseDeskTotalCount">{{ desk_rows|length }}</p>
+                <div class="kpi-text-block">
+                    <p class="kpi-label">Total List</p>
+                    <p class="kpi-value" id="caseDeskTotalCount">{{ desk_rows|length }}</p>
                 </div>
             </button>
 
             <!-- Pending Review -->
-            <button type="button" class="summary-chip-card summary-chip-card--amber is-clickable" id="pendingKpiBtn"
+            <button type="button" class="summary-chip-card summary-chip-card--amber is-clickable kpi-card-premium" id="pendingKpiBtn"
                 onclick="openPendingCasesDrawer()" aria-expanded="false" aria-controls="pendingCasesDrawer">
-                <div class="summary-icon-wrap">
-                    <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
+                <div class="summary-icon-wrap kpi-icon-block kpi-icon-block--amber">
+                    <!-- Bold thick-stroked clock: Pending Review -->
+                    <svg style="width: 1.15rem; height: 1.15rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <line x1="12" y1="7" x2="12" y2="12"></line>
+                        <line x1="12" y1="12" x2="15.5" y2="14.5"></line>
+                        <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
                     </svg>
                 </div>
-                <div>
-                    <p>Pending Review</p>
-                    <p id="caseDeskKpiPending">{{ status_counts.pending_review|default:0 }}</p>
+                <div class="kpi-text-block">
+                    <p class="kpi-label">Pending Review</p>
+                    <p class="kpi-value" id="caseDeskKpiPending">{{ status_counts.pending_review|default:0 }}</p>
                 </div>
             </button>
 
             <!-- Settled on-site -->
-            <button type="button" class="summary-chip-card summary-chip-card--purple is-clickable" id="settledOnSiteKpiBtn"
+            <button type="button" class="summary-chip-card summary-chip-card--purple is-clickable kpi-card-premium" id="settledOnSiteKpiBtn"
                 onclick="openSettledIncidentsDrawer()" aria-expanded="false" aria-controls="settledIncidentsDrawer">
-                <div class="summary-icon-wrap">
-                    <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
+                <div class="summary-icon-wrap kpi-icon-block kpi-icon-block--purple">
+                    <!-- Distinctive map-pin: Settled On-Site -->
+                    <svg style="width: 1.15rem; height: 1.15rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
+                        <circle cx="12" cy="9" r="2.5"></circle>
                     </svg>
                 </div>
-                <div>
-                    <p>Settled on-site</p>
-                    <p id="caseDeskKpiSettled">{{ settled_on_site_count|default:0 }}</p>
+                <div class="kpi-text-block">
+                    <p class="kpi-label">Settled on-site</p>
+                    <p class="kpi-value" id="caseDeskKpiSettled">{{ settled_on_site_count|default:0 }}</p>
                 </div>
             </button>
 
             <!-- Resolved -->
-            <button type="button" class="summary-chip-card summary-chip-card--emerald is-clickable" id="resolvedKpiBtn"
+            <button type="button" class="summary-chip-card summary-chip-card--emerald is-clickable kpi-card-premium" id="resolvedKpiBtn"
                 onclick="openResolvedCasesDrawer()" aria-expanded="false" aria-controls="resolvedCasesDrawer">
-                <div class="summary-icon-wrap">
-                    <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        <polyline points="9 12 11 14 15 10"></polyline>
+                <div class="summary-icon-wrap kpi-icon-block kpi-icon-block--emerald">
+                    <!-- Premium checkmark-shield: Resolved -->
+                    <svg style="width: 1.15rem; height: 1.15rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3L4 7v6c0 4.42 3.38 8.55 8 9.93C17.62 21.55 20 17.42 20 13V7l-8-4z"></path>
+                        <polyline points="9 12 11 14.5 15.5 9.5"></polyline>
                     </svg>
                 </div>
-                <div>
-                    <p>Resolved</p>
-                    <p id="caseDeskKpiResolved">{{ status_counts.resolved|default:0 }}</p>
+                <div class="kpi-text-block">
+                    <p class="kpi-label">Resolved</p>
+                    <p class="kpi-value" id="caseDeskKpiResolved">{{ status_counts.resolved|default:0 }}</p>
                 </div>
             </button>
 
