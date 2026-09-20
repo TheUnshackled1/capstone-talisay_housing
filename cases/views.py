@@ -129,15 +129,15 @@ def _case_management_list_context(request, position):
         .order_by('received_at')
     )
 
-    status_counts = {
-        'pending_review': cases.filter(status=wf.STATUS_PENDING_REVIEW).count(),
-        'under_review': cases.filter(status=wf.STATUS_UNDER_REVIEW).count(),
-        'mediation_monitoring': cases.filter(status=wf.STATUS_MEDIATION).count(),
-        'awaiting_response': cases.filter(status=wf.STATUS_AWAITING_RESPONSE).count(),
-        'referred_engineering': cases.filter(status=wf.STATUS_REFERRED_ENGINEERING).count(),
-        'resolved': cases.filter(status=wf.STATUS_RESOLVED).count(),
-        'closed': cases.filter(status=wf.STATUS_CLOSED).count(),
-    }
+    status_counts = cases.aggregate(
+        pending_review=models.Count('pk', filter=models.Q(status=wf.STATUS_PENDING_REVIEW)),
+        under_review=models.Count('pk', filter=models.Q(status=wf.STATUS_UNDER_REVIEW)),
+        mediation_monitoring=models.Count('pk', filter=models.Q(status=wf.STATUS_MEDIATION)),
+        awaiting_response=models.Count('pk', filter=models.Q(status=wf.STATUS_AWAITING_RESPONSE)),
+        referred_engineering=models.Count('pk', filter=models.Q(status=wf.STATUS_REFERRED_ENGINEERING)),
+        resolved=models.Count('pk', filter=models.Q(status=wf.STATUS_RESOLVED)),
+        closed=models.Count('pk', filter=models.Q(status=wf.STATUS_CLOSED)),
+    )
 
     search_query = request.GET.get('q', '').strip()
     filter_status = request.GET.get('status', 'all')

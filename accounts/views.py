@@ -861,9 +861,15 @@ def _staff_reports_analytics_payload(request):
     trend_max = 1
     trend_end_y = report_year if report_year != 'all' else now.year
     trend_end_m = report_month if report_month != 'all' else now.month
-    for y, m, lbl in _six_month_sequence_end(trend_end_y, trend_end_m):
-        ms, me = _report_month_bounds(y, m)
-        c = Document.objects.filter(uploaded_at__gte=ms, uploaded_at__lte=me).count()
+    # Collapse 6 sequential count() calls → 1 aggregate query with conditional counts
+    _upload_six_months = _six_month_sequence_end(trend_end_y, trend_end_m)
+    _upload_month_bounds = [(y, m, lbl, *_report_month_bounds(y, m)) for y, m, lbl in _upload_six_months]
+    _upload_agg = Document.objects.aggregate(**{
+        f'c_{y}_{m}': Count('pk', filter=Q(uploaded_at__gte=ms, uploaded_at__lte=me))
+        for y, m, lbl, ms, me in _upload_month_bounds
+    })
+    for y, m, lbl, ms, me in _upload_month_bounds:
+        c = _upload_agg.get(f'c_{y}_{m}') or 0
         trend_max = max(trend_max, c)
         monthly_upload_trend.append({'label': lbl, 'year': y, 'month': m, 'count': c})
     for row in monthly_upload_trend:
@@ -954,9 +960,15 @@ def _staff_reports_analytics_payload(request):
     reg_max = 1
     trend_end_y = report_year if report_year != 'all' else now.year
     trend_end_m = report_month if report_month != 'all' else now.month
-    for y, m, lbl in _six_month_sequence_end(trend_end_y, trend_end_m):
-        ms, me = _report_month_bounds(y, m)
-        c = Applicant.objects.filter(created_at__gte=ms, created_at__lte=me).count()
+    # Collapse 6 sequential count() calls → 1 aggregate query with conditional counts
+    _reg_six_months = _six_month_sequence_end(trend_end_y, trend_end_m)
+    _reg_month_bounds = [(y, m, lbl, *_report_month_bounds(y, m)) for y, m, lbl in _reg_six_months]
+    _reg_agg = Applicant.objects.aggregate(**{
+        f'c_{y}_{m}': Count('pk', filter=Q(created_at__gte=ms, created_at__lte=me))
+        for y, m, lbl, ms, me in _reg_month_bounds
+    })
+    for y, m, lbl, ms, me in _reg_month_bounds:
+        c = _reg_agg.get(f'c_{y}_{m}') or 0
         reg_max = max(reg_max, c)
         intake_registration_trend.append({'label': lbl, 'year': y, 'month': m, 'count': c})
     for row in intake_registration_trend:
@@ -1162,33 +1174,46 @@ def _staff_reports_analytics_payload(request):
     _analytics_rows_bar_pct(queue_by_type)
 
     # Case aging bands (open cases only)
-    open_cases = Case.objects.exclude(status__in=['resolved', 'closed'])
-    stale_cases_count = 0
-    case_aging_bands = {'0-3 days': 0, '4-7 days': 0, '8-14 days': 0, '15-30 days': 0, '30+ days': 0}
-    for c in open_cases:
-        days = (now - c.received_at).days if c.received_at else 0
-        if days > 14:
-            stale_cases_count += 1
-        if days <= 3:
-            case_aging_bands['0-3 days'] += 1
-        elif days <= 7:
-            case_aging_bands['4-7 days'] += 1
-        elif days <= 14:
-            case_aging_bands['8-14 days'] += 1
-        elif days <= 30:
-            case_aging_bands['15-30 days'] += 1
-        else:
-            case_aging_bands['30+ days'] += 1
-    open_cases_count = open_cases.count()
+    # Replaced Python for-loop (full table scan) with a single SQL aggregate
+    _3d_ago  = now - timedelta(days=3)
+    _7d_ago  = now - timedelta(days=7)
+    _14d_ago = now - timedelta(days=14)
+    _30d_ago = now - timedelta(days=30)
+    _open_cases_agg = Case.objects.exclude(status__in=['resolved', 'closed']).aggregate(
+        total=Count('pk'),
+        # received_at=None → treated as 0 days (matches original logic)
+        band_0_3=Count('pk', filter=Q(received_at__gte=_3d_ago) | Q(received_at__isnull=True)),
+        band_4_7=Count('pk', filter=Q(received_at__gte=_7d_ago, received_at__lt=_3d_ago)),
+        band_8_14=Count('pk', filter=Q(received_at__gte=_14d_ago, received_at__lt=_7d_ago)),
+        band_15_30=Count('pk', filter=Q(received_at__gte=_30d_ago, received_at__lt=_14d_ago)),
+        band_30plus=Count('pk', filter=Q(received_at__lt=_30d_ago)),
+        stale=Count('pk', filter=Q(received_at__lt=_14d_ago)),
+    )
+    open_cases_count = _open_cases_agg['total']
+    stale_cases_count = _open_cases_agg['stale']
+    case_aging_bands = {
+        '0-3 days':   _open_cases_agg['band_0_3'],
+        '4-7 days':   _open_cases_agg['band_4_7'],
+        '8-14 days':  _open_cases_agg['band_8_14'],
+        '15-30 days': _open_cases_agg['band_15_30'],
+        '30+ days':   _open_cases_agg['band_30plus'],
+    }
 
-    # Applicant workflow funnel — count per pipeline stage
+    # Applicant workflow funnel — collapse 5 count() calls → 1 aggregate
+    _funnel_agg = Applicant.objects.aggregate(
+        eligible=Count('pk', filter=Q(status='eligible')),
+        requirements=Count('pk', filter=Q(status='requirements')),
+        application=Count('pk', filter=Q(status='application')),
+        standby=Count('pk', filter=Q(status='standby')),
+        awarded=Count('pk', filter=Q(status='awarded')),
+    )
     funnel_stages = [
-        {'label': 'Registered (all time)', 'count': total_applicants},
-        {'label': 'Eligible / in queue', 'count': Applicant.objects.filter(status='eligible').count()},
-        {'label': 'Submitting requirements', 'count': Applicant.objects.filter(status='requirements').count()},
-        {'label': 'Application in progress', 'count': Applicant.objects.filter(status='application').count()},
-        {'label': 'Fully approved (standby)', 'count': Applicant.objects.filter(status='standby').count()},
-        {'label': 'Lot awarded', 'count': Applicant.objects.filter(status='awarded').count()},
+        {'label': 'Registered (all time)',        'count': total_applicants},
+        {'label': 'Eligible / in queue',          'count': _funnel_agg['eligible']},
+        {'label': 'Submitting requirements',      'count': _funnel_agg['requirements']},
+        {'label': 'Application in progress',      'count': _funnel_agg['application']},
+        {'label': 'Fully approved (standby)',     'count': _funnel_agg['standby']},
+        {'label': 'Lot awarded',                  'count': _funnel_agg['awarded']},
     ]
     _analytics_rows_bar_pct(funnel_stages)
 
@@ -1215,19 +1240,20 @@ def _staff_reports_analytics_payload(request):
     ).count()
     repossessed_units = HousingUnit.objects.filter(status='Repossessed').count()
 
-    # Construction progress summary
-    construction_total = ConstructionProgress.objects.count()
-    construction_completed = ConstructionProgress.objects.filter(stage='completed').count()
-    construction_in_progress = ConstructionProgress.objects.exclude(
-        stage__in=['not_started', 'completed']
-    ).count()
-    construction_delayed = ConstructionProgress.objects.filter(is_delayed=True).count()
-    construction_not_started = ConstructionProgress.objects.filter(stage='not_started').count()
+    # Construction progress summary — collapse 5 count() calls → 1 aggregate
+    _cp_agg = ConstructionProgress.objects.aggregate(
+        total=Count('pk'),
+        completed=Count('pk', filter=Q(stage='completed')),
+        not_started=Count('pk', filter=Q(stage='not_started')),
+        delayed=Count('pk', filter=Q(is_delayed=True)),
+    )
+    construction_total = _cp_agg['total']
     construction_stages = {
-        'not_started': construction_not_started,
-        'in_progress': construction_in_progress,
-        'completed': construction_completed,
-        'delayed': construction_delayed,
+        'not_started': _cp_agg['not_started'],
+        # in_progress = all stages that are neither 'not_started' nor 'completed'
+        'in_progress': _cp_agg['total'] - _cp_agg['not_started'] - _cp_agg['completed'],
+        'completed':   _cp_agg['completed'],
+        'delayed':     _cp_agg['delayed'],
     }
 
     # Blacklist breakdown by reason — period-scoped when filter is active
