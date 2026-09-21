@@ -1365,6 +1365,9 @@ def module2_ready_for_form_queue_rows(acting_user):
         is_required_for_form=True,
     ).count()
 
+    # Pre-fetch all blacklist entries once — same pattern as applications_list.
+    bl_cache = _fetch_all_blacklist_entries()
+
     applicants_data = []
     for applicant in applicants:
         row = _module2_applicant_row_payload(
@@ -1372,6 +1375,7 @@ def module2_ready_for_form_queue_rows(acting_user):
             permissions,
             required_group_a_submission_total,
             acting_user,
+            bl_cache=bl_cache,
         )
         if row is None:
             continue
@@ -1592,14 +1596,21 @@ def lot_awarding_queue(request, position):
         Application.objects
         .filter(status='standby')
         .exclude(applicant__status='disqualified')
-        .select_related('applicant')
+        .select_related('applicant', 'applicant__barangay')
+        # Prefetch applicant documents so the signed_application check below
+        # doesn't fire 2 DB queries per applicant (Document filter + DocumentBlob exists).
+        .prefetch_related('applicant__documents')
         .order_by('standby_position', 'standby_entered_at', '-updated_at')
     )
 
     queue_rows = []
     for app in applications_qs:
         applicant = app.applicant
-        signed_form_on_file = applicant_has_signed_application_payload(applicant)
+        # Use prefetched documents — no extra DB queries per applicant.
+        signed_form_on_file = any(
+            d.document_type == 'signed_application'
+            for d in applicant.documents.all()
+        )
         vault_base = {
             'applicant_id': str(applicant.pk),
             'document_type': 'signed_application',
