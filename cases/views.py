@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.core.cache import cache
 from functools import wraps
 import hashlib
 import json
@@ -119,17 +120,25 @@ def verify_position(view_func):
 # ===================================================================
 
 def _case_management_list_context(request, position):
-    """Shared list/KPI context for case desk page and live desk-feed API."""
-    cases = (
-        Case.objects
-        .select_related(
-            'received_by', 'investigated_by', 'decided_by',
-            'complainant_applicant', 'subject_applicant', 'related_unit',
-        )
-        .order_by('received_at')
-    )
+    """Shared list/KPI context for case desk page and live desk-feed API.
 
-    status_counts = cases.aggregate(
+    Cached for 30 seconds per (position, q, status, type) — avoids re-running
+    3–6 DB queries on every desk-feed poll (which fires every ~10s).
+    The desk-feed version hash detects real changes and forces a UI refresh
+    even when the cache is warm.
+    """
+    search_query = request.GET.get('q', '').strip()
+    filter_status = request.GET.get('status', 'all')
+    filter_type = request.GET.get('type', 'all')
+
+    _cache_key = f'case_list_ctx_{position}_{search_query}_{filter_status}_{filter_type}'
+    cached = cache.get(_cache_key)
+    if cached is not None:
+        return cached
+
+    # Aggregate counts — run on bare Case.objects (no select_related joins, which
+    # are wasteful for aggregation and add unnecessary JOIN overhead).
+    status_counts = Case.objects.aggregate(
         pending_review=models.Count('pk', filter=models.Q(status=wf.STATUS_PENDING_REVIEW)),
         under_review=models.Count('pk', filter=models.Q(status=wf.STATUS_UNDER_REVIEW)),
         mediation_monitoring=models.Count('pk', filter=models.Q(status=wf.STATUS_MEDIATION)),
@@ -139,9 +148,14 @@ def _case_management_list_context(request, position):
         closed=models.Count('pk', filter=models.Q(status=wf.STATUS_CLOSED)),
     )
 
-    search_query = request.GET.get('q', '').strip()
-    filter_status = request.GET.get('status', 'all')
-    filter_type = request.GET.get('type', 'all')
+    cases = (
+        Case.objects
+        .select_related(
+            'received_by', 'investigated_by', 'decided_by',
+            'complainant_applicant', 'subject_applicant', 'related_unit',
+        )
+        .order_by('received_at')
+    )
 
     if search_query:
         cases = cases.filter(
@@ -179,8 +193,9 @@ def _case_management_list_context(request, position):
         settled_filtered = _filter_settled_incident_logs_queryset(
             settled_base, search_query, filter_type,
         )
-        settled_on_site_count = FieldSettledIncidentLog.objects.count()
         settled_incident_rows = _settled_incident_desk_rows(settled_filtered)
+        # Re-use len() — rows already evaluated, avoid a separate COUNT query.
+        settled_on_site_count = len(settled_incident_rows)
         resolved_cases = (
             Case.objects
             .filter(status=wf.STATUS_RESOLVED)
@@ -229,10 +244,10 @@ def _case_management_list_context(request, position):
         if search_query or filter_type != 'all':
             pending_cases = _apply_case_list_filters(pending_cases, search_query, filter_type).order_by('-received_at')
 
-    return {
-        'cases': cases,
-        'resolved_cases': resolved_cases,
-        'pending_cases': pending_cases,
+    ctx = {
+        'cases': list(cases),
+        'resolved_cases': list(resolved_cases),
+        'pending_cases': list(pending_cases),
         'status_counts': status_counts,
         'search_query': search_query,
         'filter_status': filter_status,
@@ -244,6 +259,10 @@ def _case_management_list_context(request, position):
         'settled_incident_rows': settled_incident_rows,
         'settled_on_site_count': settled_on_site_count,
     }
+    # Cache for 30 seconds — short enough that edits/new cases appear quickly,
+    # long enough to absorb the 10s desk-feed poll burst.
+    cache.set(_cache_key, ctx, 30)
+    return ctx
 
 
 def _case_desk_feed_version(list_ctx):
@@ -256,7 +275,9 @@ def _case_desk_feed_version(list_ctx):
         else:
             log = row['incident_log']
             tokens.append(f"i{log.pk}:{int(log.logged_at.timestamp())}")
-    tokens.append(f"r{list_ctx['resolved_cases'].count()}")
+    # Use status_counts['resolved'] from the already-executed aggregate —
+    # avoids evaluating resolved_cases queryset just for a count.
+    tokens.append(f"r{list_ctx['status_counts'].get('resolved', 0)}")
     tokens.append(f"s{list_ctx.get('settled_on_site_count', 0)}")
     sc = list_ctx['status_counts']
     tokens.append(f"p{sc['pending_review']}:v{sc['resolved']}")
