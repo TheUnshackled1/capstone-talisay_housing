@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.cache import never_cache
 from django.db import transaction, models, IntegrityError
 from django.db.models import Prefetch
+from django.core.cache import cache
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.contrib import messages
@@ -304,25 +305,32 @@ def housing_units_monitoring(request, position):
     site = None
     all_sites = RelocationSite.objects.all()
 
+    # Evaluate all_sites once as a list to avoid a second COUNT query from .exists().
+    all_sites_list = list(all_sites)
     if site_id:
-        site = RelocationSite.objects.filter(id=site_id).first()
+        site = next((s for s in all_sites_list if str(s.id) == str(site_id)), None)
+        if not site:
+            site = RelocationSite.objects.filter(id=site_id).first()
     else:
-        # Default: get first site user has access to
-        sites = request.user.assigned_sites.all()
-        site = sites.first() if sites.exists() else None
+        # assigned_sites: evaluate once so we don't fire .all() + .exists() separately.
+        assigned = list(request.user.assigned_sites.all()[:1])
+        site = assigned[0] if assigned else None
 
-    # If no assigned site, allow staff to view all sites
-    # If regular user with no assignment, show first available site
+    # If no assigned site, allow staff to view all sites.
     no_relocation_sites = False
     if not site:
-        if all_sites.exists():
-            site = all_sites.first()
-        else:
+        site = all_sites_list[0] if all_sites_list else None
+        if not site:
             no_relocation_sites = True
 
     # Reconcile stale occupancy flags before rendering the Module 4 map/KPIs.
+    # Throttled to once every 2 minutes per site to avoid a full LotAward scan
+    # + bulk_update on every single page load in production.
     if not no_relocation_sites and site is not None:
-        _sync_site_housing_unit_occupancy(site)
+        _sync_cache_key = f'housing_sync_ran_{site.pk}'
+        if not cache.get(_sync_cache_key):
+            cache.set(_sync_cache_key, True, 120)  # 2-minute TTL
+            _sync_site_housing_unit_occupancy(site)
 
     # Get all units for the site with related data (empty when no sites exist yet)
     if no_relocation_sites:
@@ -449,7 +457,8 @@ def housing_units_monitoring(request, position):
     # Prepare context
     context = {
         'site': site,
-        'all_sites': all_sites,
+        # all_sites_list already evaluated above — no extra DB query from template iteration.
+        'all_sites': all_sites_list,
         'no_relocation_sites': no_relocation_sites,
         'show_dev_seed_hint': no_relocation_sites and settings.DEBUG,
         'total_units': len(units_list),
@@ -470,7 +479,8 @@ def housing_units_monitoring(request, position):
         'permissions': permissions,
         'can_add_housing_unit': can_add_housing_unit,
         'can_create_relocation_site': can_create_relocation_site,
-        'barangays': Barangay.objects.filter(is_active=True).order_by('name'),
+        # Eagerly evaluate Barangay queryset — avoids lazy re-evaluation during template render.
+        'barangays': list(Barangay.objects.filter(is_active=True).order_by('name')),
         'construction_not_started': construction_not_started,
         'construction_in_progress': construction_in_progress,
         'construction_completed': construction_completed,
@@ -489,9 +499,10 @@ def _gk_masterlist_site(request):
         site = RelocationSite.objects.filter(id=site_id).first()
         if site:
             return site
-    sites = request.user.assigned_sites.all()
-    if sites.exists():
-        return sites.first()
+    # Use [:1] + list() to avoid .all() + .exists() double query.
+    assigned = list(request.user.assigned_sites.all()[:1])
+    if assigned:
+        return assigned[0]
     return RelocationSite.objects.order_by('name').first()
 
 
@@ -603,13 +614,21 @@ def gk_masterlist(request, position):
     URL: /units/housing-units/<position>/gk-masterlist/
     """
     site = _gk_masterlist_site(request)
-    all_sites = RelocationSite.objects.filter(is_active=True).order_by('name')
-    no_relocation_sites = not all_sites.exists()
+    # Evaluate all_sites as a list once — avoids a second COUNT query from .exists().
+    all_sites = list(RelocationSite.objects.filter(is_active=True).order_by('name'))
+    no_relocation_sites = not all_sites
 
     search = (request.GET.get('search') or '').strip().lower()
     beneficiary_year_filter = (request.GET.get('beneficiary_year') or 'all').strip()
-    masterlist_rows = _gk_masterlist_rows(site)
 
+    # Call _gk_masterlist_rows ONCE — extract years from this full set before filtering.
+    all_masterlist_rows = _gk_masterlist_rows(site)
+    beneficiary_years = sorted(
+        {row['beneficiary_year'] for row in all_masterlist_rows if row.get('beneficiary_year') is not None},
+        reverse=True,
+    )
+
+    masterlist_rows = all_masterlist_rows
     if beneficiary_year_filter and beneficiary_year_filter.lower() != 'all':
         try:
             year_val = int(beneficiary_year_filter)
@@ -629,12 +648,6 @@ def gk_masterlist(request, position):
             or search in row['role_label'].lower()
             or (row.get('beneficiary_year') and search in str(row['beneficiary_year']))
         ]
-
-    beneficiary_years = sorted({
-        row['beneficiary_year']
-        for row in _gk_masterlist_rows(site)
-        if row.get('beneficiary_year') is not None
-    }, reverse=True)
 
     # Group by block number for block-sectioned display
     masterlist_by_block = OrderedDict()
