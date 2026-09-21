@@ -60,6 +60,17 @@ def _cached_required_group_a_vault_doc_types():
         ).values_list('vault_document_type', flat=True)
     )
 
+
+def _cached_group_a_requirements():
+    """Full Requirement objects for Group A, cached 5 minutes (rarely change)."""
+    from django.core.cache import cache as _cache
+    _key = 'applications_requirements_group_a'
+    result = _cache.get(_key)
+    if result is None:
+        result = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
+        _cache.set(_key, result, 300)
+    return result
+
 MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 # Application & Evaluation ledger and Ready for Form queue: records per page
 MODULE2_EVALUATIONS_LIST_PER_PAGE = 10
@@ -2564,9 +2575,19 @@ def evaluate_precheck(request, position):
     if handoff_error:
         return handoff_error
 
-    blacklist_error = _require_module2_blacklist_clear(applicant)
-    if blacklist_error:
-        return blacklist_error
+    # Use cached blacklist to avoid up to 6 queries per call.
+    bl_cache = _fetch_all_blacklist_entries()
+    is_bl, bl_entry = _check_blacklist_from_cache(applicant, bl_cache)
+    if is_bl:
+        _auto_disqualify_if_blacklisted(applicant, bl_entry)
+        reason_text = _build_module2_blacklist_disqualification_reason(bl_entry)
+        return JsonResponse({
+            'success': False,
+            'error': (
+                'Applicant is blacklisted and has been automatically disqualified. '
+                f'{reason_text}'
+            ),
+        }, status=400)
 
     return JsonResponse({
         'success': True,
@@ -2719,62 +2740,53 @@ def eligibility_snapshot(request, position):
     if handoff_error:
         return handoff_error
 
-    rules = _module2_eligibility_snapshot(applicant, checked_by=request.user)
+    # Pass cached blacklist — avoids up to 6 queries inside _module2_eligibility_snapshot.
+    bl_cache = _fetch_all_blacklist_entries()
+    rules = _module2_eligibility_snapshot(applicant, checked_by=request.user, bl_cache=bl_cache)
     auto_disqualified = False
     if rules.get('blacklist_blocked'):
-        _, bl_entry = check_blacklist_module2(
-            applicant.full_name,
-            applicant.phone_number or None,
-            applicant_id=applicant.id,
-            last_name=applicant.last_name,
-            first_name=applicant.first_name,
-            date_of_birth=applicant.date_of_birth,
-            barangay_id=applicant.barangay_id,
-        )
+        _, bl_entry = _check_blacklist_from_cache(applicant, bl_cache)
         auto_disqualified = _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=request.user)
 
     # Build requirement scan evidence (same baseline source as Document Scan Checklist).
-    required_row_defs = list(
-        Requirement.objects.filter(
-            group='A',
-            is_active=True,
-            is_required_for_form=True,
-        ).exclude(
-            vault_document_type='',
-        ).order_by('order', 'code').values('code', 'name', 'vault_document_type', 'is_required_for_form')
-    )
-    optional_row_defs = list(
-        Requirement.objects.filter(
-            group='A',
-            is_active=True,
-            is_required_for_form=False,
-        ).exclude(
-            vault_document_type='',
-        ).exclude(
-            code='ISF-SIT',
-        ).order_by('order', 'code').values('code', 'name', 'vault_document_type', 'is_required_for_form')
-    )
+    # Single query: fetch all Group A requirements, split in Python — saves 1 extra DB round-trip.
+    _all_group_a = _cached_group_a_requirements()
+    required_row_defs = [
+        {'code': r.code, 'name': r.name, 'vault_document_type': r.vault_document_type, 'is_required_for_form': r.is_required_for_form}
+        for r in _all_group_a
+        if r.is_active and r.is_required_for_form and r.vault_document_type
+    ]
+    optional_row_defs = [
+        {'code': r.code, 'name': r.name, 'vault_document_type': r.vault_document_type, 'is_required_for_form': r.is_required_for_form}
+        for r in _all_group_a
+        if r.is_active and not r.is_required_for_form and r.vault_document_type and r.code != 'ISF-SIT'
+    ]
     checklist_row_defs = list(required_row_defs) + list(optional_row_defs)
     req_scan_by_code = {}
     requirement_rows = []
     # Latest vault payload per document_type (upload vs scan label for checklist UI).
     doc_type_to_latest_meta = {}
+    # Pre-build a count map from prefetched docs — avoids N+1 COUNT queries per row.
+    _doc_type_counts = {}
     for doc in applicant.documents.select_related('blob_record').order_by('-uploaded_at'):
-        if doc.document_type in doc_type_to_latest_meta:
+        dtype = (doc.document_type or '').strip()
+        if not dtype:
             continue
-        try:
-            doc_url = doc.absolute_download_url(request)
-        except (ValueError, AttributeError):
-            doc_url = ''
-        capture_method = (doc.capture_method or '').strip()
-        doc_type_to_latest_meta[doc.document_type] = {
-            'url': doc_url,
-            'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
-            'capture_method': capture_method,
-            'filed_via_label': document_filed_via_display(capture_method),
-        }
+        _doc_type_counts[dtype] = _doc_type_counts.get(dtype, 0) + 1
+        if dtype not in doc_type_to_latest_meta:
+            try:
+                doc_url = doc.absolute_download_url(request)
+            except (ValueError, AttributeError):
+                doc_url = ''
+            capture_method = (doc.capture_method or '').strip()
+            doc_type_to_latest_meta[dtype] = {
+                'url': doc_url,
+                'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
+                'capture_method': capture_method,
+                'filed_via_label': document_filed_via_display(capture_method),
+            }
     for row in checklist_row_defs:
-        files_count = applicant.documents.filter(document_type=row['vault_document_type']).count()
+        files_count = _doc_type_counts.get(row['vault_document_type'], 0)  # no extra DB query
         scanned = files_count > 0
         meta = doc_type_to_latest_meta.get(row['vault_document_type'], {})
         req_scan_by_code[row['code']] = {
@@ -3160,7 +3172,11 @@ def save_eligibility_check_decision(request, position):
     # the reviewer hits Mark Situation Certified.
     status_synced_to = None
     if applicant.status in ('eligible', 'pending_followup'):
-        has_failed_checks_now = applicant.eligibility_check_decisions.filter(status='failed').exists()
+        # Use the just-saved decision row instead of firing a new .exists() query.
+        has_failed_checks_now = (
+            status == 'failed' or
+            applicant.eligibility_check_decisions.filter(status='failed').exclude(check_key=check_key).exists()
+        )
         new_status = 'pending_followup' if has_failed_checks_now else 'eligible'
         if new_status != applicant.status:
             applicant.status = new_status
