@@ -248,6 +248,7 @@ elif os.environ.get('GOOGLE_OAUTH_ALLOWED_DOMAIN', '').strip():
     )
 else:
     # Default: personal Gmail + THA Workspace accounts
+    
     GOOGLE_OAUTH_ALLOWED_DOMAINS = ('gmail.com', 'talisayhousing.gov.ph', 'chmsu.edu.ph')
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'

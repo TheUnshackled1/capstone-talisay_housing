@@ -11,6 +11,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.urls import reverse
 from django.conf import settings
+from django.core.cache import cache
 from functools import lru_cache, wraps
 from urllib.parse import urlencode
 import logging
@@ -81,6 +82,119 @@ ELIGIBILITY_CHECK_LABELS = {
 }
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Bulk blacklist helpers — replaces 6 DB queries per applicant with 1 total
+# ---------------------------------------------------------------------------
+
+def _fetch_all_blacklist_entries():
+    """
+    Load every UnitsBlacklist row once for the current request.
+    Returns a list of entries with select_related('applicant') already resolved.
+    Called once per applications_list page load; the result is passed down to
+    _module2_eligibility_snapshot so it can match in Python memory instead of
+    firing up to 6 DB queries per applicant.
+    """
+    from units.models import Blacklist as UnitsBlacklist
+    return list(UnitsBlacklist.objects.select_related('applicant').all())
+
+
+def _check_blacklist_from_cache(applicant, bl_entries):
+    """
+    In-memory equivalent of check_blacklist_module2() against a pre-fetched list.
+    Replicates the same 6-step priority matching without touching the database.
+    Returns (is_blacklisted: bool, entry_adapter | None).
+    """
+    from .utils import _UnitsBlacklistAdapter
+    if not bl_entries:
+        return False, None
+
+    applicant_id = str(applicant.id or '')
+    full_name = (applicant.full_name or '').strip()
+    phone_number = (applicant.phone_number or '').strip()
+    last_name = (applicant.last_name or '').strip()
+    first_name = (applicant.first_name or '').strip()
+    date_of_birth = applicant.date_of_birth
+    barangay_id = getattr(applicant.barangay_id, 'pk', applicant.barangay_id)
+
+    has_first_last = bool(first_name and last_name)
+    match = None
+
+    for entry in bl_entries:
+        a = entry.applicant
+        if not a:
+            continue
+        # Priority 1 — direct UUID match
+        if applicant_id and str(a.id) == applicant_id:
+            match = entry
+            break
+
+    if not match and phone_number and has_first_last:
+        for entry in bl_entries:
+            a = entry.applicant
+            if not a:
+                continue
+            if (
+                (a.phone_number or '') == phone_number
+                and (a.last_name or '').lower() == last_name.lower()
+                and (a.first_name or '').lower() == first_name.lower()
+            ):
+                match = entry
+                break
+
+    if not match and has_first_last and date_of_birth and barangay_id:
+        for entry in bl_entries:
+            a = entry.applicant
+            if not a:
+                continue
+            if (
+                (a.last_name or '').lower() == last_name.lower()
+                and (a.first_name or '').lower() == first_name.lower()
+                and a.date_of_birth == date_of_birth
+                and getattr(a.barangay_id, 'pk', a.barangay_id) == barangay_id
+            ):
+                match = entry
+                break
+
+    if not match and has_first_last and date_of_birth:
+        for entry in bl_entries:
+            a = entry.applicant
+            if not a:
+                continue
+            if (
+                (a.last_name or '').lower() == last_name.lower()
+                and (a.first_name or '').lower() == first_name.lower()
+                and a.date_of_birth == date_of_birth
+            ):
+                match = entry
+                break
+
+    if not match and has_first_last and barangay_id:
+        for entry in bl_entries:
+            a = entry.applicant
+            if not a:
+                continue
+            if (
+                (a.last_name or '').lower() == last_name.lower()
+                and (a.first_name or '').lower() == first_name.lower()
+                and getattr(a.barangay_id, 'pk', a.barangay_id) == barangay_id
+            ):
+                match = entry
+                break
+
+    if not match and full_name:
+        for entry in bl_entries:
+            a = entry.applicant
+            if not a:
+                continue
+            if (a.full_name or '').strip().lower() == full_name.lower():
+                match = entry
+                break
+
+    if match:
+        return True, _UnitsBlacklistAdapter(match)
+    return False, None
 
 
 def _relative_time_ago(dt):
@@ -427,21 +541,28 @@ def _ensure_module2_queue_entry(applicant, queue_type, added_by=None):
     raise RuntimeError('Unable to allocate queue position')
 
 
-def _module2_eligibility_snapshot(applicant, checked_by=None):
+def _module2_eligibility_snapshot(applicant, checked_by=None, bl_cache=None):
     """
     Single rule engine for Module 2 eligibility and queue recommendation.
+
+    bl_cache: optional pre-fetched list of UnitsBlacklist entries (from
+    _fetch_all_blacklist_entries). When supplied, blacklist matching is done
+    in Python memory instead of issuing up to 6 DB queries per applicant.
     """
     blockers = []
     advisories = []
-    is_bl, bl_entry = check_blacklist_module2(
-        applicant.full_name,
-        applicant.phone_number or None,
-        applicant_id=applicant.id,
-        last_name=applicant.last_name,
-        first_name=applicant.first_name,
-        date_of_birth=applicant.date_of_birth,
-        barangay_id=applicant.barangay_id,
-    )
+    if bl_cache is not None:
+        is_bl, bl_entry = _check_blacklist_from_cache(applicant, bl_cache)
+    else:
+        is_bl, bl_entry = check_blacklist_module2(
+            applicant.full_name,
+            applicant.phone_number or None,
+            applicant_id=applicant.id,
+            last_name=applicant.last_name,
+            first_name=applicant.first_name,
+            date_of_birth=applicant.date_of_birth,
+            barangay_id=applicant.barangay_id,
+        )
     blacklist_detail = ''
     blacklist_source = ''
     blacklist_policy_note = ''
@@ -713,7 +834,17 @@ def _module2_eligibility_snapshot(applicant, checked_by=None):
 
 
 def _module2_run_handoff_preflight(request_user):
-    """Self-heal handoff/CDRRMO/queue rows before Module 2 list views."""
+    """Self-heal handoff/CDRRMO/queue rows before Module 2 list views.
+
+    Throttled to run at most once every 5 minutes via Django cache so it
+    does not fire expensive DB writes on every page load in production.
+    """
+    _CACHE_KEY = 'module2_preflight_ran'
+    if cache.get(_CACHE_KEY):
+        return
+    # Mark as ran BEFORE the work so concurrent requests don't double-fire.
+    cache.set(_CACHE_KEY, True, 300)  # 5-minute TTL
+
     Applicant.objects.filter(
         channel='danger_zone',
         status='pending_cdrrmo',
@@ -891,27 +1022,33 @@ def _module2_on_ready_for_form_queue_track(applicant, application):
     return application.status in _MODULE2_FORM_PIPELINE_STATUSES
 
 
-def _module2_applicant_row_payload(applicant, permissions, required_group_a_submission_total, acted_by_user):
+def _module2_applicant_row_payload(applicant, permissions, required_group_a_submission_total, acted_by_user, bl_cache=None):
     """
     Build one Application & Evaluation row dict.
     Returns None if the applicant is blacklist-gated out of the payload.
+
+    bl_cache: optional pre-fetched blacklist list — passed through to
+    _module2_eligibility_snapshot so it avoids per-applicant DB queries.
     """
-    rules = _module2_eligibility_snapshot(applicant, checked_by=acted_by_user)
+    rules = _module2_eligibility_snapshot(applicant, checked_by=acted_by_user, bl_cache=bl_cache)
     blacklist_blocked = rules['blacklist_blocked']
     blacklist_detail = rules['blacklist_detail']
     blacklist_source = rules['blacklist_source']
     blacklist_policy_note = rules['blacklist_policy_note']
 
     if blacklist_blocked:
-        _, bl_entry = check_blacklist_module2(
-            applicant.full_name,
-            applicant.phone_number or None,
-            applicant_id=applicant.id,
-            last_name=applicant.last_name,
-            first_name=applicant.first_name,
-            date_of_birth=applicant.date_of_birth,
-            barangay_id=applicant.barangay_id,
-        )
+        if bl_cache is not None:
+            _, bl_entry = _check_blacklist_from_cache(applicant, bl_cache)
+        else:
+            _, bl_entry = check_blacklist_module2(
+                applicant.full_name,
+                applicant.phone_number or None,
+                applicant_id=applicant.id,
+                last_name=applicant.last_name,
+                first_name=applicant.first_name,
+                date_of_birth=applicant.date_of_birth,
+                barangay_id=applicant.barangay_id,
+            )
         _auto_disqualify_if_blacklisted(applicant, bl_entry, checked_by=acted_by_user)
 
     application = getattr(applicant, 'application', None)
@@ -953,30 +1090,30 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     if permissions['can_award_lot'] and application and application.status == 'standby':
         user_actions.append('award_lot')
 
-    signed_scan_present = (
-        applicant_has_signed_application_payload(applicant)
-        if application is not None
-        else False
+    # Use the prefetched documents cache instead of extra DB queries per applicant.
+    # applicant.documents is already prefetched in _module2_evaluations_applicants_queryset.
+    _sa_docs_prefetched = sorted(
+        (d for d in applicant.documents.all() if d.document_type == 'signed_application'),
+        key=lambda d: (d.uploaded_at, d.id),
+        reverse=True,
     )
+    _sa_doc_prefetched = _sa_docs_prefetched[0] if _sa_docs_prefetched else None
+    # True when a signed_application vault row exists for this applicant.
+    # Equivalent to applicant_has_signed_application_payload() but uses the prefetch.
+    signed_scan_present = application is not None and _sa_doc_prefetched is not None
 
     signed_application_view_url = ''
     signed_application_existing_file_label = ''
-    if signed_scan_present:
-        _sa_doc = (
-            Document.objects.filter(applicant=applicant, document_type='signed_application')
-            .order_by('-uploaded_at', '-id')
-            .first()
+    if signed_scan_present and _sa_doc_prefetched:
+        signed_application_view_url = reverse(
+            'documents:blob_download',
+            kwargs={'position': acted_by_user.position, 'doc_id': _sa_doc_prefetched.pk},
         )
-        if _sa_doc:
-            signed_application_view_url = reverse(
-                'documents:blob_download',
-                kwargs={'position': acted_by_user.position, 'doc_id': _sa_doc.pk},
-            )
-            signed_application_existing_file_label = (
-                (_sa_doc.file_name or '').strip()
-                or (_sa_doc.title or '').strip()
-                or 'Signed application'
-            )
+        signed_application_existing_file_label = (
+            (_sa_doc_prefetched.file_name or '').strip()
+            or (_sa_doc_prefetched.title or '').strip()
+            or 'Signed application'
+        )
 
     signed_form_vault_url = ''
     signed_form_vault_url_scan = ''
@@ -1078,7 +1215,10 @@ def applications_list(request, position):
         is_required_for_form=True,
     ).count()
 
-    # Prepare applicant data with document counts
+    # Prepare applicant data with document counts.
+    # Pre-fetch ALL blacklist entries once so _module2_eligibility_snapshot
+    # can match in Python memory instead of firing up to 6 DB queries per applicant.
+    bl_cache = _fetch_all_blacklist_entries()
     applicants_data = []
     ready_for_form_queue_count = 0
     for applicant in applicants:
@@ -1087,6 +1227,7 @@ def applications_list(request, position):
             permissions,
             required_group_a_submission_total,
             request.user,
+            bl_cache=bl_cache,
         )
         if row is None:
             continue
