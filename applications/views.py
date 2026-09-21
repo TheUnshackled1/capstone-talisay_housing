@@ -922,14 +922,18 @@ def _staff_handled_display(user):
         'staff_role': role,
         'staff_position_key': position_key,
     }
-
-
 def _module2_evaluations_applicants_queryset():
     """
     Applicants shown on Application & Evaluation (Module 2 handoff + baseline Group A scans).
 
     Handed-off applicants who were auto-disqualified (e.g. blacklist) remain visible so staff
     see the same record they promoted from Intake - not a silent drop after proceed SMS.
+
+    NOTE: The Group A document count filter (scanned_required_group_a >= N) is intentionally
+    NOT done in SQL here. The previous annotate(Count(distinct=True)) approach forced a
+    LEFT JOIN on the documents table + GROUP BY on every applicant, which was the dominant
+    ~5-8s bottleneck. The filter is now done in Python in the calling view loops, using the
+    already-prefetched `documents` cache — zero extra DB queries.
     """
     applicants = Applicant.objects.filter(
         Q(status__in=_MODULE2_EVALUATION_ACTIVE_STATUSES)
@@ -941,20 +945,6 @@ def _module2_evaluations_applicants_queryset():
     ).exclude(
         evaluation_approval_status='approved'
     )
-
-    required_group_a_doc_types = list(_cached_required_group_a_vault_doc_types())
-    required_group_a_total = len(required_group_a_doc_types)
-    if required_group_a_total > 0:
-        applicants = applicants.annotate(
-            scanned_required_group_a=Count(
-                'documents',
-                filter=Q(documents__document_type__in=required_group_a_doc_types),
-                distinct=True,
-            )
-        ).filter(
-            Q(module2_handoff_at__isnull=False)
-            | Q(scanned_required_group_a__gte=required_group_a_total)
-        )
 
     # requirement_submissions: only prefetch verified Group A submissions — the only
     # field used in the loop is group_a_verified count. This avoids fetching every
@@ -972,6 +962,9 @@ def _module2_evaluations_applicants_queryset():
         'cdrrmo_certification',
         'registered_by',
         'module2_handoff_by',
+        # barangay included so applicant.barangay.name doesn't fire a per-row query
+        # when the search filter accesses it (and for template renders).
+        'barangay',
     ).prefetch_related(
         verified_group_a_submissions_prefetch,
         'queue_entries',
@@ -1231,10 +1224,22 @@ def applications_list(request, position):
     # Pre-fetch ALL blacklist entries once so _module2_eligibility_snapshot
     # can match in Python memory instead of firing up to 6 DB queries per applicant.
     bl_cache = _fetch_all_blacklist_entries()
+    # Cache required doc types for the in-Python GROUP BY filter (replaces SQL annotation).
+    _req_doc_types = set(_cached_required_group_a_vault_doc_types())
     applicants_data = []
     ready_for_form_queue_count = 0
     total_eligible_count = 0  # tracked here to avoid a 2nd expensive .count() query
     for applicant in applicants:
+        # Python-level doc count gate — replaces the removed SQL annotate(Count(distinct=True)).
+        # Applicants with module2_handoff_at always pass; others need enough Group A doc types.
+        # Uses the prefetched `documents` cache — zero extra DB queries.
+        if not applicant.module2_handoff_at and _req_doc_types:
+            scanned_types = {
+                d.document_type for d in applicant.documents.all()
+                if d.document_type in _req_doc_types
+            }
+            if len(scanned_types) < len(_req_doc_types):
+                continue
         total_eligible_count += 1
         row = _module2_applicant_row_payload(
             applicant,
@@ -1367,9 +1372,18 @@ def module2_ready_for_form_queue_rows(acting_user):
 
     # Pre-fetch all blacklist entries once — same pattern as applications_list.
     bl_cache = _fetch_all_blacklist_entries()
+    _req_doc_types = set(_cached_required_group_a_vault_doc_types())
 
     applicants_data = []
     for applicant in applicants:
+        # Python-level doc count gate — same logic as applications_list loop.
+        if not applicant.module2_handoff_at and _req_doc_types:
+            scanned_types = {
+                d.document_type for d in applicant.documents.all()
+                if d.document_type in _req_doc_types
+            }
+            if len(scanned_types) < len(_req_doc_types):
+                continue
         row = _module2_applicant_row_payload(
             applicant,
             permissions,
