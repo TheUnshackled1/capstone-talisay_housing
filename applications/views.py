@@ -2940,7 +2940,7 @@ def eligibility_snapshot(request, position):
             )
 
     saved_decisions = {}
-    for decision in EligibilityCheckDecision.objects.filter(applicant=applicant):
+    for decision in EligibilityCheckDecision.objects.select_related('reviewed_by').filter(applicant=applicant):
         saved_decisions[decision.check_key] = {
             'status': decision.status,
             'failure_reason': decision.failure_reason or '',
@@ -3019,17 +3019,13 @@ def eligibility_snapshot(request, position):
             _cert_row['vault_scan_url'] = (
                 f'{vault_mgmt_path}?{urlencode({**_base_cert_q, "intent": "scan"})}'
             )
-            doc = applicant.documents.filter(document_type=dt).order_by('-uploaded_at').first()
-            if doc:
-                try:
-                    doc_url = doc.absolute_download_url(request)
-                except (ValueError, AttributeError):
-                    doc_url = ''
-                if doc_url:
-                    _cert_row['view_document'] = {
-                        'url': doc_url,
-                        'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
-                    }
+            # Re-use already-fetched doc metadata — avoids a new DB query per cert check row.
+            cert_meta = doc_type_to_latest_meta.get(dt)
+            if cert_meta and cert_meta.get('url'):
+                _cert_row['view_document'] = {
+                    'url': cert_meta['url'],
+                    'name': cert_meta.get('name', ''),
+                }
         sit_key = (_cert_row.get('key') or '').strip()
         if sit_key == 'field_site_photos':
             _cert_row['field_portal_url'] = reverse('accounts:dashboard_field')
