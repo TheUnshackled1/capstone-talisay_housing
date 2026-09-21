@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.core.cache import cache
 from datetime import date, datetime, timedelta
 from urllib.parse import urlencode
 
@@ -221,8 +222,34 @@ def dashboard_second_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Second Member position only.')
         return redirect('accounts:dashboard')
 
-    # ==================== MODULE 4: CASES OVERVIEW (M4) ==========
-    cases_total = Case.objects.count()
+    # Analytics payload — cached for 2 minutes to avoid ~30 sequential DB queries per load.
+    # Cache key scoped to the GET params so year/month/site filters still work correctly.
+    # Pass ?refresh=1 to force a cache miss (manual refresh for staff).
+    _cache_key = (
+        f"dashboard_analytics_second_member"
+        f"_{request.GET.get('year', 'all')}"
+        f"_{request.GET.get('month', 'all')}"
+        f"_{request.GET.get('site_id', '')}"
+    )
+    _force_refresh = request.GET.get('refresh') == '1'
+    analytics_data = None if _force_refresh else cache.get(_cache_key)
+    if analytics_data is None:
+        analytics_data = _staff_reports_analytics_payload(request)
+        cache.set(_cache_key, analytics_data, 120)  # 2-minute TTL
+
+    # CSV export — works via ?export=csv on the dashboard URL
+    if request.GET.get('export') == 'csv':
+        return _staff_reports_analytics_csv_response(
+            analytics_data, 'Second Member', 'second_member_report'
+        )
+
+    # Pull counts from the already-computed analytics payload — no extra DB queries.
+    incomplete_docs_count = analytics_data.get('incomplete_docs', 0)
+    total_applicants = analytics_data.get('total_applications', 0)
+    awaiting_signature_count = analytics_data.get('pending_final_signature_count', 0)
+    total_housing_units = analytics_data.get('housing_units_total', 0)
+    approved_this_month = analytics_data.get('approved_this_month', 0)
+    cases_total = analytics_data.get('cases_total', 0)
 
     # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) — Module 1 seven-document checklist ====================
     incomplete_module1_qs = (
@@ -237,14 +264,10 @@ def dashboard_second_member(request):
             'reference': app.reference_number,
             'missing_docs': f'{7 - done}/7 intake documents still pending',
         })
-    incomplete_docs_count = Applicant.objects.filter(_applicant_missing_intake_doc_q()).count()
 
     # ==================== MODULE 6: UPCOMING REPORTS (Reports for Full Disclosure Portal) ====================
-    # Track reports due this month
     reports_to_generate = []
-    # Standard monthly reports due: 1st (Compliance Summary), 15th (Mid-month Status), 28th (Monthly Closing)
     today = date.today()
-
     if today.day < 1:
         reports_to_generate.append({
             'title': 'Monthly Compliance Summary',
@@ -263,55 +286,17 @@ def dashboard_second_member(request):
         'status': 'UPCOMING' if today.day < 28 else 'DUE TODAY',
     })
 
-    # ==================== SYSTEM TOTALS ====================
-    total_applicants = Applicant.objects.count()
-
-    # Shared stat card data (for dashboard headers)
-    # Applications awaiting applicant-signed form scan (completed status)
-    awaiting_signature_count = Application.objects.filter(
-        status='standby'
-    ).count()
-
-    # Total housing units
-    total_housing_units = HousingUnit.objects.count()
-
-    # Approved this month
-    this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    approved_this_month = Application.objects.filter(
-        status='awarded',
-        updated_at__gte=this_month_start
-    ).count()
-
-    # Analytics payload (handles ?month, ?year, ?site_id GET params)
-    analytics_data = _staff_reports_analytics_payload(request)
-
-    # CSV export — works via ?export=csv on the dashboard URL
-    if request.GET.get('export') == 'csv':
-        return _staff_reports_analytics_csv_response(
-            analytics_data, 'Second Member', 'second_member_report'
-        )
-
     context = {
         'page_title': 'Second Member Dashboard',
         'user_position': 'second_member',
-
-        # ========== MODULE 4: CASES OVERVIEW (M4) ==========
         'cases_total': cases_total,
-
-        # ========== MODULE 3: DOCUMENT OVERSIGHT (M3) ==========
         'incomplete_docs': incomplete_docs_count,
-        'doc_completeness_alerts': doc_completeness_alerts[:10],  # Limit to 10
-
-        # ========== MODULE 6: REPORTS (M6) ==========
+        'doc_completeness_alerts': doc_completeness_alerts[:10],
         'reports_to_generate': reports_to_generate,
-
-        # ========== SYSTEM OVERVIEW ==========
         'total_applicants': total_applicants,
-        'awaiting_signature': awaiting_signature_count,  # Shared stat card
-        'housing_units': total_housing_units,  # Shared stat card
-        'approved_this_month': approved_this_month,  # Shared stat card
-
-        # ========== ANALYTICS PANEL ==========
+        'awaiting_signature': awaiting_signature_count,
+        'housing_units': total_housing_units,
+        'approved_this_month': approved_this_month,
         **analytics_data,
     }
 
@@ -1229,10 +1214,18 @@ def _staff_reports_analytics_payload(request):
 
     # Housing occupancy rate
     occupied_units = HousingUnit.objects.filter(status='Occupied').count()
+    housing_units_total_for_rate = housing_units_total  # alias for occupancy rate calc
     housing_occupancy_rate = (
         int(round(100 * occupied_units / housing_units_total))
         if housing_units_total > 0 else 0
     )
+
+    # Approved this month (for dashboard stat card)
+    _this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    approved_this_month = Application.objects.filter(
+        status='awarded', updated_at__gte=_this_month_start
+    ).count()
+    pending_final_signature_count = Application.objects.filter(status='completed').count()
 
     # Units under notice
     units_under_notice = HousingUnit.objects.filter(
@@ -1441,6 +1434,12 @@ def _staff_reports_analytics_payload(request):
         'expiring_soon': 0,
         'peak_hour': 'N/A',
         'peak_count': 0,
+        # Dashboard stat card keys — included so dashboard_second_member can pull them from
+        # the 2-minute cache instead of firing separate COUNT queries per page load.
+        'cases_total': cases_total,
+        'housing_units_total': housing_units_total,
+        'approved_this_month': approved_this_month,
+        'pending_final_signature_count': pending_final_signature_count,
         # Smart filter dropdown data
         'available_periods_json': available_periods_json,
     }
