@@ -1050,6 +1050,13 @@ def upload_scanned_requirement(request, position):
         setattr(applicant, doc_key, True)
         applicant.save(update_fields=[doc_key])
 
+    # Build the full checklist payload inline so the JS can update the UI in a
+    # single round-trip — eliminates the extra GET to applicant-requirement-scan-status.
+    try:
+        scan_payload = _build_applicant_requirement_scan_payload(applicant, request)
+    except Exception:
+        scan_payload = {}
+
     return JsonResponse({
         'success': True,
         'message': 'Scanned file saved to vault.',
@@ -1061,6 +1068,8 @@ def upload_scanned_requirement(request, position):
         'document_name': doc.file_name or (uploaded_file.name if uploaded_file else ''),
         'capture_method': doc.capture_method or capture_method,
         'filed_via_label': document_filed_via_display(doc.capture_method or capture_method),
+        # Embedded checklist — JS reads this instead of firing a second GET request
+        'scan_payload': scan_payload,
     })
 
 

@@ -137,7 +137,7 @@ function getCsrfToken() {
                 window.alert = originalAlert;
             };
             const parseUploadResponse = function (rawResponse) {
-                if (!rawResponse) return { ok: true, document_url: '', document_name: '' };
+                if (!rawResponse) return { ok: true, document_url: '', document_name: '', scan_payload: null };
                 try {
                     const parsed = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
                     if (parsed && typeof parsed === 'object') {
@@ -145,12 +145,14 @@ function getCsrfToken() {
                             ok: parsed.success !== false,
                             document_url: parsed.document_url || '',
                             document_name: parsed.document_name || '',
+                            // Forward embedded checklist so callers can skip the extra GET.
+                            scan_payload: parsed.scan_payload || null,
                         };
                     }
                 } catch (_err) {
                     // keep default fallback
                 }
-                return { ok: true, document_url: '', document_name: '' };
+                return { ok: true, document_url: '', document_name: '', scan_payload: null };
             };
             window.alert = function (message) {
                 if (shouldSuppressDwtHttpAlert(message)) {
@@ -558,13 +560,18 @@ function getCsrfToken() {
         return prop ? !!applicant[prop] : false;
     }
 
-    async function refreshApplicantRequirementScanPayload(payload) {
+    // fresh: optional pre-fetched scan payload (e.g. embedded in upload response).
+    // When supplied, the network GET to applicant-requirement-scan-status is skipped.
+    async function refreshApplicantRequirementScanPayload(payload, fresh) {
         if (!payload || !payload.applicantId) return payload;
         try {
-            const url = APPLICANT_REQUIREMENT_SCAN_STATUS_URL
-                + '?applicant_id=' + encodeURIComponent(String(payload.applicantId));
-            const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
-            const fresh = await response.json();
+            if (!fresh || !fresh.success || !Array.isArray(fresh.rows)) {
+                // No embedded payload — fall back to the GET endpoint.
+                const url = APPLICANT_REQUIREMENT_SCAN_STATUS_URL
+                    + '?applicant_id=' + encodeURIComponent(String(payload.applicantId));
+                const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+                fresh = await response.json();
+            }
             if (!fresh || !fresh.success || !Array.isArray(fresh.rows)) return payload;
             payload.rows = fresh.rows;
             payload.displacementReason = fresh.displacementReason || payload.displacementReason || '';
@@ -888,10 +895,10 @@ function getCsrfToken() {
             await dwt.SelectSourceAsync();
             await acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
             const uploadResult = await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
-            const isSaved = await saveArchiveRequirementDoc(applicantId, docKey, true);
-            if (!isSaved) {
-            }
-            const refreshed = await refreshApplicantRequirementScanPayload(payload);
+            // Fire legacy boolean flag sync without blocking the UI update.
+            saveArchiveRequirementDoc(applicantId, docKey, true);
+            // Pass embedded scan_payload from the upload response — skips the extra GET.
+            const refreshed = await refreshApplicantRequirementScanPayload(payload, uploadResult && uploadResult.scan_payload);
             finalizeArchiveVaultSync(refreshed);
             if (typeof dwt.CloseSource === 'function') {
                 try { dwt.CloseSource(); } catch (_err) { }
@@ -983,7 +990,8 @@ function getCsrfToken() {
                     throw new Error(data.error || 'Upload failed.');
                 }
                 const payload = currentArchiveRequirementsPayload;
-                const refreshed = await refreshApplicantRequirementScanPayload(payload);
+                // Pass embedded scan_payload from the upload response — skips the extra GET.
+                const refreshed = await refreshApplicantRequirementScanPayload(payload, data && data.scan_payload);
                 finalizeArchiveVaultSync(refreshed);
             })
             .catch(function (err) {
@@ -1402,10 +1410,8 @@ function getCsrfToken() {
                 await acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
                 const uploadResult = await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
 
-                // Backward-compatible checklist flag sync.
-                const isSaved = await saveArchiveRequirementDoc(applicantId, docKey, true);
-                if (!isSaved) {
-                }
+                // Backward-compatible checklist flag sync — fire-and-forget, doesn't gate UI.
+                saveArchiveRequirementDoc(applicantId, docKey, true);
 
                 row.scanned = true;
                 if (uploadResult && uploadResult.document_url) row.latest_file_url = uploadResult.document_url;

@@ -5,8 +5,13 @@ import uuid
 
 class DocumentQuerySet(models.QuerySet):
     def with_file_payload(self):
+        # Use id__in subquery instead of an implicit LEFT OUTER JOIN on blob_record.
+        # The previous filter(blob_record__isnull=False) forced PostgreSQL to JOIN the
+        # DocumentBlob table (which holds raw binary data) on every call, causing the
+        # DB to load heavy data pages into memory even though we only need a boolean.
+        # id__in issues a fast correlated subquery with no data transfer overhead.
         return self.filter(
-            models.Q(blob_record__isnull=False)
+            models.Q(id__in=DocumentBlob.objects.values('document_id'))
             | (models.Q(file__isnull=False) & ~models.Q(file=''))
         )
 
