@@ -1589,6 +1589,7 @@ def applicants_list(request, position):
         ).distinct().select_related(
             'barangay', 'eligibility_checked_by', 'registered_by'
         ).prefetch_related(
+            'household_members',
             Prefetch(
                 'queue_entries',
                 queryset=QueueEntry.objects.filter(status='active'),
