@@ -672,7 +672,9 @@ def _module2_eligibility_snapshot(applicant, checked_by=None, bl_cache=None):
     field_evidence_required = bool(requires_cdrrmo and disposition_source == 'field_unit')
     field_photos_count = 0
     if field_evidence_required and hasattr(applicant, 'cdrrmo_certification'):
-        field_photos_count = applicant.cdrrmo_certification.field_photos.count()
+        # Use len() so Django uses the prefetched cache (cdrrmo_certification__field_photos).
+        # .count() always issues a new DB query even when prefetched.
+        field_photos_count = len(applicant.cdrrmo_certification.field_photos.all())
     if not field_evidence_required:
         field_evidence_status = 'not_required'
     elif field_photos_count > 0:
@@ -954,19 +956,32 @@ def _module2_evaluations_applicants_queryset():
             | Q(scanned_required_group_a__gte=required_group_a_total)
         )
 
+    # requirement_submissions: only prefetch verified Group A submissions — the only
+    # field used in the loop is group_a_verified count. This avoids fetching every
+    # historical submission row for every applicant.
+    verified_group_a_submissions_prefetch = Prefetch(
+        'requirement_submissions',
+        queryset=RequirementSubmission.objects.filter(
+            status='verified', requirement__group='A'
+        ).select_related('requirement'),
+        to_attr='_verified_group_a_submissions',
+    )
+
     return applicants.select_related(
         'application',
         'cdrrmo_certification',
         'registered_by',
         'module2_handoff_by',
     ).prefetch_related(
-        'requirement_submissions',
-        'requirement_submissions__requirement',
+        verified_group_a_submissions_prefetch,
         'queue_entries',
         'documents',
         'eligibility_check_decisions',
         'household_members',
-        'archives',
+        # archives not needed in the main loop (only in the throttled preflight
+        # which has its own queryset). Removed to avoid fetching unused data.
+        # cdrrmo field_photos prefetched to avoid per-applicant COUNT queries.
+        'cdrrmo_certification__field_photos',
     ).order_by('module2_handoff_at', 'created_at', 'id')
 
 
@@ -1053,12 +1068,10 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
 
     application = getattr(applicant, 'application', None)
 
-    # RequirementSubmission counts reflect Module 1 "List of Applicants" only - informational on this screen.
-    group_a_verified = sum(
-        1
-        for s in applicant.requirement_submissions.all()
-        if getattr(s.requirement, 'group', None) == 'A' and s.status == 'verified'
-    )
+    # Use the pre-filtered prefetch (_verified_group_a_submissions) instead of
+    # iterating all submissions. Falls back to empty list if attr not populated
+    # (e.g. when called outside the list view without the custom Prefetch).
+    group_a_verified = len(getattr(applicant, '_verified_group_a_submissions', None) or [])
 
     can_generate_form = (
         permissions['can_generate_form']
@@ -1215,13 +1228,14 @@ def applications_list(request, position):
         is_required_for_form=True,
     ).count()
 
-    # Prepare applicant data with document counts.
     # Pre-fetch ALL blacklist entries once so _module2_eligibility_snapshot
     # can match in Python memory instead of firing up to 6 DB queries per applicant.
     bl_cache = _fetch_all_blacklist_entries()
     applicants_data = []
     ready_for_form_queue_count = 0
+    total_eligible_count = 0  # tracked here to avoid a 2nd expensive .count() query
     for applicant in applicants:
+        total_eligible_count += 1
         row = _module2_applicant_row_payload(
             applicant,
             permissions,
@@ -1321,7 +1335,9 @@ def applications_list(request, position):
         'group_b_requirements': group_b_requirements,
         'filter_stage': filter_stage,
         'search': search,
-        'total_eligible': applicants.count(),
+        # Use the counter tracked during the loop — avoids re-running the full
+        # annotated queryset as a COUNT(*) subquery (which was ~2-4s on Railway).
+        'total_eligible': total_eligible_count,
         'permissions': permissions,
         'user_position': request.user.position,
         'from_intake_handoff': from_intake_handoff,
