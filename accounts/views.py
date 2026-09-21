@@ -1255,6 +1255,10 @@ def _staff_reports_analytics_payload(request):
         'completed':   _cp_agg['completed'],
         'delayed':     _cp_agg['delayed'],
     }
+    construction_completed    = construction_stages['completed']
+    construction_in_progress  = construction_stages['in_progress']
+    construction_delayed      = construction_stages['delayed']
+    construction_not_started  = construction_stages['not_started']
 
     # Blacklist breakdown by reason — period-scoped when filter is active
     blacklist_reason_labels = dict(UnitsBlacklist.REASON_CHOICES)
