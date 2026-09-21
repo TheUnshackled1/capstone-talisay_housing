@@ -131,7 +131,11 @@ def _case_management_list_context(request, position):
     filter_status = request.GET.get('status', 'all')
     filter_type = request.GET.get('type', 'all')
 
-    _cache_key = f'case_list_ctx_{position}_{search_query}_{filter_status}_{filter_type}'
+    _cache_key = (
+        f"case_list_ctx_{position}"
+        f"_{''.join(c if c.isalnum() else '_' for c in search_query[:40])}"
+        f"_{filter_status}_{filter_type}"
+    )
     cached = cache.get(_cache_key)
     if cached is not None:
         return cached
@@ -221,28 +225,25 @@ def _case_management_list_context(request, position):
             search_query=search_query,
             filter_type=filter_type,
         )
-        resolved_cases = (
+        # resolved_cases: always start from base, apply filters in one pass.
+        _resolved_base = (
             Case.objects
             .filter(status=wf.STATUS_RESOLVED)
             .select_related('received_by', 'complainant_applicant', 'subject_applicant')
-            .order_by('-resolved_at', '-received_at')
         )
         if search_query or filter_type != 'all':
-            resolved_cases = _apply_case_list_filters(
-                Case.objects.filter(status=wf.STATUS_RESOLVED).select_related(
-                    'received_by', 'complainant_applicant', 'subject_applicant',
-                ),
-                search_query,
-                filter_type,
-            ).order_by('-resolved_at', '-received_at')
-        pending_cases = (
+            _resolved_base = _apply_case_list_filters(_resolved_base, search_query, filter_type)
+        resolved_cases = _resolved_base.order_by('-resolved_at', '-received_at')
+
+        # pending_cases: same pattern — single base, conditional filter.
+        _pending_base = (
             Case.objects
             .filter(status=wf.STATUS_PENDING_REVIEW)
             .select_related('received_by', 'complainant_applicant', 'subject_applicant')
-            .order_by('-received_at')
         )
         if search_query or filter_type != 'all':
-            pending_cases = _apply_case_list_filters(pending_cases, search_query, filter_type).order_by('-received_at')
+            _pending_base = _apply_case_list_filters(_pending_base, search_query, filter_type)
+        pending_cases = _pending_base.order_by('-received_at')
 
     ctx = {
         'cases': list(cases),
