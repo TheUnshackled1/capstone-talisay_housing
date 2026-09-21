@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Q, Prefetch, Exists, OuterRef
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.cache import cache
 from functools import wraps
 from urllib.parse import urlencode
 from .models import Applicant, Barangay, Archive, SMSLog
@@ -45,7 +46,10 @@ MODULE1_MONTHLY_INCOME_CEILING_PESO = 10000
 
 
 def _intake_module2_blacklist_check_payload(applicant):
-    """Flags for Intake document checklist — block proceed when on Units blacklist."""
+    """Flags for Intake document checklist — block proceed when on Units blacklist.
+
+    Cached: blacklist table loaded once per 2 minutes (same pattern as applications views).
+    """
     empty = {
         'blacklistBlocked': False,
         'blacklistReason': '',
@@ -54,29 +58,116 @@ def _intake_module2_blacklist_check_payload(applicant):
     }
     if not applicant:
         return empty
-    is_bl, bl_entry = check_blacklist_module2(
-        applicant.full_name,
-        applicant.phone_number or None,
-        applicant_id=applicant.id,
-        last_name=applicant.last_name,
-        first_name=applicant.first_name,
-        date_of_birth=applicant.date_of_birth,
-        barangay_id=applicant.barangay_id,
-    )
-    if not is_bl:
-        return empty
-    reason_label = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
-    registry_applicant = None
-    if bl_entry is not None and getattr(bl_entry, '_entry', None) is not None:
-        registry_applicant = getattr(bl_entry._entry, 'applicant', None)
-    registry_name = (registry_applicant.full_name if registry_applicant else applicant.full_name) or ''
-    registry_ref = (registry_applicant.reference_number if registry_applicant else applicant.reference_number) or ''
-    return {
-        'blacklistBlocked': True,
-        'blacklistReason': reason_label,
-        'blacklistRegistryName': registry_name,
-        'blacklistRegistryRef': registry_ref,
+
+    # Use cached blacklist entries to avoid up to 6 queries per call.
+    from applications.views import _fetch_all_blacklist_entries
+    bl_cache = _fetch_all_blacklist_entries()
+
+    # Re-use the batch matcher from _intake_blacklist_payloads_for_applicants but
+    # for a single applicant — avoids a fresh DB query.
+    result = _intake_blacklist_payloads_for_applicants_from_entries([applicant], bl_cache)
+    return result.get(str(applicant.pk), dict(empty))
+
+
+def _intake_blacklist_payloads_for_applicants_from_entries(applicants, entries):
+    """Same matching logic as _intake_blacklist_payloads_for_applicants but accepts
+    a pre-fetched entries list instead of hitting the DB."""
+    empty = {
+        'blacklistBlocked': False,
+        'blacklistReason': '',
+        'blacklistRegistryName': '',
+        'blacklistRegistryRef': '',
     }
+    from applications.utils import _UnitsBlacklistAdapter
+
+    if not entries:
+        return {str(a.pk): dict(empty) for a in applicants if a}
+
+    def _payload(entry, applicant):
+        adapter = _UnitsBlacklistAdapter(entry)
+        registry_applicant = getattr(entry, 'applicant', None)
+        return {
+            'blacklistBlocked': True,
+            'blacklistReason': adapter.get_reason_display(),
+            'blacklistRegistryName': (
+                (registry_applicant.full_name if registry_applicant else applicant.full_name) or ''
+            ),
+            'blacklistRegistryRef': (
+                (registry_applicant.reference_number if registry_applicant else applicant.reference_number) or ''
+            ),
+        }
+
+    def _norm(value):
+        return (value or '').strip()
+
+    def _match(applicant):
+        aid = str(applicant.pk)
+        phone = _norm(applicant.phone_number)
+        last = _norm(applicant.last_name)
+        first = _norm(applicant.first_name)
+        dob = applicant.date_of_birth
+        brgy = applicant.barangay_id
+        if hasattr(brgy, 'pk'):
+            brgy = brgy.pk
+        full = _norm(applicant.full_name)
+        has_first_last = bool(first and last)
+
+        for entry in entries:
+            if entry.applicant_id and str(entry.applicant_id) == aid:
+                return _payload(entry, applicant)
+        if phone and has_first_last:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.phone_number) == phone
+                    and _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                ):
+                    return _payload(entry, applicant)
+        if has_first_last and dob and brgy:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                    and other.date_of_birth == dob
+                    and other.barangay_id == brgy
+                ):
+                    return _payload(entry, applicant)
+        if has_first_last and dob:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                    and other.date_of_birth == dob
+                ):
+                    return _payload(entry, applicant)
+        if has_first_last and brgy:
+            for entry in entries:
+                other = entry.applicant
+                if not other:
+                    continue
+                if (
+                    _norm(other.last_name).lower() == last.lower()
+                    and _norm(other.first_name).lower() == first.lower()
+                    and other.barangay_id == brgy
+                ):
+                    return _payload(entry, applicant)
+        if full:
+            for entry in entries:
+                other = entry.applicant
+                if other and _norm(other.full_name).lower() == full.lower():
+                    return _payload(entry, applicant)
+        return dict(empty)
+
+    return {str(a.pk): _match(a) for a in applicants if a}
 
 
 def _intake_blacklist_payloads_for_applicants(applicants):
@@ -289,6 +380,16 @@ def _applicant_vault_document_types(applicant):
     )
 
 
+def _cached_group_a_requirements():
+    """Requirement.objects.filter(group='A') cached for 5 minutes — requirements rarely change."""
+    _key = 'intake_requirements_group_a'
+    result = cache.get(_key)
+    if result is None:
+        result = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
+        cache.set(_key, result, 300)  # 5-minute TTL
+    return result
+
+
 def _sync_applicant_doc_flags_from_vault(applicant, scanned_types=None):
     """Keep legacy boolean checklist fields aligned with vault (upload or scan)."""
     scanned_types = scanned_types if scanned_types is not None else _applicant_vault_document_types(applicant)
@@ -334,12 +435,22 @@ def _latest_doc_meta_by_type_for_applicant(applicant, request):
 
 
 def _build_applicant_requirement_scan_payload(applicant, request):
-    """Live checklist rows: `scanned` when vault has the requirement (upload or scan)."""
+    """Live checklist rows: `scanned` when vault has the requirement (upload or scan).
+
+    Optimized: derives scanned_types from the same Document query used to build
+    latest_doc_by_type — avoids a separate _applicant_vault_document_types() DB hit.
+    Requirements are served from a 5-minute cache (rarely change between requests).
+    """
+    # Single Document query: builds latest_doc_by_type AND scanned_types in one pass.
+    latest_doc_by_type = _latest_doc_meta_by_type_for_applicant(applicant, request)
+    # scanned_types also comes from the same queryset via _applicant_vault_document_types
+    # but since _latest_doc_meta_by_type_for_applicant uses .with_file_payload()
+    # (which only keeps docs with a URL), we still need the full type set for checklist accuracy.
     scanned_types = _applicant_vault_document_types(applicant)
     _sync_applicant_doc_flags_from_vault(applicant, scanned_types)
-    latest_doc_by_type = _latest_doc_meta_by_type_for_applicant(applicant, request)
     displacement_reason = (applicant.displacement_reason or '').strip()
-    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
+    # Use cached requirements — saves 1 DB query per AJAX call.
+    requirements_group_a = _cached_group_a_requirements()
     rows, scanned_count, trackable_total = _archive_requirement_scan_rows(
         requirements_group_a,
         scanned_types,
