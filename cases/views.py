@@ -347,13 +347,38 @@ def case_management_dashboard(request, position):
 
     return render(request, template_name, context)
 
-
 @login_required
 @require_http_methods(["GET"])
 @verify_position
 def case_desk_feed(request, position):
-    """JSON + HTML fragments for live desk list sync (field ↔ monitor desks)."""
+    """JSON + HTML fragments for live desk list sync (field ⇔ monitor desks).
+
+    Optimised for high-frequency polling (every 4-10s):
+    1. Context is cached 30s via _case_management_list_context — 0 DB on hit.
+    2. If client sends ?v=<hash> matching current version, return a 200-byte
+       "unchanged" sentinel — no template rendering at all.
+    3. Full rendered payload is cached 30s keyed by version hash so even the
+       first client after a change pays the template cost only once.
+    """
     list_ctx = _case_management_list_context(request, position)
+    current_version = _case_desk_feed_version(list_ctx)
+
+    # 1. Client version short-circuit — send nothing if desk hasn't changed.
+    client_version = request.GET.get('v', '')
+    if client_version and client_version == current_version:
+        return JsonResponse({
+            'success': True,
+            'version': current_version,
+            'unchanged': True,
+        })
+
+    # 2. Full payload cache — keyed by version so it's auto-invalidated on change.
+    _feed_cache_key = f'case_desk_feed_{position}_{current_version}'
+    cached_payload = cache.get(_feed_cache_key)
+    if cached_payload is not None:
+        return JsonResponse(cached_payload)
+
+    # 3. Cold path — render all HTML fragments (runs at most once per 30s).
     fragment_ctx = {
         **list_ctx,
         'show_time_ago': False,
@@ -387,14 +412,16 @@ def case_desk_feed(request, position):
             fragment_ctx,
             request=request,
         )
-    return JsonResponse({
+    payload = {
         'success': True,
-        'version': _case_desk_feed_version(list_ctx),
+        'version': current_version,
         'desk_row_count': len(list_ctx['desk_rows']),
         'status_counts': list_ctx['status_counts'],
         'settled_on_site_count': list_ctx.get('settled_on_site_count', 0),
         'html': html,
-    })
+    }
+    cache.set(_feed_cache_key, payload, 30)
+    return JsonResponse(payload)
 
 
 @login_required
@@ -988,7 +1015,7 @@ def get_case_details(request, position, case_id):
             'is_terminal': wf.normalize_status(case.status) in wf.TERMINAL_STATUSES,
         }
 
-        return JsonResponse({
+        _response_payload = {
             'success': True,
             'case': {
                 'id': str(case.id),
@@ -1068,7 +1095,7 @@ def get_case_details(request, position, case_id):
                 'received_at_location_display': case.get_received_at_location_display(),
             }
         }
-        # Cache the payload for 30s — skipped when auto-transition fired (state changed).
+        # Cache for 30s — skipped when auto-transition fired (state just changed).
         if not _did_auto_transition:
             cache.set(_detail_cache_key, _response_payload, 30)
         return JsonResponse(_response_payload)

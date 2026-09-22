@@ -86,6 +86,9 @@
         if (isModalBlockingSync() && reason === 'poll') return Promise.resolve();
 
         var params = filterParams();
+        // Send current version so server can short-circuit with a ~200-byte
+        // "unchanged" response instead of rendering 4 HTML templates.
+        if (lastVersion) params.set('v', lastVersion);
         var url = '/cases/' + encodeURIComponent(config.position) + '/desk-feed/';
         if (params.toString()) url += '?' + params.toString();
 
@@ -99,6 +102,8 @@
             })
             .then(function (data) {
                 if (!data.success) return;
+                // Server confirmed no change — nothing to do.
+                if (data.unchanged) return;
                 if (lastVersion === data.version) return;
                 lastVersion = data.version;
                 applyFeed(data);
