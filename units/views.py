@@ -1051,7 +1051,7 @@ def create_housing_unit(request, position):
     return JsonResponse(
         {
             'success': True,
-            'message': f'Added Block {block_number} Lot {lot_number} at {site.name}.',
+            'message': f'Added Block {block_number} Lot {lot_number} at GK Hope Village.',
             'unit': {'id': str(unit.id), 'block': block_number, 'lot': lot_number},
         }
     )
@@ -1258,7 +1258,7 @@ def delete_housing_unit(request, position, unit_id):
     return JsonResponse(
         {
             'success': True,
-            'message': f'Removed {label}' + (f' at {site_name}.' if site_name else '.'),
+            'message': f'Removed {label} at GK Hope Village.',
         }
     )
 
