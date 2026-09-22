@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.formats import date_format
 from django.conf import settings
 from django.views.decorators.http import require_http_methods, require_POST
+from django.core.cache import cache
 from functools import wraps
 from collections import defaultdict
 import json
@@ -476,6 +477,7 @@ def document_management(request, position):
                 queryset=LotAward.objects.select_related('unit', 'construction_progress'),
             ),
             'documents',
+            'household_members',
             'requirement_submissions__requirement',
             Prefetch(
                 'queue_entries',
@@ -521,142 +523,164 @@ def document_management(request, position):
     if selected_barangay and selected_barangay != 'all':
         applicants_qs = applicants_qs.filter(barangay__name=selected_barangay)
 
-    # Store unfiltered counts for statistics display (before KPI filter)
-    base_applicants_qs = applicants_qs
-    base_applicants_ordered = list(base_applicants_qs)
-    base_applicants_total = len(base_applicants_ordered)
-    base_applicant_ids = [a.pk for a in base_applicants_ordered]
-    base_documents_qs = (
-        Document.objects
-        .filter(applicant_id__in=base_applicant_ids)
-    )
-    base_documents_count = base_documents_qs.count()
-    base_size_sum = base_documents_qs.aggregate(total_size=Sum('file_size'))['total_size'] or 0
-    base_total_size_gb = round(base_size_sum / (1024*1024*1024), 2)
-
-    # Filter by KPI card (Applicants vs Blacklisted) - for display only
-    if kpi_filter == 'blacklisted':
-        applicants_qs = applicants_qs.filter(blacklist_record__isnull=False)
-    elif kpi_filter == 'applicants':
-        applicants_qs = applicants_qs.filter(blacklist_record__isnull=True)
-
-    # Queue priority ordering: priority queue first, then walk-in, then none.
-    QUEUE_RANK = {'priority': 0, 'walk_in': 1}
-    QUEUE_LABEL = {'priority': 'Priority', 'walk_in': 'Walk-in'}
-
-    # Evaluate once so we can bulk-load Module 4 blacklist rows (why disqualified).
-    applicants_ordered = list(applicants_qs)
-    bl_applicant_ids = [a.pk for a in applicants_ordered]
-    blacklist_map = {
-        str(b.applicant_id): b
-        for b in Blacklist.objects.filter(applicant_id__in=bl_applicant_ids).only(
-            'applicant_id', 'supporting_notes', 'reason_details'
+    import hashlib
+    _cache_q = request.GET.copy()
+    _cache_q.pop('page', None)
+    _cache_key = f"doc_mgmt_{position}_{hashlib.md5(_cache_q.urlencode().encode()).hexdigest()}"
+    
+    cached_payload = cache.get(_cache_key)
+    if cached_payload:
+        base_documents_count = cached_payload['base_documents_count']
+        base_size_sum = cached_payload['base_size_sum']
+        base_total_size_gb = cached_payload['base_total_size_gb']
+        base_applicants_total = cached_payload['base_applicants_total']
+        applicants_list = cached_payload['applicants_list']
+    else:
+        # Store unfiltered counts for statistics display (before KPI filter)
+        base_applicants_qs = applicants_qs
+        base_applicants_ordered = list(base_applicants_qs)
+        base_applicants_total = len(base_applicants_ordered)
+        base_applicant_ids = [a.pk for a in base_applicants_ordered]
+        base_documents_qs = (
+            Document.objects
+            .filter(applicant_id__in=base_applicant_ids)
         )
-    }
+        base_documents_count = base_documents_qs.count()
+        base_size_sum = base_documents_qs.aggregate(total_size=Sum('file_size'))['total_size'] or 0
+        base_total_size_gb = round(base_size_sum / (1024*1024*1024), 2)
 
-    # Prepare applicants with lot info and document count
-    applicants_list = []
-    for applicant in applicants_ordered:
-        # Resolve active queue entry from the prefetched list (lowest position wins).
-        active_entries = getattr(applicant, 'active_queue_entries', None) or []
-        active_queue_entry = active_entries[0] if active_entries else None
-        if active_queue_entry:
-            queue_type = active_queue_entry.queue_type
-            queue_position = active_queue_entry.position
-            queue_label_short = QUEUE_LABEL.get(queue_type, queue_type or '—')
-            queue_label = f"{queue_label_short} #{queue_position}"
-            queue_rank = QUEUE_RANK.get(queue_type, 99)
-        else:
-            queue_type = ''
-            queue_position = None
-            queue_label_short = ''
-            queue_label = '—'
-            queue_rank = 99
-        # Count uploaded documents
-        doc_count = applicant.documents.count()
-        total_docs = 15  # Total possible documents
+        # Filter by KPI card (Applicants vs Blacklisted) - for display only
+        if kpi_filter == 'blacklisted':
+            applicants_qs = applicants_qs.filter(blacklist_record__isnull=False)
+        elif kpi_filter == 'applicants':
+            applicants_qs = applicants_qs.filter(blacklist_record__isnull=True)
 
-        # Get lot assignment if exists
-        lot_info = None
-        try:
-            if hasattr(applicant, 'application') and applicant.application:
-                qs = applicant.application.lot_awards.filter(unit__isnull=False)
-                lot_award = qs.filter(status='active').first() or qs.first()
-                if lot_award and lot_award.unit:
-                    lot_info = {
-                        'block': str(lot_award.unit.block_number) if lot_award.unit.block_number else 'N/A',
-                        'lot': str(lot_award.unit.lot_number) if lot_award.unit.lot_number else 'N/A',
-                        'site': 'GK Cabatangan'
-                    }
-        except:
+        # Queue priority ordering: priority queue first, then walk-in, then none.
+        QUEUE_RANK = {'priority': 0, 'walk_in': 1}
+        QUEUE_LABEL = {'priority': 'Priority', 'walk_in': 'Walk-in'}
+
+        # Evaluate once so we can bulk-load Module 4 blacklist rows (why disqualified).
+        applicants_ordered = list(applicants_qs)
+        bl_applicant_ids = [a.pk for a in applicants_ordered]
+        blacklist_map = {
+            str(b.applicant_id): b
+            for b in Blacklist.objects.filter(applicant_id__in=bl_applicant_ids).only(
+                'applicant_id', 'supporting_notes', 'reason_details'
+            )
+        }
+
+        # Prepare applicants with lot info and document count
+        applicants_list = []
+        for applicant in applicants_ordered:
+            # Resolve active queue entry from the prefetched list (lowest position wins).
+            active_entries = getattr(applicant, 'active_queue_entries', None) or []
+            active_queue_entry = active_entries[0] if active_entries else None
+            if active_queue_entry:
+                queue_type = active_queue_entry.queue_type
+                queue_position = active_queue_entry.position
+                queue_label_short = QUEUE_LABEL.get(queue_type, queue_type or '—')
+                queue_label = f"{queue_label_short} #{queue_position}"
+                queue_rank = QUEUE_RANK.get(queue_type, 99)
+            else:
+                queue_type = ''
+                queue_position = None
+                queue_label_short = ''
+                queue_label = '—'
+                queue_rank = 99
+            # Count uploaded documents using prefetched objects to avoid N+1 query
+            applicant_docs = applicant.documents.all()
+            doc_count = len(applicant_docs)
+            total_docs = 15  # Total possible documents
+
+            # Get lot assignment if exists
             lot_info = None
+            try:
+                if hasattr(applicant, 'application') and applicant.application:
+                    lot_awards = [la for la in applicant.application.lot_awards.all() if la.unit_id is not None]
+                    lot_award = next((la for la in lot_awards if la.status == 'active'), None) or (lot_awards[0] if lot_awards else None)
+                    if lot_award and lot_award.unit:
+                        lot_info = {
+                            'block': str(lot_award.unit.block_number) if lot_award.unit.block_number else 'N/A',
+                            'lot': str(lot_award.unit.lot_number) if lot_award.unit.lot_number else 'N/A',
+                            'site': 'GK Cabatangan'
+                        }
+            except:
+                lot_info = None
 
-        group_a_verified = sum(
-            1 for sub in applicant.requirement_submissions.all()
-            if getattr(sub.requirement, 'group', '') == 'A' and sub.status == 'verified'
-        )
-        has_danger_zone_requirement = applicant.channel == 'danger_zone'
-        cdrrmo_verified = bool(
-            has_danger_zone_requirement and
-            getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', '') == 'certified'
-        )
-        phase_a_required_docs = 7 + (1 if has_danger_zone_requirement else 0)
-        phase_a_verified_docs = group_a_verified + (1 if cdrrmo_verified else 0)
+            group_a_verified = sum(
+                1 for sub in applicant.requirement_submissions.all()
+                if getattr(sub.requirement, 'group', '') == 'A' and sub.status == 'verified'
+            )
+            has_danger_zone_requirement = applicant.channel == 'danger_zone'
+            cdrrmo_verified = bool(
+                has_danger_zone_requirement and
+                getattr(getattr(applicant, 'cdrrmo_certification', None), 'status', '') == 'certified'
+            )
+            phase_a_required_docs = 7 + (1 if has_danger_zone_requirement else 0)
+            phase_a_verified_docs = group_a_verified + (1 if cdrrmo_verified else 0)
 
-        app_obj = getattr(applicant, 'application', None)
-        signed_form_confirmed = bool(app_obj and app_obj.applicant_signed_at)
-        phase_a_complete = phase_a_verified_docs >= phase_a_required_docs and signed_form_confirmed
+            app_obj = getattr(applicant, 'application', None)
+            signed_form_confirmed = bool(app_obj and app_obj.applicant_signed_at)
+            phase_a_complete = phase_a_verified_docs >= phase_a_required_docs and signed_form_confirmed
 
-        bl_row = blacklist_map.get(str(applicant.pk))
-        why_disqualified = ''
-        if bl_row and (bl_row.supporting_notes or '').strip():
-            why_disqualified = bl_row.supporting_notes.strip()
-        elif (applicant.disqualification_reason or '').strip():
-            why_disqualified = applicant.disqualification_reason.strip()
-        elif bl_row and (bl_row.reason_details or '').strip():
-            why_disqualified = bl_row.reason_details.strip()
+            bl_row = blacklist_map.get(str(applicant.pk))
+            why_disqualified = ''
+            if bl_row and (bl_row.supporting_notes or '').strip():
+                why_disqualified = bl_row.supporting_notes.strip()
+            elif (applicant.disqualification_reason or '').strip():
+                why_disqualified = applicant.disqualification_reason.strip()
+            elif bl_row and (bl_row.reason_details or '').strip():
+                why_disqualified = bl_row.reason_details.strip()
 
-        applicant_workflow_status, applicant_status_detail = staff_pipeline_primary_detail(
-            applicant, app_obj, bl_row
-        )
+            applicant_workflow_status, applicant_status_detail = staff_pipeline_primary_detail(
+                applicant, app_obj, bl_row
+            )
 
-        # Module 4 handoff: vault Phase A complete (no separate FieldInspection ORM gate).
-        module3_ready_for_module4 = phase_a_complete
+            # Module 4 handoff: vault Phase A complete (no separate FieldInspection ORM gate).
+            module3_ready_for_module4 = phase_a_complete
 
-        applicants_list.append({
-            'id': str(applicant.id),
-            'full_name': applicant.full_name,
-            'reference_number': applicant.reference_number,
-            'status': applicant.status,
-            'status_display': applicant.get_status_display() if hasattr(applicant, 'get_status_display') else applicant.status,
-            'is_historical_beneficiary': is_historical_applicant(applicant),
-            'barangay': applicant.barangay.name if applicant.barangay else 'N/A',
-            'hover_location': _applicant_hover_location(applicant, lot_info),
-            'date_of_birth': applicant.date_of_birth,
-            'monthly_income': applicant.monthly_income or 0,
-            'household_members': applicant.household_member_count,
-            'lot_assignment': lot_info,
-            'doc_count': doc_count,
-            'missing_doc_count': max(0, 8 - doc_count),
-            'doc_pct_8': min(100, int((doc_count / 8) * 100)) if doc_count > 0 else 0,
-            'total_docs': total_docs,
-            'doc_percentage': int((doc_count / total_docs) * 100) if total_docs > 0 else 0,
-            'phase_a_verified_docs': phase_a_verified_docs,
-            'phase_a_required_docs': phase_a_required_docs,
-            'phase_a_complete': phase_a_complete,
-            'module3_ready_for_module4': module3_ready_for_module4,
-            'signed_form_confirmed': signed_form_confirmed,
-            'applicant_workflow_status': applicant_workflow_status,
-            'applicant_status_detail': applicant_status_detail,
-            'why_disqualified': why_disqualified,
-            'has_blacklist_record': bool(bl_row),
-            'queue_type': queue_type,
-            'queue_position': queue_position,
-            'queue_label_short': queue_label_short,
-            'queue_label': queue_label,
-            '_queue_rank': queue_rank,
-            '_queue_position_sort': queue_position if queue_position is not None else 10**9,
-        })
+            applicants_list.append({
+                'id': str(applicant.id),
+                'full_name': applicant.full_name,
+                'reference_number': applicant.reference_number,
+                'status': applicant.status,
+                'status_display': applicant.get_status_display() if hasattr(applicant, 'get_status_display') else applicant.status,
+                'is_historical_beneficiary': is_historical_applicant(applicant),
+                'barangay': applicant.barangay.name if applicant.barangay else 'N/A',
+                'hover_location': _applicant_hover_location(applicant, lot_info),
+                'date_of_birth': applicant.date_of_birth,
+                'monthly_income': applicant.monthly_income or 0,
+                'household_members': applicant.household_member_count,
+                'lot_assignment': lot_info,
+                'doc_count': doc_count,
+                'missing_doc_count': max(0, 8 - doc_count),
+                'doc_pct_8': min(100, int((doc_count / 8) * 100)) if doc_count > 0 else 0,
+                'total_docs': total_docs,
+                'doc_percentage': int((doc_count / total_docs) * 100) if total_docs > 0 else 0,
+                'phase_a_verified_docs': phase_a_verified_docs,
+                'phase_a_required_docs': phase_a_required_docs,
+                'phase_a_complete': phase_a_complete,
+                'module3_ready_for_module4': module3_ready_for_module4,
+                'signed_form_confirmed': signed_form_confirmed,
+                'applicant_workflow_status': applicant_workflow_status,
+                'applicant_status_detail': applicant_status_detail,
+                'why_disqualified': why_disqualified,
+                'has_blacklist_record': bool(bl_row),
+                'queue_type': queue_type,
+                'queue_position': queue_position,
+                'queue_label_short': queue_label_short,
+                'queue_label': queue_label,
+                '_queue_rank': queue_rank,
+                '_queue_position_sort': queue_position if queue_position is not None else 10**9,
+            })
+            
+        cache.set(_cache_key, {
+            'base_documents_count': base_documents_count,
+            'base_size_sum': base_size_sum,
+            'base_total_size_gb': base_total_size_gb,
+            'base_applicants_total': base_applicants_total,
+            'applicants_list': applicants_list,
+        }, 30)
 
     # Final ordering: priority queue first (by position), then walk-in (by position), then no-queue.
     applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
@@ -785,10 +809,12 @@ def document_management(request, position):
 
     all_applicant_ids = [a['id'] for a in applicants_list]
     page_row_ids = [a['id'] for a in page_applicants]
+    
+    # Only fetch documents for the applicants on the current page to avoid memory exhaustion
     documents_qs = (
         Document.objects
         .select_related('applicant', 'uploaded_by')
-        .filter(applicant_id__in=all_applicant_ids)
+        .filter(applicant_id__in=page_row_ids)
         .order_by('applicant__created_at', '-uploaded_at')
     )
 

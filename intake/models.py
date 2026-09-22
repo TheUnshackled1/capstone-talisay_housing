@@ -427,7 +427,8 @@ class Applicant(models.Model):
     @property
     def household_member_count(self):
         """Return total household members - use declared size if no members registered yet."""
-        actual_count = self.household_members.count() + 1
+        # Use .all() instead of .count() to leverage prefetch_related and avoid N+1 queries
+        actual_count = len(self.household_members.all()) + 1
         # Return declared size if larger (members not yet added individually)
         return max(actual_count, self.household_size or 1)
 
