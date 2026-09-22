@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q, Prefetch, Sum, Count, OuterRef, Subquery, IntegerField, Exists
+from django.db.models import Q, Prefetch, Sum, Count
 from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
@@ -551,14 +551,16 @@ def document_management(request, position):
         applicants_list = cached_payload['applicants_list']
     else:
         # Store unfiltered counts for statistics display (before KPI filter).
-        # Compute doc count/size stats using annotated aggregates on the queryset itself
-        # — no separate base_documents_qs needed.
         base_applicants_qs = applicants_qs
         base_applicants_ordered = list(base_applicants_qs)
         base_applicants_total = len(base_applicants_ordered)
-        _doc_agg = base_applicants_qs.aggregate(
-            total_count=Count('documents', distinct=True),
-            total_size=Sum('documents__file_size'),
+        # Derive document totals from a lean query scoped to already-known applicant IDs.
+        # Avoids re-evaluating the full annotated+distinct queryset a second time.
+        _base_ids = [a.pk for a in base_applicants_ordered]
+        _doc_agg = (
+            Document.objects
+            .filter(applicant_id__in=_base_ids)
+            .aggregate(total_count=Count('id'), total_size=Sum('file_size'))
         )
         base_documents_count = _doc_agg['total_count'] or 0
         base_size_sum = _doc_agg['total_size'] or 0
