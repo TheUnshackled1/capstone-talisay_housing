@@ -1683,10 +1683,20 @@ def applicants_list(request, position):
 
     # Determine if user has full access (can modify) or read-only (field/oversight)
     can_modify = request.user.position in ['second_member', 'fourth_member']
-    # Build applicants list from danger zone channel only
-    applicants = []
 
-    # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
+    _cache_key = 'intake_applicants_list_payload'
+    cached_payload = cache.get(_cache_key)
+
+    if cached_payload:
+        applicants = cached_payload['applicants']
+        archive_records = cached_payload['archive_records']
+        archive_review_modal = cached_payload['archive_review_modal']
+        archive_documents_modal = cached_payload['archive_documents_modal']
+    else:
+        # Build applicants list from danger zone channel only
+        applicants = []
+
+        # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
     # Active list: only applicants with NO archive record at all (brand new registrations).
     # Restored applicants have is_restored=True archives, so they route to the
     # mini-table below instead of back to the active list.
@@ -1911,20 +1921,32 @@ def applicants_list(request, position):
             is_archived=True,
         )
 
-    archive_documents_modal = {
-        r['referenceNumber']: {
-            'referenceNumber': r['referenceNumber'],
-            'fullName': r['fullName'],
-            'applicantId': r.get('applicantId', ''),
-            'displacementReason': r.get('displacementReason', ''),
-            'rows': r['requirementScanRows'],
-            'blacklistBlocked': bool(r.get('blacklistBlocked')),
-            'blacklistReason': r.get('blacklistReason', ''),
-            'blacklistRegistryName': r.get('blacklistRegistryName', ''),
-            'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
+        archive_documents_modal = {
+            r['referenceNumber']: {
+                'referenceNumber': r['referenceNumber'],
+                'fullName': r['fullName'],
+                'applicantId': r.get('applicantId', ''),
+                'displacementReason': r.get('displacementReason', ''),
+                'rows': r['requirementScanRows'],
+                'blacklistBlocked': bool(r.get('blacklistBlocked')),
+                'blacklistReason': r.get('blacklistReason', ''),
+                'blacklistRegistryName': r.get('blacklistRegistryName', ''),
+                'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
+            }
+            for r in archive_records
         }
-        for r in archive_records
-    }
+
+        # Sort all applicants by dateRegistered (FIFO - oldest first)
+        applicants.sort(key=lambda x: x['dateRegistered'])
+
+        _attach_applicants_sms_history(applicants)
+
+        cache.set(_cache_key, {
+            'applicants': applicants,
+            'archive_records': archive_records,
+            'archive_review_modal': archive_review_modal,
+            'archive_documents_modal': archive_documents_modal,
+        }, 30)
 
     active_list_q = (request.GET.get('q') or '').strip()
     archive_list_q = (request.GET.get('archive_q') or '').strip()
@@ -1953,13 +1975,9 @@ def applicants_list(request, position):
                 ('fullName', 'referenceNumber', 'barangay'),
             )
         ]
-
-    # Sort all applicants by dateRegistered (FIFO - oldest first)
-    applicants.sort(key=lambda x: x['dateRegistered'])
-
-    _attach_applicants_sms_history(applicants)
     
-    # Get barangays from database
+    # Calculate stats BEFORE filtering archive records so totals are correct
+
     barangays = list(Barangay.objects.filter(is_active=True).values_list('name', flat=True).order_by('name'))
     
     # Calculate stats

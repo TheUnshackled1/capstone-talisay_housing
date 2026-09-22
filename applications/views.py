@@ -1236,47 +1236,62 @@ def applications_list(request, position):
         )
         cache.set(_req_a_count_key, required_group_a_submission_total, 300)
 
-    # Pre-fetch ALL blacklist entries once so _module2_eligibility_snapshot
-    # can match in Python memory instead of firing up to 6 DB queries per applicant.
-    bl_cache = _fetch_all_blacklist_entries()
-    # Cache required doc types for the in-Python GROUP BY filter (replaces SQL annotation).
-    _req_doc_types = set(_cached_required_group_a_vault_doc_types())
-    applicants_data = []
-    ready_for_form_queue_count = 0
-    total_eligible_count = 0  # tracked here to avoid a 2nd expensive .count() query
-    for applicant in applicants:
-        # Python-level doc count gate — replaces the removed SQL annotate(Count(distinct=True)).
-        # Applicants with module2_handoff_at always pass; others need enough Group A doc types.
-        # Uses the prefetched `documents` cache — zero extra DB queries.
-        if not applicant.module2_handoff_at and _req_doc_types:
-            scanned_types = {
-                d.document_type for d in applicant.documents.all()
-                if d.document_type in _req_doc_types
-            }
-            if len(scanned_types) < len(_req_doc_types):
+    _cache_key = f'applications_list_data_{request.user.position}'
+    cached_payload = cache.get(_cache_key)
+
+    if cached_payload:
+        applicants_data = cached_payload['applicants_data']
+        ready_for_form_queue_count = cached_payload['ready_for_form_queue_count']
+        total_eligible_count = cached_payload['total_eligible_count']
+    else:
+        # Pre-fetch ALL blacklist entries once so _module2_eligibility_snapshot
+        # can match in Python memory instead of firing up to 6 DB queries per applicant.
+        bl_cache = _fetch_all_blacklist_entries()
+        # Cache required doc types for the in-Python GROUP BY filter (replaces SQL annotation).
+        _req_doc_types = set(_cached_required_group_a_vault_doc_types())
+        applicants_data = []
+        ready_for_form_queue_count = 0
+        total_eligible_count = 0  # tracked here to avoid a 2nd expensive .count() query
+        for applicant in applicants:
+            # Python-level doc count gate — replaces the removed SQL annotate(Count(distinct=True)).
+            # Applicants with module2_handoff_at always pass; others need enough Group A doc types.
+            # Uses the prefetched `documents` cache — zero extra DB queries.
+            if not applicant.module2_handoff_at and _req_doc_types:
+                scanned_types = {
+                    d.document_type for d in applicant.documents.all()
+                    if d.document_type in _req_doc_types
+                }
+                if len(scanned_types) < len(_req_doc_types):
+                    continue
+            total_eligible_count += 1
+            row = _module2_applicant_row_payload(
+                applicant,
+                permissions,
+                required_group_a_submission_total,
+                request.user,
+                bl_cache=bl_cache,
+            )
+            if row is None:
                 continue
-        total_eligible_count += 1
-        row = _module2_applicant_row_payload(
-            applicant,
-            permissions,
-            required_group_a_submission_total,
-            request.user,
-            bl_cache=bl_cache,
-        )
-        if row is None:
-            continue
-        on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
-        if on_rfq_track:
-            ready_for_form_queue_count += 1
-        # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/completed.
-        if on_rfq_track:
-            continue
-        # Once the same routed record is pushed to lot-awarding track (and later awarded),
-        # keep it out of the main Application & Evaluation ledger.
-        app_status = (getattr(row.get('application'), 'status', '') or '').strip()
-        if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
-            continue
-        applicants_data.append(row)
+            on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
+            if on_rfq_track:
+                ready_for_form_queue_count += 1
+            # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/completed.
+            if on_rfq_track:
+                continue
+            # Once the same routed record is pushed to lot-awarding track (and later awarded),
+            # keep it out of the main Application & Evaluation ledger.
+            app_status = (getattr(row.get('application'), 'status', '') or '').strip()
+            if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
+                continue
+            applicants_data.append(row)
+            
+        cache.set(_cache_key, {
+            'applicants_data': applicants_data,
+            'ready_for_form_queue_count': ready_for_form_queue_count,
+            'total_eligible_count': total_eligible_count,
+        }, 30)
+
     
     
     # 1. Search filter (server-side across full list before pagination)
@@ -1639,53 +1654,58 @@ def lot_awarding_queue(request, position):
 
     permissions = get_module2_permissions(request.user)
 
-    applications_qs = (
-        Application.objects
-        .filter(status='standby')
-        .exclude(applicant__status='disqualified')
-        .select_related('applicant', 'applicant__barangay')
-        # Prefetch applicant documents so the signed_application check below
-        # doesn't fire 2 DB queries per applicant (Document filter + DocumentBlob exists).
-        .prefetch_related('applicant__documents')
-        .order_by('standby_position', 'standby_entered_at', '-updated_at')
-    )
-
-    queue_rows = []
-    for app in applications_qs:
-        applicant = app.applicant
-        # Use prefetched documents — no extra DB queries per applicant.
-        signed_form_on_file = any(
-            d.document_type == 'signed_application'
-            for d in applicant.documents.all()
+    _cache_key = f'lot_awarding_queue_rows_{request.user.position}'
+    queue_rows = cache.get(_cache_key)
+    
+    if queue_rows is None:
+        applications_qs = (
+            Application.objects
+            .filter(status='standby')
+            .exclude(applicant__status='disqualified')
+            .select_related('applicant', 'applicant__barangay')
+            # Prefetch applicant documents so the signed_application check below
+            # doesn't fire 2 DB queries per applicant (Document filter + DocumentBlob exists).
+            .prefetch_related('applicant__documents')
+            .order_by('standby_position', 'standby_entered_at', '-updated_at')
         )
-        vault_base = {
-            'applicant_id': str(applicant.pk),
-            'document_type': 'signed_application',
-            'open_vault': '1',
-        }
-        vault_path = reverse('documents:management', kwargs={'position': request.user.position})
-        routed_dt = app.standby_entered_at or app.updated_at
-        queue_rows.append({
-            'application': app,
-            'applicant': applicant,
-            'status_label': 'FOR AWARDING',
-            'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '-',
-            'routed_at': routed_dt,
-            'routedAgo': _relative_time_ago(routed_dt),
-            'can_award_lot': bool(permissions.get('can_award_lot')),
-            'signed_form_on_file': signed_form_on_file,
-            'signed_form_vault_url': f"{vault_path}?{urlencode(vault_base)}",
-        })
 
-    # Same Applicant Situation tier order as Ready for Form; FIFO by standby / queue entry time within tier.
-    queue_rows.sort(
-        key=lambda r: (
-            _ready_for_form_situation_priority(getattr(r['applicant'], 'displacement_reason', None)),
-            r.get('routed_at') is None,
-            r.get('routed_at') or timezone.now(),
-            str(r['applicant'].pk),
-        ),
-    )
+        queue_rows = []
+        for app in applications_qs:
+            applicant = app.applicant
+            # Use prefetched documents — no extra DB queries per applicant.
+            signed_form_on_file = any(
+                d.document_type == 'signed_application'
+                for d in applicant.documents.all()
+            )
+            vault_base = {
+                'applicant_id': str(applicant.pk),
+                'document_type': 'signed_application',
+                'open_vault': '1',
+            }
+            vault_path = reverse('documents:management', kwargs={'position': request.user.position})
+            routed_dt = app.standby_entered_at or app.updated_at
+            queue_rows.append({
+                'application': app,
+                'applicant': applicant,
+                'status_label': 'FOR AWARDING',
+                'situation_label': applicant.get_displacement_reason_display() if applicant.displacement_reason else '-',
+                'routed_at': routed_dt,
+                'routedAgo': _relative_time_ago(routed_dt),
+                'can_award_lot': bool(permissions.get('can_award_lot')),
+                'signed_form_on_file': signed_form_on_file,
+                'signed_form_vault_url': f"{vault_path}?{urlencode(vault_base)}",
+            })
+
+        # Same Applicant Situation tier order as Ready for Form; FIFO by standby / queue entry time within tier.
+        queue_rows.sort(
+            key=lambda r: (
+                _ready_for_form_situation_priority(getattr(r['applicant'], 'displacement_reason', None)),
+                r.get('routed_at') is None,
+                r.get('routed_at') or timezone.now(),
+                str(r['applicant'].pk),
+            ),
+        )
+        cache.set(_cache_key, queue_rows, 30)
 
     sms_stats = _lot_awarding_queue_sms_stats_by_applicant(
         [r['applicant'].pk for r in queue_rows]
