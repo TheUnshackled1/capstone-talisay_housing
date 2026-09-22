@@ -16,6 +16,7 @@ import json
 import mimetypes
 import os
 from uuid import UUID
+import hashlib
 from intake.models import Applicant
 from units.models import MonitoringReport, LotAward, Blacklist
 from applications.models import QueueEntry
@@ -523,7 +524,6 @@ def document_management(request, position):
     if selected_barangay and selected_barangay != 'all':
         applicants_qs = applicants_qs.filter(barangay__name=selected_barangay)
 
-    import hashlib
     _cache_q = request.GET.copy()
     _cache_q.pop('page', None)
     _cache_key = f"doc_mgmt_{position}_{hashlib.md5(_cache_q.urlencode().encode()).hexdigest()}"
@@ -680,7 +680,7 @@ def document_management(request, position):
             'base_total_size_gb': base_total_size_gb,
             'base_applicants_total': base_applicants_total,
             'applicants_list': applicants_list,
-        }, 30)
+        }, 60)
 
     # Final ordering: priority queue first (by position), then walk-in (by position), then no-queue.
     applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
@@ -716,20 +716,25 @@ def document_management(request, position):
         for a in applicants_list
     ]
 
-    # Compute stage_counts from FULL list (so tab badges show total per stage)
+    # Compute stage_counts from FULL list (so tab badges show total per stage).
+    # Precompute once so _stage_key is called exactly once per item, not 7x.
+    _stage_keys_all = [_stage_key(a) for a in applicants_list]
     stage_counts = {
-        'all':               len(applicants_list),
-        'awarded':           sum(1 for a in applicants_list if _stage_key(a) == 'awarded'),
-        'ready_for_awarding': sum(1 for a in applicants_list if _stage_key(a) == 'ready_for_awarding'),
-        'ready_for_form':    sum(1 for a in applicants_list if _stage_key(a) == 'ready_for_form'),
-        'evaluation':        sum(1 for a in applicants_list if _stage_key(a) == 'evaluation'),
-        'blacklisted':       sum(1 for a in applicants_list if _stage_key(a) == 'blacklisted'),
-        'archived':          sum(1 for a in applicants_list if _stage_key(a) == 'archived'),
+        'all':                len(applicants_list),
+        'awarded':            _stage_keys_all.count('awarded'),
+        'ready_for_awarding': _stage_keys_all.count('ready_for_awarding'),
+        'ready_for_form':     _stage_keys_all.count('ready_for_form'),
+        'evaluation':         _stage_keys_all.count('evaluation'),
+        'blacklisted':        _stage_keys_all.count('blacklisted'),
+        'archived':           _stage_keys_all.count('archived'),
     }
 
     # Apply stage filter FIRST (primary navigation)
     if stage_filter and stage_filter != 'all':
-        applicants_list = [a for a in applicants_list if _stage_key(a) == stage_filter]
+        # Reuse precomputed keys — zip then filter avoids calling _stage_key again
+        applicants_list = [
+            a for a, sk in zip(applicants_list, _stage_keys_all) if sk == stage_filter
+        ]
 
     # Compute doc_status_counts from stage-filtered list (badges reflect current stage)
     doc_status_counts = {
@@ -896,11 +901,14 @@ def document_management(request, position):
         row['vault_checklist'] = checklist
 
     _va_ids = [UUID(x['id']) for x in page_applicants]
+    # Fetch only what the vault drawer builder needs that isn't in the cached dict:
+    # cdrrmo_certification (with photos) + application.applicant_signed_at.
+    # select_related('application') is enough; barangay is already in the cached row dict.
     applicant_map = {
         str(a.id).lower(): a
         for a in (
             Applicant.objects.filter(id__in=_va_ids)
-            .select_related('application', 'barangay')
+            .select_related('application')
             .prefetch_related(
                 'cdrrmo_certification__field_photos',
             )
@@ -932,6 +940,7 @@ def document_management(request, position):
         checklist = list(row['vault_checklist'])
         signed_on_file = bool(ap and applicant_has_signed_application_payload(ap))
         signed_view_url = None
+        doc_obj = None  # Initialize so lines below never hit NameError when signed_on_file is False
         if signed_on_file:
             doc_obj = latest_doc_by_applicant_type.get((rid, 'signed_application'))
             if doc_obj:
@@ -977,15 +986,20 @@ def document_management(request, position):
             'situation': situation,
         }
 
-    blacklisted_registry_count = (
-        Blacklist.objects.filter(
-            Q(applicant__archives__isnull=False)
-            | Q(applicant__module2_handoff_at__isnull=False)
-            | document_vault_applicant_q(prefix='applicant__')
+    # Cache this expensive DISTINCT COUNT separately — it changes rarely.
+    _blr_cache_key = f"doc_mgmt_blr_{position}"
+    blacklisted_registry_count = cache.get(_blr_cache_key)
+    if blacklisted_registry_count is None:
+        blacklisted_registry_count = (
+            Blacklist.objects.filter(
+                Q(applicant__archives__isnull=False)
+                | Q(applicant__module2_handoff_at__isnull=False)
+                | document_vault_applicant_q(prefix='applicant__')
+            )
+            .distinct()
+            .count()
         )
-        .distinct()
-        .count()
-    )
+        cache.set(_blr_cache_key, blacklisted_registry_count, 120)
 
     context = {
         'page_title': 'Document Vault',
