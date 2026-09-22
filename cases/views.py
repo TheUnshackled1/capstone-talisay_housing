@@ -438,7 +438,11 @@ def _prior_cases_for_complainant(case, complainant_applicant, unit, limit=8):
         qs = qs.filter(related_unit=unit)
     else:
         return []
-    return list(qs.order_by('-received_at')[:limit])
+    return list(
+        qs.only(
+            'id', 'case_number', 'status', 'case_type', 'initial_description', 'received_at'
+        ).order_by('-received_at')[:limit]
+    )
 
 
 def _prior_cases_for_respondent(case, subject_applicant, limit=8):
@@ -453,7 +457,11 @@ def _prior_cases_for_respondent(case, subject_applicant, limit=8):
         qs = qs.filter(subject_name__iexact=(case.subject_name or '').strip())
     else:
         return []
-    return list(qs.order_by('-received_at')[:limit])
+    return list(
+        qs.only(
+            'id', 'case_number', 'status', 'case_type', 'initial_description', 'received_at'
+        ).order_by('-received_at')[:limit]
+    )
 
 
 def _subject_housing_unit(subject_applicant):
@@ -819,7 +827,12 @@ def get_case_details(request, position, case_id):
     Returns JSON with case record details for the view modal
 
     URL Route: /cases/<position>/<case_id>/details/
+    Cached for 30 seconds per case_id — eliminates 4+ DB round-trips per modal open.
     """
+    _detail_cache_key = f'case_detail_{case_id}'
+    _cached_payload = cache.get(_detail_cache_key)
+    if _cached_payload is not None:
+        return JsonResponse(_cached_payload)
     try:
         case = (
             Case.objects
@@ -883,8 +896,10 @@ def get_case_details(request, position, case_id):
                             member.get_sex_display() if member.sex else '—'
                         ),
                     }
-                    for member in complainant_applicant.household_members.all().order_by(
-                        'created_at'
+                    # sorted() uses prefetch cache; .order_by() would fire a new query.
+                    for member in sorted(
+                        complainant_applicant.household_members.all(),
+                        key=lambda m: m.created_at,
                     )
                 ],
             }
@@ -907,8 +922,10 @@ def get_case_details(request, position, case_id):
                             member.get_sex_display() if member.sex else '—'
                         ),
                     }
-                    for member in subject_applicant.household_members.all().order_by(
-                        'created_at'
+                    # sorted() uses prefetch cache; .order_by() would fire a new query.
+                    for member in sorted(
+                        subject_applicant.household_members.all(),
+                        key=lambda m: m.created_at,
                     )
                 ],
             }
@@ -927,6 +944,7 @@ def get_case_details(request, position, case_id):
         can_upload_evidence = wf.user_can_upload_case_evidence(request.user)
         is_monitor_desk = wf.user_is_case_monitor_desk(request.user)
         case_status = wf.normalize_status(case.status)
+        _did_auto_transition = False
         if (
             wf.user_can_field_mark_under_review(request.user)
             and case_status == wf.STATUS_UNDER_REVIEW
@@ -936,6 +954,9 @@ def get_case_details(request, position, case_id):
             wf.apply_transition(case, 'enter_monitoring')
             case.save(update_fields=['status', 'updated_at'])
             case_status = wf.normalize_status(case.status)
+            _did_auto_transition = True
+            # Invalidate stale cache entry after state change.
+            cache.delete(_detail_cache_key)
 
         workflow_payload = {
             'can_manage_workflow': can_manage,
@@ -1046,7 +1067,11 @@ def get_case_details(request, position, case_id):
                 'workflow': workflow_payload,
                 'received_at_location_display': case.get_received_at_location_display(),
             }
-        })
+        }
+        # Cache the payload for 30s — skipped when auto-transition fired (state changed).
+        if not _did_auto_transition:
+            cache.set(_detail_cache_key, _response_payload, 30)
+        return JsonResponse(_response_payload)
 
     except Case.DoesNotExist:
         return JsonResponse({
