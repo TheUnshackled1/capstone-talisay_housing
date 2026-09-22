@@ -1376,15 +1376,10 @@ def proceed_to_applications(request, position):
     promote_to_module2 = str(request.POST.get('promote_to_module2', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     if promote_to_module2:
-        is_bl, bl_entry = check_blacklist_module2(
-            applicant.full_name,
-            applicant.phone_number or None,
-            applicant_id=applicant.id,
-            last_name=applicant.last_name,
-            first_name=applicant.first_name,
-            date_of_birth=applicant.date_of_birth,
-            barangay_id=applicant.barangay_id,
-        )
+        # Use cached blacklist — avoids up to 6 DB queries per call.
+        from applications.views import _fetch_all_blacklist_entries, _check_blacklist_from_cache
+        bl_cache = _fetch_all_blacklist_entries()
+        is_bl, bl_entry = _check_blacklist_from_cache(applicant, bl_cache)
         if is_bl:
             reason_label = bl_entry.get_reason_display() if bl_entry else 'Blacklist match'
             registry_applicant = None
@@ -1720,7 +1715,7 @@ def applicants_list(request, position):
     walk_in_ids = [a.id for a in walk_in_applicants]
     walk_in_vault_types_by_applicant = defaultdict(set)
     walk_in_extra_doc_types_by_applicant = defaultdict(set)
-    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
+    requirements_group_a = _cached_group_a_requirements()
     if walk_in_ids:
         for aid, doc_type in Document.objects.filter(
             applicant_id__in=walk_in_ids,
@@ -2399,7 +2394,7 @@ def archive_list(request, position):
         ).order_by('-uploaded_at', '-id'):
             if doc.applicant_id not in signed_doc_by_applicant_id:
                 signed_doc_by_applicant_id[doc.applicant_id] = doc
-    requirements_group_a = list(Requirement.objects.filter(group='A').order_by('order', 'code'))
+    requirements_group_a = _cached_group_a_requirements()
 
     # Prepare records for template
     records = []

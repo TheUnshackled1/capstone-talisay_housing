@@ -1220,17 +1220,21 @@ def applications_list(request, position):
 
     applicants = _module2_evaluations_applicants_queryset()
 
-    # Get all requirements for the checklist
-    requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
-    group_a_requirements = requirements.filter(group='A')
-    group_b_requirements = requirements.filter(group='B')
-    
-    
-    required_group_a_submission_total = Requirement.objects.filter(
-        group='A',
-        is_active=True,
-        is_required_for_form=True,
-    ).count()
+    # Get all requirements for the checklist — use 5-min cache to avoid
+    # 2 separate Requirement DB queries on every page load.
+    _all_reqs_cached = _cached_group_a_requirements()
+    requirements = _all_reqs_cached
+    group_a_requirements = [r for r in _all_reqs_cached if r.group == 'A']
+    group_b_requirements = [r for r in _all_reqs_cached if r.group == 'B']
+
+    _req_a_count_key = 'applications_req_a_required_count'
+    required_group_a_submission_total = cache.get(_req_a_count_key)
+    if required_group_a_submission_total is None:
+        required_group_a_submission_total = sum(
+            1 for r in _all_reqs_cached
+            if r.group == 'A' and r.is_active and r.is_required_for_form
+        )
+        cache.set(_req_a_count_key, required_group_a_submission_total, 300)
 
     # Pre-fetch ALL blacklist entries once so _module2_eligibility_snapshot
     # can match in Python memory instead of firing up to 6 DB queries per applicant.
@@ -1371,15 +1375,27 @@ def module2_ready_for_form_queue_rows(acting_user):
     """
     Ready for Form queue rows (same filter/sort as ready_for_form_queue view).
     Returns list of _module2_applicant_row_payload dicts.
+
+    Cached for 30 seconds — the per-applicant eligibility_snapshot loop is the
+    dominant ~4-5s driver; caching absorbs repeat loads and polling bursts.
     """
+    _rows_cache_key = f'rfq_rows_{getattr(acting_user, "position", "unknown")}'
+    cached_rows = cache.get(_rows_cache_key)
+    if cached_rows is not None:
+        return cached_rows
+
     permissions = get_module2_permissions(acting_user)
     _module2_run_handoff_preflight(acting_user)
     applicants = _module2_evaluations_applicants_queryset()
-    required_group_a_submission_total = Requirement.objects.filter(
-        group='A',
-        is_active=True,
-        is_required_for_form=True,
-    ).count()
+    _all_reqs_rfq = _cached_group_a_requirements()
+    _req_a_count_key = 'applications_req_a_required_count'
+    required_group_a_submission_total = cache.get(_req_a_count_key)
+    if required_group_a_submission_total is None:
+        required_group_a_submission_total = sum(
+            1 for r in _all_reqs_rfq
+            if r.group == 'A' and r.is_active and r.is_required_for_form
+        )
+        cache.set(_req_a_count_key, required_group_a_submission_total, 300)
 
     # Pre-fetch all blacklist entries once — same pattern as applications_list.
     bl_cache = _fetch_all_blacklist_entries()
@@ -1415,6 +1431,8 @@ def module2_ready_for_form_queue_rows(acting_user):
             str(r['applicant'].pk),
         ),
     )
+    # Cache for 30s — short enough for real-time UX, long enough to absorb polling.
+    cache.set(_rows_cache_key, applicants_data, 30)
     return applicants_data
 
 
@@ -1433,15 +1451,19 @@ def ready_for_form_queue(request, position):
 
     permissions = get_module2_permissions(request.user)
 
-    requirements = Requirement.objects.filter(is_active=True).order_by('group', 'order')
-    group_a_requirements = requirements.filter(group='A')
-    group_b_requirements = requirements.filter(group='B')
+    _all_reqs_rfq_view = _cached_group_a_requirements()
+    requirements = _all_reqs_rfq_view
+    group_a_requirements = [r for r in _all_reqs_rfq_view if r.group == 'A']
+    group_b_requirements = [r for r in _all_reqs_rfq_view if r.group == 'B']
 
-    required_group_a_submission_total = Requirement.objects.filter(
-        group='A',
-        is_active=True,
-        is_required_for_form=True,
-    ).count()
+    _req_a_count_key = 'applications_req_a_required_count'
+    required_group_a_submission_total = cache.get(_req_a_count_key)
+    if required_group_a_submission_total is None:
+        required_group_a_submission_total = sum(
+            1 for r in _all_reqs_rfq_view
+            if r.group == 'A' and r.is_active and r.is_required_for_form
+        )
+        cache.set(_req_a_count_key, required_group_a_submission_total, 300)
 
     applicants_data = module2_ready_for_form_queue_rows(request.user)
 

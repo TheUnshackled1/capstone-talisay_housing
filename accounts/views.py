@@ -222,20 +222,20 @@ def dashboard_second_member(request):
         messages.error(request, 'Access denied. This dashboard is for the Second Member position only.')
         return redirect('accounts:dashboard')
 
-    # Analytics payload — cached for 2 minutes to avoid ~30 sequential DB queries per load.
-    # Cache key scoped to the GET params so year/month/site filters still work correctly.
-    # Pass ?refresh=1 to force a cache miss (manual refresh for staff).
+    _force_refresh = request.GET.get('refresh') == '1'
+
+    # Analytics payload — cached for 5 minutes to avoid the expensive
+    # _staff_analytics_module2_counts iterator on every cold load (~14s hit).
     _cache_key = (
         f"dashboard_analytics_second_member"
         f"_{request.GET.get('year', 'all')}"
         f"_{request.GET.get('month', 'all')}"
         f"_{request.GET.get('site_id', '')}"
     )
-    _force_refresh = request.GET.get('refresh') == '1'
     analytics_data = None if _force_refresh else cache.get(_cache_key)
     if analytics_data is None:
         analytics_data = _staff_reports_analytics_payload(request)
-        cache.set(_cache_key, analytics_data, 120)  # 2-minute TTL
+        cache.set(_cache_key, analytics_data, 300)  # 5-minute TTL
 
     # CSV export — works via ?export=csv on the dashboard URL
     if request.GET.get('export') == 'csv':
@@ -251,19 +251,29 @@ def dashboard_second_member(request):
     approved_this_month = analytics_data.get('approved_this_month', 0)
     cases_total = analytics_data.get('cases_total', 0)
 
-    # ==================== MODULE 3: DOCUMENT OVERSIGHT (M3) — Module 1 seven-document checklist ====================
-    incomplete_module1_qs = (
-        Applicant.objects.filter(_applicant_missing_intake_doc_q())
-        .order_by('-updated_at')[:15]
-    )
-    doc_completeness_alerts = []
-    for app in incomplete_module1_qs:
-        done = _applicant_intake_docs_done_count(app)
-        doc_completeness_alerts.append({
-            'applicant_name': app.full_name,
-            'reference': app.reference_number,
-            'missing_docs': f'{7 - done}/7 intake documents still pending',
-        })
+    # ===== MODULE 3: DOCUMENT OVERSIGHT — cached 2 min to avoid per-load DB hit =====
+    _alerts_cache_key = 'dashboard_second_member_doc_alerts'
+    doc_completeness_alerts = None if _force_refresh else cache.get(_alerts_cache_key)
+    if doc_completeness_alerts is None:
+        incomplete_module1_qs = (
+            Applicant.objects.filter(_applicant_missing_intake_doc_q())
+            .only(
+                'full_name', 'reference_number',
+                'doc_brgy_residency', 'doc_brgy_indigency', 'doc_cedula',
+                'doc_police_clearance', 'doc_no_property', 'doc_2x2_picture',
+                'doc_sketch_location',
+            )
+            .order_by('-updated_at')[:15]
+        )
+        doc_completeness_alerts = []
+        for app in incomplete_module1_qs:
+            done = _applicant_intake_docs_done_count(app)
+            doc_completeness_alerts.append({
+                'applicant_name': app.full_name,
+                'reference': app.reference_number,
+                'missing_docs': f'{7 - done}/7 intake documents still pending',
+            })
+        cache.set(_alerts_cache_key, doc_completeness_alerts, 120)  # 2-minute TTL
 
     # ==================== MODULE 6: UPCOMING REPORTS (Reports for Full Disclosure Portal) ====================
     reports_to_generate = []
