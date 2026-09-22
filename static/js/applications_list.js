@@ -496,13 +496,10 @@
 
     function buildM2SituationCertCardHtml(c, idx, checks, sc, suppressReasonDup) {
         const ok = !!c.done;
-        const vaultUploadUrl = typeof c.vault_upload_url === 'string' ? c.vault_upload_url.trim() : '';
         const vaultScanUrl = typeof c.vault_scan_url === 'string' ? c.vault_scan_url.trim() : '';
         const docUrl = (c.view_document && c.view_document.url) ? String(c.view_document.url).trim() : '';
         const docName = (c.view_document && c.view_document.name) ? String(c.view_document.name) : 'Document';
         const safeDocHref = docUrl ? docUrl.replace(/"/g, '&quot;') : '';
-        const safeVaultUploadHref = vaultUploadUrl ? vaultUploadUrl.replace(/"/g, '&quot;') : '';
-        const safeVaultScanHref = vaultScanUrl ? vaultScanUrl.replace(/"/g, '&quot;') : '';
         const vaultDt = String(c.vault_document_type || '').trim();
         const sitDwtMapping = M2_VAULT_DOCUMENT_TYPE_TO_INTAKE_DOC[vaultDt];
         const hasExistingDocAttr = docUrl ? '1' : '0';
