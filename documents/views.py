@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q, Prefetch, Sum
+from django.db.models import Q, Prefetch, Sum, Count, OuterRef, Subquery, IntegerField, Exists
 from django.http import JsonResponse, HttpResponse, Http404
 from django.urls import reverse
 from django.utils import timezone
@@ -469,21 +469,35 @@ def document_management(request, position):
     # anyone with Intake Archive or legacy Module 2 handoff timestamp. Union covers both:
     # before staff proceed to Application & Eligibility.
     # Ordering: Module 2 queue first when present — priority, then walk-in, then no queue.
+    #
+    # PERF: Use annotate() for aggregate values instead of prefetch_related for large relations.
+    # This replaces 3 heavy prefetches (documents, household_members, requirement_submissions)
+    # with SQL COUNT aggregates, eliminating thousands of row fetches for each cold-cache load.
     applicants_qs = (
         Applicant.objects
-        .select_related('application', 'barangay')
+        .select_related('application', 'barangay', 'cdrrmo_certification')
         .prefetch_related(
             Prefetch(
                 'application__lot_awards',
-                queryset=LotAward.objects.select_related('unit', 'construction_progress'),
+                queryset=LotAward.objects.select_related('unit'),
             ),
-            'documents',
-            'household_members',
-            'requirement_submissions__requirement',
             Prefetch(
                 'queue_entries',
                 queryset=QueueEntry.objects.filter(status='active').order_by('position'),
                 to_attr='active_queue_entries',
+            ),
+        )
+        # Aggregate counts in SQL — avoids loading full related-object sets into Python memory.
+        .annotate(
+            _doc_count=Count('documents', distinct=True),
+            _hh_count=Count('household_members', distinct=True),
+            _group_a_verified=Count(
+                'requirement_submissions',
+                filter=Q(
+                    requirement_submissions__requirement__group='A',
+                    requirement_submissions__status='verified',
+                ),
+                distinct=True,
             ),
         )
         .filter(
@@ -536,18 +550,19 @@ def document_management(request, position):
         base_applicants_total = cached_payload['base_applicants_total']
         applicants_list = cached_payload['applicants_list']
     else:
-        # Store unfiltered counts for statistics display (before KPI filter)
+        # Store unfiltered counts for statistics display (before KPI filter).
+        # Compute doc count/size stats using annotated aggregates on the queryset itself
+        # — no separate base_documents_qs needed.
         base_applicants_qs = applicants_qs
         base_applicants_ordered = list(base_applicants_qs)
         base_applicants_total = len(base_applicants_ordered)
-        base_applicant_ids = [a.pk for a in base_applicants_ordered]
-        base_documents_qs = (
-            Document.objects
-            .filter(applicant_id__in=base_applicant_ids)
+        _doc_agg = base_applicants_qs.aggregate(
+            total_count=Count('documents', distinct=True),
+            total_size=Sum('documents__file_size'),
         )
-        base_documents_count = base_documents_qs.count()
-        base_size_sum = base_documents_qs.aggregate(total_size=Sum('file_size'))['total_size'] or 0
-        base_total_size_gb = round(base_size_sum / (1024*1024*1024), 2)
+        base_documents_count = _doc_agg['total_count'] or 0
+        base_size_sum = _doc_agg['total_size'] or 0
+        base_total_size_gb = round(base_size_sum / (1024 * 1024 * 1024), 2)
 
         # Filter by KPI card (Applicants vs Blacklisted) - for display only
         if kpi_filter == 'blacklisted':
@@ -587,9 +602,8 @@ def document_management(request, position):
                 queue_label_short = ''
                 queue_label = '—'
                 queue_rank = 99
-            # Count uploaded documents using prefetched objects to avoid N+1 query
-            applicant_docs = applicant.documents.all()
-            doc_count = len(applicant_docs)
+            # Use annotated doc count (computed in SQL, no per-row prefetch needed).
+            doc_count = getattr(applicant, '_doc_count', 0) or 0
             total_docs = 15  # Total possible documents
 
             # Get lot assignment if exists
@@ -607,10 +621,8 @@ def document_management(request, position):
             except:
                 lot_info = None
 
-            group_a_verified = sum(
-                1 for sub in applicant.requirement_submissions.all()
-                if getattr(sub.requirement, 'group', '') == 'A' and sub.status == 'verified'
-            )
+            # Use annotated counts (computed in SQL) instead of iterating prefetched submissions.
+            group_a_verified = getattr(applicant, '_group_a_verified', 0) or 0
             has_danger_zone_requirement = applicant.channel == 'danger_zone'
             cdrrmo_verified = bool(
                 has_danger_zone_requirement and
@@ -650,7 +662,11 @@ def document_management(request, position):
                 'hover_location': _applicant_hover_location(applicant, lot_info),
                 'date_of_birth': applicant.date_of_birth,
                 'monthly_income': applicant.monthly_income or 0,
-                'household_members': applicant.household_member_count,
+                # Use annotated household count — avoids prefetching all member rows.
+                'household_members': max(
+                    (getattr(applicant, '_hh_count', 0) or 0) + 1,
+                    applicant.household_size or 1,
+                ),
                 'lot_assignment': lot_info,
                 'doc_count': doc_count,
                 'missing_doc_count': max(0, 8 - doc_count),
