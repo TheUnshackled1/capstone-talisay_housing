@@ -2682,7 +2682,7 @@ def _situation_certification_gate(applicant):
         }]
         base['ready'] = done
         if not done:
-            base['blocking_summary'] = 'Supporting document required (Court Order).'
+            base['blocking_summary'] = 'Supporting Document Required (Court Order).'
         return base
 
     if dr == 'relocated':
@@ -2699,7 +2699,7 @@ def _situation_certification_gate(applicant):
         }]
         base['ready'] = done
         if not done:
-            base['blocking_summary'] = 'Supporting document required (Demand Letter).'
+            base['blocking_summary'] = 'Supporting Document Required (Demand Letter).'
         return base
 
     return base
