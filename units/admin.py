@@ -33,6 +33,42 @@ class StaticSettlementAdmin(admin.ModelAdmin):
         }),
     )
 
+    def get_readonly_fields(self, request, obj=None):
+        # Number is assigned automatically on create; editable only when changing.
+        if obj is None:
+            return self.readonly_fields + ('number',)
+        return self.readonly_fields
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            from django.db import transaction
+            with transaction.atomic():
+                latest = (
+                    StaticSettlement.objects.select_for_update()
+                    .order_by('-number')
+                    .first()
+                )
+                obj.number = max(latest.number if latest else 1, 1) + 1
+                if not obj.created_by_id:
+                    obj.created_by = request.user
+                super().save_model(request, obj, form, change)
+            return
+        super().save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        storage = obj.image.storage if obj.image else None
+        path = obj.image.name if obj.image else None
+        super().delete_model(request, obj)
+        if storage and path and storage.exists(path):
+            storage.delete(path)
+
+    def delete_queryset(self, request, queryset):
+        files = [(obj.image.storage, obj.image.name) for obj in queryset if obj.image]
+        super().delete_queryset(request, queryset)
+        for storage, path in files:
+            if path and storage.exists(path):
+                storage.delete(path)
+
 
 @admin.register(RelocationSite)
 class RelocationSiteAdmin(admin.ModelAdmin):

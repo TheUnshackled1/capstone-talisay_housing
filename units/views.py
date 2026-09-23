@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.cache import never_cache
 from django.db import transaction, models, IntegrityError
-from django.db.models import Prefetch, Max
+from django.db.models import Prefetch
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -854,8 +854,9 @@ def create_static_settlement(request, position):
             status=400,
         )
 
-    content_type = (getattr(uploaded, 'content_type', None) or '').lower()
-    if not content_type.startswith('image/'):
+    content_type = (getattr(uploaded, 'content_type', None) or '').lower().split(';')[0].strip()
+    # Some browsers send an empty MIME type; allow that when the extension is already whitelisted.
+    if content_type and not content_type.startswith('image/'):
         return JsonResponse(
             {'success': False, 'error': 'File must be an image.'},
             status=400,
@@ -863,12 +864,12 @@ def create_static_settlement(request, position):
 
     try:
         with transaction.atomic():
-            max_num = (
+            latest = (
                 StaticSettlement.objects.select_for_update()
-                .aggregate(m=Max('number'))
-                .get('m')
+                .order_by('-number')
+                .first()
             )
-            next_number = max(max_num or 1, 1) + 1
+            next_number = max(latest.number if latest else 1, 1) + 1
             settlement = StaticSettlement(
                 number=next_number,
                 image=uploaded,
@@ -877,7 +878,13 @@ def create_static_settlement(request, position):
             settlement.full_clean()
             settlement.save()
     except ValidationError as e:
-        msg = '; '.join(e.messages) if hasattr(e, 'messages') else str(e)
+        if hasattr(e, 'message_dict'):
+            parts = []
+            for msgs in e.message_dict.values():
+                parts.extend(msgs if isinstance(msgs, (list, tuple)) else [msgs])
+            msg = '; '.join(str(p) for p in parts)
+        else:
+            msg = '; '.join(e.messages) if hasattr(e, 'messages') else str(e)
         return JsonResponse({'success': False, 'error': msg or 'Invalid image.'}, status=400)
     except IntegrityError:
         return JsonResponse(
@@ -891,15 +898,12 @@ def create_static_settlement(request, position):
         'units:static_settlement_detail',
         kwargs={'position': position, 'pk': settlement.id},
     )
-    messages.success(
-        request,
-        f'Settlement {settlement.number} added successfully.',
-    )
     return JsonResponse(
         {
             'success': True,
             'id': str(settlement.id),
             'number': settlement.number,
+            'message': f'Settlement {settlement.number} added successfully.',
             'redirect_url': redirect_url,
         }
     )

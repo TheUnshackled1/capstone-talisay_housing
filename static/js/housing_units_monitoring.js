@@ -282,7 +282,7 @@ async function uploadStaticSettlementFile(file) {
         _staticSettlementShowError('Allowed formats: JPG, JPEG, PNG, WEBP.');
         return;
     }
-    if (!((file.type || '').startsWith('image/'))) {
+    if (file.type && !(file.type.startsWith('image/'))) {
         _staticSettlementShowError('File must be an image.');
         return;
     }
@@ -311,11 +311,19 @@ async function uploadStaticSettlementFile(file) {
             _staticSettlementShowError(data.error || 'Upload failed. Please try again.');
             return;
         }
-        if (data.redirect_url) {
-            window.location.href = data.redirect_url;
-            return;
-        }
-        window.location.reload();
+        const go = () => {
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+                return;
+            }
+            window.location.reload();
+        };
+        const msg = data.message || (
+            data.number != null
+                ? `Settlement ${data.number} added successfully.`
+                : 'Settlement added successfully.'
+        );
+        monitoringFlowAlert(msg, 'Success', 'success', go);
     } catch (e) {
         _staticSettlementShowError('Network error. Please try again.');
     } finally {
