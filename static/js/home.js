@@ -179,25 +179,28 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCounter();
     }
 
-    // Animate stat numbers when they come into view
-    const statNumbers = document.querySelectorAll('.stat-number, [class*="stat"] .text-4xl, [class*="stat"] .text-3xl');
-    const counterObserver = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-                const element = entry.target;
-                const text = element.textContent;
-                const number = parseInt(text.replace(/[^\d]/g, ''));
-                
-                if (!isNaN(number) && number > 0 && !element.dataset.animated) {
-                    element.dataset.animated = 'true';
-                    animateCounter(element, number, 1500);
-                }
-                counterObserver.unobserve(element);
-            }
-        });
-    }, { threshold: 0.5 });
+    // Animate stat numbers when they come into view.
+    // Selector matches the actual class used in index.html: .stat-value
+    const statNumbers = document.querySelectorAll('.stat-value');
+    if (statNumbers.length > 0) {
+        const counterObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    const element = entry.target;
+                    const text = element.textContent;
+                    const number = parseInt(text.replace(/[^\d]/g, ''));
 
-    statNumbers.forEach(function(num) {
-        counterObserver.observe(num);
-    });
+                    if (!isNaN(number) && number > 0 && !element.dataset.animated) {
+                        element.dataset.animated = 'true';
+                        animateCounter(element, number, 1500);
+                    }
+                    counterObserver.unobserve(element);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        statNumbers.forEach(function(num) {
+            counterObserver.observe(num);
+        });
+    }
 });
