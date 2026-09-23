@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator
 import uuid
 from units.monitoring_policy import (
     FINAL_INSPECTION_INSPECTION_LABEL,
@@ -66,6 +66,38 @@ class RelocationSite(models.Model):
     @property
     def vacant_units_count(self):
         return self.units.filter(status=HousingUnit.STATUS_VACANT_AVAILABLE).count()
+
+
+class StaticSettlement(models.Model):
+    """
+    Static resettlement map image (Settlement 2+).
+
+    Settlement 1 is the live interactive housing-units monitoring page.
+    These records are image-only — no lot polygons or housing-unit DB.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    number = models.PositiveIntegerField(
+        unique=True,
+        validators=[MinValueValidator(2)],
+        help_text='Display number starting at 2 (Settlement 1 is reserved for the live map).',
+    )
+    image = models.ImageField(upload_to='settlements/%Y/%m/')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='static_settlements_created',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['number']
+        verbose_name = 'Static Settlement'
+        verbose_name_plural = 'Static Settlements'
+
+    def __str__(self):
+        return f'Settlement {self.number}'
 
 
 class HousingUnit(models.Model):

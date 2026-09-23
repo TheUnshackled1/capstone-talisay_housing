@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.cache import never_cache
 from django.db import transaction, models, IntegrityError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Max
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -18,12 +18,13 @@ from collections import OrderedDict
 from functools import wraps
 from pathlib import Path
 import json
+import os
 
 from intake.models import Applicant, Barangay, HouseholdMember
 from applications.models import QueueEntry, Application
 from intake.utils import format_phone_number, send_sms
 from units.models import (
-    HousingUnit, LotAward, RelocationSite,
+    HousingUnit, LotAward, RelocationSite, StaticSettlement,
     ConstructionProgress, ConstructionProgressUpdate, Blacklist, OccupancyMonitoringCycle,
     MonitoringTask, MonitoringReport, ExplanationReview, ExtensionRecord,
     LotAwardDocumentValidation,
@@ -815,6 +816,112 @@ def create_relocation_site(request, position):
             'message': f'Relocation site created: {site.name}.',
             'site': {'id': str(site.id), 'name': site.name, 'code': site.code},
         }
+    )
+
+
+_STATIC_SETTLEMENT_MAX_BYTES = 2 * 1024 * 1024  # 2MB
+_STATIC_SETTLEMENT_ALLOWED_EXT = frozenset({'.jpg', '.jpeg', '.png', '.webp'})
+
+
+@login_required
+@verify_position
+@require_POST
+def create_static_settlement(request, position):
+    """
+    Upload a static resettlement map image → Settlement 2, 3, …
+    Image-only pages; does not create RelocationSite / HousingUnit rows.
+    """
+    if request.user.position not in _MODULE4_CREATE_SITE_POSITIONS:
+        return JsonResponse(
+            {'success': False, 'error': 'Only housing staff (4th / 2nd Member) can add resettlements.'},
+            status=403,
+        )
+
+    uploaded = request.FILES.get('image')
+    if not uploaded:
+        return JsonResponse({'success': False, 'error': 'Please choose an image file.'}, status=400)
+
+    if uploaded.size > _STATIC_SETTLEMENT_MAX_BYTES:
+        return JsonResponse(
+            {'success': False, 'error': 'Image must be 2MB or smaller.'},
+            status=400,
+        )
+
+    ext = os.path.splitext(uploaded.name or '')[1].lower()
+    if ext not in _STATIC_SETTLEMENT_ALLOWED_EXT:
+        return JsonResponse(
+            {'success': False, 'error': 'Allowed formats: JPG, JPEG, PNG, WEBP.'},
+            status=400,
+        )
+
+    content_type = (getattr(uploaded, 'content_type', None) or '').lower()
+    if not content_type.startswith('image/'):
+        return JsonResponse(
+            {'success': False, 'error': 'File must be an image.'},
+            status=400,
+        )
+
+    try:
+        with transaction.atomic():
+            max_num = (
+                StaticSettlement.objects.select_for_update()
+                .aggregate(m=Max('number'))
+                .get('m')
+            )
+            next_number = max(max_num or 1, 1) + 1
+            settlement = StaticSettlement(
+                number=next_number,
+                image=uploaded,
+                created_by=request.user,
+            )
+            settlement.full_clean()
+            settlement.save()
+    except ValidationError as e:
+        msg = '; '.join(e.messages) if hasattr(e, 'messages') else str(e)
+        return JsonResponse({'success': False, 'error': msg or 'Invalid image.'}, status=400)
+    except IntegrityError:
+        return JsonResponse(
+            {'success': False, 'error': 'Could not assign settlement number. Please try again.'},
+            status=409,
+        )
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    redirect_url = reverse(
+        'units:static_settlement_detail',
+        kwargs={'position': position, 'pk': settlement.id},
+    )
+    messages.success(
+        request,
+        f'Settlement {settlement.number} added successfully.',
+    )
+    return JsonResponse(
+        {
+            'success': True,
+            'id': str(settlement.id),
+            'number': settlement.number,
+            'redirect_url': redirect_url,
+        }
+    )
+
+
+@login_required
+@verify_position
+@require_http_methods(['GET'])
+def static_settlement_detail(request, position, pk):
+    """Staff page: static resettlement image only (Settlement 2+)."""
+    settlement = StaticSettlement.objects.filter(pk=pk).first()
+    if not settlement:
+        messages.error(request, 'Settlement not found.')
+        return redirect('units:housing_units_monitoring', position=position)
+
+    return render(
+        request,
+        'staff/static_settlement_detail.html',
+        {
+            'settlement': settlement,
+            'user_position': position,
+        },
     )
 
 

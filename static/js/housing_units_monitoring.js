@@ -247,6 +247,87 @@ function openCreateSiteModal() {
     if (nm) setTimeout(() => nm.focus(), 50);
 }
 
+const STATIC_SETTLEMENT_MAX_BYTES = 2 * 1024 * 1024;
+const STATIC_SETTLEMENT_ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
+
+function _staticSettlementShowError(msg) {
+    const err = document.getElementById('staticSettlementUploadError');
+    if (!err) {
+        alert(msg);
+        return;
+    }
+    err.textContent = msg || '';
+    err.style.display = msg ? 'block' : 'none';
+}
+
+function openStaticSettlementPicker() {
+    if (!window.HOUSING_CONFIG?.canCreateSite || !window.HOUSING_CONFIG?.createStaticSettlementUrl) {
+        _staticSettlementShowError('Only housing staff can add resettlements.');
+        return;
+    }
+    _staticSettlementShowError('');
+    const input = document.getElementById('staticSettlementFileInput');
+    if (!input) return;
+    input.value = '';
+    input.click();
+}
+
+async function uploadStaticSettlementFile(file) {
+    const btn = document.getElementById('addStaticSettlementBtn');
+    if (!file) return;
+
+    const name = (file.name || '').toLowerCase();
+    const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
+    if (!STATIC_SETTLEMENT_ALLOWED_EXT.includes(ext)) {
+        _staticSettlementShowError('Allowed formats: JPG, JPEG, PNG, WEBP.');
+        return;
+    }
+    if (!((file.type || '').startsWith('image/'))) {
+        _staticSettlementShowError('File must be an image.');
+        return;
+    }
+    if (file.size > STATIC_SETTLEMENT_MAX_BYTES) {
+        _staticSettlementShowError('Image must be 2MB or smaller.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
+
+    if (btn) btn.disabled = true;
+    _staticSettlementShowError('');
+    try {
+        const res = await fetch(window.HOUSING_CONFIG.createStaticSettlementUrl, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken') || '',
+            },
+            body: formData,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+            _staticSettlementShowError(data.error || 'Upload failed. Please try again.');
+            return;
+        }
+        if (data.redirect_url) {
+            window.location.href = data.redirect_url;
+            return;
+        }
+        window.location.reload();
+    } catch (e) {
+        _staticSettlementShowError('Network error. Please try again.');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+document.getElementById('staticSettlementFileInput')?.addEventListener('change', function (e) {
+    const file = e.target.files && e.target.files[0];
+    if (file) uploadStaticSettlementFile(file);
+});
+
 function closeCreateSiteModal() {
     const m = document.getElementById('createSiteModal');
     if (!m) return;

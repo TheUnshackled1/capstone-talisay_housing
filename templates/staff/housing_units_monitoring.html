@@ -142,7 +142,7 @@
                 </div>
             </button>
             {% endif %}
-            <a href="#" class="summary-chip-card summary-chip-card--solid-emerald is-clickable" style="padding-right: 0.85rem; text-decoration: none;">
+            <button type="button" id="addStaticSettlementBtn" class="summary-chip-card summary-chip-card--solid-emerald is-clickable" style="padding-right: 0.85rem;" {% if can_create_relocation_site %}onclick="openStaticSettlementPicker()"{% else %}disabled title="Only housing staff can add resettlements"{% endif %}>
                 <div class="summary-icon-wrap">
                     <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 </div>
@@ -150,7 +150,9 @@
                     <p>New</p>
                     <p style="font-size: 0.85rem;">Add Resettlement</p>
                 </div>
-            </a>
+            </button>
+            <input type="file" id="staticSettlementFileInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display:none;" aria-hidden="true">
+            <p id="staticSettlementUploadError" style="display:none;margin:0.35rem 0 0;font-size:0.75rem;color:#b91c1c;width:100%;flex-basis:100%;"></p>
             <a href="{% url 'units:gk_masterlist' request.user.position %}{% if site %}?site_id={{ site.id }}{% endif %}" class="summary-chip-card summary-chip-card--solid-blue is-clickable" style="padding-right: 0.85rem; text-decoration: none;">
                 <div class="summary-icon-wrap">
                     <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -916,6 +918,7 @@
 
         casesListUrl: '{% if request.user.position == "second_member" or request.user.position == "fourth_member" %}{% url "accounts:second_member_cases" %}{% else %}{% url "accounts:field_cases" %}{% endif %}',
         createSiteUrl: '{% if can_create_relocation_site %}{% url "units:create_relocation_site" request.user.position %}{% else %}""{% endif %}',
+        createStaticSettlementUrl: '{% if can_create_relocation_site %}{% url "units:create_static_settlement" request.user.position %}{% else %}""{% endif %}',
         createUnitUrl: '{% if can_add_housing_unit %}{% url "units:create_housing_unit" request.user.position %}{% else %}""{% endif %}',
         canCreateSite: {% if can_create_relocation_site %}true{% else %}false{% endif %},
         canAddUnit: {% if can_add_housing_unit %}true{% else %}false{% endif %},

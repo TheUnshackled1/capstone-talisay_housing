@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    RelocationSite, HousingUnit, LotAward,
+    RelocationSite, HousingUnit, LotAward, StaticSettlement,
     Blacklist,
     CaseRecord, CaseUpdate, SMSLog,
     ConstructionProgress, ConstructionProgressUpdate,
@@ -13,6 +13,25 @@ class HousingUnitInline(admin.TabularInline):
     fields = ('block_number', 'lot_number', 'status', 'location_notes')
     ordering = ('block_number', 'lot_number')
     show_change_link = True
+
+
+@admin.register(StaticSettlement)
+class StaticSettlementAdmin(admin.ModelAdmin):
+    list_display = ('number', 'image', 'created_by', 'created_at')
+    list_display_links = ('number',)
+    search_fields = ('number',)
+    readonly_fields = ('id', 'created_at')
+    ordering = ('number',)
+
+    fieldsets = (
+        ('Settlement', {
+            'fields': ('number', 'image'),
+        }),
+        ('Audit', {
+            'fields': ('id', 'created_by', 'created_at'),
+            'classes': ('collapse',),
+        }),
+    )
 
 
 @admin.register(RelocationSite)

@@ -24,6 +24,16 @@ urlpatterns = [
         name='historical_beneficiary_register',
     ),
     path('housing-units/<str:position>/site/create/', views.create_relocation_site, name='create_relocation_site'),
+    path(
+        'housing-units/<str:position>/static-settlement/create/',
+        views.create_static_settlement,
+        name='create_static_settlement',
+    ),
+    path(
+        'housing-units/<str:position>/static-settlement/<uuid:pk>/',
+        views.static_settlement_detail,
+        name='static_settlement_detail',
+    ),
     path('housing-units/<str:position>/unit/create/', views.create_housing_unit, name='create_housing_unit'),
     path('housing-units/<str:position>/<uuid:unit_id>/update/', views.update_housing_unit, name='update_housing_unit'),
     path(

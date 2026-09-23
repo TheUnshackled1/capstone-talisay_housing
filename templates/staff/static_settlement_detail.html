@@ -1,0 +1,49 @@
+{% extends 'staff/staff_base.html' %}
+{% load static %}
+
+{% block title %}Settlement {{ settlement.number }}{% endblock %}
+
+{% block nav_housing_monitoring %}active{% endblock %}
+
+{% block page_title %}Staff Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .static-settlement-shell {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .static-settlement-title {
+        text-align: center;
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #0f172a;
+        margin: 0 0 1rem;
+        text-transform: uppercase;
+    }
+    .static-settlement-frame {
+        width: 100%;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.65rem;
+        overflow: auto;
+        padding: 0.5rem;
+    }
+    .static-settlement-frame img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="static-settlement-shell">
+    <h1 class="static-settlement-title">Settlement {{ settlement.number }}</h1>
+    <div class="static-settlement-frame">
+        <img src="{{ settlement.image.url }}" alt="Settlement {{ settlement.number }} map" />
+    </div>
+</div>
+{% endblock %}
