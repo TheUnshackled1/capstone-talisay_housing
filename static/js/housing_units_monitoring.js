@@ -248,24 +248,13 @@ function openCreateSiteModal() {
 }
 
 const STATIC_SETTLEMENT_MAX_BYTES = 2 * 1024 * 1024;
-const STATIC_SETTLEMENT_ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
-
-function _staticSettlementShowError(msg) {
-    const err = document.getElementById('staticSettlementUploadError');
-    if (!err) {
-        alert(msg);
-        return;
-    }
-    err.textContent = msg || '';
-    err.style.display = msg ? 'block' : 'none';
-}
+const STATIC_SETTLEMENT_ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 function openStaticSettlementPicker() {
     if (!window.HOUSING_CONFIG?.canCreateSite || !window.HOUSING_CONFIG?.createStaticSettlementUrl) {
-        _staticSettlementShowError('Only housing staff can add resettlements.');
+        monitoringFlowAlert('Only housing staff can add resettlements.', 'Notice', 'default', null);
         return;
     }
-    _staticSettlementShowError('');
     const input = document.getElementById('staticSettlementFileInput');
     if (!input) return;
     input.value = '';
@@ -277,17 +266,18 @@ async function uploadStaticSettlementFile(file) {
     if (!file) return;
 
     const name = (file.name || '').toLowerCase();
-    const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
-    if (!STATIC_SETTLEMENT_ALLOWED_EXT.includes(ext)) {
-        _staticSettlementShowError('Allowed formats: JPG, JPEG, PNG, WEBP.');
+    const dot = name.lastIndexOf('.');
+    const ext = dot >= 0 ? name.slice(dot) : '';
+    if (!STATIC_SETTLEMENT_ALLOWED_EXT.has(ext)) {
+        monitoringFlowAlert('Allowed formats: JPG, JPEG, PNG, WEBP.', 'Upload failed', 'warning', null);
         return;
     }
-    if (file.type && !(file.type.startsWith('image/'))) {
-        _staticSettlementShowError('File must be an image.');
+    if (file.type && !file.type.startsWith('image/')) {
+        monitoringFlowAlert('File must be an image.', 'Upload failed', 'warning', null);
         return;
     }
     if (file.size > STATIC_SETTLEMENT_MAX_BYTES) {
-        _staticSettlementShowError('Image must be 2MB or smaller.');
+        monitoringFlowAlert('Image must be 2MB or smaller.', 'Upload failed', 'warning', null);
         return;
     }
 
@@ -296,7 +286,6 @@ async function uploadStaticSettlementFile(file) {
     formData.append('csrfmiddlewaretoken', getCookie('csrftoken') || '');
 
     if (btn) btn.disabled = true;
-    _staticSettlementShowError('');
     try {
         const res = await fetch(window.HOUSING_CONFIG.createStaticSettlementUrl, {
             method: 'POST',
@@ -308,24 +297,25 @@ async function uploadStaticSettlementFile(file) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success) {
-            _staticSettlementShowError(data.error || 'Upload failed. Please try again.');
+            monitoringFlowAlert(
+                data.error || 'Upload failed. Please try again.',
+                'Upload failed',
+                'warning',
+                null
+            );
             return;
         }
         const go = () => {
-            if (data.redirect_url) {
-                window.location.href = data.redirect_url;
-                return;
-            }
-            window.location.reload();
+            window.location.href = data.redirect_url || window.location.href;
         };
-        const msg = data.message || (
-            data.number != null
-                ? `Settlement ${data.number} added successfully.`
-                : 'Settlement added successfully.'
+        monitoringFlowAlert(
+            data.message || `Settlement ${data.number} added successfully.`,
+            'Success',
+            'success',
+            go
         );
-        monitoringFlowAlert(msg, 'Success', 'success', go);
     } catch (e) {
-        _staticSettlementShowError('Network error. Please try again.');
+        monitoringFlowAlert('Network error. Please try again.', 'Upload failed', 'warning', null);
     } finally {
         if (btn) btn.disabled = false;
     }

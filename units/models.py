@@ -99,6 +99,15 @@ class StaticSettlement(models.Model):
     def __str__(self):
         return f'Settlement {self.number}'
 
+    @classmethod
+    def allocate_next_number(cls):
+        """
+        Next display number (>= 2). Caller must be inside transaction.atomic()
+        so select_for_update() serializes concurrent creates.
+        """
+        latest = cls.objects.select_for_update().order_by('-number').first()
+        return max(latest.number if latest else 1, 1) + 1
+
 
 class HousingUnit(models.Model):
     """

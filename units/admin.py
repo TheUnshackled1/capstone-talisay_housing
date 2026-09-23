@@ -43,12 +43,7 @@ class StaticSettlementAdmin(admin.ModelAdmin):
         if not change:
             from django.db import transaction
             with transaction.atomic():
-                latest = (
-                    StaticSettlement.objects.select_for_update()
-                    .order_by('-number')
-                    .first()
-                )
-                obj.number = max(latest.number if latest else 1, 1) + 1
+                obj.number = StaticSettlement.allocate_next_number()
                 if not obj.created_by_id:
                     obj.created_by = request.user
                 super().save_model(request, obj, form, change)

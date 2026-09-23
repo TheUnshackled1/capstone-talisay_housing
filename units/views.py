@@ -18,7 +18,6 @@ from collections import OrderedDict
 from functools import wraps
 from pathlib import Path
 import json
-import os
 
 from intake.models import Applicant, Barangay, HouseholdMember
 from applications.models import QueueEntry, Application
@@ -847,7 +846,7 @@ def create_static_settlement(request, position):
             status=400,
         )
 
-    ext = os.path.splitext(uploaded.name or '')[1].lower()
+    ext = Path(uploaded.name or '').suffix.lower()
     if ext not in _STATIC_SETTLEMENT_ALLOWED_EXT:
         return JsonResponse(
             {'success': False, 'error': 'Allowed formats: JPG, JPEG, PNG, WEBP.'},
@@ -864,35 +863,26 @@ def create_static_settlement(request, position):
 
     try:
         with transaction.atomic():
-            latest = (
-                StaticSettlement.objects.select_for_update()
-                .order_by('-number')
-                .first()
-            )
-            next_number = max(latest.number if latest else 1, 1) + 1
             settlement = StaticSettlement(
-                number=next_number,
+                number=StaticSettlement.allocate_next_number(),
                 image=uploaded,
                 created_by=request.user,
             )
             settlement.full_clean()
             settlement.save()
     except ValidationError as e:
-        if hasattr(e, 'message_dict'):
-            parts = []
-            for msgs in e.message_dict.values():
-                parts.extend(msgs if isinstance(msgs, (list, tuple)) else [msgs])
-            msg = '; '.join(str(p) for p in parts)
-        else:
-            msg = '; '.join(e.messages) if hasattr(e, 'messages') else str(e)
+        msg = '; '.join(str(m) for m in e.messages) if getattr(e, 'messages', None) else str(e)
         return JsonResponse({'success': False, 'error': msg or 'Invalid image.'}, status=400)
     except IntegrityError:
         return JsonResponse(
             {'success': False, 'error': 'Could not assign settlement number. Please try again.'},
             status=409,
         )
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    except Exception:
+        return JsonResponse(
+            {'success': False, 'error': 'Could not save resettlement. Please try again.'},
+            status=500,
+        )
 
     redirect_url = reverse(
         'units:static_settlement_detail',
@@ -922,10 +912,7 @@ def static_settlement_detail(request, position, pk):
     return render(
         request,
         'staff/static_settlement_detail.html',
-        {
-            'settlement': settlement,
-            'user_position': position,
-        },
+        {'settlement': settlement},
     )
 
 
