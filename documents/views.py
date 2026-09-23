@@ -468,11 +468,9 @@ def document_management(request, position):
     # Vault list scope: anyone on Intake "LIST OF APPLICATIONS" (has an Archive row) and/or
     # anyone with Intake Archive or legacy Module 2 handoff timestamp. Union covers both:
     # before staff proceed to Application & Eligibility.
-    # Ordering: Module 2 queue first when present — priority, then walk-in, then no queue.
     #
-    # PERF: Use annotate() for aggregate values instead of prefetch_related for large relations.
-    # This replaces 3 heavy prefetches (documents, household_members, requirement_submissions)
-    # with SQL COUNT aggregates, eliminating thousands of row fetches for each cold-cache load.
+    # IMPORTANT: filter().distinct() MUST come before annotate() so that the JOIN from
+    # archives / document_vault_applicant_q() does not inflate COUNT annotation values.
     applicants_qs = (
         Applicant.objects
         .select_related('application', 'barangay', 'cdrrmo_certification')
@@ -487,7 +485,13 @@ def document_management(request, position):
                 to_attr='active_queue_entries',
             ),
         )
-        # Aggregate counts in SQL — avoids loading full related-object sets into Python memory.
+        .filter(
+            Q(archives__isnull=False)
+            | Q(module2_handoff_at__isnull=False)
+            | document_vault_applicant_q()
+        )
+        .distinct()
+        # Aggregate counts in SQL AFTER deduplication to avoid JOIN inflation.
         .annotate(
             _doc_count=Count('documents', distinct=True),
             _hh_count=Count('household_members', distinct=True),
@@ -500,12 +504,6 @@ def document_management(request, position):
                 distinct=True,
             ),
         )
-        .filter(
-            Q(archives__isnull=False)
-            | Q(module2_handoff_at__isnull=False)
-            | document_vault_applicant_q()
-        )
-        .distinct()
     )
 
     # Filter by status

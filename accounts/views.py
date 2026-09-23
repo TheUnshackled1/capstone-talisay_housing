@@ -138,31 +138,24 @@ def login_view(request):
     return response
 
 
-def google_login_start(request):
-    """Validate portal role and hand off to Google OAuth (role stored in OAuth state)."""
-    role = normalize_portal_role(request.GET.get('role', ''))
-    if not is_valid_portal_role(role):
-        messages.error(request, 'Select your staff portal before signing in with Google.')
-        return redirect('accounts:login')
-    if not google_oauth_configured():
-        messages.error(
-            request,
-            'Google sign-in is not set up. Ask an administrator to run: '
-            'python manage.py setup_google_oauth',
-        )
-        return redirect(f"{reverse('accounts:login')}?{urlencode({'role': role})}")
-    return redirect(f"{reverse('google_login')}?{urlencode({'portal_role': role})}")
-
-
 @login_not_required
-def tha_google_oauth_login(request):
-    """Start Google OAuth; embed portal_role in per-flow state (multi-tab safe)."""
-    role = normalize_portal_role(request.GET.get('portal_role', ''))
+def google_login_start(request):
+    """Validate portal role and start Google OAuth in a single hop.
+
+    Previously two views with a redirect between them; merged to cut one
+    full HTTP round-trip before Google sees the request.
+    """
+    role = normalize_portal_role(request.GET.get('role', '') or request.GET.get('portal_role', ''))
     if not is_valid_portal_role(role):
         messages.error(request, 'Select your staff portal before signing in with Google.')
         return redirect('accounts:login')
 
-    if not google_oauth_configured():
+    # Cache the SocialApp existence check — it almost never changes at runtime.
+    _oauth_ok = cache.get('google_oauth_configured')
+    if _oauth_ok is None:
+        _oauth_ok = google_oauth_configured()
+        cache.set('google_oauth_configured', _oauth_ok, 300)  # 5-minute TTL
+    if not _oauth_ok:
         messages.error(
             request,
             'Google sign-in is not set up. Ask an administrator to run: '
@@ -172,6 +165,16 @@ def tha_google_oauth_login(request):
 
     provider = get_adapter().get_provider(request, 'google')
     return provider.redirect(request, process=AuthProcess.LOGIN, portal_role=role)
+
+
+@login_not_required
+def tha_google_oauth_login(request):
+    """Legacy entry point kept for backward-compat with allauth URL wiring.
+
+    Delegates to google_login_start so the single-hop optimisation applies
+    whether allauth or our own URL triggers this flow.
+    """
+    return google_login_start(request)
 
 
 def logout_view(request):
