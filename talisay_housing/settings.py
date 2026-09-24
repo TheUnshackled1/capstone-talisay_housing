@@ -166,6 +166,24 @@ else:
         }
     }
 
+# =============================================================================
+# Cache — DatabaseCache so values persist across Railway dynos / workers.
+# After deploying, run once: python manage.py createcachetable
+# LocMemCache (Django's default) is per-process and is useless on Railway
+# because each worker starts with an empty cache — defeating all cache.set()
+# calls that we rely on (homepage stats, google_oauth_configured, etc).
+# =============================================================================
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "django_cache",
+        "OPTIONS": {
+            # Max number of rows before culling (removes oldest 1/CULL_FREQUENCY entries).
+            "MAX_ENTRIES": 1000,
+        },
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators

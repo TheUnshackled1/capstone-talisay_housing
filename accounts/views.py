@@ -151,10 +151,11 @@ def google_login_start(request):
         return redirect('accounts:login')
 
     # Cache the SocialApp existence check — it almost never changes at runtime.
+    # TTL: 1 hour — SocialApp rows only change via admin commands, not at runtime.
     _oauth_ok = cache.get('google_oauth_configured')
     if _oauth_ok is None:
         _oauth_ok = google_oauth_configured()
-        cache.set('google_oauth_configured', _oauth_ok, 300)  # 5-minute TTL
+        cache.set('google_oauth_configured', _oauth_ok, 3600)  # 1-hour TTL
     if not _oauth_ok:
         messages.error(
             request,
