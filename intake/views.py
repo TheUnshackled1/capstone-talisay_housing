@@ -1690,7 +1690,6 @@ def applicants_list(request, position):
     if cached_payload:
         applicants = cached_payload['applicants']
         archive_records = cached_payload['archive_records']
-        archive_review_modal = cached_payload['archive_review_modal']
         archive_documents_modal = cached_payload['archive_documents_modal']
     else:
         # Build applicants list from danger zone channel only
@@ -1905,22 +1904,10 @@ def applicants_list(request, position):
                 **bl_gate,
             })
 
-        archive_review_modal = {}
         archive_documents_modal = {}  # default if archives is empty
-        for archive in archives:
-            ref = archive.reference_number_snapshot or ''
-            applicant = getattr(archive, 'applicant', None)
-            if not ref or not applicant:
-                continue
-            local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
-            archive_review_modal[ref] = _build_intake_applicant_review_payload(
-                applicant,
-                requirements_group_a=requirements_group_a,
-                vault_types=docs_by_applicant_id.get(applicant.id, set()),
-                date_registered_override=local_archived_at.strftime('%Y-%m-%d') if local_archived_at else None,
-                module2_handed_off=True,
-                is_archived=True,
-            )
+        # archive_review_modal is now built client-side from archive_records
+        # (keyed by referenceNumber) — eliminates N _build_intake_applicant_review_payload
+        # calls per cold load. The JS reads archiveRecordsJson and indexes by ref.
 
         # Build documents modal after loops complete
         archive_documents_modal = {
@@ -1946,7 +1933,6 @@ def applicants_list(request, position):
         cache.set(_cache_key, {
             'applicants': applicants,
             'archive_records': archive_records,
-            'archive_review_modal': archive_review_modal,
             'archive_documents_modal': archive_documents_modal,
         }, 120)  # 2-minute TTL — long enough to survive the cold compute
 
@@ -2019,12 +2005,13 @@ def applicants_list(request, position):
             'ready_for_module2': ready_for_module2,
         },
         'archive_records': archive_records,
+        'archive_records_json': json.dumps(archive_records),
         'archive_records_total': len(archive_records),
         'archive_complete_count': archive_complete_count,
         'archive_incomplete_count': archive_incomplete_count,
         'archive_pending_count': archive_pending_count,
         'archive_documents_modal': archive_documents_modal,
-        'archive_review_modal': json.dumps(archive_review_modal),
+        # archive_review_modal removed — JS builds it from archive_records_json client-side
         'active_list_q': active_list_q,
         'archive_list_q': archive_list_q,
         'archive_list_barangay': archive_list_barangay,

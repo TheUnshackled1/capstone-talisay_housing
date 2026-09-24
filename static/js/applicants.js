@@ -32,7 +32,8 @@ function getCsrfToken() {
 // Main Applicants JS
     // Store applicants data in JavaScript
     const applicantsData = JSON.parse(document.getElementById('applicantsDataJson')?.textContent || '[]');
-    const archiveReviewData = JSON.parse(document.getElementById('archiveReviewDataJson')?.textContent || '{}');
+    // archiveReviewData is built client-side from archive_records (see applicants.html inline script)
+    const archiveReviewData = window._archiveReviewDataByRef || {};
     let reviewModalArchiveMode = false;
 
     const FIRST_REVIEW_INDEX = applicantsData.length > 0 ? 0 : -1;

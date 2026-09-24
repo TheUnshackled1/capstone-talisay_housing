@@ -2283,7 +2283,23 @@
     </div>
 </div>
 <script id="applicantsDataJson" type="application/json">{{ applicants_json|safe }}</script>
-<script id="archiveReviewDataJson" type="application/json">{{ archive_review_modal|safe }}</script>
+<script id="archiveRecordsJson" type="application/json">{{ archive_records_json|safe }}</script>
+<script>
+// Build archiveReviewData from archive_records (already on page) keyed by referenceNumber.
+// This replaces the old server-rendered archiveReviewDataJson which required a full
+// _build_intake_applicant_review_payload() call per archived applicant on every page load.
+(function () {
+    try {
+        const records = JSON.parse(document.getElementById('archiveRecordsJson')?.textContent || '[]');
+        window._archiveReviewDataByRef = {};
+        for (const r of records) {
+            if (r.referenceNumber) window._archiveReviewDataByRef[r.referenceNumber] = r;
+        }
+    } catch (e) {
+        window._archiveReviewDataByRef = {};
+    }
+})();
+</script>
 <input type="hidden" id="canModifyFlag" value="{{ can_modify|yesno:'true,false' }}">
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.initiate.js' %}"></script>
 <script src="{% static 'Dynamic Web TWAIN SDK 19.3.3/Resources/dynamsoft.webtwain.config.js' %}"></script>
