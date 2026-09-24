@@ -227,6 +227,30 @@ class THASocialAccountAdapterTests(TestCase):
         with self.assertRaises(ImmediateHttpResponse):
             self.adapter.pre_social_login(request, sociallogin)
 
+    def test_login_redirect_field_inspector_user(self):
+        from django.urls import reverse
+        request = self._request()
+        field_user = User.objects.create_user(
+            username='field.redirect',
+            email='field.redirect@talisayhousing.gov.ph',
+            password='tha2026',
+            position='field',
+        )
+        request.user = field_user
+        self.assertEqual(
+            self.adapter.get_login_redirect_url(request),
+            reverse('accounts:dashboard_field'),
+        )
+
+    def test_login_redirect_staff_still_dashboard(self):
+        from django.urls import reverse
+        request = self._request()
+        request.user = self.user
+        self.assertEqual(
+            self.adapter.get_login_redirect_url(request),
+            reverse('accounts:dashboard'),
+        )
+
     def test_rejects_unprovisioned_email(self):
         request = self._request(session={PORTAL_ROLE_SESSION_KEY: 'second_member'})
         sociallogin = self._make_sociallogin(email='unknown@talisayhousing.gov.ph')

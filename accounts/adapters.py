@@ -21,6 +21,7 @@ from .auth_portal import (
     resolve_staff_user_for_portal,
     user_allowed_for_portal,
 )
+from .models import FIELD_INSPECTOR_POSITIONS
 
 
 def _login_redirect_with_role(portal_role: str):
@@ -119,4 +120,12 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
         request.session.pop(PORTAL_ROLE_SESSION_KEY, None)
 
     def get_login_redirect_url(self, request):
+        # Skip /dashboard/ hop for field inspectors — land on the field desk directly.
+        user = getattr(request, 'user', None)
+        if user is not None and getattr(user, 'is_authenticated', False):
+            if getattr(user, 'position', None) in FIELD_INSPECTOR_POSITIONS:
+                return reverse('accounts:dashboard_field')
+        portal = getattr(request, '_ihsms_save_portal_role', None) or portal_role_for_oauth(request)
+        if normalize_portal_role(portal) == 'field_inspector':
+            return reverse('accounts:dashboard_field')
         return reverse('accounts:dashboard')

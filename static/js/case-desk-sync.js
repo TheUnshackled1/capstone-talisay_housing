@@ -132,7 +132,7 @@
         var config = cfg();
         if (!config) return;
         stopPolling();
-        var ms = config.pollMs || 4000;
+        var ms = config.pollMs || 15000;
         pollTimer = global.setInterval(function () {
             refreshDeskList('poll');
         }, ms);

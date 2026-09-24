@@ -119,11 +119,22 @@ def verify_position(view_func):
 # CASE MANAGEMENT - Module 5
 # ===================================================================
 
+# List pages never need full investigation/resolution text — keep list payloads lean.
+_CASE_LIST_DEFER = (
+    'investigation_notes',
+    'referral_notes',
+    'resolution_notes',
+)
+_DESK_ACTIVE_ROW_LIMIT = 100
+_SETTLED_INCIDENT_ROW_LIMIT = 50
+_DRAWER_CASE_LIST_LIMIT = 50
+
+
 def _case_management_list_context(request, position):
     """Shared list/KPI context for case desk page and live desk-feed API.
 
     Cached for 30 seconds per (position, q, status, type) — avoids re-running
-    3–6 DB queries on every desk-feed poll (which fires every ~10s).
+    3–6 DB queries on every desk-feed poll.
     The desk-feed version hash detects real changes and forces a UI refresh
     even when the cache is warm.
     """
@@ -132,7 +143,7 @@ def _case_management_list_context(request, position):
     filter_type = request.GET.get('type', 'all')
 
     _cache_key = (
-        f"case_list_ctx_{position}"
+        f"case_list_ctx_v2_{position}"
         f"_{''.join(c if c.isalnum() else '_' for c in search_query[:40])}"
         f"_{filter_status}_{filter_type}"
     )
@@ -158,6 +169,7 @@ def _case_management_list_context(request, position):
             'received_by', 'investigated_by', 'decided_by',
             'complainant_applicant', 'subject_applicant', 'related_unit',
         )
+        .defer(*_CASE_LIST_DEFER)
         .order_by('received_at')
     )
 
@@ -184,7 +196,11 @@ def _case_management_list_context(request, position):
     settled_on_site_count = 0
 
     if use_split_case_desk:
-        desk_cases = cases.exclude(status=wf.STATUS_RESOLVED)
+        # Newest active cases first, hard-capped for HTML size (JS paginates further).
+        desk_cases = (
+            cases.exclude(status=wf.STATUS_RESOLVED)
+            .order_by('-received_at', '-pk')[:_DESK_ACTIVE_ROW_LIMIT]
+        )
         desk_rows = _build_case_desk_rows(
             desk_cases,
             include_incident_logs=False,
@@ -197,56 +213,68 @@ def _case_management_list_context(request, position):
         settled_filtered = _filter_settled_incident_logs_queryset(
             settled_base, search_query, filter_type,
         )
-        settled_incident_rows = _settled_incident_desk_rows(settled_filtered)
-        # Re-use len() — rows already evaluated, avoid a separate COUNT query.
-        settled_on_site_count = len(settled_incident_rows)
+        # Full count for KPI; rows capped for drawer HTML.
+        settled_on_site_count = settled_filtered.count()
+        settled_incident_rows = _settled_incident_desk_rows(
+            settled_filtered,
+            limit=_SETTLED_INCIDENT_ROW_LIMIT,
+        )
         resolved_cases = (
             Case.objects
             .filter(status=wf.STATUS_RESOLVED)
             .select_related(
                 'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
             )
+            .defer(*_CASE_LIST_DEFER)
         )
         resolved_cases = _apply_case_list_filters(resolved_cases, search_query, filter_type)
-        resolved_cases = resolved_cases.order_by('-resolved_at', '-received_at')
+        resolved_cases = resolved_cases.order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
         pending_cases = (
             Case.objects
             .filter(status=wf.STATUS_PENDING_REVIEW)
             .select_related(
                 'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
             )
+            .defer(*_CASE_LIST_DEFER)
         )
-        pending_cases = _apply_case_list_filters(pending_cases, search_query, filter_type).order_by('-received_at')
+        pending_cases = _apply_case_list_filters(pending_cases, search_query, filter_type).order_by(
+            '-received_at'
+        )[:_DRAWER_CASE_LIST_LIMIT]
+        # Templates use desk_rows / drawers — do not materialize the full Case table.
+        cases_list = []
     else:
         include_incident_logs = filter_status == 'all'
+        desk_cases = cases.order_by('-received_at', '-pk')[:_DESK_ACTIVE_ROW_LIMIT]
         desk_rows = _build_case_desk_rows(
-            cases,
+            desk_cases,
             include_incident_logs=include_incident_logs,
             search_query=search_query,
             filter_type=filter_type,
+            incident_limit=_SETTLED_INCIDENT_ROW_LIMIT if include_incident_logs else None,
         )
-        # resolved_cases: always start from base, apply filters in one pass.
         _resolved_base = (
             Case.objects
             .filter(status=wf.STATUS_RESOLVED)
             .select_related('received_by', 'complainant_applicant', 'subject_applicant')
+            .defer(*_CASE_LIST_DEFER)
         )
         if search_query or filter_type != 'all':
             _resolved_base = _apply_case_list_filters(_resolved_base, search_query, filter_type)
-        resolved_cases = _resolved_base.order_by('-resolved_at', '-received_at')
+        resolved_cases = _resolved_base.order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
 
-        # pending_cases: same pattern — single base, conditional filter.
         _pending_base = (
             Case.objects
             .filter(status=wf.STATUS_PENDING_REVIEW)
             .select_related('received_by', 'complainant_applicant', 'subject_applicant')
+            .defer(*_CASE_LIST_DEFER)
         )
         if search_query or filter_type != 'all':
             _pending_base = _apply_case_list_filters(_pending_base, search_query, filter_type)
-        pending_cases = _pending_base.order_by('-received_at')
+        pending_cases = _pending_base.order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+        cases_list = []
 
     ctx = {
-        'cases': list(cases),
+        'cases': cases_list,
         'resolved_cases': list(resolved_cases),
         'pending_cases': list(pending_cases),
         'status_counts': status_counts,
@@ -261,7 +289,7 @@ def _case_management_list_context(request, position):
         'settled_on_site_count': settled_on_site_count,
     }
     # Cache for 30 seconds — short enough that edits/new cases appear quickly,
-    # long enough to absorb the 10s desk-feed poll burst.
+    # long enough to absorb desk-feed poll bursts.
     cache.set(_cache_key, ctx, 30)
     return ctx
 
@@ -606,10 +634,13 @@ def _filter_settled_incident_logs_queryset(qs, search_query, filter_type):
     return qs
 
 
-def _settled_incident_desk_rows(incident_qs):
+def _settled_incident_desk_rows(incident_qs, limit=None):
     """Build display rows for on-site settled incident logs (newest first)."""
+    qs = incident_qs.order_by('-logged_at', '-pk')
+    if limit is not None:
+        qs = qs[:limit]
     rows = []
-    for log in incident_qs.order_by('-logged_at', '-pk'):
+    for log in qs:
         rows.append({
             'kind': 'incident_log',
             'sort_at': log.logged_at,
@@ -639,7 +670,13 @@ def _apply_case_list_filters(qs, search_query, filter_type):
     return qs
 
 
-def _build_case_desk_rows(cases_qs, include_incident_logs, search_query, filter_type):
+def _build_case_desk_rows(
+    cases_qs,
+    include_incident_logs,
+    search_query,
+    filter_type,
+    incident_limit=None,
+):
     """
     Merge formal cases and on-site settled incident logs for one desk list.
     Incident logs appear only when include_incident_logs is True (status filter = all).
@@ -657,7 +694,7 @@ def _build_case_desk_rows(cases_qs, include_incident_logs, search_query, filter_
             'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
         )
         incident_qs = _filter_settled_incident_logs_queryset(incident_qs, search_query, filter_type)
-        rows.extend(_settled_incident_desk_rows(incident_qs))
+        rows.extend(_settled_incident_desk_rows(incident_qs, limit=incident_limit))
     rows.sort(key=lambda row: row['sort_at'] or timezone.now())
     return rows
 

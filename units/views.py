@@ -3484,28 +3484,30 @@ def caretaker_monitoring_dashboard(request):
 
     scheduled_tasks = [t for t in tasks_list if t.status == 'pending' and t.due_date >= today]
     overdue_tasks = [t for t in tasks_list if t.status == 'pending' and t.due_date < today]
-    completed_tasks = MonitoringTask.objects.filter(
-        models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
-        notified_at__isnull=False,
-        status='completed',
-    ).exclude(
-        task_type='month_1_inspection',
-    ).select_related(
-        'unit',
-        'lot_award',
-        'lot_award__application__applicant',
-        'lot_award__application__applicant__registered_by',
-        'lot_award__application__applicant__module2_handoff_by',
-        'unit__site',
-        'assigned_to',
-    ).prefetch_related(
-        Prefetch(
-            'reports',
-            queryset=MonitoringReport.objects.select_related('submitted_by').order_by(
-                '-submitted_at'
-            ),
-        )
-    ).order_by('-completed_at', '-due_date')
+    completed_tasks = list(
+        MonitoringTask.objects.filter(
+            models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
+            notified_at__isnull=False,
+            status='completed',
+        ).exclude(
+            task_type='month_1_inspection',
+        ).select_related(
+            'unit',
+            'lot_award',
+            'lot_award__application__applicant',
+            'lot_award__application__applicant__registered_by',
+            'lot_award__application__applicant__module2_handoff_by',
+            'unit__site',
+            'assigned_to',
+        ).prefetch_related(
+            Prefetch(
+                'reports',
+                queryset=MonitoringReport.objects.select_related('submitted_by').order_by(
+                    '-submitted_at'
+                ),
+            )
+        ).order_by('-completed_at', '-due_date')[:50]
+    )
     active_unit_tasks = sorted(
         tasks_list,
         key=lambda t: (t.unit_id, t.notified_at or timezone.now(), t.due_date, t.pk),

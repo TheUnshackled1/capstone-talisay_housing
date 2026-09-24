@@ -1746,6 +1746,32 @@ def _cdrrmo_meta_for_applicant(applicant):
     }
 
 
+def _cdrrmo_docs_by_applicant_id(applicant_ids):
+    """Newest cdrrmo_cert Document per applicant (one query)."""
+    if not applicant_ids:
+        return {}
+    newest = {}
+    for doc in (
+        Document.objects.filter(
+            applicant_id__in=applicant_ids,
+            document_type='cdrrmo_cert',
+        )
+        .order_by('applicant_id', '-uploaded_at')
+        .only('id', 'applicant_id', 'uploaded_at')
+    ):
+        if doc.applicant_id not in newest:
+            newest[doc.applicant_id] = doc
+    return newest
+
+
+def _cdrrmo_meta_from_cert_and_doc(cert, doc=None):
+    return {
+        'status': cert.status if cert else 'pending',
+        'certified_at': cert.certified_at.isoformat() if cert and cert.certified_at else None,
+        'document_at': doc.uploaded_at.isoformat() if doc and doc.uploaded_at else None,
+    }
+
+
 def _module1_staff_handled_user(applicant):
     """Staff who proceeded from Module 1; falls back to encoder."""
     return getattr(applicant, 'module2_handoff_by', None) or applicant.registered_by
@@ -1789,51 +1815,43 @@ def field_applicant_cdrrmo_meta(request, applicant_id):
     return JsonResponse({'success': True, 'meta': _cdrrmo_meta_for_applicant(applicant)})
 
 
-@login_required
-def dashboard_field(request):
-    """
-    Unified field desk: Ronda (includes on-site / caretaker duties) and Field personnel.
-    Channel B danger-zone field verification (CDRRMO) after Module 2 handoff.
-    """
-    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
-        messages.error(
-            request,
-            'Access denied. This dashboard is for field inspectors only.',
-        )
-        return redirect('accounts:dashboard')
-
-    # ==================== CHANNEL B FIELD VERIFICATION ====================
-    # Pending danger zone verifications after intake staff proceeded the record to Archives.
-    # Filter:
-    # 1. CDRRMOCertification status='pending' (needs field verification)
-    # 2. Applicant claimed danger zone (danger_zone_type is not empty)
-    # 3. Applicant is income eligible (monthly_income <= 10,000)
-    # 4. Applicant has an Intake Archive row (Proceed → LIST OF APPLICATIONS)
-    # 5. Applicant is in pending_cdrrmo stage
+def _build_dashboard_field_context():
+    """Heavy field dashboard payload (cached by dashboard_field)."""
     pending_certifications = CDRRMOCertification.objects.filter(
         status='pending',
-        applicant__danger_zone_type__isnull=False,  # Claimed danger zone
-        applicant__monthly_income__lte=10000,  # Income eligible
-        applicant__module2_handoff_at__isnull=False,  # Staff clicked Proceed to Module 2
+        applicant__danger_zone_type__isnull=False,
+        applicant__monthly_income__lte=10000,
+        applicant__module2_handoff_at__isnull=False,
         applicant__status='pending_cdrrmo',
     ).exclude(
-        applicant__danger_zone_type=''  # Empty string means not claimed
+        applicant__danger_zone_type=''
     ).distinct().select_related(
         'applicant',
         'applicant__registered_by',
         'applicant__module2_handoff_by',
         'applicant__barangay',
+    ).prefetch_related(
+        Prefetch(
+            'applicant__queue_entries',
+            queryset=QueueEntry.objects.filter(status='active').order_by('position'),
+            to_attr='_active_queue_entries',
+        ),
+        'applicant__household_members',
     ).order_by('requested_at')
 
     pending_cert_list = list(pending_certifications)
     total_pending_certs = len(pending_cert_list)
+    applicant_ids = [c.applicant_id for c in pending_cert_list]
+    docs_by_applicant = _cdrrmo_docs_by_applicant_id(applicant_ids)
 
     pending_cdrrmo_meta = {
-        str(cert.applicant_id): _cdrrmo_meta_for_applicant(cert.applicant)
+        str(cert.applicant_id): _cdrrmo_meta_from_cert_and_doc(
+            cert,
+            docs_by_applicant.get(cert.applicant_id),
+        )
         for cert in pending_cert_list
     }
 
-    # Oldest certification request first — table row order matches field visit order before QueueEntry exists
     visit_order_by_applicant_id = {
         c.applicant_id: order
         for order, c in enumerate(pending_cert_list, start=1)
@@ -1842,10 +1860,8 @@ def dashboard_field(request):
     pending_verifications = []
     for row_num, cert in enumerate(pending_cert_list, start=1):
         days_pending = (timezone.now() - cert.requested_at).days
-
-        # Priority QueueEntry is only created after eligibility / CDRRMO staff steps — not at registration.
-        # Show assigned priority number when present; otherwise show FIFO field-visit order among pending cases.
-        queue_entry = cert.applicant.queue_entries.filter(status='active').first()
+        active_queue = getattr(cert.applicant, '_active_queue_entries', None)
+        queue_entry = active_queue[0] if active_queue else None
         if queue_entry:
             queue_position = f'Priority no. {queue_entry.position}'
         else:
@@ -1872,7 +1888,7 @@ def dashboard_field(request):
             'danger_zone_type': cert.applicant.danger_zone_type,
             'danger_zone_location': cert.applicant.danger_zone_location,
             'channel': 'Channel B — Danger Zone',
-            'eligibility': 'Eligible to Proceed',  # All showing in this view are eligible
+            'eligibility': 'Eligible to Proceed',
             'queue_position': queue_position,
             'staff_user': staff_user,
             **staff_row,
@@ -1884,48 +1900,40 @@ def dashboard_field(request):
 
     total_pending = len(pending_verifications)
 
-    # Breakdown by staff who registered them
     staff_workload = {}
     for cert in pending_verifications:
         staff_name = cert['staff_handled']
-        if staff_name not in staff_workload:
-            staff_workload[staff_name] = 0
-        staff_workload[staff_name] += 1
+        staff_workload[staff_name] = staff_workload.get(staff_name, 0) + 1
 
-    # Certified vs Not Certified tallies
-    certified_count = CDRRMOCertification.objects.filter(
-        status='certified'
-    ).count()
+    certified_count = CDRRMOCertification.objects.filter(status='certified').count()
+    not_certified_count = CDRRMOCertification.objects.filter(status='not_certified').count()
 
-    not_certified_count = CDRRMOCertification.objects.filter(
-        status='not_certified'
-    ).count()
-
-    # Aging verifications (pending > 7 days)
     seven_days_ago = timezone.now() - timedelta(days=7)
     aging_certifications = CDRRMOCertification.objects.filter(
         status='pending',
-        requested_at__lt=seven_days_ago
+        requested_at__lt=seven_days_ago,
     ).select_related('applicant').order_by('-requested_at')
 
-    aging_verifications = []
-    for cert in aging_certifications:
-        aging_verifications.append({
+    aging_verifications = [
+        {
             'applicant': cert.applicant,
             'days_pending': (timezone.now() - cert.requested_at).days,
-        })
-
+        }
+        for cert in aging_certifications
+    ]
     aging_count = len(aging_verifications)
 
-    # Team workload (field desk roles; ronda subsumes former caretaker)
     FIELD_TEAM_SIZE = 3
     avg_per_member = int(total_pending / FIELD_TEAM_SIZE) if total_pending > 0 else 0
 
-    # Completed today (verifications completed today)
-    today = timezone.now().date()
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow_start = today_start + timedelta(days=1)
+
     completed_today = CDRRMOCertification.objects.filter(
         status__in=['certified', 'not_certified'],
-        certified_at__date=today
+        certified_at__gte=today_start,
+        certified_at__lt=tomorrow_start,
     ).count()
 
     team_workload = {
@@ -1934,14 +1942,9 @@ def dashboard_field(request):
         'completed_today': completed_today,
     }
 
-    # Success rate (verified as danger zone / total processed)
     total_processed = certified_count + not_certified_count
-    if total_processed > 0:
-        verified_percentage = int((certified_count / total_processed) * 100)
-    else:
-        verified_percentage = 0
+    verified_percentage = int((certified_count / total_processed) * 100) if total_processed else 0
 
-    # Certified applicants log (for clickable Success Rate drilldown)
     certified_applicants = []
     for cert in CDRRMOCertification.objects.filter(
         status='certified'
@@ -1966,15 +1969,20 @@ def dashboard_field(request):
             'recorded_by': cert.result_recorded_by.get_full_name() if cert.result_recorded_by else '—',
         })
 
-    # Today's summary: certifications recorded today + photos uploaded today
-    today_certs_qs = CDRRMOCertification.objects.filter(
-        status__in=['certified', 'not_certified'],
-        certified_at__date=today,
-    ).select_related('applicant', 'result_recorded_by').order_by('-certified_at')
+    today_certs_qs = list(
+        CDRRMOCertification.objects.filter(
+            status__in=['certified', 'not_certified'],
+            certified_at__gte=today_start,
+            certified_at__lt=tomorrow_start,
+        ).select_related('applicant', 'result_recorded_by').order_by('-certified_at')
+    )
 
-    today_photo_uploads_qs = FieldVerificationPhoto.objects.filter(
-        uploaded_at__date=today,
-    ).select_related('certification__applicant', 'uploaded_by')
+    today_photo_uploads_qs = list(
+        FieldVerificationPhoto.objects.filter(
+            uploaded_at__gte=today_start,
+            uploaded_at__lt=tomorrow_start,
+        ).select_related('certification__applicant', 'uploaded_by')
+    )
 
     photo_counts_today = {}
     for ph in today_photo_uploads_qs:
@@ -1995,7 +2003,6 @@ def dashboard_field(request):
             'photos_today': photo_counts_today.get(cert.applicant_id, 0),
         })
 
-    # Include applicants who only had photos uploaded today (no certification recorded yet)
     for ph in today_photo_uploads_qs:
         ap_id = ph.certification.applicant_id
         if ap_id in seen_applicants:
@@ -2017,33 +2024,48 @@ def dashboard_field(request):
         'photos': sum(photo_counts_today.values()),
     }
 
-    context = {
+    return {
         'page_title': 'Field Operations Dashboard',
-        'user_position': request.user.position,
-
-        # ========== MODULE 1: VERIFICATION METRICS ==========
         'total_pending': total_pending,
         'certified_count': certified_count,
         'not_certified_count': not_certified_count,
-
-        # ========== TEAM WORKLOAD ==========
         'team_workload': team_workload,
         'staff_workload': staff_workload,
-
-        # ========== AGING VERIFICATIONS ==========
         'aging_verifications': aging_verifications,
         'aging_count': aging_count,
-
-        # ========== PENDING VERIFICATIONS LIST ==========
         'pending_verifications': pending_verifications,
         'pending_cdrrmo_meta': pending_cdrrmo_meta,
-
-        # ========== VERIFICATION SUMMARY ==========
         'verified_percentage': verified_percentage,
         'certified_applicants': certified_applicants,
         'not_certified_applicants': not_certified_applicants,
         'today_summary': today_summary,
         'today_summary_counts': today_summary_counts,
+    }
+
+
+@login_required
+def dashboard_field(request):
+    """
+    Unified field desk: Ronda (includes on-site / caretaker duties) and Field personnel.
+    Channel B danger-zone field verification (CDRRMO) after Module 2 handoff.
+    """
+    if request.user.position not in FIELD_INSPECTOR_POSITIONS:
+        messages.error(
+            request,
+            'Access denied. This dashboard is for field inspectors only.',
+        )
+        return redirect('accounts:dashboard')
+
+    _cache_key = 'dashboard_field_payload_v1'
+    _force_refresh = request.GET.get('refresh') == '1'
+    context = None if _force_refresh else cache.get(_cache_key)
+    if context is None:
+        context = _build_dashboard_field_context()
+        cache.set(_cache_key, context, 600)  # 10-minute TTL
+
+    context = {
+        **context,
+        'user_position': request.user.position,
     }
     return render(request, 'field/dashboard.html', context)
 
