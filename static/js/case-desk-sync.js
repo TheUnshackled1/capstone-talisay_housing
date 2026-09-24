@@ -10,6 +10,7 @@
     var lastVersion = null;
     var paused = false;
     var inFlight = false;
+    var drawerInFlight = {};
 
     function cfg() {
         return global.CASE_DESK_SYNC || null;
@@ -43,6 +44,15 @@
         if (el) el.textContent = String(text);
     }
 
+    function markDrawersStale() {
+        ['caseDeskResolvedDrawerScroll', 'caseDeskSettledDrawerScroll', 'caseDeskPendingDrawerScroll']
+            .forEach(function (id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.setAttribute('data-drawer-loaded', '0');
+            });
+    }
+
     function applyFeed(data) {
         var html = data.html || {};
         var tbody = document.getElementById('caseDeskTableBody');
@@ -53,13 +63,30 @@
         if (cards && html.mobile_cards != null) {
             cards.innerHTML = html.mobile_cards;
         }
-        var settledScroll = document.getElementById('caseDeskSettledDrawerScroll');
-        if (settledScroll && html.settled_drawer != null) {
-            settledScroll.innerHTML = html.settled_drawer;
+        // Drawers are lazy — invalidate on list change; do not replace until opened.
+        if (data.drawers_stale) {
+            markDrawersStale();
         }
-        var resolvedScroll = document.getElementById('caseDeskResolvedDrawerScroll');
-        if (resolvedScroll && html.resolved_drawer != null) {
-            resolvedScroll.innerHTML = html.resolved_drawer;
+        if (html.settled_drawer != null) {
+            var settledScroll = document.getElementById('caseDeskSettledDrawerScroll');
+            if (settledScroll) {
+                settledScroll.innerHTML = html.settled_drawer;
+                settledScroll.setAttribute('data-drawer-loaded', '1');
+            }
+        }
+        if (html.resolved_drawer != null) {
+            var resolvedScroll = document.getElementById('caseDeskResolvedDrawerScroll');
+            if (resolvedScroll) {
+                resolvedScroll.innerHTML = html.resolved_drawer;
+                resolvedScroll.setAttribute('data-drawer-loaded', '1');
+            }
+        }
+        if (html.pending_drawer != null) {
+            var pendingScroll = document.getElementById('caseDeskPendingDrawerScroll');
+            if (pendingScroll) {
+                pendingScroll.innerHTML = html.pending_drawer;
+                pendingScroll.setAttribute('data-drawer-loaded', '1');
+            }
         }
 
         if (data.desk_row_count != null) {
@@ -73,10 +100,69 @@
         }
         setText('caseDeskResolvedDrawerSubtitle', (sc.resolved || 0) + ' case' + ((sc.resolved || 0) === 1 ? '' : 's') + ' marked resolved');
         setText('caseDeskSettledDrawerSubtitle', (data.settled_on_site_count || 0) + ' incident log' + ((data.settled_on_site_count || 0) === 1 ? '' : 's') + ' — handled without a formal case');
+        if (sc.pending_review != null) {
+            setText('caseDeskPendingDrawerSubtitle', (sc.pending_review || 0) + ' case' + ((sc.pending_review || 0) === 1 ? '' : 's') + ' pending review');
+        }
 
         if (global.caseDeskPaginationApi && typeof global.caseDeskPaginationApi.refresh === 'function') {
             global.caseDeskPaginationApi.refresh();
         }
+    }
+
+    function scrollElForPart(part) {
+        if (part === 'resolved') return document.getElementById('caseDeskResolvedDrawerScroll');
+        if (part === 'settled') return document.getElementById('caseDeskSettledDrawerScroll');
+        if (part === 'pending') return document.getElementById('caseDeskPendingDrawerScroll');
+        return null;
+    }
+
+    function loadDrawerPart(part) {
+        var config = cfg();
+        var scroll = scrollElForPart(part);
+        if (!config || !scroll || !part) return Promise.resolve();
+        if (scroll.getAttribute('data-drawer-loaded') === '1') return Promise.resolve();
+        if (drawerInFlight[part]) return drawerInFlight[part];
+
+        var params = filterParams();
+        params.set('part', part);
+        var url = '/cases/' + encodeURIComponent(config.position) + '/desk-feed/';
+        if (params.toString()) url += '?' + params.toString();
+
+        scroll.innerHTML = '<p class="cases-resolved-drawer-empty">Loading…</p>';
+        drawerInFlight[part] = fetch(url, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error('drawer ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                if (!data.success) return;
+                var html = (data.html || {})[part + '_drawer'];
+                if (html != null) {
+                    scroll.innerHTML = html;
+                    scroll.setAttribute('data-drawer-loaded', '1');
+                }
+                if (data.status_counts) {
+                    var sc = data.status_counts;
+                    setText('caseDeskKpiResolved', sc.resolved != null ? sc.resolved : '');
+                    setText('caseDeskKpiPending', sc.pending_review != null ? sc.pending_review : '');
+                    setText('caseDeskResolvedDrawerSubtitle', (sc.resolved || 0) + ' case' + ((sc.resolved || 0) === 1 ? '' : 's') + ' marked resolved');
+                    if (sc.pending_review != null) {
+                        setText('caseDeskPendingDrawerSubtitle', (sc.pending_review || 0) + ' case' + ((sc.pending_review || 0) === 1 ? '' : 's') + ' pending review');
+                    }
+                }
+                if (data.settled_on_site_count != null) {
+                    setText('caseDeskSettledDrawerSubtitle', (data.settled_on_site_count || 0) + ' incident log' + ((data.settled_on_site_count || 0) === 1 ? '' : 's') + ' — handled without a formal case');
+                }
+            })
+            .catch(function () {
+                scroll.innerHTML = '<p class="cases-resolved-drawer-empty">Could not load. Close and try again.</p>';
+            })
+            .finally(function () {
+                drawerInFlight[part] = null;
+            });
+        return drawerInFlight[part];
     }
 
     function refreshDeskList(reason) {
@@ -87,7 +173,7 @@
 
         var params = filterParams();
         // Send current version so server can short-circuit with a ~200-byte
-        // "unchanged" response instead of rendering 4 HTML templates.
+        // "unchanged" response instead of rendering HTML templates.
         if (lastVersion) params.set('v', lastVersion);
         var url = '/cases/' + encodeURIComponent(config.position) + '/desk-feed/';
         if (params.toString()) url += '?' + params.toString();
@@ -125,7 +211,14 @@
     function onLocalChange() {
         notifyPeers();
         lastVersion = null;
+        markDrawersStale();
         return refreshDeskList('local');
+    }
+
+    function onFilterChange() {
+        lastVersion = null;
+        markDrawersStale();
+        return refreshDeskList('filter');
     }
 
     function startPolling() {
@@ -164,12 +257,26 @@
             if (!document.hidden) refreshDeskList('visible');
         });
 
+        var searchInput = document.getElementById('searchInput');
+        var typeFilter = document.getElementById('typeFilter');
+        if (searchInput) {
+            var searchTimer = null;
+            searchInput.addEventListener('input', function () {
+                global.clearTimeout(searchTimer);
+                searchTimer = global.setTimeout(onFilterChange, 300);
+            });
+        }
+        if (typeFilter) {
+            typeFilter.addEventListener('change', onFilterChange);
+        }
+
         startPolling();
     }
 
     global.CaseDeskSync = {
         refresh: refreshDeskList,
         notifyChange: onLocalChange,
+        loadDrawer: loadDrawerPart,
         start: startPolling,
         stop: stopPolling,
         pause: function () { paused = true; },

@@ -216,6 +216,10 @@ class Case(models.Model):
         ordering = ['-received_at']
         verbose_name = "Case"
         verbose_name_plural = "Cases"
+        indexes = [
+            models.Index(fields=['status', '-received_at'], name='cases_status_recv_idx'),
+            models.Index(fields=['-resolved_at'], name='cases_resolved_at_idx'),
+        ]
     
     def save(self, *args, **kwargs):
         if not self.case_number:
@@ -351,6 +355,9 @@ class FieldSettledIncidentLog(models.Model):
         ordering = ['-logged_at']
         verbose_name = 'Settled incident log'
         verbose_name_plural = 'Settled incident logs'
+        indexes = [
+            models.Index(fields=['-logged_at'], name='cases_settled_logged_idx'),
+        ]
 
     def __str__(self):
         return f'Settled log {self.id}'

@@ -8,7 +8,6 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.core.cache import cache
 from functools import wraps
-import hashlib
 import json
 import re
 from urllib.parse import urlencode
@@ -125,34 +124,75 @@ _CASE_LIST_DEFER = (
     'referral_notes',
     'resolution_notes',
 )
-_DESK_ACTIVE_ROW_LIMIT = 100
+# Matches client pageSize 5 × ~5 pages; avoids shipping 100 fat rows twice.
+_DESK_ACTIVE_ROW_LIMIT = 25
 _SETTLED_INCIDENT_ROW_LIMIT = 50
 _DRAWER_CASE_LIST_LIMIT = 50
 
+_CASE_DESK_DATA_VERSION_KEY = 'case_desk_data_version_v1'
+_CASE_DESK_DATA_VERSION_TTL = 86400  # 24h; bumped on Case / settled-log writes
 
-def _case_management_list_context(request, position):
+
+def _get_case_desk_data_version():
+    """Cheap mutable stamp — desk-feed polls compare this without loading list_ctx."""
+    v = cache.get(_CASE_DESK_DATA_VERSION_KEY)
+    if v is None:
+        v = 1
+        cache.set(_CASE_DESK_DATA_VERSION_KEY, v, _CASE_DESK_DATA_VERSION_TTL)
+    return str(v)
+
+
+def _bump_case_desk_data_version():
+    """Invalidate poll short-circuit + list_ctx keys that embed this stamp."""
+    try:
+        new_v = cache.incr(_CASE_DESK_DATA_VERSION_KEY)
+        # Refresh TTL after incr (DatabaseCache incr does not extend expiry).
+        cache.set(_CASE_DESK_DATA_VERSION_KEY, new_v, _CASE_DESK_DATA_VERSION_TTL)
+    except ValueError:
+        cache.set(_CASE_DESK_DATA_VERSION_KEY, 1, _CASE_DESK_DATA_VERSION_TTL)
+
+
+def _case_desk_poll_version(request):
+    """Stamp + filter signature so filter changes still miss the unchanged short-circuit."""
+    q = (request.GET.get('q') or '').strip()[:40]
+    filter_type = request.GET.get('type', 'all') or 'all'
+    filter_status = request.GET.get('status', 'all') or 'all'
+    return f"{_get_case_desk_data_version()}:{q}:{filter_type}:{filter_status}"
+
+
+def _prefer_mobile_case_desk(request):
+    """Render mobile cards XOR table — not both — based on Client Hints / UA."""
+    ch = (request.headers.get('Sec-CH-UA-Mobile') or '').strip()
+    if ch == '?1':
+        return True
+    if ch == '?0':
+        return False
+    ua = (request.META.get('HTTP_USER_AGENT') or '').lower()
+    return any(tok in ua for tok in ('mobile', 'android', 'iphone', 'ipod', 'webos'))
+
+
+def _case_management_list_context(request, position, include_drawer_rows=False):
     """Shared list/KPI context for case desk page and live desk-feed API.
 
-    Cached for 30 seconds per (position, q, status, type) — avoids re-running
-    3–6 DB queries on every desk-feed poll.
-    The desk-feed version hash detects real changes and forces a UI refresh
-    even when the cache is warm.
+    Cached for 30 seconds per (data_version, position, q, status, type, drawers).
+    Drawer row lists are omitted by default (lazy-loaded via desk-feed ?part=).
     """
     search_query = request.GET.get('q', '').strip()
     filter_status = request.GET.get('status', 'all')
     filter_type = request.GET.get('type', 'all')
+    data_version = _get_case_desk_data_version()
+    drawers_flag = '1' if include_drawer_rows else '0'
 
     _cache_key = (
-        f"case_list_ctx_v3_{position}"
+        f"case_list_ctx_v4_{data_version}_{position}"
         f"_{''.join(c if c.isalnum() else '_' for c in search_query[:40])}"
-        f"_{filter_status}_{filter_type}"
+        f"_{filter_status}_{filter_type}_d{drawers_flag}"
     )
     cached = cache.get(_cache_key)
     if cached is not None:
         return cached
 
-    # Aggregate counts — run on bare Case.objects (no select_related joins, which
-    # are wasteful for aggregation and add unnecessary JOIN overhead).
+    # Aggregate counts — bare Case.objects (no select_related JOIN overhead).
     status_counts = Case.objects.aggregate(
         pending_review=models.Count('pk', filter=models.Q(status=wf.STATUS_PENDING_REVIEW)),
         under_review=models.Count('pk', filter=models.Q(status=wf.STATUS_UNDER_REVIEW)),
@@ -166,7 +206,7 @@ def _case_management_list_context(request, position):
     cases = (
         Case.objects
         .select_related(
-            'received_by', 'investigated_by', 'decided_by',
+            'received_by',
             'complainant_applicant', 'subject_applicant', 'related_unit',
         )
         .defer(*_CASE_LIST_DEFER)
@@ -192,11 +232,18 @@ def _case_management_list_context(request, position):
         position in FIELD_INSPECTOR_POSITIONS
         or position in wf.CASE_MONITOR_DESK_POSITIONS
     )
+    # Field UI has no pending drawer — skip that query entirely.
+    load_pending_drawer = (
+        include_drawer_rows
+        and not is_field_inspector
+        and position in wf.CASE_MONITOR_DESK_POSITIONS
+    )
     settled_incident_rows = []
     settled_on_site_count = 0
+    resolved_cases = []
+    pending_cases = []
 
     if use_split_case_desk:
-        # Newest active cases first, hard-capped for HTML size (JS paginates further).
         desk_cases = (
             cases.exclude(status=wf.STATUS_RESOLVED)
             .order_by('-received_at', '-pk')[:_DESK_ACTIVE_ROW_LIMIT]
@@ -206,6 +253,7 @@ def _case_management_list_context(request, position):
             include_incident_logs=False,
             search_query=search_query,
             filter_type=filter_type,
+            enrich=False,
         )
         settled_base = FieldSettledIncidentLog.objects.select_related(
             'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
@@ -213,41 +261,59 @@ def _case_management_list_context(request, position):
         settled_filtered = _filter_settled_incident_logs_queryset(
             settled_base, search_query, filter_type,
         )
-        # Full count for KPI; rows capped for drawer HTML.
         settled_on_site_count = settled_filtered.count()
-        settled_incident_rows = _settled_incident_desk_rows(
-            settled_filtered,
-            limit=_SETTLED_INCIDENT_ROW_LIMIT,
-        )
-        resolved_cases = list(
-            _apply_case_list_filters(
-                Case.objects
-                .filter(status=wf.STATUS_RESOLVED)
-                .select_related(
-                    'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+        if include_drawer_rows:
+            settled_incident_rows = _settled_incident_desk_rows(
+                settled_filtered,
+                limit=_SETTLED_INCIDENT_ROW_LIMIT,
+                enrich=False,
+            )
+            resolved_cases = list(
+                _apply_case_list_filters(
+                    Case.objects
+                    .filter(status=wf.STATUS_RESOLVED)
+                    .select_related(
+                        'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+                    )
+                    .defer(*_CASE_LIST_DEFER),
+                    search_query,
+                    filter_type,
+                ).order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+            )
+            if load_pending_drawer:
+                pending_cases = list(
+                    _apply_case_list_filters(
+                        Case.objects
+                        .filter(status=wf.STATUS_PENDING_REVIEW)
+                        .select_related(
+                            'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+                        )
+                        .defer(*_CASE_LIST_DEFER),
+                        search_query,
+                        filter_type,
+                    ).order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
                 )
-                .defer(*_CASE_LIST_DEFER),
-                search_query,
-                filter_type,
-            ).order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+        enrich_apps = _collect_applicants_from_cases(
+            [row['case'] for row in desk_rows if row.get('case')]
         )
-        pending_cases = list(
-            _apply_case_list_filters(
-                Case.objects
-                .filter(status=wf.STATUS_PENDING_REVIEW)
-                .select_related(
-                    'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
-                )
-                .defer(*_CASE_LIST_DEFER),
-                search_query,
-                filter_type,
-            ).order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
-        )
-        _enrich_desk_applicants(
-            _collect_applicants_from_cases(resolved_cases)
-            + _collect_applicants_from_cases(pending_cases)
-        )
-        # Templates use desk_rows / drawers — do not materialize the full Case table.
+        enrich_apps += [
+            row['incident_log'].complainant_applicant
+            for row in settled_incident_rows
+            if row.get('incident_log')
+        ]
+        enrich_apps += [
+            row['incident_log'].subject_applicant
+            for row in settled_incident_rows
+            if row.get('incident_log')
+        ]
+        enrich_apps += _collect_applicants_from_cases(resolved_cases)
+        enrich_apps += _collect_applicants_from_cases(pending_cases)
+        _enrich_desk_applicants(enrich_apps)
+        for row in settled_incident_rows:
+            log = row['incident_log']
+            row['incident_unit_label'] = _settled_incident_complainant_unit_label(log)
+            row['incident_complainant_unit_label'] = _settled_incident_complainant_unit_label(log)
+            row['incident_respondent_unit_label'] = _settled_incident_respondent_unit_label(log)
         cases_list = []
     else:
         include_incident_logs = filter_status == 'all'
@@ -258,34 +324,60 @@ def _case_management_list_context(request, position):
             search_query=search_query,
             filter_type=filter_type,
             incident_limit=_SETTLED_INCIDENT_ROW_LIMIT if include_incident_logs else None,
+            enrich=False,
         )
-        _resolved_base = (
-            Case.objects
-            .filter(status=wf.STATUS_RESOLVED)
-            .select_related('received_by', 'complainant_applicant', 'subject_applicant')
-            .defer(*_CASE_LIST_DEFER)
+        if include_drawer_rows:
+            _resolved_base = (
+                Case.objects
+                .filter(status=wf.STATUS_RESOLVED)
+                .select_related(
+                    'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+                )
+                .defer(*_CASE_LIST_DEFER)
+            )
+            if search_query or filter_type != 'all':
+                _resolved_base = _apply_case_list_filters(_resolved_base, search_query, filter_type)
+            resolved_cases = list(
+                _resolved_base.order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+            )
+            if load_pending_drawer:
+                _pending_base = (
+                    Case.objects
+                    .filter(status=wf.STATUS_PENDING_REVIEW)
+                    .select_related(
+                        'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+                    )
+                    .defer(*_CASE_LIST_DEFER)
+                )
+                if search_query or filter_type != 'all':
+                    _pending_base = _apply_case_list_filters(
+                        _pending_base, search_query, filter_type,
+                    )
+                pending_cases = list(
+                    _pending_base.order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+                )
+        enrich_apps = _collect_applicants_from_cases(
+            [row['case'] for row in desk_rows if row.get('case')]
         )
-        if search_query or filter_type != 'all':
-            _resolved_base = _apply_case_list_filters(_resolved_base, search_query, filter_type)
-        resolved_cases = list(
-            _resolved_base.order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
-        )
-
-        _pending_base = (
-            Case.objects
-            .filter(status=wf.STATUS_PENDING_REVIEW)
-            .select_related('received_by', 'complainant_applicant', 'subject_applicant')
-            .defer(*_CASE_LIST_DEFER)
-        )
-        if search_query or filter_type != 'all':
-            _pending_base = _apply_case_list_filters(_pending_base, search_query, filter_type)
-        pending_cases = list(
-            _pending_base.order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
-        )
-        _enrich_desk_applicants(
-            _collect_applicants_from_cases(resolved_cases)
-            + _collect_applicants_from_cases(pending_cases)
-        )
+        enrich_apps += [
+            row['incident_log'].complainant_applicant
+            for row in desk_rows
+            if row.get('incident_log')
+        ]
+        enrich_apps += [
+            row['incident_log'].subject_applicant
+            for row in desk_rows
+            if row.get('incident_log')
+        ]
+        enrich_apps += _collect_applicants_from_cases(resolved_cases)
+        enrich_apps += _collect_applicants_from_cases(pending_cases)
+        _enrich_desk_applicants(enrich_apps)
+        for row in desk_rows:
+            if row.get('kind') == 'incident_log' and row.get('incident_log'):
+                log = row['incident_log']
+                row['incident_unit_label'] = _settled_incident_complainant_unit_label(log)
+                row['incident_complainant_unit_label'] = _settled_incident_complainant_unit_label(log)
+                row['incident_respondent_unit_label'] = _settled_incident_respondent_unit_label(log)
         cases_list = []
 
     ctx = {
@@ -303,30 +395,8 @@ def _case_management_list_context(request, position):
         'settled_incident_rows': settled_incident_rows,
         'settled_on_site_count': settled_on_site_count,
     }
-    # Cache for 30 seconds — short enough that edits/new cases appear quickly,
-    # long enough to absorb desk-feed poll bursts.
     cache.set(_cache_key, ctx, 30)
     return ctx
-
-
-def _case_desk_feed_version(list_ctx):
-    tokens = []
-    for row in list_ctx['desk_rows']:
-        if row['kind'] == 'case':
-            case = row['case']
-            ts = case.updated_at or case.received_at
-            tokens.append(f"c{case.pk}:{int(ts.timestamp())}")
-        else:
-            log = row['incident_log']
-            tokens.append(f"i{log.pk}:{int(log.logged_at.timestamp())}")
-    # Use status_counts['resolved'] from the already-executed aggregate —
-    # avoids evaluating resolved_cases queryset just for a count.
-    tokens.append(f"r{list_ctx['status_counts'].get('resolved', 0)}")
-    tokens.append(f"s{list_ctx.get('settled_on_site_count', 0)}")
-    sc = list_ctx['status_counts']
-    tokens.append(f"p{sc['pending_review']}:v{sc['resolved']}")
-    digest = hashlib.sha256('|'.join(tokens).encode()).hexdigest()
-    return digest[:16]
 
 
 @login_required
@@ -351,7 +421,9 @@ def case_management_dashboard(request, position):
         url = request.path + (f'?{query}' if query else '')
         return redirect(url)
 
-    list_ctx = _case_management_list_context(request, position)
+    # Drawers lazy-loaded via desk-feed ?part= — keep initial HTML lean.
+    list_ctx = _case_management_list_context(request, position, include_drawer_rows=False)
+    prefer_mobile = _prefer_mobile_case_desk(request)
 
     prefill_beneficiary = None
     prefill_applicant_id = request.GET.get('applicant_id', '').strip()
@@ -385,7 +457,10 @@ def case_management_dashboard(request, position):
         'case_desk_mode': wf.case_desk_mode_for_position(position),
         'field_intake_positions': tuple(wf.FIELD_INSPECTOR_POSITIONS),
         'monitor_intake_positions': tuple(wf.CASE_MONITOR_DESK_POSITIONS),
-        'desk_feed_version': _case_desk_feed_version(list_ctx),
+        'desk_feed_version': _case_desk_poll_version(request),
+        'desk_render_mobile': prefer_mobile,
+        'desk_render_table': not prefer_mobile,
+        'drawers_lazy': True,
     }
 
     return render(request, template_name, context)
@@ -396,18 +471,52 @@ def case_management_dashboard(request, position):
 def case_desk_feed(request, position):
     """JSON + HTML fragments for live desk list sync (field ⇔ monitor desks).
 
-    Optimised for high-frequency polling (every 4-10s):
-    1. Context is cached 30s via _case_management_list_context — 0 DB on hit.
-    2. If client sends ?v=<hash> matching current version, return a 200-byte
-       "unchanged" sentinel — no template rendering at all.
-    3. Full rendered payload is cached 30s keyed by version hash so even the
-       first client after a change pays the template cost only once.
+    Optimised for high-frequency polling:
+    1. Cheap data-version stamp checked first — unchanged polls skip list_ctx entirely.
+    2. ?part=resolved|settled|pending lazy-loads one drawer without full feed render.
+    3. Full list payload cached 30s keyed by poll version.
     """
-    list_ctx = _case_management_list_context(request, position)
-    current_version = _case_desk_feed_version(list_ctx)
-
-    # 1. Client version short-circuit — send nothing if desk hasn't changed.
+    current_version = _case_desk_poll_version(request)
     client_version = request.GET.get('v', '')
+    part = (request.GET.get('part') or '').strip().lower()
+
+    # Drawer fragment — always loads drawer rows; no unchanged short-circuit.
+    if part in ('resolved', 'settled', 'pending'):
+        if part == 'pending' and position in FIELD_INSPECTOR_POSITIONS:
+            return JsonResponse({
+                'success': True,
+                'version': current_version,
+                'part': part,
+                'html': {'pending_drawer': ''},
+            })
+        list_ctx = _case_management_list_context(
+            request, position, include_drawer_rows=True,
+        )
+        fragment_ctx = {
+            **list_ctx,
+            'show_time_ago': False,
+            'can_delete_incident_logs': position in wf.FIELD_INSPECTOR_POSITIONS,
+        }
+        template_by_part = {
+            'resolved': 'field/case_desk_resolved_drawer_inner.html',
+            'settled': 'field/case_desk_settled_drawer_inner.html',
+            'pending': 'field/case_desk_pending_drawer_inner.html',
+        }
+        html_key = f'{part}_drawer'
+        return JsonResponse({
+            'success': True,
+            'version': current_version,
+            'part': part,
+            'html': {
+                html_key: render_to_string(
+                    template_by_part[part], fragment_ctx, request=request,
+                ),
+            },
+            'status_counts': list_ctx['status_counts'],
+            'settled_on_site_count': list_ctx.get('settled_on_site_count', 0),
+        })
+
+    # 1. Client version short-circuit — no list_ctx / no templates.
     if client_version and client_version == current_version:
         return JsonResponse({
             'success': True,
@@ -415,46 +524,41 @@ def case_desk_feed(request, position):
             'unchanged': True,
         })
 
-    # 2. Full payload cache — keyed by version so it's auto-invalidated on change.
-    _feed_cache_key = f'case_desk_feed_{position}_{current_version}'
+    # 2. Full payload cache — keyed by poll version (includes filters).
+    prefer_mobile = _prefer_mobile_case_desk(request)
+    _feed_cache_key = (
+        f'case_desk_feed_v4_{position}_{current_version}'
+        f'_{"m" if prefer_mobile else "d"}'
+    )
     cached_payload = cache.get(_feed_cache_key)
     if cached_payload is not None:
         return JsonResponse(cached_payload)
 
-    # 3. Cold path — render all HTML fragments (runs at most once per 30s).
+    # 3. Cold path — list rows only (drawers lazy via ?part=).
+    list_ctx = _case_management_list_context(
+        request, position, include_drawer_rows=False,
+    )
     fragment_ctx = {
         **list_ctx,
         'show_time_ago': False,
         'can_delete_incident_logs': position in wf.FIELD_INSPECTOR_POSITIONS,
     }
-    html = {
-        'table_body': render_to_string(
-            'field/case_desk_unified_tbody.html',
-            fragment_ctx,
-            request=request,
-        ),
-        'settled_drawer': render_to_string(
-            'field/case_desk_settled_drawer_inner.html',
-            fragment_ctx,
-            request=request,
-        ),
-        'resolved_drawer': render_to_string(
-            'field/case_desk_resolved_drawer_inner.html',
-            fragment_ctx,
-            request=request,
-        ),
-        'pending_drawer': render_to_string(
-            'field/case_desk_pending_drawer_inner.html',
-            fragment_ctx,
-            request=request,
-        ),
-    }
-    if position in FIELD_INSPECTOR_POSITIONS:
+    html = {}
+    if prefer_mobile and position in FIELD_INSPECTOR_POSITIONS:
         html['mobile_cards'] = render_to_string(
             'field/case_desk_mobile_cards.html',
             fragment_ctx,
             request=request,
         )
+    else:
+        html['table_body'] = render_to_string(
+            'field/case_desk_unified_tbody.html',
+            fragment_ctx,
+            request=request,
+        )
+        # Staff always uses table; field desktop gets table only.
+        if position in FIELD_INSPECTOR_POSITIONS and not prefer_mobile:
+            pass
     payload = {
         'success': True,
         'version': current_version,
@@ -462,6 +566,7 @@ def case_desk_feed(request, position):
         'status_counts': list_ctx['status_counts'],
         'settled_on_site_count': list_ctx.get('settled_on_site_count', 0),
         'html': html,
+        'drawers_stale': True,
     }
     cache.set(_feed_cache_key, payload, 30)
     return JsonResponse(payload)
@@ -566,12 +671,7 @@ def _settled_incident_complainant_unit_label(log):
     if label:
         return label
     if log.complainant_applicant_id and log.complainant_applicant:
-        batched = (getattr(log.complainant_applicant, 'desk_unit_label', None) or '').strip()
-        if batched:
-            return batched
-        fallback = (log.complainant_applicant.active_unit_label or '').strip()
-        if fallback and fallback != 'Not specified':
-            return fallback
+        return (getattr(log.complainant_applicant, 'desk_unit_label', None) or '').strip()
     return ''
 
 
@@ -579,15 +679,7 @@ def _settled_incident_respondent_unit_label(log):
     if not _settled_incident_respondent_name(log):
         return ''
     if log.subject_applicant_id and log.subject_applicant:
-        batched = (getattr(log.subject_applicant, 'desk_unit_label', None) or '').strip()
-        if batched:
-            return batched
-        label = _housing_unit_label(_subject_housing_unit(log.subject_applicant))
-        if label:
-            return label
-        fallback = (log.subject_applicant.active_unit_label or '').strip()
-        if fallback and fallback != 'Not specified':
-            return fallback
+        return (getattr(log.subject_applicant, 'desk_unit_label', None) or '').strip()
     return ''
 
 
@@ -742,15 +834,16 @@ def _enrich_desk_applicants(applicants):
     _attach_desk_unit_labels(apps)
 
 
-def _settled_incident_desk_rows(incident_qs, limit=None):
+def _settled_incident_desk_rows(incident_qs, limit=None, enrich=True):
     """Build display rows for on-site settled incident logs (newest first)."""
     qs = incident_qs.order_by('-logged_at', '-pk')
     if limit is not None:
         qs = qs[:limit]
     logs = list(qs)
-    _enrich_desk_applicants(
-        [log.complainant_applicant for log in logs] + [log.subject_applicant for log in logs]
-    )
+    if enrich:
+        _enrich_desk_applicants(
+            [log.complainant_applicant for log in logs] + [log.subject_applicant for log in logs]
+        )
     rows = []
     for log in logs:
         rows.append({
@@ -758,9 +851,15 @@ def _settled_incident_desk_rows(incident_qs, limit=None):
             'sort_at': log.logged_at,
             'case': None,
             'incident_log': log,
-            'incident_unit_label': _settled_incident_complainant_unit_label(log),
-            'incident_complainant_unit_label': _settled_incident_complainant_unit_label(log),
-            'incident_respondent_unit_label': _settled_incident_respondent_unit_label(log),
+            'incident_unit_label': (
+                _settled_incident_complainant_unit_label(log) if enrich else ''
+            ),
+            'incident_complainant_unit_label': (
+                _settled_incident_complainant_unit_label(log) if enrich else ''
+            ),
+            'incident_respondent_unit_label': (
+                _settled_incident_respondent_unit_label(log) if enrich else ''
+            ),
             'incident_complainant_name': _settled_incident_complainant_name(log),
             'incident_respondent_name': _settled_incident_respondent_name(log),
         })
@@ -788,13 +887,15 @@ def _build_case_desk_rows(
     search_query,
     filter_type,
     incident_limit=None,
+    enrich=True,
 ):
     """
     Merge formal cases and on-site settled incident logs for one desk list.
     Incident logs appear only when include_incident_logs is True (status filter = all).
     """
     case_list = list(cases_qs)
-    _enrich_desk_applicants(_collect_applicants_from_cases(case_list))
+    if enrich:
+        _enrich_desk_applicants(_collect_applicants_from_cases(case_list))
     rows = []
     for case in case_list:
         rows.append({
@@ -808,7 +909,9 @@ def _build_case_desk_rows(
             'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
         )
         incident_qs = _filter_settled_incident_logs_queryset(incident_qs, search_query, filter_type)
-        rows.extend(_settled_incident_desk_rows(incident_qs, limit=incident_limit))
+        rows.extend(
+            _settled_incident_desk_rows(incident_qs, limit=incident_limit, enrich=enrich)
+        )
     rows.sort(key=lambda row: row['sort_at'] or timezone.now())
     return rows
 
@@ -1135,6 +1238,7 @@ def get_case_details(request, position, case_id):
             _did_auto_transition = True
             # Invalidate stale cache entry after state change.
             cache.delete(_detail_cache_key)
+            _bump_case_desk_data_version()
 
         workflow_payload = {
             'can_manage_workflow': can_manage,
@@ -1395,6 +1499,7 @@ def create_case(request, position):
             case.status = wf.STATUS_PENDING_REVIEW
             case.save(update_fields=['status'])
 
+        _bump_case_desk_data_version()
         return JsonResponse({
             'success': True,
             'message': (
@@ -1514,6 +1619,7 @@ def create_settled_incident_log(request, position):
             description=description,
             logged_by=request.user,
         )
+        _bump_case_desk_data_version()
         return JsonResponse({
             'success': True,
             'message': 'Settled incident logged.',
@@ -1535,6 +1641,7 @@ def delete_settled_incident_log(request, position, log_id):
     try:
         log = FieldSettledIncidentLog.objects.get(id=log_id)
         log.delete()
+        _bump_case_desk_data_version()
         return JsonResponse({'success': True, 'message': 'Incident log removed.'})
     except FieldSettledIncidentLog.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Incident log not found.'}, status=404)
@@ -1659,6 +1766,7 @@ def save_field_settlement(request, position, case_id):
 
     case.save()
 
+    _bump_case_desk_data_version()
     if outcome == 'settled':
         message = 'Case marked resolved.'
     else:
@@ -1720,6 +1828,7 @@ def update_case(request, position):
             case.investigated_by = request.user
             case.investigated_at = timezone.now()
             case.save()
+            _bump_case_desk_data_version()
             return JsonResponse({
                 'success': True,
                 'message': 'Case is now Under Review',
@@ -1738,6 +1847,7 @@ def update_case(request, position):
             if wf.can_transition(case, 'enter_monitoring'):
                 wf.apply_transition(case, 'enter_monitoring')
             case.save(update_fields=['field_intake_reviewed_at', 'status', 'updated_at'])
+            _bump_case_desk_data_version()
             return JsonResponse({
                 'success': True,
                 'message': 'Case is now in Settlement.',
@@ -1762,6 +1872,7 @@ def update_case(request, position):
             case.investigated_by = request.user
             case.investigated_at = timezone.now()
             case.save()
+            _bump_case_desk_data_version()
             return JsonResponse({'success': True, 'message': 'Review notes saved'})
 
         elif action == 'record_action':
@@ -1809,6 +1920,7 @@ def update_case(request, position):
                     pass
 
             case.save()
+            _bump_case_desk_data_version()
             return JsonResponse({
                 'success': True,
                 'message': label,
@@ -1828,6 +1940,7 @@ def update_case(request, position):
                 case.decided_at = timezone.now()
                 case.resolved_at = timezone.now()
                 case.save()
+                _bump_case_desk_data_version()
                 return JsonResponse({'success': True, 'message': 'Case marked resolved', 'new_status': case.status})
             if transition == 'close':
                 closure_outcome = data.get('closure_outcome', '').strip()
@@ -1838,6 +1951,7 @@ def update_case(request, position):
                 case.status = wf.STATUS_CLOSED
                 case.closure_outcome = closure_outcome
                 case.save()
+                _bump_case_desk_data_version()
                 return JsonResponse({'success': True, 'message': 'Case archived (closed)', 'new_status': case.status})
             if not wf.can_transition(case, transition):
                 return JsonResponse({'success': False, 'error': 'Invalid workflow transition.'}, status=400)
@@ -1846,6 +1960,7 @@ def update_case(request, position):
                 case.investigated_by = request.user
                 case.investigated_at = timezone.now()
             case.save()
+            _bump_case_desk_data_version()
             return JsonResponse({
                 'success': True,
                 'message': case.get_status_display(),
@@ -1864,6 +1979,7 @@ def update_case(request, position):
             case.decided_at = timezone.now()
             case.resolved_at = timezone.now()
             case.save()
+            _bump_case_desk_data_version()
             return JsonResponse({
                 'success': True,
                 'message': 'Case marked resolved',
@@ -1879,6 +1995,7 @@ def update_case(request, position):
             case.status = wf.STATUS_CLOSED
             case.closure_outcome = closure_outcome
             case.save()
+            _bump_case_desk_data_version()
             return JsonResponse({
                 'success': True,
                 'message': 'Case archived (closed)',

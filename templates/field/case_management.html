@@ -78,8 +78,9 @@
             <button type="button" class="cases-resolved-drawer-close" onclick="closeResolvedCasesDrawer()"
                 aria-label="Close">&times;</button>
         </div>
-        <div class="cases-resolved-drawer-scroll" id="caseDeskResolvedDrawerScroll">
-            {% include "field/case_desk_resolved_drawer_inner.html" %}
+        <div class="cases-resolved-drawer-scroll" id="caseDeskResolvedDrawerScroll"
+            data-drawer-part="resolved" data-drawer-loaded="0">
+            <p class="cases-resolved-drawer-empty">Open to load resolved cases…</p>
         </div>
     </div>
 </div>
@@ -95,8 +96,9 @@
             <button type="button" class="cases-resolved-drawer-close" onclick="closeSettledIncidentsDrawer()"
                 aria-label="Close">&times;</button>
         </div>
-        <div class="cases-resolved-drawer-scroll" id="caseDeskSettledDrawerScroll">
-            {% include "field/case_desk_settled_drawer_inner.html" %}
+        <div class="cases-resolved-drawer-scroll" id="caseDeskSettledDrawerScroll"
+            data-drawer-part="settled" data-drawer-loaded="0">
+            <p class="cases-resolved-drawer-empty">Open to load settled incidents…</p>
         </div>
     </div>
 </div>
@@ -190,7 +192,7 @@
         </div>
 
         <div class="formal-table-card">
-            <div class="formal-table-scroll">
+            <div class="formal-table-scroll{% if desk_render_mobile %} is-ua-hidden{% endif %}">
                 <table class="formal-table compact cases-table">
                     <thead>
                         <tr>
@@ -204,14 +206,18 @@
                         </tr>
                     </thead>
                     <tbody id="caseDeskTableBody">
+                        {% if desk_render_table %}
                         {% include "field/case_desk_unified_tbody.html" with show_time_ago=False can_delete_incident_logs=can_delete_incident_logs %}
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
 
             <!-- Responsive Mobile Card View (cases + incident logs via desk_rows) -->
-            <div class="mobile-cards-view mobile-cases-cards" id="caseDeskMobileCards">
+            <div class="mobile-cards-view mobile-cases-cards{% if desk_render_mobile %} is-ua-mobile-primary{% endif %}" id="caseDeskMobileCards">
+                {% if desk_render_mobile %}
                 {% include "field/case_desk_mobile_cards.html" with can_delete_incident_logs=can_delete_incident_logs %}
+                {% endif %}
             </div>
         </div>
         <div class="table-pagination" id="caseDeskPagination">

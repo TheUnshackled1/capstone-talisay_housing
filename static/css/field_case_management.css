@@ -3486,12 +3486,24 @@
         display: none !important;
     }
 
+    /* Server chose mobile XOR table via UA — override viewport media rules. */
+    .formal-table-scroll.is-ua-hidden {
+        display: none !important;
+    }
+    .mobile-cards-view.is-ua-mobile-primary {
+        display: flex !important;
+        flex-direction: column;
+        gap: 0.85rem;
+        margin-top: 0.5rem;
+    }
+
     @media (max-width: 768px) {
-        .formal-table-scroll {
+        /* Hide table only when mobile cards were server-rendered for this UA. */
+        .formal-table-scroll.is-ua-hidden {
             display: none !important;
         }
 
-        .mobile-cards-view {
+        .mobile-cards-view.is-ua-mobile-primary {
             display: flex !important;
             flex-direction: column;
             gap: 0.85rem;

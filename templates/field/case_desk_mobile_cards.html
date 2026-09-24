@@ -14,7 +14,7 @@
             data-full-name="{{ case.complainant_name }}"
             data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
             data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-            data-barangay="{% if case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% elif case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% else %}Not specified{% endif %}"
+            data-barangay="{% if case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% elif case.complainant_applicant.desk_unit_label %}{{ case.complainant_applicant.desk_unit_label }}{% else %}Not specified{% endif %}"
             data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
             {{ case.complainant_name }}
         </h4>
@@ -32,7 +32,7 @@
                       data-full-name="{{ case.subject_applicant.full_name }}"
                       data-tx-id="APP-{{ case.subject_applicant.id|slice:":8" }}..."
                       data-ref-code="{{ case.subject_applicant.reference_number|default:'' }}"
-                      data-barangay="{% if case.subject_applicant.desk_unit_label %}{{ case.subject_applicant.desk_unit_label }}{% elif case.subject_applicant and case.subject_applicant.active_unit_label != 'Not specified' %}{{ case.subject_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+                      data-barangay="{% if case.subject_applicant.desk_unit_label %}{{ case.subject_applicant.desk_unit_label }}{% else %}Not specified{% endif %}"
                       data-dob="{{ case.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                       title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
                 <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
@@ -95,7 +95,7 @@
             data-full-name="{{ row.incident_complainant_name }}"
             data-tx-id="APP-{{ log.complainant_applicant.id|slice:":8" }}..."
             data-ref-code="{{ log.complainant_applicant.reference_number|default:'' }}"
-            data-barangay="{% if row.incident_complainant_unit_label %}{{ row.incident_complainant_unit_label }}{% elif log.complainant_applicant.active_unit_label != 'Not specified' %}{{ log.complainant_applicant.active_unit_label }}{% else %}Not specified{% endif %}"
+            data-barangay="{% if row.incident_complainant_unit_label %}{{ row.incident_complainant_unit_label }}{% elif log.complainant_applicant.desk_unit_label %}{{ log.complainant_applicant.desk_unit_label }}{% else %}Not specified{% endif %}"
             data-dob="{{ log.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
             {% endif %}>
             {{ row.incident_complainant_name|default:"—" }}
@@ -114,7 +114,7 @@
                       data-full-name="{{ row.incident_respondent_name }}"
                       data-tx-id="APP-{{ log.subject_applicant.id|slice:":8" }}..."
                       data-ref-code="{{ log.subject_applicant.reference_number|default:'' }}"
-                      data-barangay="{% if row.incident_respondent_unit_label %}{{ row.incident_respondent_unit_label }}{% elif log.subject_applicant.active_unit_label != 'Not specified' %}{{ log.subject_applicant.active_unit_label }}{% else %}Not specified{% endif %}"
+                      data-barangay="{% if row.incident_respondent_unit_label %}{{ row.incident_respondent_unit_label }}{% elif log.subject_applicant.desk_unit_label %}{{ log.subject_applicant.desk_unit_label }}{% else %}Not specified{% endif %}"
                       data-dob="{{ log.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                       title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
                 {% if row.incident_respondent_unit_label %}

@@ -2006,6 +2006,9 @@
             btn.classList.add('is-active');
             btn.setAttribute('aria-expanded', 'true');
         }
+        if (window.CaseDeskSync && typeof window.CaseDeskSync.loadDrawer === 'function') {
+            window.CaseDeskSync.loadDrawer('resolved');
+        }
     }
 
     function closeResolvedCasesDrawer(e) {
@@ -2031,6 +2034,9 @@
         if (btn) {
             btn.classList.add('is-active');
             btn.setAttribute('aria-expanded', 'true');
+        }
+        if (window.CaseDeskSync && typeof window.CaseDeskSync.loadDrawer === 'function') {
+            window.CaseDeskSync.loadDrawer('settled');
         }
     }
 
