@@ -234,7 +234,7 @@ def _case_management_list_context(request, position, include_drawer_rows=False):
         and position in wf.CASE_MONITOR_DESK_POSITIONS
     )
     settled_incident_rows = []
-    settled_on_site_count = 0
+    settled_on_site_count = None  # omitted on field cold load; set when computed
     resolved_cases = []
     pending_cases = []
 
@@ -511,7 +511,7 @@ def case_desk_feed(request, position):
                 ),
             },
             'status_counts': list_ctx['status_counts'],
-            'settled_on_site_count': list_ctx.get('settled_on_site_count', 0),
+            'settled_on_site_count': list_ctx.get('settled_on_site_count'),
         })
 
     # 1. Client version short-circuit — no list_ctx / no templates.
@@ -559,7 +559,7 @@ def case_desk_feed(request, position):
         'version': current_version,
         'desk_row_count': len(list_ctx['desk_rows']),
         'status_counts': list_ctx['status_counts'],
-        'settled_on_site_count': list_ctx.get('settled_on_site_count', 0),
+        'settled_on_site_count': list_ctx.get('settled_on_site_count'),
         'html': html,
         'drawers_stale': True,
     }

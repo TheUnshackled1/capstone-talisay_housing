@@ -114,9 +114,9 @@
         setText('caseDeskKpiResolved', sc.resolved != null ? sc.resolved : '');
         if (data.settled_on_site_count != null) {
             setText('caseDeskKpiSettled', data.settled_on_site_count);
+            setText('caseDeskSettledDrawerSubtitle', (data.settled_on_site_count || 0) + ' incident log' + ((data.settled_on_site_count || 0) === 1 ? '' : 's') + ' — handled without a formal case');
         }
         setText('caseDeskResolvedDrawerSubtitle', (sc.resolved || 0) + ' case' + ((sc.resolved || 0) === 1 ? '' : 's') + ' marked resolved');
-        setText('caseDeskSettledDrawerSubtitle', (data.settled_on_site_count || 0) + ' incident log' + ((data.settled_on_site_count || 0) === 1 ? '' : 's') + ' — handled without a formal case');
         if (sc.pending_review != null) {
             setText('caseDeskPendingDrawerSubtitle', (sc.pending_review || 0) + ' case' + ((sc.pending_review || 0) === 1 ? '' : 's') + ' pending review');
         }

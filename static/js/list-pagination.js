@@ -51,7 +51,8 @@
 
             var rows = getRows();
             var cards = getCards();
-            var total = rows.length;
+            /* XOR table/cards: only one set is in the DOM — use whichever has items. */
+            var total = Math.max(rows.length, cards.length);
             var totalPages = Math.max(1, Math.ceil(total / pageSize));
             currentPage = Math.min(Math.max(1, currentPage), totalPages);
 
