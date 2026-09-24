@@ -11,7 +11,7 @@
                  data-full-name="{{ case.complainant_name }}"
                  data-tx-id="{% if case.complainant_applicant %}APP-{{ case.complainant_applicant.id|slice:":8" }}...{% else %}{{ case.case_number }}{% endif %}"
                  data-ref-code="{{ case.complainant_applicant.reference_number|default:'' }}"
-                 data-barangay="{% if case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+                 data-barangay="{% if case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% elif case.complainant_applicant and case.complainant_applicant.active_unit_label != 'Not specified' %}{{ case.complainant_applicant.active_unit_label }}{% else %}Not specified{% endif %}"
                  data-dob="{{ case.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}">
                 <svg class="applicant-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 0.9rem; height: 0.9rem;">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -25,7 +25,7 @@
                 </span>
                 {% if case.complainant_applicant %}
                 <span style="font-size: 0.62rem; color: #475569; font-weight: 500; background: #f8fafc; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #e2e8f0; white-space: nowrap;">
-                    Complaints filed: {{ case.complainant_applicant.cases_filed.count|add:case.complainant_applicant.settled_incident_logs_as_complainant.count }}
+                    Complaints filed: {{ case.complainant_applicant.desk_complaints_filed|default:0 }}
                 </span>
                 {% endif %}
             </div>
@@ -42,7 +42,7 @@
                   data-full-name="{{ case.subject_applicant.full_name }}"
                   data-tx-id="APP-{{ case.subject_applicant.id|slice:":8" }}..."
                   data-ref-code="{{ case.subject_applicant.reference_number|default:'' }}"
-                  data-barangay="{% if case.subject_applicant and case.subject_applicant.active_unit_label != 'Not specified' %}{{ case.subject_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
+                  data-barangay="{% if case.subject_applicant.desk_unit_label %}{{ case.subject_applicant.desk_unit_label }}{% elif case.subject_applicant and case.subject_applicant.active_unit_label != 'Not specified' %}{{ case.subject_applicant.active_unit_label }}{% elif case.related_unit %}Block {{ case.related_unit.block_number }}, Lot {{ case.related_unit.lot_number }}{% else %}Not specified{% endif %}"
                   data-dob="{{ case.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                   title="{{ case.subject_applicant.full_name }}">{{ case.subject_applicant.full_name }}</span>
             <div style="display: flex; align-items: center; gap: 0.15rem; flex-wrap: nowrap;">
@@ -50,7 +50,7 @@
                     #{{ case.case_number }}
                 </span>
                 <span style="font-size: 0.54rem; color: #991b1b; font-weight: 500; background: #fef2f2; padding: 0.05rem 0.25rem; border-radius: 0.25rem; border: 1px solid #fecaca; white-space: nowrap; flex-shrink: 0;">
-                    Complaints received: {{ case.subject_applicant.cases_against.count|add:case.subject_applicant.settled_incident_logs.count }}
+                    Complaints received: {{ case.subject_applicant.desk_complaints_received|default:0 }}
                 </span>
             </div>
         </div>
@@ -119,7 +119,7 @@
                   data-full-name="{{ row.incident_complainant_name }}"
                   data-tx-id="APP-{{ log.complainant_applicant.id|slice:":8" }}..."
                   data-ref-code="{{ log.complainant_applicant.reference_number|default:'' }}"
-                  data-barangay="{% if log.complainant_applicant.active_unit_label != 'Not specified' %}{{ log.complainant_applicant.active_unit_label }}{% elif row.incident_complainant_unit_label %}{{ row.incident_complainant_unit_label }}{% else %}Not specified{% endif %}"
+                  data-barangay="{% if row.incident_complainant_unit_label %}{{ row.incident_complainant_unit_label }}{% elif log.complainant_applicant.active_unit_label != 'Not specified' %}{{ log.complainant_applicant.active_unit_label }}{% else %}Not specified{% endif %}"
                   data-dob="{{ log.complainant_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
                   title="{{ row.incident_complainant_name }}">{{ row.incident_complainant_name }}</span>
             {% else %}
@@ -131,7 +131,7 @@
                 </span>
                 {% if log.complainant_applicant %}
                 <span style="font-size: 0.62rem; color: #475569; font-weight: 500; background: #f8fafc; padding: 0.08rem 0.4rem; border-radius: 0.35rem; border: 1px solid #e2e8f0; white-space: nowrap;">
-                    Complaints filed: {{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}
+                    Complaints filed: {{ log.complainant_applicant.desk_complaints_filed|default:0 }}
                 </span>
                 {% endif %}
             </div>
@@ -147,14 +147,14 @@
               data-full-name="{{ row.incident_respondent_name }}"
               data-tx-id="APP-{{ log.subject_applicant.id|slice:":8" }}..."
               data-ref-code="{{ log.subject_applicant.reference_number|default:'' }}"
-              data-barangay="{% if log.subject_applicant.active_unit_label != 'Not specified' %}{{ log.subject_applicant.active_unit_label }}{% elif row.incident_respondent_unit_label %}{{ row.incident_respondent_unit_label }}{% else %}Not specified{% endif %}"
+              data-barangay="{% if row.incident_respondent_unit_label %}{{ row.incident_respondent_unit_label }}{% elif log.subject_applicant.active_unit_label != 'Not specified' %}{{ log.subject_applicant.active_unit_label }}{% else %}Not specified{% endif %}"
               data-dob="{{ log.subject_applicant.date_of_birth|date:'M d, Y'|default:'Not specified' }}"
               title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>
         {% if row.incident_respondent_unit_label %}
         <span style="display: block; font-size: 0.7rem; color: #64748b; font-weight: 500; margin-top: 0.15rem;">{{ row.incident_respondent_unit_label }}</span>
         {% endif %}
         <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
-            Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
+            Complaints received: {{ log.subject_applicant.desk_complaints_received|default:0 }}
         </span>
         {% elif row.incident_respondent_name %}
         <span class="respondent-name-cell" title="{{ row.incident_respondent_name }}">{{ row.incident_respondent_name }}</span>

@@ -143,7 +143,7 @@ def _case_management_list_context(request, position):
     filter_type = request.GET.get('type', 'all')
 
     _cache_key = (
-        f"case_list_ctx_v2_{position}"
+        f"case_list_ctx_v3_{position}"
         f"_{''.join(c if c.isalnum() else '_' for c in search_query[:40])}"
         f"_{filter_status}_{filter_type}"
     )
@@ -219,27 +219,34 @@ def _case_management_list_context(request, position):
             settled_filtered,
             limit=_SETTLED_INCIDENT_ROW_LIMIT,
         )
-        resolved_cases = (
-            Case.objects
-            .filter(status=wf.STATUS_RESOLVED)
-            .select_related(
-                'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
-            )
-            .defer(*_CASE_LIST_DEFER)
+        resolved_cases = list(
+            _apply_case_list_filters(
+                Case.objects
+                .filter(status=wf.STATUS_RESOLVED)
+                .select_related(
+                    'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+                )
+                .defer(*_CASE_LIST_DEFER),
+                search_query,
+                filter_type,
+            ).order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
         )
-        resolved_cases = _apply_case_list_filters(resolved_cases, search_query, filter_type)
-        resolved_cases = resolved_cases.order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
-        pending_cases = (
-            Case.objects
-            .filter(status=wf.STATUS_PENDING_REVIEW)
-            .select_related(
-                'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
-            )
-            .defer(*_CASE_LIST_DEFER)
+        pending_cases = list(
+            _apply_case_list_filters(
+                Case.objects
+                .filter(status=wf.STATUS_PENDING_REVIEW)
+                .select_related(
+                    'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+                )
+                .defer(*_CASE_LIST_DEFER),
+                search_query,
+                filter_type,
+            ).order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
         )
-        pending_cases = _apply_case_list_filters(pending_cases, search_query, filter_type).order_by(
-            '-received_at'
-        )[:_DRAWER_CASE_LIST_LIMIT]
+        _enrich_desk_applicants(
+            _collect_applicants_from_cases(resolved_cases)
+            + _collect_applicants_from_cases(pending_cases)
+        )
         # Templates use desk_rows / drawers — do not materialize the full Case table.
         cases_list = []
     else:
@@ -260,7 +267,9 @@ def _case_management_list_context(request, position):
         )
         if search_query or filter_type != 'all':
             _resolved_base = _apply_case_list_filters(_resolved_base, search_query, filter_type)
-        resolved_cases = _resolved_base.order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+        resolved_cases = list(
+            _resolved_base.order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+        )
 
         _pending_base = (
             Case.objects
@@ -270,7 +279,13 @@ def _case_management_list_context(request, position):
         )
         if search_query or filter_type != 'all':
             _pending_base = _apply_case_list_filters(_pending_base, search_query, filter_type)
-        pending_cases = _pending_base.order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+        pending_cases = list(
+            _pending_base.order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+        )
+        _enrich_desk_applicants(
+            _collect_applicants_from_cases(resolved_cases)
+            + _collect_applicants_from_cases(pending_cases)
+        )
         cases_list = []
 
     ctx = {
@@ -546,21 +561,33 @@ def _settled_incident_unit_label(log):
 
 
 def _settled_incident_complainant_unit_label(log):
+    # Prefer select_related related_unit — avoids active_unit_label N+1.
+    label = _housing_unit_label(log.related_unit)
+    if label:
+        return label
     if log.complainant_applicant_id and log.complainant_applicant:
-        label = (log.complainant_applicant.active_unit_label or '').strip()
-        if label and label != 'Not specified':
-            return label
-    return _housing_unit_label(log.related_unit)
+        batched = (getattr(log.complainant_applicant, 'desk_unit_label', None) or '').strip()
+        if batched:
+            return batched
+        fallback = (log.complainant_applicant.active_unit_label or '').strip()
+        if fallback and fallback != 'Not specified':
+            return fallback
+    return ''
 
 
 def _settled_incident_respondent_unit_label(log):
     if not _settled_incident_respondent_name(log):
         return ''
     if log.subject_applicant_id and log.subject_applicant:
-        label = (log.subject_applicant.active_unit_label or '').strip()
-        if label and label != 'Not specified':
+        batched = (getattr(log.subject_applicant, 'desk_unit_label', None) or '').strip()
+        if batched:
+            return batched
+        label = _housing_unit_label(_subject_housing_unit(log.subject_applicant))
+        if label:
             return label
-        return _housing_unit_label(_subject_housing_unit(log.subject_applicant))
+        fallback = (log.subject_applicant.active_unit_label or '').strip()
+        if fallback and fallback != 'Not specified':
+            return fallback
     return ''
 
 
@@ -634,13 +661,98 @@ def _filter_settled_incident_logs_queryset(qs, search_query, filter_type):
     return qs
 
 
+def _attach_desk_complaint_counts(applicants):
+    """
+    Batch-load complaint filed/received totals onto Applicant instances so list
+    templates avoid per-row .count() N+1 queries.
+    Sets: desk_complaints_filed, desk_complaints_received
+    """
+    apps = [a for a in applicants if a is not None and getattr(a, 'pk', None)]
+    if not apps:
+        return
+    ids = list({a.pk for a in apps})
+
+    filed = {
+        row['complainant_applicant_id']: row['c']
+        for row in Case.objects.filter(complainant_applicant_id__in=ids)
+        .values('complainant_applicant_id')
+        .annotate(c=models.Count('pk'))
+    }
+    against = {
+        row['subject_applicant_id']: row['c']
+        for row in Case.objects.filter(subject_applicant_id__in=ids)
+        .values('subject_applicant_id')
+        .annotate(c=models.Count('pk'))
+    }
+    settled_as_complainant = {
+        row['complainant_applicant_id']: row['c']
+        for row in FieldSettledIncidentLog.objects.filter(complainant_applicant_id__in=ids)
+        .values('complainant_applicant_id')
+        .annotate(c=models.Count('pk'))
+    }
+    settled_as_subject = {
+        row['subject_applicant_id']: row['c']
+        for row in FieldSettledIncidentLog.objects.filter(subject_applicant_id__in=ids)
+        .values('subject_applicant_id')
+        .annotate(c=models.Count('pk'))
+    }
+
+    for a in apps:
+        pk = a.pk
+        a.desk_complaints_filed = filed.get(pk, 0) + settled_as_complainant.get(pk, 0)
+        a.desk_complaints_received = against.get(pk, 0) + settled_as_subject.get(pk, 0)
+
+
+def _attach_desk_unit_labels(applicants):
+    """
+    Batch-load active housing-unit labels onto Applicant instances.
+    Sets: desk_unit_label ('' when none). Avoids per-row active_unit_label N+1.
+    """
+    apps = [a for a in applicants if a is not None and getattr(a, 'pk', None)]
+    if not apps:
+        return
+    ids = list({a.pk for a in apps})
+    unit_by_applicant = {}
+    for award in (
+        LotAward.objects.filter(application__applicant_id__in=ids, status='active')
+        .select_related('unit', 'application')
+        .order_by('-awarded_at')
+    ):
+        aid = award.application.applicant_id
+        if aid not in unit_by_applicant:
+            unit_by_applicant[aid] = award.unit
+    for a in apps:
+        a.desk_unit_label = _housing_unit_label(unit_by_applicant.get(a.pk))
+
+
+def _collect_applicants_from_cases(cases):
+    apps = []
+    for case in cases:
+        if case.complainant_applicant_id and case.complainant_applicant:
+            apps.append(case.complainant_applicant)
+        if case.subject_applicant_id and case.subject_applicant:
+            apps.append(case.subject_applicant)
+    return apps
+
+
+def _enrich_desk_applicants(applicants):
+    """Batch complaint counts + unit labels for desk list templates."""
+    apps = [a for a in applicants if a is not None]
+    _attach_desk_complaint_counts(apps)
+    _attach_desk_unit_labels(apps)
+
+
 def _settled_incident_desk_rows(incident_qs, limit=None):
     """Build display rows for on-site settled incident logs (newest first)."""
     qs = incident_qs.order_by('-logged_at', '-pk')
     if limit is not None:
         qs = qs[:limit]
+    logs = list(qs)
+    _enrich_desk_applicants(
+        [log.complainant_applicant for log in logs] + [log.subject_applicant for log in logs]
+    )
     rows = []
-    for log in qs:
+    for log in logs:
         rows.append({
             'kind': 'incident_log',
             'sort_at': log.logged_at,
@@ -681,8 +793,10 @@ def _build_case_desk_rows(
     Merge formal cases and on-site settled incident logs for one desk list.
     Incident logs appear only when include_incident_logs is True (status filter = all).
     """
+    case_list = list(cases_qs)
+    _enrich_desk_applicants(_collect_applicants_from_cases(case_list))
     rows = []
-    for case in cases_qs:
+    for case in case_list:
         rows.append({
             'kind': 'case',
             'sort_at': case.received_at,

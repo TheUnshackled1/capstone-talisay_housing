@@ -130,10 +130,10 @@
         }
     }
 
-    /* ===== PREMIUM KPI CARDS (HIGH SPECIFICITY) ===== */
+    /* ===== PREMIUM KPI CARDS ===== */
     .monitoring-kpis {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 1.25rem;
         margin-bottom: 2rem;
     }
@@ -141,17 +141,24 @@
     .monitoring-kpis .monitoring-kpi {
         display: flex;
         align-items: center;
-        padding: 1.25rem 1.5rem;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        transition: all 0.25s ease;
+        padding: 1.35rem 1.5rem;
+        border-radius: 16px;
+        transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
         text-align: left;
         width: 100%;
         position: relative;
         overflow: hidden;
         cursor: default;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    /* Subtle shimmer overlay */
+    .monitoring-kpis .monitoring-kpi::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 60%);
+        pointer-events: none;
+        border-radius: inherit;
     }
 
     .monitoring-kpis .monitoring-kpi.is-clickable {
@@ -159,22 +166,15 @@
     }
 
     .monitoring-kpis .monitoring-kpi:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01) !important;
+        transform: translateY(-5px) !important;
+        box-shadow: 0 16px 40px -8px rgba(0,0,0,0.14), 0 4px 12px -2px rgba(0,0,0,0.05) !important;
     }
 
-    .monitoring-kpis .monitoring-kpi::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%);
-        pointer-events: none;
-    }
-
+    /* Glassmorphic icon block */
     .monitoring-kpis .monitoring-kpi-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -182,13 +182,13 @@
         flex-shrink: 0;
         position: relative;
         z-index: 1;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
     }
 
     .monitoring-kpis .monitoring-kpi-icon svg {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         stroke: #ffffff;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18));
     }
 
     .monitoring-kpis .monitoring-kpi-text {
@@ -198,59 +198,72 @@
     }
 
     .monitoring-kpis .monitoring-kpi-text h4 {
-        margin: 0 0 0.25rem 0;
-        font-size: 0.75rem;
+        margin: 0 0 0.3rem 0;
+        font-size: 0.72rem;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         font-weight: 800;
     }
 
     .monitoring-kpis .monitoring-kpi-number {
-        font-size: 2rem;
+        font-size: 2.15rem;
         font-weight: 800;
         line-height: 1;
         font-feature-settings: "tnum";
         font-variant-numeric: tabular-nums;
     }
 
-    /* Pending Review (Amber/Orange) */
+    /* ── Pending Review (Amber/Orange) ── */
     .monitoring-kpis .monitoring-kpi-open {
-        background: linear-gradient(to right, #fffbeb, #ffffff) !important;
-        border-color: #fde68a !important;
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 55%, #ffffff 100%) !important;
+        border: 1.5px solid #fcd34d !important;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12), inset 0 1px 0 rgba(255,255,255,0.7);
     }
-    .monitoring-kpis .monitoring-kpi-open:hover { border-color: #f59e0b !important; }
+    .monitoring-kpis .monitoring-kpi-open:hover {
+        border-color: #f59e0b !important;
+        box-shadow: 0 16px 40px -8px rgba(217, 119, 6, 0.22), 0 4px 12px -2px rgba(217, 119, 6, 0.1) !important;
+    }
     .monitoring-kpis .monitoring-kpi-open .monitoring-kpi-icon {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2) !important;
+        background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%) !important;
+        box-shadow: 0 6px 16px rgba(217, 119, 6, 0.38), 0 2px 4px rgba(217, 119, 6, 0.2) !important;
     }
-    .monitoring-kpis .monitoring-kpi-open h4 { color: #b45309 !important; }
+    .monitoring-kpis .monitoring-kpi-open h4 { color: #92400e !important; }
     .monitoring-kpis .monitoring-kpi-open .monitoring-kpi-number { color: #78350f !important; }
 
-    /* Total List (Blue) */
+    /* ── Total List (Blue) ── */
     .monitoring-kpis .monitoring-kpi-settled {
-        background: linear-gradient(to right, #eff6ff, #ffffff) !important;
-        border-color: #bfdbfe !important;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 55%, #ffffff 100%) !important;
+        border: 1.5px solid #93c5fd !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12), inset 0 1px 0 rgba(255,255,255,0.7);
     }
-    .monitoring-kpis .monitoring-kpi-settled:hover { border-color: #3b82f6 !important; }
+    .monitoring-kpis .monitoring-kpi-settled:hover {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 16px 40px -8px rgba(29, 78, 216, 0.2), 0 4px 12px -2px rgba(29, 78, 216, 0.1) !important;
+    }
     .monitoring-kpis .monitoring-kpi-settled .monitoring-kpi-icon {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2) !important;
+        background: linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%) !important;
+        box-shadow: 0 6px 16px rgba(29, 78, 216, 0.38), 0 2px 4px rgba(29, 78, 216, 0.2) !important;
     }
     .monitoring-kpis .monitoring-kpi-settled h4 { color: #1e40af !important; }
     .monitoring-kpis .monitoring-kpi-settled .monitoring-kpi-number { color: #1e3a8a !important; }
 
-    /* Resolved (Emerald) */
+    /* ── Resolved (Emerald) ── */
     .monitoring-kpis .monitoring-kpi-resolved {
-        background: linear-gradient(to right, #ecfdf5, #ffffff) !important;
-        border-color: #a7f3d0 !important;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 55%, #ffffff 100%) !important;
+        border: 1.5px solid #6ee7b7 !important;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255,255,255,0.7);
     }
-    .monitoring-kpis .monitoring-kpi-resolved:hover { border-color: #10b981 !important; }
+    .monitoring-kpis .monitoring-kpi-resolved:hover {
+        border-color: #10b981 !important;
+        box-shadow: 0 16px 40px -8px rgba(5, 150, 105, 0.22), 0 4px 12px -2px rgba(5, 150, 105, 0.1) !important;
+    }
     .monitoring-kpis .monitoring-kpi-resolved .monitoring-kpi-icon {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2) !important;
+        background: linear-gradient(135deg, #34d399 0%, #059669 100%) !important;
+        box-shadow: 0 6px 16px rgba(5, 150, 105, 0.38), 0 2px 4px rgba(5, 150, 105, 0.2) !important;
     }
     .monitoring-kpis .monitoring-kpi-resolved h4 { color: #047857 !important; }
     .monitoring-kpis .monitoring-kpi-resolved .monitoring-kpi-number { color: #064e3b !important; }
+
 
     /* ===================================================================
        Case Management (Module 5) â€” Monitoring-style layout

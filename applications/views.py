@@ -2139,6 +2139,7 @@ def update_cdrrmo_certification(request, position):
                     applicant.eligibility_sms_sent = True
                     applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
+            cache.delete('dashboard_field_payload_v1')
             return JsonResponse({
                 'success': True,
                 'message': f'✅ {applicant.full_name} CERTIFIED as danger zone. Added to Priority Queue (Position {queue_entry.position}).',
@@ -2157,6 +2158,7 @@ def update_cdrrmo_certification(request, position):
             if sent and not applicant.eligibility_sms_sent:
                 applicant.eligibility_sms_sent = True
                 applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
+        cache.delete('dashboard_field_payload_v1')
         return JsonResponse({
             'success': True,
             'message': (
@@ -2470,6 +2472,9 @@ def field_verify_cdrrmo(request, position):
         else:
             message = f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}'
 
+        # Field dashboard caches pending CDRRMO queue for 10 min — bust on write.
+        cache.delete('dashboard_field_payload_v1')
+
         return JsonResponse({
             'success': True,
             'message': message,
@@ -2560,6 +2565,7 @@ def update_cdrrmo_status(request, position):
                     applicant.eligibility_sms_sent = True
                     applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
+            cache.delete('dashboard_field_payload_v1')
             return JsonResponse({
                 'success': True,
                 'message': f'CDRRMO approval confirmed! Applicant {msg_outcome}.',
@@ -2582,6 +2588,7 @@ def update_cdrrmo_status(request, position):
             )
             sent = send_sms(applicant.phone_number, walk_in_msg, 'eligibility_passed', applicant=applicant, module='applications')
 
+        cache.delete('dashboard_field_payload_v1')
         return JsonResponse({
             'success': True,
             'message': f'CDRRMO verification result noted. Applicant assigned to Walk-in Queue position #{queue_entry.position}.',

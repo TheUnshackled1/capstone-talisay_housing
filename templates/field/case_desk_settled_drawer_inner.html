@@ -7,7 +7,7 @@
     </div>
     <p class="cases-resolved-drawer-item-name">{{ row.incident_complainant_name|default:"—" }}{% if row.incident_complainant_unit_label %} · {{ row.incident_complainant_unit_label }}{% endif %}</p>
     <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #64748b; font-weight: 500; margin-top: 0.15rem; margin-bottom: 0.5rem; text-align: left;">
-        Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.cases_filed.count|add:log.complainant_applicant.settled_incident_logs_as_complainant.count }}{% else %}1{% endif %}
+        Complaints filed: {% if log.complainant_applicant %}{{ log.complainant_applicant.desk_complaints_filed|default:0 }}{% else %}1{% endif %}
     </span>
 
     <div class="cases-resolved-drawer-item-meta" style="margin-bottom: 0.4rem;">
@@ -17,7 +17,7 @@
                 {{ log.subject_applicant.full_name }}
                 {% if row.incident_respondent_unit_label %} · {{ row.incident_respondent_unit_label }}{% endif %}
                 <span class="complaints-count-badge" style="display: block; font-size: 0.65rem; color: #b91c1c; font-weight: 500; margin-top: 0.15rem;">
-                    Complaints received: {{ log.subject_applicant.cases_against.count|add:log.subject_applicant.settled_incident_logs.count }}
+                    Complaints received: {{ log.subject_applicant.desk_complaints_received|default:0 }}
                 </span>
             {% elif row.incident_respondent_name %}
                 {{ row.incident_respondent_name }}

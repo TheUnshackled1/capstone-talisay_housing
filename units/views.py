@@ -3469,29 +3469,28 @@ def caretaker_monitoring_dashboard(request):
         'assigned_to',
     ).order_by('notified_at', 'due_date', 'pk')
 
-    # Calculate KPIs
-    pending_count = tasks.filter(status='pending').count()
-    overdue_count = tasks.filter(due_date__lt=today, status='pending').count()
-    completed_count = MonitoringTask.objects.filter(
-        models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
-        notified_at__isnull=False,
-        status='completed'
-    ).count()
-    active_units = tasks.values('unit_id').distinct().count()
-
     tasks_list = list(tasks)
     _enrich_monitoring_tasks_staff(tasks_list)
 
     scheduled_tasks = [t for t in tasks_list if t.status == 'pending' and t.due_date >= today]
     overdue_tasks = [t for t in tasks_list if t.status == 'pending' and t.due_date < today]
-    completed_tasks = list(
+    # KPIs from materialized list — avoids 3 extra COUNT round-trips.
+    pending_count = len(scheduled_tasks) + len(overdue_tasks)
+    overdue_count = len(overdue_tasks)
+    active_units = len({t.unit_id for t in tasks_list if t.unit_id})
+
+    completed_qs = (
         MonitoringTask.objects.filter(
             models.Q(assigned_to_id=request.user.id) | models.Q(assigned_to__isnull=True),
             notified_at__isnull=False,
             status='completed',
         ).exclude(
             task_type='month_1_inspection',
-        ).select_related(
+        )
+    )
+    completed_count = completed_qs.count()
+    completed_tasks = list(
+        completed_qs.select_related(
             'unit',
             'lot_award',
             'lot_award__application__applicant',
