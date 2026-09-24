@@ -1435,21 +1435,42 @@
     .field-evidence-intake .case-settlement-inline-carousel-remove:hover {
         text-decoration: underline;
     }
-    .field-evidence-intake .case-settlement-inline-carousel-stage {
+    /* Preview stage = same fill box as live #photoCameraVideo (no side gutters). */
+    .field-evidence-intake .case-settlement-inline-carousel-stage,
+    #photoEvidenceCarousel .case-settlement-inline-carousel-stage {
         position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 12rem;
-        padding: 0.5rem 2.25rem;
+        display: block;
+        width: 100%;
+        height: 420px;
+        min-height: 420px;
+        padding: 0 !important;
+        margin: 0;
+        overflow: hidden;
+        border-radius: 10px;
+        background: #0f172a;
+        line-height: 0;
+    }
+    .field-evidence-intake .case-settlement-inline-carousel-stage img,
+    #photoEvidenceImg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        object-fit: cover !important;
+        object-position: center center;
+        border-radius: 0 !important;
         background: #0f172a;
     }
-    .field-evidence-intake .case-settlement-inline-carousel-stage img {
-        /* Sizing shared with #photoCameraVideo (object-fit: contain, max-height 420px). */
-        margin: 0;
-        border-radius: 0.35rem;
-    }
-    .field-evidence-intake .case-settlement-inline-carousel-nav {
+    .field-evidence-intake .case-settlement-inline-carousel-nav,
+    #photoEvidenceCarousel .case-settlement-inline-carousel-nav {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
@@ -1472,11 +1493,13 @@
     .field-evidence-intake .case-settlement-inline-carousel-nav[hidden] {
         display: none;
     }
-    .field-evidence-intake .case-settlement-inline-carousel-nav--prev {
-        left: 0.35rem;
+    .field-evidence-intake .case-settlement-inline-carousel-nav--prev,
+    #photoEvidenceCarousel .case-settlement-inline-carousel-nav--prev {
+        left: 0.5rem;
     }
-    .field-evidence-intake .case-settlement-inline-carousel-nav--next {
-        right: 0.35rem;
+    .field-evidence-intake .case-settlement-inline-carousel-nav--next,
+    #photoEvidenceCarousel .case-settlement-inline-carousel-nav--next {
+        right: 0.5rem;
     }
     /* Premium Camera Button Icons */
     .cam-icon-wrapper {
@@ -1585,19 +1608,16 @@
         display: block;
     }
 
-    /* Live camera + captured preview share the same box: full frame, no CSS crop. */
-    #photoCameraVideo,
-    .field-evidence-intake .case-settlement-inline-carousel-stage img {
+    /* Fill the dark box (no letterbox). Capture JS crops to this visible cover region. */
+    #photoCameraVideo {
         display: block;
         width: 100%;
-        max-width: 100%;
-        height: auto;
+        height: 420px;
         max-height: 420px;
-        object-fit: contain;
+        object-fit: cover;
+        object-position: center center;
         border-radius: 10px;
         background: #0f172a;
-    }
-    #photoCameraVideo {
         margin-bottom: 10px;
     }
 

@@ -386,12 +386,30 @@ function capturePhotoEvidence() {
         return;
     }
 
-    /* Capture the full native video frame (matches object-fit: contain on #photoCameraVideo).
-       Do not crop to the CSS display box — that made live view and saved photo differ. */
-    let destWidth = video.videoWidth || 1280;
-    let destHeight = video.videoHeight || 720;
+    const videoW = video.videoWidth || 0;
+    const videoH = video.videoHeight || 0;
+    if (!videoW || !videoH) {
+        showToast('Camera is still starting. Try Capture again in a moment.', 'error');
+        return;
+    }
 
-    /* Scale down 4K/high-res streams to max 1280px while keeping aspect ratio */
+    /* object-fit: cover on #photoCameraVideo — crop the source to the visible region
+       so the saved JPEG matches what the user sees (no letterbox, same framing). */
+    const elemW = video.clientWidth || videoW;
+    const elemH = video.clientHeight || videoH;
+    const scale = Math.max(elemW / videoW, elemH / videoH);
+    let srcW = elemW / scale;
+    let srcH = elemH / scale;
+    let sx = (videoW - srcW) / 2;
+    let sy = (videoH - srcH) / 2;
+    /* Clamp for floating-point edge cases */
+    if (sx < 0) sx = 0;
+    if (sy < 0) sy = 0;
+    if (sx + srcW > videoW) srcW = videoW - sx;
+    if (sy + srcH > videoH) srcH = videoH - sy;
+
+    let destWidth = Math.round(srcW);
+    let destHeight = Math.round(srcH);
     const MAX_DIMENSION = 1280;
     if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
         const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);
@@ -402,12 +420,12 @@ function capturePhotoEvidence() {
     canvas.width = destWidth;
     canvas.height = destHeight;
     const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, destWidth, destHeight);
+    context.drawImage(video, sx, sy, srcW, srcH, 0, 0, destWidth, destHeight);
     canvas.toBlob((blob) => {
         if (!blob) return;
         const file = new File([blob], `monitoring-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
         setPhotoEvidenceFiles([...(input.files || []), file]);
-    }, 'image/jpeg', 0.8); /* 0.8 quality for faster upload speed */
+    }, 'image/jpeg', 0.8);
 }
 
 function openPhotoEvidencePicker() {
