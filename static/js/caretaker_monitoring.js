@@ -386,14 +386,12 @@ function capturePhotoEvidence() {
         return;
     }
 
-    /* Capture the full native video frame — no UI-based cropping.
-       The previous getBoundingClientRect() crop was using the CSS display
-       box dimensions instead of the actual camera sensor dimensions,
-       which caused the captured image to be incorrectly cropped. */
+    /* Capture the full native video frame (matches object-fit: contain on #photoCameraVideo).
+       Do not crop to the CSS display box — that made live view and saved photo differ. */
     let destWidth = video.videoWidth || 1280;
     let destHeight = video.videoHeight || 720;
 
-    /* Optimization: Scale down 4K/high-res streams to max 1280px wide/tall */
+    /* Scale down 4K/high-res streams to max 1280px while keeping aspect ratio */
     const MAX_DIMENSION = 1280;
     if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
         const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);

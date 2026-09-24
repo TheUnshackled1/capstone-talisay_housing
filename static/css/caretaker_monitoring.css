@@ -1442,17 +1442,12 @@
         justify-content: center;
         min-height: 12rem;
         padding: 0.5rem 2.25rem;
-        background: #f1f5f9;
+        background: #0f172a;
     }
     .field-evidence-intake .case-settlement-inline-carousel-stage img {
-        display: block;
-        width: 100%;
-        max-width: 100%;
-        aspect-ratio: 16 / 9;
-        height: auto;
-        object-fit: cover;
+        /* Sizing shared with #photoCameraVideo (object-fit: contain, max-height 420px). */
+        margin: 0;
         border-radius: 0.35rem;
-        background: #0f172a;
     }
     .field-evidence-intake .case-settlement-inline-carousel-nav {
         position: absolute;
@@ -1588,6 +1583,22 @@
     }
     #cameraPreview.active {
         display: block;
+    }
+
+    /* Live camera + captured preview share the same box: full frame, no CSS crop. */
+    #photoCameraVideo,
+    .field-evidence-intake .case-settlement-inline-carousel-stage img {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 420px;
+        object-fit: contain;
+        border-radius: 10px;
+        background: #0f172a;
+    }
+    #photoCameraVideo {
+        margin-bottom: 10px;
     }
 
     /* Empty State */
