@@ -168,7 +168,7 @@ else:
 
 # =============================================================================
 # Cache — DatabaseCache so values persist across Railway dynos / workers.
-# After deploying, run once: python manage.py createcachetable
+# After deploying, createcachetable runs automatically via scripts/start.sh.
 # LocMemCache (Django's default) is per-process and is useless on Railway
 # because each worker starts with an empty cache — defeating all cache.set()
 # calls that we rely on (homepage stats, google_oauth_configured, etc).
