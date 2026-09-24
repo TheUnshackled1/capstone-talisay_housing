@@ -556,9 +556,6 @@ def case_desk_feed(request, position):
             fragment_ctx,
             request=request,
         )
-        # Staff always uses table; field desktop gets table only.
-        if position in FIELD_INSPECTOR_POSITIONS and not prefer_mobile:
-            pass
     payload = {
         'success': True,
         'version': current_version,

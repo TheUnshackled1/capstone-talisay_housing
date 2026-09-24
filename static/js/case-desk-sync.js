@@ -24,9 +24,16 @@
     function filterParams() {
         var q = (document.getElementById('searchInput')?.value || '').trim();
         var type = document.getElementById('typeFilter')?.value || 'all';
+        var status = document.getElementById('statusDropdownFilter')?.value || 'all';
+        // Fall back to URL when the status select is hidden/missing (mobile).
+        if ((!status || status === 'all') && global.location && global.location.search) {
+            var urlStatus = new URLSearchParams(global.location.search).get('status');
+            if (urlStatus) status = urlStatus;
+        }
         var params = new URLSearchParams();
         if (q) params.set('q', q);
         if (type && type !== 'all') params.set('type', type);
+        if (status && status !== 'all') params.set('status', status);
         return params;
     }
 
@@ -45,12 +52,21 @@
     }
 
     function markDrawersStale() {
+        var openParts = [];
         ['caseDeskResolvedDrawerScroll', 'caseDeskSettledDrawerScroll', 'caseDeskPendingDrawerScroll']
             .forEach(function (id) {
                 var el = document.getElementById(id);
                 if (!el) return;
                 el.setAttribute('data-drawer-loaded', '0');
+                var part = el.getAttribute('data-drawer-part');
+                var panel = el.closest('[role="dialog"]');
+                if (part && panel && panel.classList.contains('is-open')) {
+                    openParts.push(part);
+                }
             });
+        openParts.forEach(function (part) {
+            loadDrawerPart(part);
+        });
     }
 
     function applyFeed(data) {
@@ -215,12 +231,6 @@
         return refreshDeskList('local');
     }
 
-    function onFilterChange() {
-        lastVersion = null;
-        markDrawersStale();
-        return refreshDeskList('filter');
-    }
-
     function startPolling() {
         var config = cfg();
         if (!config) return;
@@ -256,19 +266,6 @@
         document.addEventListener('visibilitychange', function () {
             if (!document.hidden) refreshDeskList('visible');
         });
-
-        var searchInput = document.getElementById('searchInput');
-        var typeFilter = document.getElementById('typeFilter');
-        if (searchInput) {
-            var searchTimer = null;
-            searchInput.addEventListener('input', function () {
-                global.clearTimeout(searchTimer);
-                searchTimer = global.setTimeout(onFilterChange, 300);
-            });
-        }
-        if (typeFilter) {
-            typeFilter.addEventListener('change', onFilterChange);
-        }
 
         startPolling();
     }
