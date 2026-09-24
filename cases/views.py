@@ -162,13 +162,8 @@ def _case_desk_poll_version(request):
 
 def _prefer_mobile_case_desk(request):
     """Render mobile cards XOR table — not both — based on Client Hints / UA."""
-    ch = (request.headers.get('Sec-CH-UA-Mobile') or '').strip()
-    if ch == '?1':
-        return True
-    if ch == '?0':
-        return False
-    ua = (request.META.get('HTTP_USER_AGENT') or '').lower()
-    return any(tok in ua for tok in ('mobile', 'android', 'iphone', 'ipod', 'webos'))
+    from accounts.request_ua import prefer_mobile_client
+    return prefer_mobile_client(request)
 
 
 def _case_management_list_context(request, position, include_drawer_rows=False):
@@ -255,44 +250,47 @@ def _case_management_list_context(request, position, include_drawer_rows=False):
             filter_type=filter_type,
             enrich=False,
         )
-        settled_base = FieldSettledIncidentLog.objects.select_related(
-            'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
-        )
-        settled_filtered = _filter_settled_incident_logs_queryset(
-            settled_base, search_query, filter_type,
-        )
-        settled_on_site_count = settled_filtered.count()
-        if include_drawer_rows:
-            settled_incident_rows = _settled_incident_desk_rows(
-                settled_filtered,
-                limit=_SETTLED_INCIDENT_ROW_LIMIT,
-                enrich=False,
+        # Field UI has no Settled KPI chip — skip count on cold page load.
+        # Count (and rows) still load when drawers are requested via ?part=.
+        if include_drawer_rows or not is_field_inspector:
+            settled_base = FieldSettledIncidentLog.objects.select_related(
+                'related_unit', 'logged_by', 'subject_applicant', 'complainant_applicant',
             )
-            resolved_cases = list(
-                _apply_case_list_filters(
-                    Case.objects
-                    .filter(status=wf.STATUS_RESOLVED)
-                    .select_related(
-                        'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
-                    )
-                    .defer(*_CASE_LIST_DEFER),
-                    search_query,
-                    filter_type,
-                ).order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+            settled_filtered = _filter_settled_incident_logs_queryset(
+                settled_base, search_query, filter_type,
             )
-            if load_pending_drawer:
-                pending_cases = list(
+            settled_on_site_count = settled_filtered.count()
+            if include_drawer_rows:
+                settled_incident_rows = _settled_incident_desk_rows(
+                    settled_filtered,
+                    limit=_SETTLED_INCIDENT_ROW_LIMIT,
+                    enrich=False,
+                )
+                resolved_cases = list(
                     _apply_case_list_filters(
                         Case.objects
-                        .filter(status=wf.STATUS_PENDING_REVIEW)
+                        .filter(status=wf.STATUS_RESOLVED)
                         .select_related(
                             'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
                         )
                         .defer(*_CASE_LIST_DEFER),
                         search_query,
                         filter_type,
-                    ).order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+                    ).order_by('-resolved_at', '-received_at')[:_DRAWER_CASE_LIST_LIMIT]
                 )
+                if load_pending_drawer:
+                    pending_cases = list(
+                        _apply_case_list_filters(
+                            Case.objects
+                            .filter(status=wf.STATUS_PENDING_REVIEW)
+                            .select_related(
+                                'received_by', 'complainant_applicant', 'subject_applicant', 'related_unit',
+                            )
+                            .defer(*_CASE_LIST_DEFER),
+                            search_query,
+                            filter_type,
+                        ).order_by('-received_at')[:_DRAWER_CASE_LIST_LIMIT]
+                    )
         enrich_apps = _collect_applicants_from_cases(
             [row['case'] for row in desk_rows if row.get('case')]
         )

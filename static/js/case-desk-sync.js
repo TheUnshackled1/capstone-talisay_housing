@@ -107,12 +107,13 @@
 
         if (data.desk_row_count != null) {
             setText('caseDeskTotalCount', data.desk_row_count);
+            setText('caseDeskKpiTotalList', data.desk_row_count);
         }
         var sc = data.status_counts || {};
         setText('caseDeskKpiPending', sc.pending_review != null ? sc.pending_review : '');
         setText('caseDeskKpiResolved', sc.resolved != null ? sc.resolved : '');
-        if (data.desk_row_count != null) {
-            setText('caseDeskKpiSettled', data.desk_row_count);
+        if (data.settled_on_site_count != null) {
+            setText('caseDeskKpiSettled', data.settled_on_site_count);
         }
         setText('caseDeskResolvedDrawerSubtitle', (sc.resolved || 0) + ' case' + ((sc.resolved || 0) === 1 ? '' : 's') + ' marked resolved');
         setText('caseDeskSettledDrawerSubtitle', (data.settled_on_site_count || 0) + ' incident log' + ((data.settled_on_site_count || 0) === 1 ? '' : 's') + ' — handled without a formal case');

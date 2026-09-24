@@ -1,7 +1,7 @@
 {% extends 'field/field_base.html' %}
 {% load static %}
 
-{% block title %}Field inspection{% endblock %}
+{% block title %}Field Inspection{% endblock %}
 
 {% block nav_verification %}active{% endblock %}
 
@@ -78,7 +78,8 @@
 
             <div class="widget" style="margin-top: 0; border-top-left-radius: 0; border-top-right-radius: 0; border-top: none;">
             {% if pending_verifications %}
-            <div class="table-responsive-wrapper">
+            <div class="table-responsive-wrapper{% if desk_render_mobile %} is-ua-hidden{% endif %}">
+                {% if desk_render_table %}
                 <table class="field-desk-table">
                     <thead>
                         <tr>
@@ -143,10 +144,12 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                {% endif %}
             </div>
 
-            <!-- Responsive Mobile Card View (Option 2 — Tables-to-Cards Pattern) -->
-            <div id="fieldPendingMobileCards" class="mobile-cards-view">
+            <!-- Responsive Mobile Card View — XOR with table via UA -->
+            <div id="fieldPendingMobileCards" class="mobile-cards-view{% if desk_render_mobile %} is-ua-mobile-primary{% endif %}">
+                {% if desk_render_mobile %}
                 {% for cert in pending_verifications %}
                 <article class="mobile-verification-card">
                     <div class="m-card-header">
@@ -207,8 +210,10 @@
                                 <polyline points="17 11 19 13 23 9"></polyline>
                             </svg>
                         </button>
+                    </div>
                 </article>
                 {% endfor %}
+                {% endif %}
             </div>
             <div class="table-pagination" id="fieldPendingPagination">
                 <div class="table-pagination-info" id="fieldPendingPaginationInfo">

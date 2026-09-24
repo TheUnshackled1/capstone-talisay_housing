@@ -3463,6 +3463,7 @@ def caretaker_monitoring_dashboard(request):
         'unit',
         'lot_award',
         'lot_award__application__applicant',
+        'lot_award__application__applicant__barangay',
         'lot_award__application__applicant__registered_by',
         'lot_award__application__applicant__module2_handoff_by',
         'unit__site',
@@ -3494,6 +3495,7 @@ def caretaker_monitoring_dashboard(request):
             'unit',
             'lot_award',
             'lot_award__application__applicant',
+            'lot_award__application__applicant__barangay',
             'lot_award__application__applicant__registered_by',
             'lot_award__application__applicant__module2_handoff_by',
             'unit__site',
@@ -3512,6 +3514,9 @@ def caretaker_monitoring_dashboard(request):
         key=lambda t: (t.unit_id, t.notified_at or timezone.now(), t.due_date, t.pk),
     )
 
+    from accounts.request_ua import prefer_mobile_client
+    prefer_mobile = prefer_mobile_client(request)
+
     context = {
         'tasks': tasks_list,
         'pending_count': pending_count,
@@ -3525,6 +3530,8 @@ def caretaker_monitoring_dashboard(request):
         'today': today,
         'selected_task_id': (request.GET.get('task') or '').strip(),
         'task_notified': request.GET.get('notified') == '1',
+        'desk_render_mobile': prefer_mobile,
+        'desk_render_table': not prefer_mobile,
     }
 
     return render(request, 'field/caretaker_monitoring_dashboard.html', context)

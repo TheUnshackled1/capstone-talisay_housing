@@ -2063,9 +2063,13 @@ def dashboard_field(request):
         context = _build_dashboard_field_context()
         cache.set(_cache_key, context, 600)  # 10-minute TTL
 
+    from accounts.request_ua import prefer_mobile_client
+    prefer_mobile = prefer_mobile_client(request)
     context = {
         **context,
         'user_position': request.user.position,
+        'desk_render_mobile': prefer_mobile,
+        'desk_render_table': not prefer_mobile,
     }
     return render(request, 'field/dashboard.html', context)
 

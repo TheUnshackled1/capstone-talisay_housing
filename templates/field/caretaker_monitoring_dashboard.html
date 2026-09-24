@@ -247,7 +247,8 @@
         <span class="monitoring-work-badge">▸ CARETAKER MONITORING DESK</span>
     </div>
     {% if tasks %}
-    <div class="monitoring-table-scroll">
+    <div class="monitoring-table-scroll{% if desk_render_mobile %} is-ua-hidden{% endif %}">
+    {% if desk_render_table %}
     <table class="monitoring-tasks-table">
     <thead>
         <tr>
@@ -394,10 +395,12 @@
         {% endfor %}
     </tbody>
 </table>
+    {% endif %}
     </div>
 
-    <!-- Responsive Mobile Card View (Option 2 — Tables-to-Cards Pattern) -->
-    <div class="mobile-cards-view mobile-tasks-cards">
+    <!-- Responsive Mobile Card View — XOR with table via UA -->
+    <div class="mobile-cards-view mobile-tasks-cards{% if desk_render_mobile %} is-ua-mobile-primary{% endif %}">
+        {% if desk_render_mobile %}
         {% for task in tasks %}
         <article class="mobile-verification-card m-task-card" id="task-card-{{ task.id }}">
             <div class="m-card-header">
@@ -510,6 +513,7 @@
             </div>
         </article>
         {% endfor %}
+        {% endif %}
     </div>
       <div class="table-pagination" id="monitoringTasksPagination">
           <div class="table-pagination-info" id="monitoringTasksPaginationInfo">
