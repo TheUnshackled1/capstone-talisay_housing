@@ -228,8 +228,8 @@ def dashboard_second_member(request):
 
     _force_refresh = request.GET.get('refresh') == '1'
 
-    # Analytics payload — cached for 5 minutes to avoid the expensive
-    # _staff_analytics_module2_counts iterator on every cold load (~14s hit).
+    # Analytics payload — cached for 10 minutes (shared across Railway dynos via
+    # DatabaseCache). Previously caused a ~14s cold hit per worker; now computed once.
     _cache_key = (
         f"dashboard_analytics_second_member"
         f"_{request.GET.get('year', 'all')}"
@@ -282,7 +282,7 @@ def dashboard_second_member(request):
     # ==================== MODULE 6: UPCOMING REPORTS (Reports for Full Disclosure Portal) ====================
     reports_to_generate = []
     today = date.today()
-    if today.day < 1:
+    if today.day == 1:  # 1st of the month — Monthly Compliance Summary is due today
         reports_to_generate.append({
             'title': 'Monthly Compliance Summary',
             'due_date': today.replace(day=1),
@@ -425,20 +425,21 @@ def _staff_analytics_module2_counts(user):
       EXCLUDED = form_queue_routed_at IS NOT NULL AND application.status IN ('standby', 'awarded')
     """
     from applications.views import _module2_evaluations_applicants_queryset
-    from django.db.models import Q
 
     _MODULE2_FORM_PIPELINE_STATUSES = frozenset({'draft', 'completed'})
     _ROUTED_REMOVED_STATUSES = frozenset({'standby', 'awarded'})
 
-    # Lean base queryset — no prefetches, only fields needed for the filter
+    # Lean base queryset — clear ALL prefetches and reset select_related to only
+    # the application join. The base queryset carries barangay/cdrrmo/registered_by
+    # joins that are useless here and add unnecessary SQL LEFT JOINs.
     base_qs = (
         _module2_evaluations_applicants_queryset()
         .prefetch_related(None)
+        .select_related(None)
         .select_related('application')
-        .only('id', 'form_queue_routed_at', 'application__status')
     )
 
-    # Fetch just PKs and the two fields we need — one DB round-trip
+    # Fetch just PKs and the two fields we need — one DB round-trip, no model instances
     rows = list(base_qs.values('id', 'form_queue_routed_at', 'application__status'))
 
     rfq_ids = []
