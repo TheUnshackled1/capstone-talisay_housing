@@ -2,6 +2,7 @@
 set -euo pipefail
 
 python manage.py migrate --noinput --skip-checks
+python manage.py createcachetable --no-input
 
 if [ -n "${MEDIA_ROOT:-}" ] && [ -d /app/media ] && [ "$MEDIA_ROOT" != /app/media ]; then
   cp -rn /app/media/. "$MEDIA_ROOT"/ 2>/dev/null || true
