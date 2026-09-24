@@ -1697,230 +1697,232 @@ def applicants_list(request, position):
         applicants = []
 
         # ====== CHANNEL B: Danger Zone Applicants + ALL OTHER APPLICANTS ======
-    # Active list: only applicants with NO archive record at all (brand new registrations).
-    # Restored applicants have is_restored=True archives, so they route to the
-    # mini-table below instead of back to the active list.
-    walk_in_applicants = list(
-        Applicant.objects.exclude(
-            Exists(
-                Archive.objects.filter(
-                    applicant=OuterRef('pk'),
+        # Active list: only applicants with NO archive record at all (brand new registrations).
+        # Restored applicants have is_restored=True archives, so they route to the
+        # mini-table below instead of back to the active list.
+        walk_in_applicants = list(
+            Applicant.objects.exclude(
+                Exists(
+                    Archive.objects.filter(
+                        applicant=OuterRef('pk'),
+                    )
                 )
+            ).exclude(
+                intake_registration_exclude_q(),
+            ).exclude(
+                application__isnull=False,
+            ).distinct().select_related(
+                'barangay', 'eligibility_checked_by', 'registered_by'
+            ).prefetch_related(
+                'household_members',
+                Prefetch(
+                    'queue_entries',
+                    queryset=QueueEntry.objects.filter(status='active'),
+                    to_attr='active_queue',
+                ),
+            ).order_by('created_at')
+        )
+        walk_in_ids = [a.id for a in walk_in_applicants]
+        walk_in_vault_types_by_applicant = defaultdict(set)
+        walk_in_extra_doc_types_by_applicant = defaultdict(set)
+        requirements_group_a = _cached_group_a_requirements()
+        if walk_in_ids:
+            for aid, doc_type in Document.objects.filter(
+                applicant_id__in=walk_in_ids,
+            ).exclude(document_type='').values_list('applicant_id', 'document_type'):
+                walk_in_vault_types_by_applicant[aid].add(doc_type)
+                if doc_type in (ISF_EXTRA_VAULT_DOC_TYPE, CDRRMO_EXTRA_VAULT_DOC_TYPE):
+                    walk_in_extra_doc_types_by_applicant[aid].add(doc_type)
+
+        for app in walk_in_applicants:
+            applicants.append(_build_intake_applicant_review_payload(
+                app,
+                requirements_group_a=requirements_group_a,
+                vault_types=walk_in_vault_types_by_applicant.get(app.id, set()),
+            ))
+
+        # Mini-table (REGISTERED APPLICANTS): shows all archives that have NOT been
+        # formally closed via "ARCHIVE record" (formally_archived=False).
+        # This includes both:
+        #   - Newly proceeded applicants (is_restored=False, formally_archived=False)
+        #   - Restored applicants (is_restored=True, formally_archived=False)
+        # Once "ARCHIVE record" is clicked (sets formally_archived=True), they leave
+        # this table and appear only in archive_list.html with RESTORE button enabled.
+        archive_records = []
+        archives = list(
+            Archive.objects.filter(
+                formally_archived=False,
+            ).exclude(
+                intake_registration_exclude_q(prefix='applicant__'),
+            ).exclude(
+                applicant__application__isnull=False,
+            ).select_related(
+                'archived_by',
+                'applicant',
+                'applicant__barangay',
+                'applicant__registered_by',
+                'applicant__application__form_generated_by',
+            ).prefetch_related(
+                'applicant__household_members',
+                Prefetch(
+                    'applicant__queue_entries',
+                    queryset=QueueEntry.objects.filter(status='active'),
+                    to_attr='active_queue',
+                ),
+            ).order_by('archived_at')
+        )
+
+        applicant_ids_for_docs = [a.applicant_id for a in archives if a.applicant_id]
+        docs_by_applicant_id = defaultdict(set)
+        latest_doc_meta_by_applicant_id = defaultdict(dict)
+        if applicant_ids_for_docs:
+            for aid, doc_type in Document.objects.filter(
+                applicant_id__in=applicant_ids_for_docs,
+            ).values_list('applicant_id', 'document_type'):
+                docs_by_applicant_id[aid].add(doc_type)
+            latest_docs = (
+                Document.objects.filter(applicant_id__in=applicant_ids_for_docs)
+                .with_file_payload()
+                .annotate(has_blob=Exists(DocumentBlob.objects.filter(document_id=OuterRef('pk'))))
+                .order_by('applicant_id', 'document_type', '-uploaded_at')
             )
-        ).exclude(
-            intake_registration_exclude_q(),
-        ).exclude(
-            application__isnull=False,
-        ).distinct().select_related(
-            'barangay', 'eligibility_checked_by', 'registered_by'
-        ).prefetch_related(
-            'household_members',
-            Prefetch(
-                'queue_entries',
-                queryset=QueueEntry.objects.filter(status='active'),
-                to_attr='active_queue',
-            ),
-        ).order_by('created_at')
-    )
-    walk_in_ids = [a.id for a in walk_in_applicants]
-    walk_in_vault_types_by_applicant = defaultdict(set)
-    walk_in_extra_doc_types_by_applicant = defaultdict(set)
-    requirements_group_a = _cached_group_a_requirements()
-    if walk_in_ids:
-        for aid, doc_type in Document.objects.filter(
-            applicant_id__in=walk_in_ids,
-        ).exclude(document_type='').values_list('applicant_id', 'document_type'):
-            walk_in_vault_types_by_applicant[aid].add(doc_type)
-            if doc_type in (ISF_EXTRA_VAULT_DOC_TYPE, CDRRMO_EXTRA_VAULT_DOC_TYPE):
-                walk_in_extra_doc_types_by_applicant[aid].add(doc_type)
+            for doc in latest_docs:
+                dtype = (doc.document_type or '').strip()
+                if not dtype:
+                    continue
+                slot = latest_doc_meta_by_applicant_id[doc.applicant_id]
+                if dtype in slot:
+                    continue
+                slot[dtype] = {
+                    'url': doc.absolute_download_url(request),
+                    'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
+                }
 
-    for app in walk_in_applicants:
-        applicants.append(_build_intake_applicant_review_payload(
-            app,
-            requirements_group_a=requirements_group_a,
-            vault_types=walk_in_vault_types_by_applicant.get(app.id, set()),
-        ))
+        channel_display_map = {
+            'channel_a': ('A', 'Channel A — Walk-in'),
+            'channel_b_no_hazard': ('B', 'Channel B — No hazard (No)'),
+            'channel_b_hazard': ('B', 'Channel B — Hazard (Yes)'),
+            'channel_c': ('C', 'Channel C — Landowner'),
+        }
 
-    # Mini-table (REGISTERED APPLICANTS): shows all archives that have NOT been
-    # formally closed via "ARCHIVE record" (formally_archived=False).
-    # This includes both:
-    #   - Newly proceeded applicants (is_restored=False, formally_archived=False)
-    #   - Restored applicants (is_restored=True, formally_archived=False)
-    # Once "ARCHIVE record" is clicked (sets formally_archived=True), they leave
-    # this table and appear only in archive_list.html with RESTORE button enabled.
-    archive_records = []
-    archives = list(
-        Archive.objects.filter(
-            formally_archived=False,
-        ).exclude(
-            intake_registration_exclude_q(prefix='applicant__'),
-        ).exclude(
-            applicant__application__isnull=False,
-        ).select_related(
-            'archived_by',
-            'applicant',
-            'applicant__barangay',
-            'applicant__registered_by',
-            'applicant__application__form_generated_by',
-        ).prefetch_related(
-            'applicant__household_members',
-            Prefetch(
-                'applicant__queue_entries',
-                queryset=QueueEntry.objects.filter(status='active'),
-                to_attr='active_queue',
-            ),
-        ).order_by('archived_at')
-    )
-
-    applicant_ids_for_docs = [a.applicant_id for a in archives if a.applicant_id]
-    docs_by_applicant_id = defaultdict(set)
-    latest_doc_meta_by_applicant_id = defaultdict(dict)
-    if applicant_ids_for_docs:
-        for aid, doc_type in Document.objects.filter(
-            applicant_id__in=applicant_ids_for_docs,
-        ).values_list('applicant_id', 'document_type'):
-            docs_by_applicant_id[aid].add(doc_type)
-        latest_docs = (
-            Document.objects.filter(applicant_id__in=applicant_ids_for_docs)
-            .with_file_payload()
-            .annotate(has_blob=Exists(DocumentBlob.objects.filter(document_id=OuterRef('pk'))))
-            .order_by('applicant_id', 'document_type', '-uploaded_at')
+        blacklist_by_applicant_id = _intake_blacklist_payloads_for_applicants(
+            [archive.applicant for archive in archives if archive.applicant_id and archive.applicant]
         )
-        for doc in latest_docs:
-            dtype = (doc.document_type or '').strip()
-            if not dtype:
+        empty_blacklist_gate = {
+            'blacklistBlocked': False,
+            'blacklistReason': '',
+            'blacklistRegistryName': '',
+            'blacklistRegistryRef': '',
+        }
+
+        for archive in archives:
+            channel_code, channel_label = channel_display_map.get(archive.channel, ('?', archive.channel))
+            local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
+
+            module3_summary = 'Not yet proceeded beyond Archives'
+            module3_proceeded_at = ''
+            module3_proceeded_by = ''
+            module3_application_number = ''
+            if archive.applicant_id and hasattr(archive.applicant, 'application'):
+                app_obj = getattr(archive.applicant, 'application', None)
+                if app_obj and app_obj.form_generated_at:
+                    local_form_generated_at = timezone.localtime(app_obj.form_generated_at)
+                    module3_proceeded_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
+                    module3_proceeded_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
+                    module3_application_number = app_obj.application_number or ''
+                    module3_summary = f"Application #{module3_application_number} • {module3_proceeded_at}"
+
+            applicant_phone = ''
+            if archive.applicant_id and archive.applicant:
+                applicant_phone = (archive.applicant.phone_number or '').strip()
+            has_phone = bool(applicant_phone)
+            sms_sent_state = bool(archive.sms_sent)
+            if archive.applicant_id and archive.applicant:
+                sms_sent_state = bool(archive.applicant.registration_sms_sent)
+
+            scanned_types = docs_by_applicant_id.get(archive.applicant_id, set()) if archive.applicant_id else set()
+            disp_snapshot = ''
+            if archive.applicant_id and archive.applicant:
+                disp_snapshot = (archive.applicant.displacement_reason or '').strip()
+            requirement_scan_rows, scanned_count, trackable_total = _archive_requirement_scan_rows(
+                requirements_group_a,
+                scanned_types,
+                displacement_reason=disp_snapshot,
+                latest_doc_by_type=latest_doc_meta_by_applicant_id.get(archive.applicant_id, {}),
+            )
+            requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
+            scanned_required, required_total = _required_requirement_counts(
+                scanned_types,
+                disp_snapshot,
+                requirements_group_a,
+            )
+            bl_gate = (
+                blacklist_by_applicant_id.get(str(archive.applicant_id), empty_blacklist_gate)
+                if archive.applicant_id and archive.applicant
+                else empty_blacklist_gate
+            )
+            _req_status_label, _req_status_tier = _archive_list_status_label_and_tier(
+                scanned_required,
+                required_total,
+                blacklist_blocked=bool(bl_gate.get('blacklistBlocked')),
+            )
+            archive_records.append({
+                'id': str(archive.id),
+                'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
+                'proceededAgo': _relative_time_ago(archive.archived_at) if archive.archived_at else '—',
+                'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
+                'referenceNumber': archive.reference_number_snapshot,
+                'fullName': archive.full_name_snapshot,
+                'lastName': archive.last_name_snapshot or '',
+                'firstName': archive.first_name_snapshot or '',
+                'middleName': archive.middle_name_snapshot or '',
+                'extensionName': archive.extension_name_snapshot or '',
+                'barangay': archive.barangay_name_snapshot,
+                'channel': channel_code,
+                'channelLabel': channel_label,
+                'handledBy': archive.archived_by.get_full_name() if archive.archived_by else 'Unknown',
+                'handledByPosition': archive.archived_by.get_position_display_short() if archive.archived_by else '',
+                'handledByInitials': (archive.archived_by.first_name[:1] + archive.archived_by.last_name[:1]).upper() if archive.archived_by else '??',
+                'registrationSmsSent': sms_sent_state,
+                'hasPhone': has_phone,
+                'handoffAt': local_archived_at.strftime('%Y-%m-%d %I:%M %p') if local_archived_at else '',
+                'handoffBy': archive.archived_by.get_full_name() if archive.archived_by else '',
+                'module2Summary': f"{archive.reference_number_snapshot} • {archive.full_name_snapshot}",
+                'module3Summary': module3_summary,
+                'module3ProceededAt': module3_proceeded_at,
+                'module3ProceededBy': module3_proceeded_by,
+                'module3ApplicationNumber': module3_application_number,
+                'requirementScanRows': requirement_scan_rows,
+                'scannedCount': scanned_count,
+                'requirementsTotal': requirements_total,
+                'requiredScannedCount': scanned_required,
+                'requiredTotal': required_total,
+                'requirementsStatusLabel': _req_status_label,
+                'requirementsStatusTier': _req_status_tier,
+                'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
+                'displacementReason': disp_snapshot,
+                'archiveDispNameClass': _archive_list_name_class_for_displacement(disp_snapshot),
+                **bl_gate,
+            })
+
+        archive_review_modal = {}
+        archive_documents_modal = {}  # default if archives is empty
+        for archive in archives:
+            ref = archive.reference_number_snapshot or ''
+            applicant = getattr(archive, 'applicant', None)
+            if not ref or not applicant:
                 continue
-            slot = latest_doc_meta_by_applicant_id[doc.applicant_id]
-            if dtype in slot:
-                continue
-            slot[dtype] = {
-                'url': doc.absolute_download_url(request),
-                'name': (doc.file_name or doc.title or doc.get_document_type_display() or '').strip(),
-            }
+            local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
+            archive_review_modal[ref] = _build_intake_applicant_review_payload(
+                applicant,
+                requirements_group_a=requirements_group_a,
+                vault_types=docs_by_applicant_id.get(applicant.id, set()),
+                date_registered_override=local_archived_at.strftime('%Y-%m-%d') if local_archived_at else None,
+                module2_handed_off=True,
+                is_archived=True,
+            )
 
-    channel_display_map = {
-        'channel_a': ('A', 'Channel A — Walk-in'),
-        'channel_b_no_hazard': ('B', 'Channel B — No hazard (No)'),
-        'channel_b_hazard': ('B', 'Channel B — Hazard (Yes)'),
-        'channel_c': ('C', 'Channel C — Landowner'),
-    }
-
-    blacklist_by_applicant_id = _intake_blacklist_payloads_for_applicants(
-        [archive.applicant for archive in archives if archive.applicant_id and archive.applicant]
-    )
-    empty_blacklist_gate = {
-        'blacklistBlocked': False,
-        'blacklistReason': '',
-        'blacklistRegistryName': '',
-        'blacklistRegistryRef': '',
-    }
-
-    for archive in archives:
-        channel_code, channel_label = channel_display_map.get(archive.channel, ('?', archive.channel))
-        local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
-
-        module3_summary = 'Not yet proceeded beyond Archives'
-        module3_proceeded_at = ''
-        module3_proceeded_by = ''
-        module3_application_number = ''
-        if archive.applicant_id and hasattr(archive.applicant, 'application'):
-            app_obj = getattr(archive.applicant, 'application', None)
-            if app_obj and app_obj.form_generated_at:
-                local_form_generated_at = timezone.localtime(app_obj.form_generated_at)
-                module3_proceeded_at = local_form_generated_at.strftime('%Y-%m-%d %I:%M %p')
-                module3_proceeded_by = app_obj.form_generated_by.get_full_name() if app_obj.form_generated_by else 'Unknown'
-                module3_application_number = app_obj.application_number or ''
-                module3_summary = f"Application #{module3_application_number} • {module3_proceeded_at}"
-
-        applicant_phone = ''
-        if archive.applicant_id and archive.applicant:
-            applicant_phone = (archive.applicant.phone_number or '').strip()
-        has_phone = bool(applicant_phone)
-        sms_sent_state = bool(archive.sms_sent)
-        if archive.applicant_id and archive.applicant:
-            sms_sent_state = bool(archive.applicant.registration_sms_sent)
-
-        scanned_types = docs_by_applicant_id.get(archive.applicant_id, set()) if archive.applicant_id else set()
-        disp_snapshot = ''
-        if archive.applicant_id and archive.applicant:
-            disp_snapshot = (archive.applicant.displacement_reason or '').strip()
-        requirement_scan_rows, scanned_count, trackable_total = _archive_requirement_scan_rows(
-            requirements_group_a,
-            scanned_types,
-            displacement_reason=disp_snapshot,
-            latest_doc_by_type=latest_doc_meta_by_applicant_id.get(archive.applicant_id, {}),
-        )
-        requirements_total = trackable_total if trackable_total > 0 else max(len(requirement_scan_rows), 1)
-        scanned_required, required_total = _required_requirement_counts(
-            scanned_types,
-            disp_snapshot,
-            requirements_group_a,
-        )
-        bl_gate = (
-            blacklist_by_applicant_id.get(str(archive.applicant_id), empty_blacklist_gate)
-            if archive.applicant_id and archive.applicant
-            else empty_blacklist_gate
-        )
-        _req_status_label, _req_status_tier = _archive_list_status_label_and_tier(
-            scanned_required,
-            required_total,
-            blacklist_blocked=bool(bl_gate.get('blacklistBlocked')),
-        )
-        archive_records.append({
-            'id': str(archive.id),
-            'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
-            'proceededAgo': _relative_time_ago(archive.archived_at) if archive.archived_at else '—',
-            'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
-            'referenceNumber': archive.reference_number_snapshot,
-            'fullName': archive.full_name_snapshot,
-            'lastName': archive.last_name_snapshot or '',
-            'firstName': archive.first_name_snapshot or '',
-            'middleName': archive.middle_name_snapshot or '',
-            'extensionName': archive.extension_name_snapshot or '',
-            'barangay': archive.barangay_name_snapshot,
-            'channel': channel_code,
-            'channelLabel': channel_label,
-            'handledBy': archive.archived_by.get_full_name() if archive.archived_by else 'Unknown',
-            'handledByPosition': archive.archived_by.get_position_display_short() if archive.archived_by else '',
-            'handledByInitials': (archive.archived_by.first_name[:1] + archive.archived_by.last_name[:1]).upper() if archive.archived_by else '??',
-            'registrationSmsSent': sms_sent_state,
-            'hasPhone': has_phone,
-            'handoffAt': local_archived_at.strftime('%Y-%m-%d %I:%M %p') if local_archived_at else '',
-            'handoffBy': archive.archived_by.get_full_name() if archive.archived_by else '',
-            'module2Summary': f"{archive.reference_number_snapshot} • {archive.full_name_snapshot}",
-            'module3Summary': module3_summary,
-            'module3ProceededAt': module3_proceeded_at,
-            'module3ProceededBy': module3_proceeded_by,
-            'module3ApplicationNumber': module3_application_number,
-            'requirementScanRows': requirement_scan_rows,
-            'scannedCount': scanned_count,
-            'requirementsTotal': requirements_total,
-            'requiredScannedCount': scanned_required,
-            'requiredTotal': required_total,
-            'requirementsStatusLabel': _req_status_label,
-            'requirementsStatusTier': _req_status_tier,
-            'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
-            'displacementReason': disp_snapshot,
-            'archiveDispNameClass': _archive_list_name_class_for_displacement(disp_snapshot),
-            **bl_gate,
-        })
-
-    archive_review_modal = {}
-    for archive in archives:
-        ref = archive.reference_number_snapshot or ''
-        applicant = getattr(archive, 'applicant', None)
-        if not ref or not applicant:
-            continue
-        local_archived_at = timezone.localtime(archive.archived_at) if archive.archived_at else None
-        archive_review_modal[ref] = _build_intake_applicant_review_payload(
-            applicant,
-            requirements_group_a=requirements_group_a,
-            vault_types=docs_by_applicant_id.get(applicant.id, set()),
-            date_registered_override=local_archived_at.strftime('%Y-%m-%d') if local_archived_at else None,
-            module2_handed_off=True,
-            is_archived=True,
-        )
-
+        # Build documents modal after loops complete
         archive_documents_modal = {
             r['referenceNumber']: {
                 'referenceNumber': r['referenceNumber'],
@@ -1946,7 +1948,7 @@ def applicants_list(request, position):
             'archive_records': archive_records,
             'archive_review_modal': archive_review_modal,
             'archive_documents_modal': archive_documents_modal,
-        }, 30)
+        }, 120)  # 2-minute TTL — long enough to survive the cold compute
 
     active_list_q = (request.GET.get('q') or '').strip()
     archive_list_q = (request.GET.get('archive_q') or '').strip()
