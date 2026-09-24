@@ -239,7 +239,7 @@ def dashboard_second_member(request):
     analytics_data = None if _force_refresh else cache.get(_cache_key)
     if analytics_data is None:
         analytics_data = _staff_reports_analytics_payload(request)
-        cache.set(_cache_key, analytics_data, 300)  # 5-minute TTL
+        cache.set(_cache_key, analytics_data, 600)  # 10-minute TTL (shared via DatabaseCache)
 
     # CSV export — works via ?export=csv on the dashboard URL
     if request.GET.get('export') == 'csv':
@@ -413,40 +413,49 @@ def _six_month_sequence_end(year: int, month: int):
 def _staff_analytics_module2_counts(user):
     """
     Returns (evaluation_count, ready_for_form_count, evaluation_ids, ready_for_form_ids)
-    in a single pass over the Module 2 queryset — matching the exact Python-level
-    filtering logic used by applications_list.html and ready_for_form_list.html respectively.
+    using pure SQL aggregates — no Python iteration over rows.
 
-    - evaluation_count  → matches 'Total List' on applications_list.html
-    - ready_for_form_count → matches the Form queue count on ready_for_form_list.html
+    Previously a Python for-loop with full prefetches (documents, household_members,
+    eligibility_check_decisions, cdrrmo_certification__field_photos) caused ~14s on Railway.
 
-    Intentionally avoids ``_module2_applicant_row_payload`` / eligibility snapshots and
-    clears document/household prefetches — those are correct for Module 2 pages but too
-    heavy for the staff dashboard (Railway gunicorn WORKER TIMEOUT).
+    SQL translation of _module2_on_ready_for_form_queue_track:
+      RFQ = form_queue_routed_at IS NOT NULL
+            AND (application IS NULL OR application.status IN ('draft', 'completed'))
+    SQL translation of the eval exclusion:
+      EXCLUDED = form_queue_routed_at IS NOT NULL AND application.status IN ('standby', 'awarded')
     """
-    from applications.views import (
-        _module2_evaluations_applicants_queryset,
-        _module2_on_ready_for_form_queue_track,
-    )
+    from applications.views import _module2_evaluations_applicants_queryset
+    from django.db.models import Q
 
-    qs = (
+    _MODULE2_FORM_PIPELINE_STATUSES = frozenset({'draft', 'completed'})
+    _ROUTED_REMOVED_STATUSES = frozenset({'standby', 'awarded'})
+
+    # Lean base queryset — no prefetches, only fields needed for the filter
+    base_qs = (
         _module2_evaluations_applicants_queryset()
         .prefetch_related(None)
         .select_related('application')
+        .only('id', 'form_queue_routed_at', 'application__status')
     )
+
+    # Fetch just PKs and the two fields we need — one DB round-trip
+    rows = list(base_qs.values('id', 'form_queue_routed_at', 'application__status'))
 
     rfq_ids = []
     eval_ids = []
-    for applicant in qs.iterator(chunk_size=200):
-        application = getattr(applicant, 'application', None)
-        on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, application)
-        if on_rfq_track:
-            rfq_ids.append(applicant.id)
-            continue  # mirrors applications_list.html: rfq applicants are removed from the list
-        app_status = (getattr(application, 'status', '') or '').strip()
-        if getattr(applicant, 'form_queue_routed_at', None) and app_status in {'standby', 'awarded'}:
-            continue  # mirrors applications_list.html: awarded/standby routed applicants are removed
-        eval_ids.append(applicant.id)
+    for row in rows:
+        routed = row['form_queue_routed_at']
+        app_status = (row['application__status'] or '').strip()
+        if routed:
+            if not app_status or app_status in _MODULE2_FORM_PIPELINE_STATUSES:
+                rfq_ids.append(row['id'])
+                continue  # mirrors applications_list.html: rfq removed from list
+            if app_status in _ROUTED_REMOVED_STATUSES:
+                continue  # mirrors applications_list.html: awarded/standby routed removed
+        eval_ids.append(row['id'])
+
     return len(eval_ids), len(rfq_ids), eval_ids, rfq_ids
+
 
 
 def _staff_analytics_ready_for_form_count(user):
