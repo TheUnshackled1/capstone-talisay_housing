@@ -736,21 +736,28 @@
         }
     }
 
-    function captureCaseSettlementPhoto() {
-        const v = document.getElementById('caseSettlementCameraVideo');
-        const c = document.getElementById('caseSettlementCameraCanvas');
-        if (!v || !c || !v.videoWidth) {
-            alert('Wait for the camera preview, then capture again.');
-            return;
-        }
+    /* object-fit: cover on the live video — crop source to the visible region
+       so the saved JPEG matches what the user sees. */
+    function captureCoverCroppedBlob(video, canvas, filenamePrefix, onFile) {
+        if (!video || !canvas) return false;
+        const videoW = video.videoWidth || 0;
+        const videoH = video.videoHeight || 0;
+        if (!videoW || !videoH) return false;
 
-        /* Capture the full native video frame — no UI-based cropping.
-           getBoundingClientRect() returns the CSS box size, not the camera
-           sensor size, which caused the captured image to be incorrectly cropped. */
-        let destWidth = v.videoWidth || 1280;
-        let destHeight = v.videoHeight || 720;
+        const elemW = video.clientWidth || videoW;
+        const elemH = video.clientHeight || videoH;
+        const scale = Math.max(elemW / videoW, elemH / videoH);
+        let srcW = elemW / scale;
+        let srcH = elemH / scale;
+        let sx = (videoW - srcW) / 2;
+        let sy = (videoH - srcH) / 2;
+        if (sx < 0) sx = 0;
+        if (sy < 0) sy = 0;
+        if (sx + srcW > videoW) srcW = videoW - sx;
+        if (sy + srcH > videoH) srcH = videoH - sy;
 
-        /* Optimization: Scale down 4K/high-res streams to max 1280px */
+        let destWidth = Math.round(srcW);
+        let destHeight = Math.round(srcH);
         const MAX_DIMENSION = 1280;
         if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
             const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);
@@ -758,14 +765,23 @@
             destHeight = Math.floor(destHeight * ratio);
         }
 
-        c.width = destWidth;
-        c.height = destHeight;
-        c.getContext('2d').drawImage(v, 0, 0, destWidth, destHeight);
-        c.toBlob((blob) => {
+        canvas.width = destWidth;
+        canvas.height = destHeight;
+        canvas.getContext('2d').drawImage(video, sx, sy, srcW, srcH, 0, 0, destWidth, destHeight);
+        canvas.toBlob((blob) => {
             if (!blob) return;
-            const file = new File([blob], 'settlement-' + Date.now() + '.jpg', { type: 'image/jpeg' });
-            addCaseSettlementPendingFile(file);
+            const file = new File([blob], filenamePrefix + Date.now() + '.jpg', { type: 'image/jpeg' });
+            onFile(file);
         }, 'image/jpeg', 0.8);
+        return true;
+    }
+
+    function captureCaseSettlementPhoto() {
+        const v = document.getElementById('caseSettlementCameraVideo');
+        const c = document.getElementById('caseSettlementCameraCanvas');
+        if (!captureCoverCroppedBlob(v, c, 'settlement-', addCaseSettlementPendingFile)) {
+            alert('Wait for the camera preview, then capture again.');
+        }
     }
 
     function onCaseSettlementEvidenceFilesSelected(ev) {
@@ -955,33 +971,9 @@
     function captureNewCasePhoto() {
         const v = document.getElementById('newCaseCameraVideo');
         const c = document.getElementById('newCaseCameraCanvas');
-        if (!v || !c || !v.videoWidth) {
+        if (!captureCoverCroppedBlob(v, c, 'intake-', addNewCasePendingFile)) {
             alert('Wait for the camera preview, then capture again.');
-            return;
         }
-
-        /* Capture the full native video frame — no UI-based cropping.
-           getBoundingClientRect() returns the CSS box size, not the camera
-           sensor size, which caused the captured image to be incorrectly cropped. */
-        let destWidth = v.videoWidth || 1280;
-        let destHeight = v.videoHeight || 720;
-
-        /* Optimization: Scale down 4K/high-res streams to max 1280px */
-        const MAX_DIMENSION = 1280;
-        if (destWidth > MAX_DIMENSION || destHeight > MAX_DIMENSION) {
-            const ratio = Math.min(MAX_DIMENSION / destWidth, MAX_DIMENSION / destHeight);
-            destWidth = Math.floor(destWidth * ratio);
-            destHeight = Math.floor(destHeight * ratio);
-        }
-
-        c.width = destWidth;
-        c.height = destHeight;
-        c.getContext('2d').drawImage(v, 0, 0, destWidth, destHeight);
-        c.toBlob((blob) => {
-            if (!blob) return;
-            const file = new File([blob], 'intake-' + Date.now() + '.jpg', { type: 'image/jpeg' });
-            addNewCasePendingFile(file);
-        }, 'image/jpeg', 0.8);
     }
 
     function onNewCaseEvidenceFilesSelected(ev) {
