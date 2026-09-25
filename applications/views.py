@@ -106,9 +106,16 @@ def _fetch_all_blacklist_entries():
     Called once per applications_list page load; the result is passed down to
     _module2_eligibility_snapshot so it can match in Python memory instead of
     firing up to 6 DB queries per applicant.
+    Cached for 2 minutes — blacklist entries rarely change mid-session.
     """
+    _bl_cache_key = 'module2_blacklist_entries'
+    cached = cache.get(_bl_cache_key)
+    if cached is not None:
+        return cached
     from units.models import Blacklist as UnitsBlacklist
-    return list(UnitsBlacklist.objects.select_related('applicant').all())
+    entries = list(UnitsBlacklist.objects.select_related('applicant').all())
+    cache.set(_bl_cache_key, entries, 120)
+    return entries
 
 
 def _check_blacklist_from_cache(applicant, bl_entries):
@@ -593,13 +600,17 @@ def _module2_eligibility_snapshot(applicant, checked_by=None, bl_cache=None):
 
     property_ok = not bool(applicant.has_property_in_talisay)
 
+    # Materialise prefetched relations once — avoids iterating the cache twice.
+    _all_docs = list(applicant.documents.all())
+    _all_members = list(applicant.household_members.all())
+
     declared_household = int(applicant.household_size or 0)
-    listed_household = len(applicant.household_members.all()) + 1
+    listed_household = len(_all_members) + 1
     has_min_household = declared_household >= 1
     if not has_min_household:
         advisories.append('Declared household size must be at least 1.')
 
-    live_in_partner_count = sum(1 for m in applicant.household_members.all() if m.relationship == 'live_in_partner')
+    live_in_partner_count = sum(1 for m in _all_members if m.relationship == 'live_in_partner')
     household_has_live_in_partner = live_in_partner_count > 0
     household_ok = has_min_household and not household_has_live_in_partner
 
@@ -662,7 +673,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None, bl_cache=None):
     required_docs_total = len(required_group_a_doc_types)
     scanned_required_docs = 0
     if required_docs_total > 0:
-        scanned_required_docs = len({d.document_type for d in applicant.documents.all() if d.document_type in required_group_a_doc_types})
+        scanned_required_docs = len({d.document_type for d in _all_docs if d.document_type in required_group_a_doc_types})
     required_docs_complete = (required_docs_total == 0) or (scanned_required_docs >= required_docs_total)
 
     if requires_cdrrmo:
@@ -705,7 +716,7 @@ def _module2_eligibility_snapshot(applicant, checked_by=None, bl_cache=None):
     # Option A uses CDRRMO + field verification gates (not ISF situational uploads).
     # Options B/C require at least one ISF situational supporting document.
     situation_docs_required = displacement_reason in ('ejected', 'relocated')
-    situation_docs_count = sum(1 for d in applicant.documents.all() if d.document_type == 'isf_situational_docs') if situation_docs_required else 0
+    situation_docs_count = sum(1 for d in _all_docs if d.document_type == 'isf_situational_docs') if situation_docs_required else 0
     situation_docs_ready = (not situation_docs_required) or (situation_docs_count > 0)
 
     # Module 2 eligibility checklist aggregation.
@@ -1109,8 +1120,10 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
 
     # Use the prefetched documents cache instead of extra DB queries per applicant.
     # applicant.documents is already prefetched in _module2_evaluations_applicants_queryset.
+    # Materialise once so the signed_application filter doesn't re-iterate the cache.
+    _row_docs = list(applicant.documents.all())
     _sa_docs_prefetched = sorted(
-        (d for d in applicant.documents.all() if d.document_type == 'signed_application'),
+        (d for d in _row_docs if d.document_type == 'signed_application'),
         key=lambda d: (d.uploaded_at, d.id),
         reverse=True,
     )
@@ -1290,7 +1303,7 @@ def applications_list(request, position):
             'applicants_data': applicants_data,
             'ready_for_form_queue_count': ready_for_form_queue_count,
             'total_eligible_count': total_eligible_count,
-        }, 30)
+        }, 120)  # 2-minute TTL — cold load is expensive, don't expire every 30s
 
     
     
@@ -1379,10 +1392,10 @@ def applications_list(request, position):
         'intake_handoff_ref': intake_handoff_ref,
         'ready_for_form_queue_count': ready_for_form_queue_count,
         'vacant_units_by_site': (
-            vacant_units_grouped_for_award_select() if permissions.get('can_award_lot') else []
+            _cached_vacant_units_grouped() if permissions.get('can_award_lot') else []
         ),
     }
-    
+
     return render(request, 'staff/applications_list.html', context)
 
 
@@ -1446,8 +1459,8 @@ def module2_ready_for_form_queue_rows(acting_user):
             str(r['applicant'].pk),
         ),
     )
-    # Cache for 30s — short enough for real-time UX, long enough to absorb polling.
-    cache.set(_rows_cache_key, applicants_data, 30)
+    # Cache for 120s — short enough for real-time UX, long enough to absorb polling.
+    cache.set(_rows_cache_key, applicants_data, 120)
     return applicants_data
 
 
@@ -3825,6 +3838,20 @@ def vacant_units_grouped_for_award_select():
             groups.append({'site': u.site, 'units': []})
         groups[index_by_site[sid]]['units'].append(u)
     return groups
+
+
+def _cached_vacant_units_grouped():
+    """Cached wrapper for vacant_units_grouped_for_award_select — 2-minute TTL.
+
+    The HousingUnit + LotAward query doesn't need to run on every page hit;
+    vacant unit inventory changes infrequently (lot awards are rare events).
+    """
+    _key = 'applications_vacant_units_grouped'
+    result = cache.get(_key)
+    if result is None:
+        result = vacant_units_grouped_for_award_select()
+        cache.set(_key, result, 120)
+    return result
 
 
 def _resolve_relocation_site_for_award(site_name_raw):
