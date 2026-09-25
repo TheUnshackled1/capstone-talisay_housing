@@ -66,6 +66,12 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
         self, sociallogin: SocialLogin
     ) -> tuple[AbstractUser, str] | None:
         """Match Google email to the staff user for the portal selected before OAuth."""
+        # Reuse the user already resolved in pre_social_login (stashed to avoid a second DB hit).
+        _cached = getattr(sociallogin, '_ihsms_resolved_user', None)
+        if _cached is not None:
+            user, email = _cached
+            return user, email
+
         portal_role = portal_role_for_oauth(self.request, sociallogin)
         if not portal_role:
             return None
@@ -105,6 +111,9 @@ class THASocialAccountAdapter(DefaultSocialAccountAdapter):
         if resolve_err or user is None:
             messages.error(request, resolve_err or 'Unable to sign in with this Google account.')
             raise ImmediateHttpResponse(_login_redirect_with_role(portal_role))
+
+        # Stash resolved user so authenticate_by_email can reuse it without a second DB query.
+        sociallogin._ihsms_resolved_user = (user, email)
 
         if sociallogin.user != user:
             sociallogin.user = user

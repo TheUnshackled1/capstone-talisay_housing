@@ -1691,6 +1691,7 @@ def applicants_list(request, position):
         applicants = cached_payload['applicants']
         archive_records = cached_payload['archive_records']
         archive_documents_modal = cached_payload['archive_documents_modal']
+        barangays = cached_payload.get('barangays', [])
     else:
         # Build applicants list from danger zone channel only
         applicants = []
@@ -1930,11 +1931,15 @@ def applicants_list(request, position):
 
         _attach_applicants_sms_history(applicants)
 
+        # Cache barangays alongside the main payload — they change rarely.
+        barangays = list(Barangay.objects.filter(is_active=True).values_list('name', flat=True).order_by('name'))
+
         cache.set(_cache_key, {
             'applicants': applicants,
             'archive_records': archive_records,
             'archive_documents_modal': archive_documents_modal,
-        }, 120)  # 2-minute TTL — long enough to survive the cold compute
+            'barangays': barangays,
+        }, 300)  # 5-minute TTL
 
     active_list_q = (request.GET.get('q') or '').strip()
     archive_list_q = (request.GET.get('archive_q') or '').strip()
@@ -1965,9 +1970,6 @@ def applicants_list(request, position):
         ]
     
     # Calculate stats BEFORE filtering archive records so totals are correct
-
-    barangays = list(Barangay.objects.filter(is_active=True).values_list('name', flat=True).order_by('name'))
-    
     # Calculate stats
     total_applicants = len(applicants)
     priority_count = len([a for a in applicants if a['queueType'] == 'Priority'])

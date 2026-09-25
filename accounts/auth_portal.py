@@ -163,28 +163,43 @@ def resolve_staff_user_for_portal(email: str, portal_role: str | None):
         return None, 'Select your staff portal before signing in with Google.'
 
     candidates = _users_for_email(email)
-    if not candidates.exists():
+    # Fetch at most 2 rows in one query — avoids separate .exists() + .count() + .first() calls.
+    candidate_list = list(candidates[:2])
+    if not candidate_list:
         return None, (
             'This Google account is not provisioned in IHSMS. '
             'Contact your system administrator.'
         )
 
     if role == 'field_inspector':
-        matched = candidates.filter(position__in=FIELD_INSPECTOR_POSITIONS)
+        matched = [u for u in candidate_list if u.position in FIELD_INSPECTOR_POSITIONS]
     else:
-        matched = candidates.filter(position=role)
+        matched = [u for u in candidate_list if u.position == role]
 
-    count = matched.count()
-    if count == 0:
-        expected = portal_role_display(role) or role
-        return None, (
-            f'No staff account for this Google email on the {expected} portal. '
-            f'Use the login page that matches your position.'
-        )
-    if count > 1:
+    if len(matched) == 0:
+        # Check if there are more candidates beyond our 2-row slice.
+        if role == 'field_inspector':
+            full_matched = list(candidates.filter(position__in=FIELD_INSPECTOR_POSITIONS)[:2])
+        else:
+            full_matched = list(candidates.filter(position=role)[:2])
+
+        if not full_matched:
+            expected = portal_role_display(role) or role
+            return None, (
+                f'No staff account for this Google email on the {expected} portal. '
+                f'Use the login page that matches your position.'
+            )
+        if len(full_matched) > 1:
+            return None, (
+                'Multiple staff accounts match this email for the selected portal. '
+                'Contact your system administrator.'
+            )
+        return full_matched[0], None
+
+    if len(matched) > 1:
         return None, (
             'Multiple staff accounts match this email for the selected portal. '
             'Contact your system administrator.'
         )
 
-    return matched.first(), None
+    return matched[0], None

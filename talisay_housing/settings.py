@@ -167,22 +167,45 @@ else:
     }
 
 # =============================================================================
-# Cache — DatabaseCache so values persist across Railway dynos / workers.
-# After deploying, createcachetable runs automatically via scripts/start.sh.
-# LocMemCache (Django's default) is per-process and is useless on Railway
-# because each worker starts with an empty cache — defeating all cache.set()
-# calls that we rely on (homepage stats, google_oauth_configured, etc).
+# Cache — tiered by environment:
+#   Local dev  → LocMemCache  (zero-overhead, in-process, no DB round-trips)
+#   Production → Redis if REDIS_URL set (recommended), else DatabaseCache as
+#                last resort for Railway multi-worker setups.
+# NOTE: DatabaseCache was removed from local dev because every cache.get/set
+# round-trips the database, making caching slower than no cache at all.
 # =============================================================================
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-        "LOCATION": "django_cache",
-        "OPTIONS": {
-            # Max number of rows before culling (removes oldest 1/CULL_FREQUENCY entries).
-            "MAX_ENTRIES": 1000,
-        },
+_REDIS_URL = os.environ.get('REDIS_URL', '').strip()
+
+if DEBUG:
+    # Fast in-process cache for local development — no DB queries.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "ihsms-default",
+        }
     }
-}
+elif _REDIS_URL:
+    # Production: Redis (fastest, shared across workers/dynos)
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _REDIS_URL,
+        }
+    }
+else:
+    # Production fallback: DatabaseCache persists across Railway dynos / workers.
+    # Add REDIS_URL to Railway env vars to eliminate this DB overhead.
+    # After deploying, createcachetable runs automatically via scripts/start.sh.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "django_cache",
+            "OPTIONS": {
+                # Max number of rows before culling (removes oldest 1/CULL_FREQUENCY entries).
+                "MAX_ENTRIES": 1000,
+            },
+        }
+    }
 
 
 # Password validation
