@@ -65,6 +65,27 @@ _MODULE4_MONITORING_COMPLIANCE_STAFF = _MODULE4_ADD_HOUSING_UNIT_POSITIONS | FIE
 
 _NOTICE_STATUS_VALUES = frozenset({'Under notice (30-day)', 'Final notice (10-day)'})
 
+_HOUSING_UNITS_DATA_VERSION_KEY = 'housing_units_data_version_v1'
+_HOUSING_UNITS_DATA_VERSION_TTL = 86400  # 24h; bumped on unit/award writes
+
+
+def _get_housing_units_data_version():
+    """Cheap mutable stamp used in housing_units_monitoring cache key."""
+    v = cache.get(_HOUSING_UNITS_DATA_VERSION_KEY)
+    if v is None:
+        v = 1
+        cache.set(_HOUSING_UNITS_DATA_VERSION_KEY, v, _HOUSING_UNITS_DATA_VERSION_TTL)
+    return str(v)
+
+
+def _bump_housing_units_data_version():
+    """Call after any HousingUnit / LotAward write to invalidate the dashboard cache."""
+    try:
+        new_v = cache.incr(_HOUSING_UNITS_DATA_VERSION_KEY)
+        cache.set(_HOUSING_UNITS_DATA_VERSION_KEY, new_v, _HOUSING_UNITS_DATA_VERSION_TTL)
+    except ValueError:
+        cache.set(_HOUSING_UNITS_DATA_VERSION_KEY, 1, _HOUSING_UNITS_DATA_VERSION_TTL)
+
 _HOUSING_UNITS_AWARD_PREFETCH = Prefetch(
     'lot_awards',
     queryset=LotAward.objects.select_related(
@@ -303,10 +324,14 @@ def housing_units_monitoring(request, position):
     # For Fourth Member (Jocel), this would be their primary site
     site_id = request.GET.get('site_id')
     site = None
-    all_sites = RelocationSite.objects.all()
 
-    # Evaluate all_sites once as a list to avoid a second COUNT query from .exists().
-    all_sites_list = list(all_sites)
+    # Cache the site list for 5 minutes — sites rarely change.
+    _sites_cache_key = 'housing_all_sites_v1'
+    all_sites_list = cache.get(_sites_cache_key)
+    if all_sites_list is None:
+        all_sites_list = list(RelocationSite.objects.all())
+        cache.set(_sites_cache_key, all_sites_list, 300)
+
     if site_id:
         site = next((s for s in all_sites_list if str(s.id) == str(site_id)), None)
         if not site:
@@ -331,62 +356,174 @@ def housing_units_monitoring(request, position):
         if not cache.get(_sync_cache_key):
             cache.set(_sync_cache_key, True, 120)  # 2-minute TTL
             _sync_site_housing_unit_occupancy(site)
+            # After sync, bump data version so the dashboard cache refreshes.
+            _bump_housing_units_data_version()
 
-    # Get all units for the site with related data (empty when no sites exist yet)
-    if no_relocation_sites:
-        units = HousingUnit.objects.none()
+    # -------------------------------------------------------------------
+    # Server-side cache for the heavy DB work (units + construction progress).
+    # Keyed by data_version + site + position so any write invalidates it.
+    # -------------------------------------------------------------------
+    _data_version = _get_housing_units_data_version()
+    _site_pk = str(site.pk) if site else 'none'
+    _ctx_cache_key = f'housing_units_ctx_v2_{_data_version}_{_site_pk}_{position}'
+    _cached_ctx = cache.get(_ctx_cache_key) if not no_relocation_sites else None
+
+    if _cached_ctx is not None:
+        units_list = _cached_ctx['units_list']
+        units_by_block = _cached_ctx['units_by_block']
+        occupied_count = _cached_ctx['occupied_count']
+        vacant_count = _cached_ctx['vacant_count']
+        notice_30_count = _cached_ctx['notice_30_count']
+        notice_10_count = _cached_ctx['notice_10_count']
+        repossessed_count = _cached_ctx['repossessed_count']
+        escalated_units = _cached_ctx['escalated_units']
+        critical_alert_message = _cached_ctx['critical_alert_message']
+        has_final_notice_alerts = _cached_ctx['has_final_notice_alerts']
+        construction_not_started = _cached_ctx['construction_not_started']
+        construction_in_progress = _cached_ctx['construction_in_progress']
+        construction_completed = _cached_ctx['construction_completed']
+        construction_delayed = _cached_ctx['construction_delayed']
+        housing_unit_on_file_count = _cached_ctx['housing_unit_on_file_count']
+        housing_unit_kpi_count = _cached_ctx.get('housing_unit_kpi_count', occupied_count)
     else:
-        units = (
-            HousingUnit.objects
-            .filter(site=site)
-            .prefetch_related(_HOUSING_UNITS_AWARD_PREFETCH)
-            .order_by('block_number', 'lot_number')
+        # Get all units for the site with related data (empty when no sites exist yet)
+        if no_relocation_sites:
+            units = HousingUnit.objects.none()
+        else:
+            units = (
+                HousingUnit.objects
+                .filter(site=site)
+                .prefetch_related(_HOUSING_UNITS_AWARD_PREFETCH)
+                .order_by('block_number', 'lot_number')
+            )
+
+        units_list = list(units)
+        units_list.sort(key=lambda u: _block_lot_sort_key(u.block_number, u.lot_number))
+        for u in units_list:
+            setattr(u, 'is_historical_beneficiary', is_historical_lot_award(_active_lot_award_for_unit(u)))
+        occupied_count = sum(
+            1 for u in units_list
+            if u.status == 'Occupied' and not getattr(u, 'is_historical_beneficiary', False)
+        )
+        vacant_count = sum(
+            1 for u in units_list if HousingUnit.is_vacant_available_status(u.status)
+        )
+        notice_30_count = sum(1 for u in units_list if u.status == 'Under notice (30-day)')
+        notice_10_count = sum(1 for u in units_list if u.status == 'Final notice (10-day)')
+        repossessed_count = sum(1 for u in units_list if u.status == 'Repossessed')
+        # Compute kpi_count here so it's available for both context and cache payload.
+        _hist_count = sum(1 for u in units_list if getattr(u, 'is_historical_beneficiary', False))
+        housing_unit_kpi_count = occupied_count + _hist_count
+
+        # Find critical alerts (final notices escalated) without extra SQL.
+        escalated_units = next(
+            (
+                u for u in units_list
+                if u.status == 'Final notice (10-day)' and u.is_escalated
+            ),
+            None,
         )
 
-    units_list = list(units)
-    units_list.sort(key=lambda u: _block_lot_sort_key(u.block_number, u.lot_number))
-    for u in units_list:
-        setattr(u, 'is_historical_beneficiary', is_historical_lot_award(_active_lot_award_for_unit(u)))
-    occupied_count = sum(
-        1 for u in units_list
-        if u.status == 'Occupied' and not getattr(u, 'is_historical_beneficiary', False)
-    )
-    vacant_count = sum(
-        1 for u in units_list if HousingUnit.is_vacant_available_status(u.status)
-    )
-    notice_30_count = sum(1 for u in units_list if u.status == 'Under notice (30-day)')
-    notice_10_count = sum(1 for u in units_list if u.status == 'Final notice (10-day)')
-    repossessed_count = sum(1 for u in units_list if u.status == 'Repossessed')
+        critical_alert_message = ""
+        has_final_notice_alerts = notice_10_count > 0 or any(u.is_escalated for u in units_list)
 
-    # Find critical alerts (final notices escalated) without extra SQL.
-    escalated_units = next(
-        (
-            u for u in units_list
-            if u.status == 'Final notice (10-day)' and u.is_escalated
-        ),
-        None,
-    )
+        if escalated_units:
+            critical_alert_message = (
+                f"Block {escalated_units.block_number}, Lot {escalated_units.lot_number} — "
+                f"{escalated_units.occupant_name or 'Unknown'}. "
+                f"Deadline: {escalated_units.notice_deadline}. No response received — case escalated."
+            )
 
-    critical_alert_message = ""
-    has_final_notice_alerts = notice_10_count > 0 or any(u.is_escalated for u in units_list)
-
-    if escalated_units:
-        critical_alert_message = (
-            f"Block {escalated_units.block_number}, Lot {escalated_units.lot_number} — "
-            f"{escalated_units.occupant_name or 'Unknown'}. "
-            f"Deadline: {escalated_units.notice_deadline}. No response received — case escalated."
+        # Group units by block (OrderedDict so template can use .items() like a dict)
+        units_by_block = OrderedDict()
+        for u in units_list:
+            units_by_block.setdefault(u.block_number, []).append(u)
+        units_by_block = OrderedDict(
+            sorted(units_by_block.items(), key=lambda item: _block_lot_sort_key(item[0]))
         )
 
-    # Group units by block (OrderedDict so template can use .items() like a dict)
-    units_by_block = OrderedDict()
-    for u in units_list:
-        units_by_block.setdefault(u.block_number, []).append(u)
-    units_by_block = OrderedDict(
-        sorted(units_by_block.items(), key=lambda item: _block_lot_sort_key(item[0]))
-    )
+        # Construction monitoring rollups + per-unit snapshot (MVP)
+        construction_not_started = 0
+        construction_in_progress = 0
+        construction_completed = 0
+        construction_delayed = 0
+        housing_unit_on_file_count = 0
+        progress_by_unit_id = {}
+
+        if not no_relocation_sites and units_list:
+            progress_qs = (
+                ConstructionProgress.objects.filter(
+                    lot_award__unit__in=units_list,
+                    lot_award__status='active',
+                )
+                .select_related('lot_award__unit')
+                .prefetch_related(
+                    'lot_award__monitoring_tasks__reports',
+                    'lot_award__monitoring_cycles'
+                )
+            )
+            for p in progress_qs:
+                uid = getattr(p.lot_award, 'unit_id', None)
+                if uid and uid not in progress_by_unit_id:
+                    progress_by_unit_id[uid] = p
+
+            for u in units_list:
+                p = progress_by_unit_id.get(u.id)
+                setattr(u, '_construction_progress', p)
+                la = getattr(p, 'lot_award', None)
+                on_file = housing_unit_on_file(la, p)
+                setattr(u, 'is_housing_unit_on_file', on_file)
+                if on_file:
+                    housing_unit_on_file_count += 1
+                if not p:
+                    setattr(u, 'is_housing_unit_on_file', False)
+                    setattr(u, 'construction_tokens', '')
+                    continue
+                tokens = []
+                if p.is_delayed:
+                    construction_delayed += 1
+                    tokens.append('delayed')
+                if p.stage == 'not_started' or p.percent_complete <= 0:
+                    construction_not_started += 1
+                    tokens.append('not_started')
+                elif p.stage == 'completed' or p.percent_complete >= 100:
+                    construction_completed += 1
+                    tokens.append('completed')
+                else:
+                    construction_in_progress += 1
+                    tokens.append('in_progress')
+                setattr(u, 'construction_tokens', ' '.join(tokens))
+
+            ext_failed_unit_ids = _unit_ids_with_extension_month_2_failed(units_list)
+            for u in units_list:
+                setattr(u, 'extension_final_visit_failed', u.id in ext_failed_unit_ids)
+        else:
+            for u in units_list:
+                setattr(u, 'extension_final_visit_failed', False)
+
+        # Cache all computed data for 120s — version stamp ensures invalidation on writes.
+        if not no_relocation_sites:
+            cache.set(_ctx_cache_key, {
+                'units_list': units_list,
+                'units_by_block': units_by_block,
+                'occupied_count': occupied_count,
+                'vacant_count': vacant_count,
+                'notice_30_count': notice_30_count,
+                'notice_10_count': notice_10_count,
+                'repossessed_count': repossessed_count,
+                'escalated_units': escalated_units,
+                'critical_alert_message': critical_alert_message,
+                'has_final_notice_alerts': has_final_notice_alerts,
+                'construction_not_started': construction_not_started,
+                'construction_in_progress': construction_in_progress,
+                'construction_completed': construction_completed,
+                'construction_delayed': construction_delayed,
+                'housing_unit_on_file_count': housing_unit_on_file_count,
+                'housing_unit_kpi_count': housing_unit_kpi_count,  # pre-computed above
+            }, 120)  # 120s — sync throttle is also 2 min, keeps them aligned
+
 
     from applications.views import get_module2_permissions
-
     permissions = get_module2_permissions(request.user)
     can_create_relocation_site = request.user.position in _MODULE4_CREATE_SITE_POSITIONS
     can_add_housing_unit = (
@@ -395,64 +532,12 @@ def housing_units_monitoring(request, position):
         and site is not None
     )
 
-    # Construction monitoring rollups + per-unit snapshot (MVP)
-    construction_not_started = 0
-    construction_in_progress = 0
-    construction_completed = 0
-    construction_delayed = 0
-    housing_unit_on_file_count = 0
-    progress_by_unit_id = {}
-
-    if not no_relocation_sites and units_list:
-        progress_qs = (
-            ConstructionProgress.objects.filter(
-                lot_award__unit__in=units_list,
-                lot_award__status='active',
-            )
-            .select_related('lot_award__unit')
-            .prefetch_related(
-                'lot_award__monitoring_tasks__reports',
-                'lot_award__monitoring_cycles'
-            )
-        )
-        for p in progress_qs:
-            uid = getattr(p.lot_award, 'unit_id', None)
-            if uid and uid not in progress_by_unit_id:
-                progress_by_unit_id[uid] = p
-
-        for u in units_list:
-            p = progress_by_unit_id.get(u.id)
-            setattr(u, '_construction_progress', p)
-            la = getattr(p, 'lot_award', None)
-            on_file = housing_unit_on_file(la, p)
-            setattr(u, 'is_housing_unit_on_file', on_file)
-            if on_file:
-                housing_unit_on_file_count += 1
-            if not p:
-                setattr(u, 'is_housing_unit_on_file', False)
-                setattr(u, 'construction_tokens', '')
-                continue
-            tokens = []
-            if p.is_delayed:
-                construction_delayed += 1
-                tokens.append('delayed')
-            if p.stage == 'not_started' or p.percent_complete <= 0:
-                construction_not_started += 1
-                tokens.append('not_started')
-            elif p.stage == 'completed' or p.percent_complete >= 100:
-                construction_completed += 1
-                tokens.append('completed')
-            else:
-                construction_in_progress += 1
-                tokens.append('in_progress')
-            setattr(u, 'construction_tokens', ' '.join(tokens))
-
-        ext_failed_unit_ids = _unit_ids_with_extension_month_2_failed(units_list)
-        for u in units_list:
-            setattr(u, 'extension_final_visit_failed', u.id in ext_failed_unit_ids)
-    else:
-        for u in units_list:
-            setattr(u, 'extension_final_visit_failed', False)
+    # Barangays: cached separately — almost never change.
+    _brgy_cache_key = 'housing_active_barangays_v1'
+    _barangays = cache.get(_brgy_cache_key)
+    if _barangays is None:
+        _barangays = list(Barangay.objects.filter(is_active=True).order_by('name'))
+        cache.set(_brgy_cache_key, _barangays, 600)  # 10-minute TTL
 
     # Prepare context
     context = {
@@ -461,31 +546,30 @@ def housing_units_monitoring(request, position):
         'all_sites': all_sites_list,
         'no_relocation_sites': no_relocation_sites,
         'show_dev_seed_hint': no_relocation_sites and settings.DEBUG,
-        'total_units': len(units_list),
-        'occupied_count': occupied_count,
-        'vacant_count': vacant_count,
-        'notice_30_count': notice_30_count,
-        'notice_10_count': notice_10_count,
-        'repossessed_count': repossessed_count,
-        'housing_unit_kpi_count': occupied_count + sum(1 for u in units_list if getattr(u, 'is_historical_beneficiary', False)),
-        'units_by_block': units_by_block,
-        'all_units': units_list,
-        'has_final_notice_alerts': has_final_notice_alerts,
-        'critical_alert_message': critical_alert_message,
+        'total_units': len(units_list) if not no_relocation_sites else 0,
+        'occupied_count': occupied_count if not no_relocation_sites else 0,
+        'vacant_count': vacant_count if not no_relocation_sites else 0,
+        'notice_30_count': notice_30_count if not no_relocation_sites else 0,
+        'notice_10_count': notice_10_count if not no_relocation_sites else 0,
+        'repossessed_count': repossessed_count if not no_relocation_sites else 0,
+        'housing_unit_kpi_count': housing_unit_kpi_count if not no_relocation_sites else 0,
+        'units_by_block': units_by_block if not no_relocation_sites else OrderedDict(),
+        'all_units': units_list if not no_relocation_sites else [],
+        'has_final_notice_alerts': has_final_notice_alerts if not no_relocation_sites else False,
+        'critical_alert_message': critical_alert_message if not no_relocation_sites else '',
         # Aliases for template compatibility
-        'has_escalation_alerts': has_final_notice_alerts,
-        'escalation_message': critical_alert_message,
+        'has_escalation_alerts': has_final_notice_alerts if not no_relocation_sites else False,
+        'escalation_message': critical_alert_message if not no_relocation_sites else '',
         'view_mode': request.GET.get('view', 'grid'),
         'permissions': permissions,
         'can_add_housing_unit': can_add_housing_unit,
         'can_create_relocation_site': can_create_relocation_site,
-        # Eagerly evaluate Barangay queryset — avoids lazy re-evaluation during template render.
-        'barangays': list(Barangay.objects.filter(is_active=True).order_by('name')),
-        'construction_not_started': construction_not_started,
-        'construction_in_progress': construction_in_progress,
-        'construction_completed': construction_completed,
-        'construction_delayed': construction_delayed,
-        'housing_unit_on_file_count': housing_unit_on_file_count,
+        'barangays': _barangays,
+        'construction_not_started': construction_not_started if not no_relocation_sites else 0,
+        'construction_in_progress': construction_in_progress if not no_relocation_sites else 0,
+        'construction_completed': construction_completed if not no_relocation_sites else 0,
+        'construction_delayed': construction_delayed if not no_relocation_sites else 0,
+        'housing_unit_on_file_count': housing_unit_on_file_count if not no_relocation_sites else 0,
         'explanation_letter_office_tz': str(settings.TIME_ZONE),
     }
 
@@ -1146,6 +1230,7 @@ def create_housing_unit(request, position):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+    _bump_housing_units_data_version()
     return JsonResponse(
         {
             'success': True,
@@ -1235,6 +1320,7 @@ def update_housing_unit(request, position, unit_id):
             status=400,
         )
 
+    _bump_housing_units_data_version()
     return JsonResponse(
         {
             'success': True,
@@ -1350,9 +1436,8 @@ def delete_housing_unit(request, position, unit_id):
         )
 
     label = f'Block {unit.block_number} Lot {unit.lot_number}'
-    site_name = unit.site.name if unit.site else ''
     unit.delete()
-
+    _bump_housing_units_data_version()
     return JsonResponse(
         {
             'success': True,
