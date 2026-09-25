@@ -4,6 +4,16 @@ set -euo pipefail
 python manage.py migrate --noinput --skip-checks
 python manage.py createcachetable
 
+# Sync Site domain + Google SocialApp credentials on every deploy.
+# Fixes 401 "Third-Party Login Failure" caused by Site domain mismatch
+# (DB was set to localhost:8000 from local dev; Railway needs ihsms.up.railway.app).
+# Command is idempotent — safe to run repeatedly.
+if [ -n "${GOOGLE_OAUTH_CLIENT_ID:-}" ] && [ -n "${GOOGLE_OAUTH_CLIENT_SECRET:-}" ]; then
+  python manage.py setup_google_oauth \
+    --site-domain "ihsms.up.railway.app" \
+    --site-name "IHSMS"
+fi
+
 if [ -n "${MEDIA_ROOT:-}" ] && [ -d /app/media ] && [ "$MEDIA_ROOT" != /app/media ]; then
   cp -rn /app/media/. "$MEDIA_ROOT"/ 2>/dev/null || true
 fi
