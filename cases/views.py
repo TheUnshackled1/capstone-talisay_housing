@@ -188,6 +188,7 @@ def _case_management_list_context(request, position, include_drawer_rows=False):
         return cached
 
     # Aggregate counts — bare Case.objects (no select_related JOIN overhead).
+    # NOTE: this runs inside the cache miss path so it only hits the DB on cold load.
     status_counts = Case.objects.aggregate(
         pending_review=models.Count('pk', filter=models.Q(status=wf.STATUS_PENDING_REVIEW)),
         under_review=models.Count('pk', filter=models.Q(status=wf.STATUS_UNDER_REVIEW)),
@@ -393,7 +394,7 @@ def _case_management_list_context(request, position, include_drawer_rows=False):
         'settled_incident_rows': settled_incident_rows,
         'settled_on_site_count': settled_on_site_count,
     }
-    cache.set(_cache_key, ctx, 30)
+    cache.set(_cache_key, ctx, 120)  # 120s TTL — bumped on writes via _bump_case_desk_data_version
     return ctx
 
 

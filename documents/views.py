@@ -26,9 +26,33 @@ from units.historical_beneficiary import (
     document_vault_applicant_q,
     is_historical_applicant,
 )
-from documents.models import Document, DocumentBlob
+from documents.models import Document, DocumentBlob, RequirementSubmission
+from intake.models import HouseholdMember
 
 DOCUMENTS_MANAGEMENT_PER_PAGE = 10
+
+# ---------------------------------------------------------------------------
+# Module-level constants for document_management view (defined once at startup)
+# ---------------------------------------------------------------------------
+_DOC_MGMT_AWARDED_STATUSES = frozenset({
+    'Awarded lot', 'Housing Units', 'Historical beneficiary', 'Awarded — pending unit linkage',
+})
+
+
+def _doc_mgmt_stage_key(a):
+    """Stage bucket for a document_management applicants_list row."""
+    ws = a.get('applicant_workflow_status') or ''
+    if a.get('has_blacklist_record') or ws == 'Blacklisted Beneficiaries registry':
+        return 'blacklisted'
+    if 'archived' in (a.get('status') or '').lower():
+        return 'archived'
+    if ws in _DOC_MGMT_AWARDED_STATUSES:
+        return 'awarded'
+    if ws == 'Ready for Awarding':
+        return 'ready_for_awarding'
+    if ws == 'Ready for Form queue':
+        return 'ready_for_form'
+    return 'evaluation'
 
 
 def _applicant_hover_location(applicant: Applicant, lot_info: dict | None) -> str:
@@ -491,19 +515,9 @@ def document_management(request, position):
             | document_vault_applicant_q()
         )
         .distinct()
-        # Aggregate counts in SQL AFTER deduplication to avoid JOIN inflation.
-        .annotate(
-            _doc_count=Count('documents', distinct=True),
-            _hh_count=Count('household_members', distinct=True),
-            _group_a_verified=Count(
-                'requirement_submissions',
-                filter=Q(
-                    requirement_submissions__requirement__group='A',
-                    requirement_submissions__status='verified',
-                ),
-                distinct=True,
-            ),
-        )
+        # NOTE: Count(distinct=True) annotations removed — they generate correlated
+        # subqueries per row on top of DISTINCT+3-way-OR, causing ~16s load times.
+        # Doc/HH/submission counts are now computed as 3 fast bulk IN-list queries below.
     )
 
     # Filter by status
@@ -552,16 +566,21 @@ def document_management(request, position):
         base_applicants_qs = applicants_qs
         base_applicants_ordered = list(base_applicants_qs)
         base_applicants_total = len(base_applicants_ordered)
-        # Derive document totals from a lean query scoped to already-known applicant IDs.
-        # Avoids re-evaluating the full annotated+distinct queryset a second time.
         _base_ids = [a.pk for a in base_applicants_ordered]
-        _doc_agg = (
-            Document.objects
-            .filter(applicant_id__in=_base_ids)
-            .aggregate(total_count=Count('id'), total_size=Sum('file_size'))
-        )
-        base_documents_count = _doc_agg['total_count'] or 0
-        base_size_sum = _doc_agg['total_size'] or 0
+
+        # Single Document query for BOTH global stats and per-applicant doc counts.
+        # Previously two separate queries hit the same table with the same ID list.
+        _doc_count_map = defaultdict(int)
+        _doc_size_map = defaultdict(int)
+        for row in (Document.objects
+                    .filter(applicant_id__in=_base_ids)
+                    .values('applicant_id')
+                    .annotate(n=Count('id'), sz=Sum('file_size'))):
+            _doc_count_map[row['applicant_id']] = row['n']
+            _doc_size_map[row['applicant_id']] = row['sz'] or 0
+
+        base_documents_count = sum(_doc_count_map.values())
+        base_size_sum = sum(_doc_size_map.values())
         base_total_size_gb = round(base_size_sum / (1024 * 1024 * 1024), 2)
 
         # Filter by KPI card (Applicants vs Blacklisted) - for display only
@@ -574,15 +593,60 @@ def document_management(request, position):
         QUEUE_RANK = {'priority': 0, 'walk_in': 1}
         QUEUE_LABEL = {'priority': 'Priority', 'walk_in': 'Walk-in'}
 
-        # Evaluate once so we can bulk-load Module 4 blacklist rows (why disqualified).
-        applicants_ordered = list(applicants_qs)
-        bl_applicant_ids = [a.pk for a in applicants_ordered]
-        blacklist_map = {
-            str(b.applicant_id): b
-            for b in Blacklist.objects.filter(applicant_id__in=bl_applicant_ids).only(
-                'applicant_id', 'supporting_notes', 'reason_details'
-            )
-        }
+        # When kpi_filter is set, re-evaluate the filtered queryset;
+        # otherwise reuse the already-materialised base list (avoids a second DB round-trip).
+        if kpi_filter in ('blacklisted', 'applicants'):
+            applicants_ordered = list(applicants_qs)
+            bl_applicant_ids = [a.pk for a in applicants_ordered]
+            # Re-build _doc_count_map scoped to the filtered set.
+            _doc_count_map = defaultdict(int)
+            for row in (Document.objects
+                        .filter(applicant_id__in=bl_applicant_ids)
+                        .values('applicant_id')
+                        .annotate(n=Count('id'))):
+                _doc_count_map[row['applicant_id']] = row['n']
+        else:
+            # No kpi_filter — reuse the base list and already-computed doc count map.
+            applicants_ordered = base_applicants_ordered
+            bl_applicant_ids = _base_ids
+
+        # Bulk-compute HH + Group A verified counts in 2 more lean IN-list queries.
+        # (Doc counts were already computed in the combined query above.)
+        _hh_count_map = defaultdict(int)
+        for row in (HouseholdMember.objects
+                    .filter(applicant_id__in=bl_applicant_ids)
+                    .values('applicant_id')
+                    .annotate(n=Count('id'))):
+            _hh_count_map[row['applicant_id']] = row['n']
+
+        _group_a_verified_map = defaultdict(int)
+        for row in (RequirementSubmission.objects
+                    .filter(
+                        applicant_id__in=bl_applicant_ids,
+                        requirement__group='A',
+                        status='verified',
+                    )
+                    .values('applicant_id')
+                    .annotate(n=Count('id'))):
+            _group_a_verified_map[row['applicant_id']] = row['n']
+
+        # Attach computed counts to applicant objects so downstream code is unchanged.
+        for a in applicants_ordered:
+            a._doc_count = _doc_count_map.get(a.pk, 0)
+            a._hh_count = _hh_count_map.get(a.pk, 0)
+            a._group_a_verified = _group_a_verified_map.get(a.pk, 0)
+
+        # Cache the blacklist map for 2 min — it's a full table scan and rarely changes.
+        _bl_map_cache_key = f'doc_mgmt_bl_map_{hashlib.md5(str(sorted(str(x) for x in bl_applicant_ids)).encode()).hexdigest()}'
+        blacklist_map = cache.get(_bl_map_cache_key)
+        if blacklist_map is None:
+            blacklist_map = {
+                str(b.applicant_id): b
+                for b in Blacklist.objects.filter(applicant_id__in=bl_applicant_ids).only(
+                    'applicant_id', 'supporting_notes', 'reason_details'
+                )
+            }
+            cache.set(_bl_map_cache_key, blacklist_map, 120)
 
         # Prepare applicants with lot info and document count
         applicants_list = []
@@ -690,38 +754,18 @@ def document_management(request, position):
                 '_queue_position_sort': queue_position if queue_position is not None else 10**9,
             })
             
+        # Sort before caching so warm requests skip the O(N log N) sort.
+        applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
+
         cache.set(_cache_key, {
             'base_documents_count': base_documents_count,
             'base_size_sum': base_size_sum,
             'base_total_size_gb': base_total_size_gb,
             'base_applicants_total': base_applicants_total,
             'applicants_list': applicants_list,
-        }, 60)
+        }, 300)  # 5-minute TTL — heavy distinct+OR query, don't expire every 60s
 
-    # Final ordering: priority queue first (by position), then walk-in (by position), then no-queue.
-    applicants_list.sort(key=lambda a: (a['_queue_rank'], a['_queue_position_sort'], a['full_name']))
-
-    # Workflow status values from staff_pipeline_primary_detail():
-    _AWARDED_STATUSES = frozenset({
-        'Awarded lot', 'Housing Units', 'Historical beneficiary', 'Awarded — pending unit linkage',
-    })
-    _EVALUATION_STATUSES = frozenset({
-        'Evaluation & Eligibility', 'Applicant Registration',
-    })
-
-    def _stage_key(a):
-        ws = a.get('applicant_workflow_status') or ''
-        if a.get('has_blacklist_record') or ws == 'Blacklisted Beneficiaries registry':
-            return 'blacklisted'
-        if 'archived' in (a.get('status') or '').lower():
-            return 'archived'
-        if ws in _AWARDED_STATUSES:
-            return 'awarded'
-        if ws == 'Ready for Awarding':
-            return 'ready_for_awarding'
-        if ws == 'Ready for Form queue':
-            return 'ready_for_form'
-        return 'evaluation'
+    # Final ordering already applied inside cache block above — skip re-sort on warm hits.
 
     # Capture barangay list and upload choices from full list (before any Python-level filter)
     all_barangays = sorted(set(
@@ -733,8 +777,8 @@ def document_management(request, position):
     ]
 
     # Compute stage_counts from FULL list (so tab badges show total per stage).
-    # Precompute once so _stage_key is called exactly once per item, not 7x.
-    _stage_keys_all = [_stage_key(a) for a in applicants_list]
+    # Precompute once so _doc_mgmt_stage_key is called exactly once per item, not 7x.
+    _stage_keys_all = [_doc_mgmt_stage_key(a) for a in applicants_list]
     stage_counts = {
         'all':                len(applicants_list),
         'awarded':            _stage_keys_all.count('awarded'),

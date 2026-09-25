@@ -1288,9 +1288,8 @@ def applications_list(request, position):
                 continue
             on_rfq_track = _module2_on_ready_for_form_queue_track(applicant, row['application'])
             if on_rfq_track:
+                # Count it for the badge, then skip it from the main ledger.
                 ready_for_form_queue_count += 1
-            # Routed Proceed-to-Form applicants stay on Ready for Form until Application advances past draft/completed.
-            if on_rfq_track:
                 continue
             # Once the same routed record is pushed to lot-awarding track (and later awarded),
             # keep it out of the main Application & Evaluation ledger.
