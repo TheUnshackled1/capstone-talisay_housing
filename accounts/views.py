@@ -754,52 +754,50 @@ def _staff_reports_analytics_payload(request):
     total_applicants = Applicant.objects.count()
     housing_application_records = Application.objects.count()
 
-    # ── Smart dropdown: distinct (year, month) pairs that have real remaining data ──
+    # ── Smart dropdown: continuous months between first and last recorded activity ──
+    from django.db.models import Min, Max
     from django.db.models import Exists, OuterRef, Q
-    from django.db.models.functions import ExtractYear, ExtractMonth
     from units.historical_beneficiary import HISTORICAL_BACKFILL_NOTE
 
-    # Historical GK backfill rows with no lot award left are orphans — do not
-    # keep their created_at year in the filter after the unit/beneficiary is removed.
     _has_lot_award = LotAward.objects.filter(application__applicant_id=OuterRef('pk'))
     _ap_for_periods = Applicant.objects.exclude(
         Q(application__notes__icontains=HISTORICAL_BACKFILL_NOTE) & ~Exists(_has_lot_award)
     )
-    _ap_periods = (
-        _ap_for_periods
-        .annotate(yr=ExtractYear('created_at'), mo=ExtractMonth('created_at'))
-        .values('yr', 'mo')
-        .distinct()
-        .order_by('yr', 'mo')
-    )
-    _case_periods = (
-        Case.objects
-        .filter(received_at__isnull=False)
-        .annotate(yr=ExtractYear('received_at'), mo=ExtractMonth('received_at'))
-        .values('yr', 'mo')
-        .distinct()
-        .order_by('yr', 'mo')
-    )
-    _award_periods = (
-        LotAward.objects
-        .annotate(yr=ExtractYear('awarded_at'), mo=ExtractMonth('awarded_at'))
-        .values('yr', 'mo')
-        .distinct()
-        .order_by('yr', 'mo')
-    )
-    # Merge and deduplicate (skip null extracts from bad/empty timestamps)
+
+    _min_max = []
+    
+    _ap_agg = _ap_for_periods.aggregate(min=Min('created_at'), max=Max('created_at'))
+    if _ap_agg['min'] and _ap_agg['max']:
+        _min_max.append((_ap_agg['min'], _ap_agg['max']))
+        
+    _case_agg = Case.objects.filter(received_at__isnull=False).aggregate(min=Min('received_at'), max=Max('received_at'))
+    if _case_agg['min'] and _case_agg['max']:
+        _min_max.append((_case_agg['min'], _case_agg['max']))
+        
+    _award_agg = LotAward.objects.aggregate(min=Min('awarded_at'), max=Max('awarded_at'))
+    if _award_agg['min'] and _award_agg['max']:
+        _min_max.append((_award_agg['min'], _award_agg['max']))
+
     _all_periods_set = set()
-    for _row in _ap_periods:
-        if _row['yr'] and _row['mo']:
-            _all_periods_set.add((int(_row['yr']), int(_row['mo'])))
-    for _row in _case_periods:
-        if _row['yr'] and _row['mo']:
-            _all_periods_set.add((int(_row['yr']), int(_row['mo'])))
-    for _row in _award_periods:
-        if _row['yr'] and _row['mo']:
-            _all_periods_set.add((int(_row['yr']), int(_row['mo'])))
-    # Do NOT inject the currently selected year/month — if that data was deleted
-    # (e.g. GK 2002 removed), the year must disappear from the dropdown.
+    if _min_max:
+        overall_min = min(dt for (dt, _) in _min_max)
+        overall_max = max(dt for (_, dt) in _min_max)
+        
+        # Ensure we're working in the local timezone just in case
+        overall_min = timezone.localtime(overall_min)
+        overall_max = timezone.localtime(overall_max)
+        
+        curr_y, curr_m = overall_min.year, overall_min.month
+        end_y, end_m = overall_max.year, overall_max.month
+        
+        while (curr_y, curr_m) <= (end_y, end_m):
+            _all_periods_set.add((curr_y, curr_m))
+            curr_m += 1
+            if curr_m > 12:
+                curr_m = 1
+                curr_y += 1
+
+    # Do NOT inject the currently selected year/month — if it's out of range, let it disappear
     available_periods = sorted(_all_periods_set)  # list of (year, month) tuples
     available_years = sorted(set(y for y, m in available_periods))
     # Map year → list of (month_num, month_name) for that year
@@ -813,6 +811,7 @@ def _staff_reports_analytics_payload(request):
         str(y): [{'num': m, 'name': calendar.month_name[m]} for m, _ in available_months_by_year[y]]
         for y in available_years
     }
+
 
     # Raw status breakdown — kept for CSV export only
     applicant_status_raw = sorted(
