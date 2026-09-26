@@ -2100,26 +2100,19 @@
 
     function showCaseRecordedSuccess(casePayload, fallbackMessage) {
         let caseNumber = (casePayload && casePayload.case_number) ? String(casePayload.case_number).trim() : '';
-        let statusText = 'Pending Review';
         if (fallbackMessage) {
             const caseMatch = fallbackMessage.match(/CASE-[A-Za-z0-9-]+/i);
             if (!caseNumber && caseMatch) caseNumber = caseMatch[0];
-            const statusMatch = fallbackMessage.match(/Status:\s*([A-Za-z\s]+)/i);
-            if (statusMatch) statusText = statusMatch[1].replace(/\.$/, '').trim();
         }
         closeNewCaseModal();
         const message = caseNumber
-            ? `Case ${caseNumber} was saved and added to the case list.\nStatus: ${statusText}.`
-            : `The complaint was saved and added to the case list.\nStatus: ${statusText}.`;
-        caseFlowAlert(message, 'Case recorded', 'success');
+            ? `Case ${caseNumber} was saved.`
+            : 'The complaint was saved.';
+        caseFlowAlert(message, 'Case Recorded', 'success');
         const refWrap = document.getElementById('flowAlertRefWrap');
-        if (refWrap && caseNumber) {
+        if (refWrap) {
             refWrap.innerHTML = '';
-            const pill = document.createElement('span');
-            pill.className = 'flow-alert-ref-pill';
-            pill.textContent = caseNumber;
-            refWrap.appendChild(pill);
-            refWrap.style.display = 'block';
+            refWrap.style.display = 'none';
         }
     }
 
