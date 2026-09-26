@@ -1354,7 +1354,9 @@ def unarchive_applicant(request, position):
                 applicant.module2_handoff_at = None
                 applicant.module2_handoff_by = None
                 applicant.save(update_fields=['module2_handoff_at', 'module2_handoff_by'])
-                
+
+        cache.delete('intake_applicants_list_payload')
+
         return JsonResponse({
             'success': True,
             'message': f'Applicant "{applicant.full_name}" restored successfully.'
@@ -1497,6 +1499,8 @@ def proceed_to_applications(request, position):
                     )
 
             transaction.on_commit(_send_proceed_sms_after_commit)
+
+    cache.delete('intake_applicants_list_payload')
 
     return JsonResponse({
         'success': True,
@@ -1755,13 +1759,13 @@ def applicants_list(request, position):
                 vault_types=walk_in_vault_types_by_applicant.get(app.id, set()),
             ))
 
-        # Mini-table (REGISTERED APPLICANTS): shows all archives that have NOT been
-        # formally closed via "ARCHIVE record" (formally_archived=False).
-        # This includes both:
-        #   - Newly proceeded applicants (is_restored=False, formally_archived=False)
-        #   - Restored applicants (is_restored=True, formally_archived=False)
-        # Once "ARCHIVE record" is clicked (sets formally_archived=True), they leave
-        # this table and appear only in archive_list.html with RESTORE button enabled.
+        # Mini-table (REGISTERED APPLICANTS): archives not formally closed
+        # (formally_archived=False). Includes:
+        #   - Newly proceeded (is_restored=False, formally_archived=False)
+        #   - Restored (is_restored=True, formally_archived=False) — also still
+        #     listed on archive_list with RESTORE locked.
+        # "ARCHIVE record" sets formally_archived=True → leaves this table;
+        # row remains on archive_list with RESTORE enabled.
         archive_records = []
         archives = list(
             Archive.objects.filter(
@@ -2402,8 +2406,14 @@ def archive_list(request, position):
         selected_stage = ''
     search_query = (request.GET.get('q') or '').strip()
 
+    # Formally archived rows stay on Archives forever for history.
+    # Restored rows (is_restored=True, formally_archived=False) also stay listed
+    # with RESTORE locked ("Already in Registration"). Staging-only rows
+    # (never ARCHIVE record: formally_archived=False, is_restored=False) are excluded.
     archives_qs = (
-        Archive.objects.exclude(
+        Archive.objects.filter(
+            Q(formally_archived=True) | Q(is_restored=True),
+        ).exclude(
             intake_registration_exclude_q(prefix='applicant__'),
         ).exclude(
             applicant__application__isnull=False,
@@ -2610,11 +2620,11 @@ def archive_list(request, position):
             'formPreviewUrl': form_preview_url,
             'formPreviewKind': form_preview_kind,
             # Restorable only when:
-            # 1. The archive IS formally_archived (staff clicked "ARCHIVE record")
-            # 2. The archive is NOT already restored (is_restored=True = back in working list)
-            # 3. module2_handoff_at=None (not in Evaluation & Eligibility)
-            # 4. Has not yet received an Application (Evaluation/Form/Awarding/Housing
-            #    applicants have Applications and are excluded from this page entirely).
+            # 1. formally_archived (staff clicked "ARCHIVE record")
+            # 2. not already restored (is_restored=True → back on REGISTERED;
+            #    row stays on Archives with RESTORE locked "Already in Registration")
+            # 3. module2_handoff_at=None (else locked "Already in Evaluation & Eligibility")
+            # 4. no Application yet (those rows are excluded from this page)
             'isRestorable': (
                 archive.formally_archived
                 and not archive.is_restored
