@@ -306,6 +306,19 @@ MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 MODULE1_MAX_YEARS_RESIDING_TALISAY = 99
 
 
+def _age_from_dob(date_of_birth):
+    """Whole-year age from a date of birth. Returns None if missing or future."""
+    if not date_of_birth:
+        return None
+    today = timezone.localdate()
+    age = today.year - date_of_birth.year - (
+        (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
+    )
+    if age < 0:
+        return None
+    return age
+
+
 def _parse_years_residing(raw):
     """Normalize years residing to 0–99 (2 digits). Returns None if empty/invalid."""
     if raw is None:
@@ -1590,7 +1603,7 @@ def _build_intake_applicant_review_payload(
         'civilStatus': app.get_civil_status_display() if app.civil_status else '',
         'isRegisteredVoterTalisay': bool(app.is_registered_voter_talisay),
         'hasPropertyInTalisay': bool(app.has_property_in_talisay),
-        'age': app.age,
+        'age': _age_from_dob(app.date_of_birth) if app.date_of_birth else app.age,
         'dateOfBirth': app.date_of_birth.isoformat() if app.date_of_birth else '',
         'barangay': app.barangay.name if app.barangay else 'Unknown',
         'phoneNumber': app.phone_number or '',
@@ -1914,7 +1927,11 @@ def applicants_list(request, position):
                 'civilStatus': (
                     live.get_civil_status_display() if live is not None and live.civil_status else ''
                 ),
-                'age': live.age if live is not None else None,
+                'age': (
+                    _age_from_dob(live.date_of_birth)
+                    if live is not None and live.date_of_birth
+                    else (live.age if live is not None else None)
+                ),
                 'dateOfBirth': (
                     live.date_of_birth.isoformat()
                     if live is not None and live.date_of_birth
@@ -2128,12 +2145,7 @@ def walkin_register(request, position):
         return redirect(applicants_list_url)
 
     date_of_birth = form.cleaned_data.get('date_of_birth')
-    computed_age = None
-    if date_of_birth:
-        today = timezone.localdate()
-        computed_age = today.year - date_of_birth.year - (
-            (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
-        )
+    computed_age = _age_from_dob(date_of_birth)
 
     # Get barangay instance
     barangay_name = form.cleaned_data['barangay']

@@ -2299,8 +2299,11 @@ function getCsrfToken() {
             // Populate all fields
             if (sexEl) sexEl.value = currentApplicant.sex === 'M' ? 'Male' : currentApplicant.sex === 'F' ? 'Female' : (currentApplicant.sex || '');
             if (civilStatusEl) civilStatusEl.value = currentApplicant.civilStatus || '';
-            if (ageEl) ageEl.value = currentApplicant.age ?? '';
             if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
+            if (ageEl) {
+                const computedAge = ageFromDobValue(currentApplicant.dateOfBirth || (dobEl && dobEl.value));
+                ageEl.value = computedAge != null ? computedAge : (currentApplicant.age ?? '');
+            }
             if (barangayEl) barangayEl.value = currentApplicant.barangay || '';
             const barangayDisplayEl = document.getElementById('reviewBarangayDisplay');
             if (barangayDisplayEl) barangayDisplayEl.textContent = currentApplicant.barangay || '—';
@@ -2869,8 +2872,9 @@ function getCsrfToken() {
         const sexDisplay = applicant.sex === 'M' ? 'Male' : applicant.sex === 'F' ? 'Female' : (applicant.sex || '');
         setValue('reviewSexB', sexDisplay);
         setValue('reviewCivilStatusB', applicant.civilStatus || '');
-        setValue('reviewAgeB', applicant.age ?? '');
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
+        const computedAgeB = ageFromDobValue(applicant.dateOfBirth);
+        setValue('reviewAgeB', computedAgeB != null ? computedAgeB : (applicant.age ?? ''));
         const voterEl = document.getElementById('reviewVoterB');
         if (voterEl) voterEl.value = applicant.isRegisteredVoterTalisay ? 'yes' : 'no';
         const voterDisplayEl = document.getElementById('reviewVoterBDisplay');
@@ -4347,6 +4351,21 @@ function getCsrfToken() {
         }
     }
 
+    /** Whole-year age from YYYY-MM-DD (or Date). Returns null if empty/invalid/future. */
+    function ageFromDobValue(dobValue) {
+        if (dobValue == null || dobValue === '') return null;
+        const dob = dobValue instanceof Date ? dobValue : new Date(dobValue);
+        if (Number.isNaN(dob.getTime())) return null;
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+        if (age < 0) return null;
+        return age;
+    }
+
     // Auto-calculate age from date of birth (optional; no eligibility gates).
     function calculateAge() {
         const dobInput = document.getElementById('dateOfBirth');
@@ -4358,20 +4377,8 @@ function getCsrfToken() {
             return null;
         }
 
-        const dob = new Date(dobInput.value);
-        if (Number.isNaN(dob.getTime())) {
-            ageInput.value = '';
-            return null;
-        }
-
-        const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            age--;
-        }
-
-        if (age < 0) {
+        const age = ageFromDobValue(dobInput.value);
+        if (age == null) {
             ageInput.value = '';
             return null;
         }
