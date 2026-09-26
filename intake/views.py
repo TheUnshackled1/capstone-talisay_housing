@@ -1084,6 +1084,7 @@ def update_applicant(request, position):
                 setattr(applicant, field, request.POST.get(field) == 'true')
 
         applicant.save()
+        cache.delete('intake_applicants_list_payload')
 
         new_danger_zone_type = (applicant.danger_zone_type or '').strip()
         new_danger_zone_location = (applicant.danger_zone_location or '').strip()
@@ -1866,6 +1867,10 @@ def applicants_list(request, position):
                 required_total,
                 blacklist_blocked=bool(bl_gate.get('blacklistBlocked')),
             )
+            # Live Applicant scalars for Record Sheet reopen (snapshots alone omit voter/years).
+            live = archive.applicant if (archive.applicant_id and archive.applicant) else None
+            live_years = live.years_residing if live is not None else None
+            live_income = float(live.monthly_income) if live is not None and live.monthly_income is not None else None
             archive_records.append({
                 'id': str(archive.id),
                 'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
@@ -1873,11 +1878,14 @@ def applicants_list(request, position):
                 'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',
                 'referenceNumber': archive.reference_number_snapshot,
                 'fullName': archive.full_name_snapshot,
-                'lastName': archive.last_name_snapshot or '',
-                'firstName': archive.first_name_snapshot or '',
-                'middleName': archive.middle_name_snapshot or '',
-                'extensionName': archive.extension_name_snapshot or '',
-                'barangay': archive.barangay_name_snapshot,
+                'lastName': (live.last_name if live is not None else None) or archive.last_name_snapshot or '',
+                'firstName': (live.first_name if live is not None else None) or archive.first_name_snapshot or '',
+                'middleName': (live.middle_name if live is not None else None) or archive.middle_name_snapshot or '',
+                'extensionName': (live.extension_name if live is not None else None) or archive.extension_name_snapshot or '',
+                'barangay': (
+                    (live.barangay.name if live is not None and live.barangay_id else None)
+                    or archive.barangay_name_snapshot
+                ),
                 'channel': channel_code,
                 'channelLabel': channel_label,
                 'handledBy': archive.archived_by.get_full_name() if archive.archived_by else 'Unknown',
@@ -1902,6 +1910,50 @@ def applicants_list(request, position):
                 'applicantId': str(archive.applicant_id) if archive.applicant_id else '',
                 'displacementReason': disp_snapshot,
                 'archiveDispNameClass': _archive_list_name_class_for_displacement(disp_snapshot),
+                'sex': (live.sex if live is not None else '') or '',
+                'civilStatus': (
+                    live.get_civil_status_display() if live is not None and live.civil_status else ''
+                ),
+                'age': live.age if live is not None else None,
+                'dateOfBirth': (
+                    live.date_of_birth.isoformat()
+                    if live is not None and live.date_of_birth
+                    else ''
+                ),
+                'isRegisteredVoterTalisay': bool(live.is_registered_voter_talisay) if live is not None else False,
+                'hasPropertyInTalisay': bool(live.has_property_in_talisay) if live is not None else False,
+                'phoneNumber': applicant_phone,
+                'currentAddress': (live.current_address if live is not None else '') or '',
+                'householdSize': live.household_size if live is not None else None,
+                'monthlyIncome': live_income,
+                'incomeEligible': bool(live.is_income_eligible) if live is not None else False,
+                'incomeCeilingPeso': MODULE1_MONTHLY_INCOME_CEILING_PESO,
+                'yearsResiding': live_years,
+                'residencyEligible': _is_residency_eligible(live_years),
+                'minYearsResidingTalisay': MODULE1_MIN_YEARS_RESIDING_TALISAY,
+                'occupation': (live.occupation if live is not None else '') or '',
+                'employmentStatus': (
+                    live.get_employment_status_display()
+                    if live is not None and live.employment_status
+                    else ''
+                ),
+                'dangerZoneType': (live.danger_zone_type if live is not None else '') or '',
+                'dangerZoneLocation': (live.danger_zone_location if live is not None else '') or '',
+                'ejectionType': (
+                    (live.ejection_type or '').strip()
+                    if live is not None and hasattr(live, 'ejection_type')
+                    else ''
+                ),
+                'ejectionDate': (
+                    live.ejection_date.isoformat()
+                    if live is not None and getattr(live, 'ejection_date', None)
+                    else ''
+                ),
+                'projectName': (
+                    (live.project_name or '').strip()
+                    if live is not None and hasattr(live, 'project_name')
+                    else ''
+                ),
                 **bl_gate,
             })
 

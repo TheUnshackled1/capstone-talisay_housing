@@ -3886,6 +3886,52 @@ function getCsrfToken() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Patch in-memory review data so reopen before/after reload shows saved values.
+                    if (currentApplicant) {
+                        const yearsRaw = formData.get('years_residing');
+                        if (yearsRaw != null && String(yearsRaw).trim() !== '') {
+                            const yearsNum = parseInt(String(yearsRaw).replace(/\D/g, '').slice(0, 2), 10);
+                            if (!Number.isNaN(yearsNum)) currentApplicant.yearsResiding = yearsNum;
+                        }
+                        const voterRaw = String(formData.get('is_registered_voter_talisay') || '').trim().toLowerCase();
+                        if (['yes', 'true', '1', 'on'].includes(voterRaw)) {
+                            currentApplicant.isRegisteredVoterTalisay = true;
+                        } else if (['no', 'false', '0', 'off'].includes(voterRaw)) {
+                            currentApplicant.isRegisteredVoterTalisay = false;
+                        }
+                        const propNorm = String(formData.get('has_property_in_talisay') || '').trim().toLowerCase();
+                        if (['yes', 'true', '1'].includes(propNorm)) {
+                            currentApplicant.hasPropertyInTalisay = true;
+                        } else if (['no', 'false', '0'].includes(propNorm)) {
+                            currentApplicant.hasPropertyInTalisay = false;
+                        }
+                        const incomeRaw = formData.get('monthly_income');
+                        if (incomeRaw != null && String(incomeRaw).trim() !== '') {
+                            const incomeNum = parseFloat(String(incomeRaw).replace(/,/g, ''));
+                            if (!Number.isNaN(incomeNum)) currentApplicant.monthlyIncome = incomeNum;
+                        }
+                        const hhRaw = formData.get('household_size');
+                        if (hhRaw != null && String(hhRaw).trim() !== '') {
+                            const hhNum = parseInt(String(hhRaw), 10);
+                            if (!Number.isNaN(hhNum)) currentApplicant.householdSize = hhNum;
+                        }
+                        if (formData.has('phone_number')) {
+                            currentApplicant.phoneNumber = String(formData.get('phone_number') || '');
+                        }
+                        if (formData.has('current_address')) {
+                            currentApplicant.currentAddress = String(formData.get('current_address') || '');
+                        }
+                        if (formData.has('barangay')) {
+                            currentApplicant.barangay = String(formData.get('barangay') || '');
+                        }
+                        if (formData.has('full_name')) {
+                            currentApplicant.fullName = String(formData.get('full_name') || '');
+                        }
+                        const ref = currentApplicant.referenceNumber;
+                        if (ref && archiveReviewData[ref]) {
+                            Object.assign(archiveReviewData[ref], currentApplicant);
+                        }
+                    }
                     showFlowAlert('Changes saved successfully.', 'Success', function () {
                         location.reload();
                     }, 'success');
