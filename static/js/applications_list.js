@@ -1035,8 +1035,8 @@
             } else if (applicantId && window._lastCertifiedAlertApplicantId !== applicantId) {
                 window._lastCertifiedAlertApplicantId = applicantId;
                 showFlowAlert(
-                    'Situation Evaluation completed successfully. You may now proceed with Application Form Generation.',
-                    'Situation Evaluation',
+                    'Eligibility Evaluation completed successfully. You may now proceed with Application Form Generation.',
+                    'Eligibility Evaluation',
                     null,
                     'success'
                 );
@@ -1265,7 +1265,7 @@
         }
         const snap = lastEligibilitySnapshot;
         if (!snap) {
-            showFlowAlert('Unable to load eligibility data for situation evaluation.');
+            showFlowAlert('Unable to load eligibility data for eligibility evaluation.');
             return;
         }
         const modal = document.getElementById('situationCertificationModal');
@@ -1344,11 +1344,11 @@
                 certifyBtn.style.cursor = 'pointer';
                 certifyBtn.title = 'Complete Applicant Situation step and record eligibility';
             } else {
-                certifyBtn.textContent = 'Mark Situation Evaluated';
+                certifyBtn.textContent = 'Mark Eligibility Evaluated';
                 certifyBtn.disabled = !sc.ready;
                 certifyBtn.style.opacity = certifyBtn.disabled ? '0.55' : '1';
                 certifyBtn.style.cursor = certifyBtn.disabled ? 'not-allowed' : 'pointer';
-                certifyBtn.title = sc.ready ? '' : String(sc.blocking_summary || 'Complete situation evaluation requirements');
+                certifyBtn.title = sc.ready ? '' : String(sc.blocking_summary || 'Complete eligibility evaluation requirements');
             }
         }
         const eligibilityModal = document.getElementById('eligibilityNextModal');
@@ -1524,9 +1524,9 @@
                     return;
                 }
                 const data = await response.json();
-                if (!data.success) throw new Error(data.error || 'Unable to complete situation evaluation.');
+                if (!data.success) throw new Error(data.error || 'Unable to complete eligibility evaluation.');
             } catch (error) {
-                showFlowAlert(error.message || 'Unable to mark situation evaluated.', 'ERROR');
+                showFlowAlert(error.message || 'Unable to mark eligibility evaluated.', 'ERROR');
                 return;
             }
         }

@@ -3375,7 +3375,7 @@ def mark_situation_certified(request, position):
     if situation_gate.get('requires_documents') and not situation_gate.get('ready'):
         return JsonResponse({
             'success': False,
-            'error': situation_gate.get('blocking_summary') or 'Situation evaluation requirements are not complete.',
+            'error': situation_gate.get('blocking_summary') or 'Eligibility evaluation requirements are not complete.',
         }, status=400)
 
     queue_placement = _layer3_queue_placement_bundle(applicant, request.user)
@@ -3397,9 +3397,9 @@ def mark_situation_certified(request, position):
         else:
             message = 'Applicant Situation evaluated. Marked Pending Follow-up due to failed eligibility check(s).'
     elif displacement_reason == 'not_abc':
-        message = 'Situation Evaluation completed successfully. You may now proceed with Application Form Generation.'
+        message = 'Eligibility Evaluation completed successfully. You may now proceed with Application Form Generation.'
     else:
-        message = 'Situation Evaluation completed successfully. You may now proceed with Application Form Generation.'
+        message = 'Eligibility Evaluation completed successfully. You may now proceed with Application Form Generation.'
 
     return JsonResponse({
         'success': True,
