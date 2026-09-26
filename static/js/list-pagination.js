@@ -46,14 +46,24 @@
             }
         }
 
+        function getTotal() {
+            var rows = getRows();
+            var cards = getCards();
+            return Math.max(rows.length, cards.length);
+        }
+
+        function getTotalPages() {
+            return Math.max(1, Math.ceil(getTotal() / pageSize));
+        }
+
         function render(resetPage) {
             if (resetPage) currentPage = 1;
 
             var rows = getRows();
             var cards = getCards();
             /* XOR table/cards: only one set is in the DOM — use whichever has items. */
-            var total = Math.max(rows.length, cards.length);
-            var totalPages = Math.max(1, Math.ceil(total / pageSize));
+            var total = getTotal();
+            var totalPages = getTotalPages();
             currentPage = Math.min(Math.max(1, currentPage), totalPages);
 
             var start = (currentPage - 1) * pageSize;
@@ -110,7 +120,7 @@
         }
         if (nextBtn) {
             nextBtn.addEventListener('click', function () {
-                var totalPages = Math.max(1, Math.ceil(getRows().length / pageSize));
+                var totalPages = getTotalPages();
                 if (currentPage < totalPages) {
                     currentPage += 1;
                     render(false);
