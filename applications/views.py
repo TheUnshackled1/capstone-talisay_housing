@@ -1052,6 +1052,32 @@ def _module2_on_ready_for_form_queue_track(applicant, application):
     return application.status in _MODULE2_FORM_PIPELINE_STATUSES
 
 
+def _module2_eligibility_readiness_key(row):
+    """
+    Same branch order as applications_list.html Eligibility status chips.
+    Returns one of: blocked, form_stage, docs_incomplete, needs_situation_docs,
+    pending_cert, needs_field_evidence, pending_followup, ready_for_form, under_review.
+    """
+    evaluator = row.get('m2_evaluator') or {}
+    if evaluator.get('blacklist_blocked') or row.get('blacklist_blocked'):
+        return 'blocked'
+    if row.get('form_generated'):
+        return 'form_stage'
+    if not evaluator.get('required_docs_complete'):
+        return 'docs_incomplete'
+    if evaluator.get('situation_docs_required') and not evaluator.get('situation_docs_ready'):
+        return 'needs_situation_docs'
+    if evaluator.get('certification_status') == 'pending':
+        return 'pending_cert'
+    if evaluator.get('field_evidence_required') and evaluator.get('field_evidence_status') == 'missing':
+        return 'needs_field_evidence'
+    if evaluator.get('has_failed_checks'):
+        return 'pending_followup'
+    if evaluator.get('form_generation_ready'):
+        return 'ready_for_form'
+    return 'under_review'
+
+
 def _module2_applicant_row_payload(applicant, permissions, required_group_a_submission_total, acted_by_user, bl_cache=None):
     """
     Build one Application & Evaluation row dict.
@@ -1166,7 +1192,7 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
     routed_ago = _relative_time_ago(routed_dt) if routed_dt else '-'
     staff_display = _staff_handled_display(_module1_staff_handled_user(applicant))
 
-    return {
+    row = {
         'applicant': applicant,
         **staff_display,
         'application': application,
@@ -1201,6 +1227,8 @@ def _module2_applicant_row_payload(applicant, permissions, required_group_a_subm
         'signed_form_vault_url_scan': signed_form_vault_url_scan,
         'signed_form_vault_url_upload': signed_form_vault_url_upload,
     }
+    row['eligibility_readiness_key'] = _module2_eligibility_readiness_key(row)
+    return row
 
 
 # =============================================================================
@@ -1330,12 +1358,25 @@ def applications_list(request, position):
 
         applicants_data = [a for a in applicants_data if _evaluation_row_matches(a)]
 
-    # 2. Stage counts for summary cards (calculated strictly from visible table rows after search, before stage filter)
+    # 2. Summary cards — count Eligibility status chips (same keys as table), not current_stage.
+    pending_review = 0
+    needs_docs = 0
+    pending_cert = 0
+    for row in applicants_data:
+        key = row.get('eligibility_readiness_key') or _module2_eligibility_readiness_key(row)
+        if key in ('under_review', 'pending_followup'):
+            pending_review += 1
+        elif key in ('docs_incomplete', 'needs_situation_docs', 'needs_field_evidence'):
+            needs_docs += 1
+        elif key == 'pending_cert':
+            pending_cert += 1
+
+    # Template still uses legacy stage_counts keys for the three cards.
     stage_counts = {
-        'eligibility': len([a for a in applicants_data if a['current_stage'] == 'Eligibility']),
-        'document_gathering': len([a for a in applicants_data if a['current_stage'] == 'Document Gathering']),
+        'eligibility': pending_review,
+        'document_gathering': needs_docs,
         'form_released': len([a for a in applicants_data if a['current_stage'] == 'Form Released']),
-        'awaiting_final_approval': len([a for a in applicants_data if a['current_stage'] == 'Awaiting final approval']),
+        'awaiting_final_approval': pending_cert,
         'fully_approved': len([a for a in applicants_data if a['current_stage'] == 'Fully Approved']),
         'lot_awarded': len([a for a in applicants_data if a['current_stage'] == 'Lot Awarded']),
     }
