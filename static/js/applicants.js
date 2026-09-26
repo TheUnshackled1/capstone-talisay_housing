@@ -1029,32 +1029,41 @@ function getCsrfToken() {
         });
     }
 
-    function syncArchiveRequirementsButtonSummary(scannedRequired, requiredTotal, scannedAll, totalAll) {
+    function adjustArchiveSummaryCard(tier, delta) {
+        const idMap = {
+            complete: 'archiveCompleteCount',
+            pending: 'archivePendingCount',
+            incomplete: 'archiveIncompleteCount',
+        };
+        const el = document.getElementById(idMap[tier]);
+        if (!el) return;
+        el.textContent = String(Math.max(0, (Number(el.textContent) || 0) + delta));
+    }
+
+    function syncArchiveRequirementsButtonSummary(scannedRequired, requiredTotal) {
         const payload = currentArchiveRequirementsPayload;
         const ref = payload && payload.referenceNumber ? String(payload.referenceNumber) : '';
         if (!ref) return;
         const btn = document.querySelector('.btn-archive-docs[data-reference="' + ref + '"]');
         if (!btn) return;
-        const scannedAllNum = Number(scannedAll) || 0;
-        const totalAllNum = Number(totalAll) || 0;
         const scannedReqNum = Number(scannedRequired) || 0;
         const totalReqNum = Number(requiredTotal) || 0;
         let blocks = '';
         for (let i = 1; i <= 15; i++) {
-            if (i <= scannedAllNum) blocks += '█';
-            else if (i <= totalAllNum) blocks += '░';
+            if (i <= scannedReqNum) blocks += '█';
+            else if (i <= totalReqNum) blocks += '░';
         }
         btn.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
                 <span style="letter-spacing: 1px; font-size: 0.6rem; line-height: 1; opacity: 0.95;">${blocks}</span>
-                <span style="font-weight: 700; font-size: 0.6rem; white-space: nowrap;">${scannedAllNum}/${totalAllNum}</span>
+                <span style="font-weight: 700; font-size: 0.6rem; white-space: nowrap;">${scannedReqNum}/${totalReqNum}</span>
             </div>
         `;
-        btn.title = 'Applicant requirement scan checklist — ' + scannedAllNum + ' of ' + totalAllNum + ' digitally filed';
+        btn.title = 'Applicant requirement scan checklist — ' + scannedReqNum + ' of ' + totalReqNum + ' required digitally filed';
         btn.classList.remove('btn-archive-docs--done', 'btn-archive-docs--partial', 'btn-archive-docs--none');
         if (totalReqNum > 0 && scannedReqNum >= totalReqNum) {
             btn.classList.add('btn-archive-docs--done');
-        } else if (scannedAllNum > 0) {
+        } else if (scannedReqNum > 0) {
             btn.classList.add('btn-archive-docs--partial');
         } else {
             btn.classList.add('btn-archive-docs--none');
@@ -1062,9 +1071,9 @@ function getCsrfToken() {
     }
 
     /**
-     * LIST OF APPLICANTS — keep Status column in sync with the scan checklist (same X/Y as Documents).
+     * LIST OF APPLICANTS — keep Status column in sync with required docs (same X/Y as Documents).
      */
-    function syncArchiveRequirementsListRowStatus(scannedRequired, requiredTotal, scannedAll, totalAll) {
+    function syncArchiveRequirementsListRowStatus(scannedRequired, requiredTotal) {
         const payload = currentArchiveRequirementsPayload;
         const ref = payload && payload.referenceNumber ? String(payload.referenceNumber) : '';
         if (!ref) return;
@@ -1075,10 +1084,9 @@ function getCsrfToken() {
         const statusTd = tr.querySelector('td[title*="Applicant requirements"], td[title*="Blacklisted"]');
         const statusPill = statusTd ? statusTd.querySelector('.pastel-status-pill') : null;
         if (!statusPill) return;
-        const scannedAllNum = Number(scannedAll) || 0;
-        const totalAllNum = Number(totalAll) || 0;
         const scannedReqNum = Number(scannedRequired) || 0;
         const totalReqNum = Number(requiredTotal) || 0;
+        const reqLabel = scannedReqNum + '/' + totalReqNum;
         var label;
         var tier;
         if (payload && payload.blacklistBlocked) {
@@ -1087,41 +1095,45 @@ function getCsrfToken() {
             if (statusTd) {
                 statusTd.title =
                     'Blacklisted — cannot proceed to Applicant Evaluation and Eligibility (' +
-                    scannedAllNum + '/' + totalAllNum + ' docs on file)';
+                    reqLabel + ' required docs on file)';
             }
         } else if (totalReqNum <= 0) {
             label = 'Pending';
             tier = 'pending';
             if (statusTd) {
                 statusTd.title =
-                    'Applicant requirements (scan checklist): ' +
-                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
+                    'Applicant requirements (scan checklist): ' + reqLabel + ' required filed';
             }
         } else if (scannedReqNum >= totalReqNum) {
             label = 'Complete';
             tier = 'complete';
             if (statusTd) {
                 statusTd.title =
-                    'Applicant requirements (scan checklist): ' +
-                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
+                    'Applicant requirements (scan checklist): ' + reqLabel + ' required filed';
             }
-        } else if (scannedAllNum > 0) {
+        } else if (scannedReqNum > 0) {
             label = 'Incomplete';
             tier = 'incomplete';
             if (statusTd) {
                 statusTd.title =
-                    'Applicant requirements (scan checklist): ' +
-                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
+                    'Applicant requirements (scan checklist): ' + reqLabel + ' required filed';
             }
         } else {
             label = 'Pending';
             tier = 'pending';
             if (statusTd) {
                 statusTd.title =
-                    'Applicant requirements (scan checklist): ' +
-                    scannedAllNum + '/' + totalAllNum + ' filed — same totals as Documents';
+                    'Applicant requirements (scan checklist): ' + reqLabel + ' required filed';
             }
         }
+        const oldTier = (tr.getAttribute('data-req-tier') || '').trim();
+        if (oldTier && oldTier !== tier && (oldTier === 'complete' || oldTier === 'pending' || oldTier === 'incomplete')) {
+            if (tier === 'complete' || tier === 'pending' || tier === 'incomplete') {
+                adjustArchiveSummaryCard(oldTier, -1);
+                adjustArchiveSummaryCard(tier, 1);
+            }
+        }
+        tr.setAttribute('data-req-tier', tier);
         const tierClasses = ['status--complete', 'status--incomplete', 'status--pending', 'status--blocked', 'status--disqualified', 'status--encoded'];
         tierClasses.forEach(function (cls) { statusPill.classList.remove(cls); });
         statusPill.classList.add('status--' + tier);
@@ -1162,15 +1174,9 @@ function getCsrfToken() {
             if (chip) chip.classList.toggle('is-complete', requiredTotal > 0 && scannedRequired >= requiredTotal);
         }
         if (rowSummaryEl) rowSummaryEl.textContent = String(safeRows.length);
-        // LIST OF APPLICANTS badge: count every checklist row (incl. optional situational row for Options A/B/C).
-        const scannedAll = (payload && payload.scannedCount != null)
-            ? Number(payload.scannedCount)
-            : safeRows.filter(function (r) { return !!r.scanned; }).length;
-        const totalAll = (payload && payload.trackableTotal != null)
-            ? Number(payload.trackableTotal)
-            : safeRows.length;
-        syncArchiveRequirementsButtonSummary(scannedRequired, requiredTotal, scannedAll, totalAll);
-        syncArchiveRequirementsListRowStatus(scannedRequired, requiredTotal, scannedAll, totalAll);
+        // LIST OF APPLICANTS Documents badge + Status: required counts only (match REQUIRED ON FILE).
+        syncArchiveRequirementsButtonSummary(scannedRequired, requiredTotal);
+        syncArchiveRequirementsListRowStatus(scannedRequired, requiredTotal);
         updateArchiveProceedButton(requiredTotal > 0 && scannedRequired >= requiredTotal);
     }
 

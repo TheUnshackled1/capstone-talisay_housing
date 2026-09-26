@@ -529,7 +529,7 @@
             </div>
             <div>
                 <p>Complete</p>
-                <p>{{ archive_complete_count }}</p>
+                <p id="archiveCompleteCount">{{ archive_complete_count }}</p>
             </div>
         </div>
 
@@ -542,7 +542,7 @@
             </div>
             <div>
                 <p>Pending</p>
-                <p>{{ archive_pending_count }}</p>
+                <p id="archivePendingCount">{{ archive_pending_count }}</p>
             </div>
         </div>
 
@@ -556,7 +556,7 @@
             </div>
             <div>
                 <p>Incomplete</p>
-                <p>{{ archive_incomplete_count }}</p>
+                <p id="archiveIncompleteCount">{{ archive_incomplete_count }}</p>
             </div>
         </div>
 
@@ -607,6 +607,7 @@
                 <tbody id="archiveTableBody">
                     {% for row in archive_records %}
                     <tr data-archive-row="true"
+                        data-req-tier="{{ row.requirementsStatusTier }}"
                         data-displacement-reason="{{ row.displacementReason|default:''|escape }}"
                         data-channel="{{ row.channel }}" data-barangay="{{ row.barangay }}"
                         data-blacklist-blocked="{% if row.blacklistBlocked %}1{% else %}0{% endif %}"

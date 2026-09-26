@@ -1182,6 +1182,8 @@ def upload_scanned_requirement(request, position):
     except Exception:
         scan_payload = {}
 
+    cache.delete('intake_applicants_list_payload')
+
     return JsonResponse({
         'success': True,
         'message': 'Scanned file saved to vault.',
@@ -1239,6 +1241,8 @@ def remove_scanned_requirement(request, position):
     if update_fields:
         update_fields.append('updated_at')
         applicant.save(update_fields=update_fields)
+
+    cache.delete('intake_applicants_list_payload')
 
     return JsonResponse({'success': True, 'message': 'Requirement removed.'})
 
