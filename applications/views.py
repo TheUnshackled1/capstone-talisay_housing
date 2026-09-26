@@ -2526,7 +2526,7 @@ def field_verify_cdrrmo(request, position):
             existing_label = '✓ Certified' if cert.status == 'certified' else '✗ Not Certified'
             message = f'Certification already on file ({existing_label}). {photos_saved} photo(s) appended to the field record.'
         else:
-            message = f'Verification recorded as {"✓ Certified" if verification_decision == "certified" else "✗ Not Certified"}'
+            message = 'Verification Recorded'
 
         # Field dashboard caches pending CDRRMO queue for 10 min — bust on write.
         cache.delete('dashboard_field_payload_v1')

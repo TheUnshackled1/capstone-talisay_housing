@@ -62,7 +62,7 @@
         var cancelBtn = document.getElementById('flowAlertCancelBtn');
 
         if (!modal || !titleEl || !messageEl) {
-            global.alert(message);
+            global.alert(message || title);
             if (typeof onConfirm === 'function') onConfirm();
             return;
         }
@@ -118,6 +118,7 @@
 
         titleEl.textContent = title;
         messageEl.textContent = message || '';
+        messageEl.style.display = (message && message.trim() && message.trim() !== title.trim()) ? 'block' : 'none';
         flowAlertOnConfirm = onConfirm || null;
         modal.classList.add('active');
 

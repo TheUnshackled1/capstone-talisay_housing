@@ -525,15 +525,6 @@ function submitVerification(event) {
             return;
         }
 
-        const photoMsg = (data.photos_saved > 0)
-            ? `\n\nAttached ${data.photos_saved} site photograph(s) to this certification.` : '';
-        let smsMsg = '';
-        if (Object.prototype.hasOwnProperty.call(data, 'sms_dispatched')) {
-            smsMsg = data.sms_dispatched
-                ? "\n\nA status SMS was queued for the applicant's contact number."
-                : '\n\nNo SMS was queued (missing or invalid mobile number, or gateway error).';
-        }
-
         // Broadcast sync signal to other open tabs
         try {
             const ts = String(Date.now());
@@ -545,13 +536,11 @@ function submitVerification(event) {
             }
         } catch (_) { /* private mode / storage quota */ }
 
-        const msg   = data.message + photoMsg + smsMsg +
-            '\n\nThe field certification has been recorded and is now available in Module 2 for staff review.';
         const onAck = () => { closeVerificationModal(); setTimeout(() => location.reload(), 200); };
         if (typeof window.showFlowAlert === 'function') {
-            window.showFlowAlert(msg, 'Verification recorded', onAck, 'success');
+            window.showFlowAlert('', 'Verification Recorded', onAck, 'success');
         } else {
-            alert(msg); onAck();
+            alert('Verification Recorded'); onAck();
         }
     })
     .catch(err => {

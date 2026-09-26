@@ -564,15 +564,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    var photoMsg = (typeof data.photos_saved === 'number' && data.photos_saved > 0)
-                        ? ('\n\nAttached ' + data.photos_saved + ' site photograph(s) to this certification.')
-                        : '';
-                    var smsMsg = '';
-                    if (Object.prototype.hasOwnProperty.call(data, 'sms_dispatched')) {
-                        smsMsg = data.sms_dispatched
-                            ? '\n\nA status SMS was queued for the applicant’s contact number (check SMSLog / server output if using console mode).'
-                            : '\n\nNo SMS was queued (missing or invalid mobile number, or gateway error).';
-                    }
                     try {
                         var _ts = String(Date.now());
                         localStorage.setItem('tha_field_cert_sync', _ts);
@@ -582,16 +573,14 @@
                             _bc.close();
                         }
                     } catch (ignoreLs) { /* private mode / quota */ }
-                    var successMessage = data.message + photoMsg + smsMsg
-                        + '\n\nThe field certification has been recorded and is now available in Module 2 (Application & Eligibility) for staff review.';
                     var onAck = function () {
                         closeVerificationModal();
                         setTimeout(function () { location.reload(); }, 200);
                     };
                     if (typeof window.showFlowAlert === 'function') {
-                        window.showFlowAlert(successMessage, 'Verification recorded', onAck, 'success');
+                        window.showFlowAlert('', 'Verification Recorded', onAck, 'success');
                     } else {
-                        alert(successMessage);
+                        alert('Verification Recorded');
                         onAck();
                     }
                 } else {
