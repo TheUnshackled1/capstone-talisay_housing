@@ -1828,6 +1828,9 @@ def proceed_to_form_queue(request, position):
     applicant.form_queue_routed_by = request.user
     applicant.save(update_fields=['form_queue_routed_at', 'form_queue_routed_by', 'updated_at'])
 
+    cache.delete('rfq_rows_second_member')
+    cache.delete('rfq_rows_fourth_member')
+
     has_phone = bool((applicant.phone_number or '').strip())
     sms_deduped = has_phone and _applicant_already_received_ready_for_form_reminder_sms(applicant)
     sms_dispatched = False
@@ -3636,6 +3639,8 @@ def generate_form(request, position, applicant_id):
             applicant.status = 'application'
             applicant.save(update_fields=['status'])
             build_filled_application_pdf(applicant, application)
+            cache.delete('rfq_rows_second_member')
+            cache.delete('rfq_rows_fourth_member')
     except FileNotFoundError as exc:
         logger.error('generate_form missing PDF template: %s', exc)
         return JsonResponse({'success': False, 'error': str(exc)}, status=500)
@@ -3763,6 +3768,10 @@ def proceed_to_lot_awarding_queue(request, position):
         )['max_pos'] or 0
         application.standby_position = last_position + 1
         application.save(update_fields=['status', 'standby_entered_at', 'standby_position', 'updated_at'])
+
+        cache.delete('rfq_rows_second_member')
+        cache.delete('rfq_rows_fourth_member')
+
 
         # Send congratulatory SMS to applicant.
         applicant = application.applicant

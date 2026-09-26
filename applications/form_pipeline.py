@@ -62,4 +62,9 @@ def apply_signed_application_scan_if_ready(applicant_id) -> dict:
         app.save()
         updated = True
 
+    if updated:
+        from django.core.cache import cache
+        cache.delete('rfq_rows_second_member')
+        cache.delete('rfq_rows_fourth_member')
+
     return {'updated': updated}
