@@ -37,11 +37,11 @@
     </div>
 
         <!-- Controls Bar — matches FORM GENERATION frame style -->
-    {% with sp=search_query sb=selected_barangay sf=stage_filter so=sort_order %}
+    {% with sp=search_query sb=selected_barangay sf=stage_filter %}
     <div class="cases-controls-bar">
         
         <!-- Total Documents (All) -->
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=all"
+        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}doc_status=all"
            class="summary-chip-card summary-chip-card--blue" style="text-decoration: none; {% if doc_status_filter == 'all' or not doc_status_filter %}box-shadow: 0 0 0 2px #3b82f6;{% endif %}">
             <div class="summary-icon-wrap">
                 <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -57,7 +57,7 @@
         </a>
 
         <!-- Complete -->
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=complete"
+        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}doc_status=complete"
            class="summary-chip-card summary-chip-card--emerald" style="text-decoration: none; {% if doc_status_filter == 'complete' %}box-shadow: 0 0 0 2px #10b981;{% endif %}">
             <div class="summary-icon-wrap">
                 <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -72,7 +72,7 @@
         </a>
 
         <!-- Incomplete -->
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=partial"
+        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}doc_status=partial"
            class="summary-chip-card summary-chip-card--purple" style="text-decoration: none; {% if doc_status_filter == 'partial' %}box-shadow: 0 0 0 2px #a855f7;{% endif %}">
             <div class="summary-icon-wrap">
                 <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -87,7 +87,7 @@
         </a>
 
         <!-- Pending -->
-        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}{% if so and so != 'default' %}sort={{ so }}&{% endif %}doc_status=pending"
+        <a href="?{% if sp %}search={{ sp }}&{% endif %}{% if sb and sb != 'all' %}barangay={{ sb }}&{% endif %}{% if sf and sf != 'all' %}stage={{ sf }}&{% endif %}doc_status=pending"
            class="summary-chip-card summary-chip-card--amber" style="text-decoration: none; {% if doc_status_filter == 'pending' %}box-shadow: 0 0 0 2px #f59e0b;{% endif %}">
             <div class="summary-icon-wrap">
                 <svg style="width: 1.1rem; height: 1.1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -105,7 +105,7 @@
         <form method="get" id="documentsSearchForm" style="display: contents;">
             {% if doc_status_filter and doc_status_filter != 'all' %}<input type="hidden" name="doc_status" value="{{ doc_status_filter }}">{% endif %}
             
-            <div class="cases-search-box" style="flex: 1 1 160px; min-width: 160px;">
+            <div class="cases-search-box" style="flex: 1 1 200px; min-width: 200px;">
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
@@ -141,15 +141,6 @@
                 <option value="evaluation" {% if stage_filter == 'evaluation' %}selected{% endif %}>Evaluation</option>
                 <option value="blacklisted" {% if stage_filter == 'blacklisted' %}selected{% endif %}>Blacklisted</option>
                 <option value="archived" {% if stage_filter == 'archived' %}selected{% endif %}>Archived</option>
-            </select>
-
-            <!-- Sort -->
-            <select name="sort" id="filterSort" class="cases-select filter-select" style="max-width: 6.5rem; padding-left: 0.4rem; padding-right: 1.2rem; font-size: 0.72rem;">
-                <option value="default" {% if sort_order == 'default' or not sort_order %}selected{% endif %}>Sort: Default</option>
-                <option value="name_asc" {% if sort_order == 'name_asc' %}selected{% endif %}>Name A → Z</option>
-                <option value="name_desc" {% if sort_order == 'name_desc' %}selected{% endif %}>Name Z → A</option>
-                <option value="docs_most" {% if sort_order == 'docs_most' %}selected{% endif %}>Most Documents</option>
-                <option value="docs_least" {% if sort_order == 'docs_least' %}selected{% endif %}>Fewest Documents</option>
             </select>
         </form>
     </div>

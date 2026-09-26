@@ -1991,7 +1991,7 @@ document.addEventListener('click', function(e) {
         var tc = getTableContainer();
         if (tc) tc.classList.add('is-loading');
         // Also dim the filter controls slightly
-        document.querySelectorAll('.ctrl-select').forEach(function (s) {
+        document.querySelectorAll('.ctrl-select, .filter-select').forEach(function (s) {
             s.classList.add('is-changing');
         });
         document.querySelectorAll('.dm-filter-tab, .dm-stage-tab').forEach(function (a) {
@@ -2000,8 +2000,8 @@ document.addEventListener('click', function(e) {
         });
     }
 
-    // ── Dropdowns (ctrl-select) ──
-    document.querySelectorAll('.ctrl-select').forEach(function (sel) {
+    // ── Dropdowns (ctrl-select / filter-select) ──
+    document.querySelectorAll('.ctrl-select, .filter-select').forEach(function (sel) {
         sel.addEventListener('change', function () {
             showLoadingState();
             // Small delay so the CSS transition renders before the page freeze
