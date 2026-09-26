@@ -1035,8 +1035,8 @@
             } else if (applicantId && window._lastCertifiedAlertApplicantId !== applicantId) {
                 window._lastCertifiedAlertApplicantId = applicantId;
                 showFlowAlert(
-                    'Situation certification completed successfully. You may now proceed with Application Form Generation.',
-                    'Situation Certification',
+                    'Situation Evaluation completed successfully. You may now proceed with Application Form Generation.',
+                    'Situation Evaluation',
                     null,
                     'success'
                 );
@@ -1265,7 +1265,7 @@
         }
         const snap = lastEligibilitySnapshot;
         if (!snap) {
-            showFlowAlert('Unable to load eligibility data for situation certification.');
+            showFlowAlert('Unable to load eligibility data for situation evaluation.');
             return;
         }
         const modal = document.getElementById('situationCertificationModal');
@@ -1344,11 +1344,11 @@
                 certifyBtn.style.cursor = 'pointer';
                 certifyBtn.title = 'Complete Applicant Situation step and record eligibility';
             } else {
-                certifyBtn.textContent = 'Mark Situation Certified';
+                certifyBtn.textContent = 'Mark Situation Evaluated';
                 certifyBtn.disabled = !sc.ready;
                 certifyBtn.style.opacity = certifyBtn.disabled ? '0.55' : '1';
                 certifyBtn.style.cursor = certifyBtn.disabled ? 'not-allowed' : 'pointer';
-                certifyBtn.title = sc.ready ? '' : String(sc.blocking_summary || 'Complete situation certification requirements');
+                certifyBtn.title = sc.ready ? '' : String(sc.blocking_summary || 'Complete situation evaluation requirements');
             }
         }
         const eligibilityModal = document.getElementById('eligibilityNextModal');
@@ -1406,7 +1406,10 @@
         if (ev.persisted) scheduleM2EligibilityOpenViewsRefresh();
     });
 
-    // markSituationCertifiedFromModal removed — dead code (handled by handleProceedFromModal)
+    async function markSituationCertifiedFromModal() {
+        return handleProceedFromModal();
+    }
+    window.markSituationCertifiedFromModal = markSituationCertifiedFromModal;
 
     function closeSituationCertificationModal(event) {
         if (event && event.target && event.target.id !== 'situationCertificationModal') return;
@@ -1521,9 +1524,9 @@
                     return;
                 }
                 const data = await response.json();
-                if (!data.success) throw new Error(data.error || 'Unable to complete situation certification.');
+                if (!data.success) throw new Error(data.error || 'Unable to complete situation evaluation.');
             } catch (error) {
-                showFlowAlert(error.message || 'Unable to mark situation certified.', 'ERROR');
+                showFlowAlert(error.message || 'Unable to mark situation evaluated.', 'ERROR');
                 return;
             }
         }
