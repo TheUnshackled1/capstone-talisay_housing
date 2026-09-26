@@ -4180,12 +4180,53 @@ function getCsrfToken() {
         }
         // Total = applicant (1) + filled members
         const totalSize = 1 + filledCount;
-    const householdSizeInput = document.getElementById('householdSize');
-    if (householdSizeInput) householdSizeInput.value = totalSize;
+        const householdSizeInput = document.getElementById('householdSize');
+        if (householdSizeInput) householdSizeInput.value = totalSize;
     }
 
-    function renderHouseholdMembers() {
+    function snapshotHouseholdMembers() {
+        const rows = [];
+        for (let i = 1; i <= householdMemberCount; i++) {
+            const nameEl = document.querySelector(`input[name="hh_member_${i}_name"]`);
+            const relEl = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
+            const ageEl = document.querySelector(`input[name="hh_member_${i}_age"]`);
+            const sexEl = document.querySelector(`input[name="hh_member_${i}_sex"]:checked`);
+            const statusEl = document.querySelector(`select[name="hh_member_${i}_status"]`);
+            const contactEl = document.querySelector(`input[name="hh_member_${i}_contact"]`);
+            rows.push({
+                name: nameEl ? nameEl.value : '',
+                relationship: relEl ? relEl.value : '',
+                age: ageEl ? ageEl.value : '',
+                sex: sexEl ? sexEl.value : '',
+                status: statusEl ? statusEl.value : '',
+                contact: contactEl ? contactEl.value : '',
+            });
+        }
+        return rows;
+    }
+
+    function applyHouseholdMemberSnapshot(i, data) {
+        if (!data) return;
+        const nameEl = document.querySelector(`input[name="hh_member_${i}_name"]`);
+        const relEl = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
+        const ageEl = document.querySelector(`input[name="hh_member_${i}_age"]`);
+        const statusEl = document.querySelector(`select[name="hh_member_${i}_status"]`);
+        const contactEl = document.querySelector(`input[name="hh_member_${i}_contact"]`);
+        if (nameEl) nameEl.value = data.name || '';
+        if (relEl) relEl.value = data.relationship || '';
+        if (ageEl) ageEl.value = data.age || '';
+        if (statusEl) statusEl.value = data.status || '';
+        if (contactEl) contactEl.value = data.contact || '';
+        if (data.sex) {
+            const sexRadio = document.querySelector(`input[name="hh_member_${i}_sex"][value="${data.sex}"]`);
+            if (sexRadio) sexRadio.checked = true;
+        }
+    }
+
+    function renderHouseholdMembers(preservedRows) {
         const container = document.getElementById('householdMembersContainer');
+        if (!container) return;
+        const preserved = Array.isArray(preservedRows) ? preservedRows : snapshotHouseholdMembers();
         container.innerHTML = '';
 
         for (let i = 1; i <= householdMemberCount; i++) {
@@ -4195,7 +4236,7 @@ function getCsrfToken() {
             memberDiv.innerHTML = `
                 <div class="form-group hh-member-name-span">
                     <label class="form-label">Full name</label>
-                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="30" minlength="2" onchange="updateHouseholdSize()" autocomplete="name">
+                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="30" minlength="2" onchange="updateHouseholdSize()" oninput="updateHouseholdSize()" autocomplete="name">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Relationship</label>
@@ -4222,8 +4263,8 @@ function getCsrfToken() {
                 <div class="form-group">
                     <label class="form-label">Sex</label>
                     <div class="hh-sex-group">
-                        <label><input type="radio" name="hh_member_${i}_sex" value="male"> Male</label>
-                        <label><input type="radio" name="hh_member_${i}_sex" value="female"> Female</label>
+                        <label><input type="radio" name="hh_member_${i}_sex" value="male" onchange="updateHouseholdSize()"> Male</label>
+                        <label><input type="radio" name="hh_member_${i}_sex" value="female" onchange="updateHouseholdSize()"> Female</label>
                     </div>
                 </div>
                 <div class="form-group">
@@ -4257,6 +4298,7 @@ function getCsrfToken() {
                 </div>
             `;
             container.appendChild(memberDiv);
+            applyHouseholdMemberSnapshot(i, preserved[i - 1]);
         }
         initializePhoneInputs();
         container.querySelectorAll('input[name^="hh_member_"][name$="_name"]').forEach((el) => {
@@ -4266,8 +4308,9 @@ function getCsrfToken() {
     }
 
     function addHouseholdMember() {
+        const preserved = snapshotHouseholdMembers();
         householdMemberCount++;
-        renderHouseholdMembers();
+        renderHouseholdMembers(preserved);
     }
 
     function deleteHouseholdMember(index) {
@@ -4275,8 +4318,13 @@ function getCsrfToken() {
             showFlowAlert('The last household member row cannot be removed. Clear the fields on that row if it is not used.');
             return;
         }
-        householdMemberCount--;
-        renderHouseholdMembers();
+        const preserved = snapshotHouseholdMembers();
+        const removeAt = Number(index) - 1;
+        if (removeAt >= 0 && removeAt < preserved.length) {
+            preserved.splice(removeAt, 1);
+        }
+        householdMemberCount = Math.max(1, preserved.length);
+        renderHouseholdMembers(preserved);
     }
 
 
