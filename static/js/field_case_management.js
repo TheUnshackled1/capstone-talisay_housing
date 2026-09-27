@@ -1279,14 +1279,14 @@
         const nameLabel = document.getElementById('newCaseSubjectAutoNameLabel');
         const searchInput = document.getElementById('subjectSearchInput');
         if (illegal) {
-            if (title) title.textContent = section.dataset.titleIllegal || 'Beneficiary (illegal occupant concern)';
+            if (title) title.textContent = section.dataset.titleIllegal || 'Beneficiary (Illegal Occupant Concern)';
             if (searchLabel) {
-                searchLabel.innerHTML = `${section.dataset.searchLabelIllegal || 'Search beneficiary (illegal occupant concern)'} <span class="req">*</span>`;
+                searchLabel.innerHTML = `${section.dataset.searchLabelIllegal || 'Search Beneficiary (Illegal Occupant Concern)'} <span class="req">*</span>`;
             }
             if (searchHelp) {
                 searchHelp.textContent = section.dataset.helpIllegal || '';
             }
-            if (nameLabel) nameLabel.textContent = section.dataset.nameLabelIllegal || 'Beneficiary name';
+            if (nameLabel) nameLabel.textContent = section.dataset.nameLabelIllegal || 'Beneficiary Name';
             if (searchInput) {
                 searchInput.placeholder = section.dataset.searchPlaceholderIllegal || 'e.g. Juan Dela Cruz, APP ref, or 1-1';
             }
@@ -1300,10 +1300,10 @@
         } else {
             if (title) title.textContent = section.dataset.titleStandard || 'Reported Party';
             if (searchLabel) {
-                searchLabel.innerHTML = `${section.dataset.searchLabelStandard || 'Search reported party / against whom'} <span class="req">*</span>`;
+                searchLabel.innerHTML = `${section.dataset.searchLabelStandard || 'Search Reported Party / Against Whom'} <span class="req">*</span>`;
             }
             if (searchHelp) searchHelp.textContent = section.dataset.helpStandard || '';
-            if (nameLabel) nameLabel.textContent = section.dataset.nameLabelStandard || 'Reported party name';
+            if (nameLabel) nameLabel.textContent = section.dataset.nameLabelStandard || 'Reported Party Name';
             if (searchInput) {
                 searchInput.placeholder = section.dataset.searchPlaceholderStandard || 'e.g. name, APP ref, or lot';
             }
@@ -1966,6 +1966,19 @@
         clearTimeout(subjectSearchTimer);
         const q = e.target.value.trim();
         subjectSearchTimer = setTimeout(() => runSubjectSearch(q), 300);
+    });
+
+    function titleCaseWords(str) {
+        return (str || '').replace(/(?:^|\s|-)\S/g, (c) => c.toUpperCase());
+    }
+
+    ['complainantSearchInput', 'subjectSearchInput', 'settledLogComplainantSearchInput', 'settledLogSubjectSearchInput'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('blur', () => {
+                if (el.value) el.value = titleCaseWords(el.value);
+            });
+        }
     });
 
     document.getElementById('searchInput')?.addEventListener('keydown', (e) => {

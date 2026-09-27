@@ -1003,6 +1003,19 @@
         subjectSearchTimer = setTimeout(() => runSubjectSearch(q), 300);
     });
 
+    function titleCaseWords(str) {
+        return (str || '').replace(/(?:^|\s|-)\S/g, (c) => c.toUpperCase());
+    }
+
+    ['complainantSearchInput', 'subjectSearchInput'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('blur', () => {
+                if (el.value) el.value = titleCaseWords(el.value);
+            });
+        }
+    });
+
     document.getElementById('searchInput')?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') applyCaseFilters();
     });
