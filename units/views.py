@@ -2740,6 +2740,8 @@ def disqualify_beneficiary_monitoring(request, position, unit_id):
     if unit.site_id:
         _sync_site_housing_unit_occupancy(unit.site)
 
+    _bump_housing_units_data_version()
+
     return JsonResponse({
         'success': True,
         'message': (
