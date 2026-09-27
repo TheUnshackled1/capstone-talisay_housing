@@ -1754,6 +1754,13 @@
         document.getElementById('caseModal').style.display = 'none';
         document.getElementById('newCaseModal').style.display = 'none';
         resetSettledLogForm();
+        ['settledLogComplainantBody', 'settledLogSubjectBody', 'settledLogDetailsBody'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'block';
+        });
+        document.querySelectorAll('#settledLogModal .section-toggle-icon').forEach((icon) => {
+            icon.style.transform = 'rotate(180deg)';
+        });
         document.body.style.overflow = 'hidden';
         document.getElementById('settledLogModal').style.display = 'flex';
     }

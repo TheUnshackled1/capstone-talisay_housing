@@ -8,7 +8,7 @@
 {% block nav_cases %}active{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/field_case_management.css' %}?v=photo-fill-3">
+<link rel="stylesheet" href="{% static 'css/field_case_management.css' %}?v=photo-fill-4">
 
 <!-- Preload LCP Logo Image -->
 <link rel="preload" as="image" href="{% static 'images/crop_tha_logo.png' %}">
@@ -888,6 +888,20 @@
 <div id="settledLogModal" class="tha-case-modal-overlay" onclick="closeSettledLogModal(event)">
     <div class="modal-content tha-reg-modal tha-case-reg-modal" onclick="event.stopPropagation();">
         <div class="modal-body" style="padding-top: 0;">
+            <style>
+                #settledLogModal .tha-section-title::before,
+                #settledLogForm .tha-section-title::before,
+                #settledLogDetailsSection .tha-section-title::before,
+                #settledLogComplainantSection .tha-section-title::before,
+                #settledLogSubjectSection .tha-section-title::before,
+                #settledLogModal .tha-case-reg-form .tha-section-title::before,
+                .tha-section-block--income .tha-section-title::before {
+                    display: none !important;
+                    content: none !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                }
+            </style>
             <div id="settledLogForm" class="tha-case-reg-form">
                 <input type="hidden" id="settledLogComplainantApplicantId">
                 <input type="hidden" id="settledLogRelatedUnitId">
@@ -917,11 +931,11 @@
                     <h3 class="tha-section-title" style="cursor: pointer;" onclick="toggleSettledLogSection('settledLogComplainantBody', this)">
                         <span class="section-toggle-spacer" style="width: 1.1rem; flex-shrink: 0;" aria-hidden="true"></span>
                         <span style="flex: 1; text-align: center;">Complainant</span>
-                        <svg class="section-toggle-icon" style="width: 1.1rem; height: 1.1rem; transition: transform 0.2s; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="section-toggle-icon" style="width: 1.1rem; height: 1.1rem; transition: transform 0.2s; color: #94a3b8; flex-shrink: 0; transform: rotate(180deg);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </h3>
-                    <div id="settledLogComplainantBody" style="display: none;">
+                    <div id="settledLogComplainantBody" style="display: block;">
                         <div class="form-group">
                             <label class="form-label">Search Beneficiary (Complainant) <span class="req">*</span></label>
                             <div class="case-beneficiary-search-wrap">
@@ -959,11 +973,11 @@
                     <h3 class="tha-section-title" style="cursor: pointer;" onclick="toggleSettledLogSection('settledLogSubjectBody', this)">
                         <span class="section-toggle-spacer" style="width: 1.1rem; flex-shrink: 0;" aria-hidden="true"></span>
                         <span style="flex: 1; text-align: center;">Reported Party</span>
-                        <svg class="section-toggle-icon" style="width: 1.1rem; height: 1.1rem; transition: transform 0.2s; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="section-toggle-icon" style="width: 1.1rem; height: 1.1rem; transition: transform 0.2s; color: #94a3b8; flex-shrink: 0; transform: rotate(180deg);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </h3>
-                    <div id="settledLogSubjectBody" style="display: none;">
+                    <div id="settledLogSubjectBody" style="display: block;">
                         <div class="form-group">
                             <label class="form-label">Search Reported Party / Against Whom <span class="req">*</span></label>
                             <div class="case-beneficiary-search-wrap">
@@ -988,8 +1002,6 @@
                                     <label class="form-label">Block &amp; lot</label>
                                     <input type="text" class="form-input" id="settledLogSubjectAutoUnit" readonly placeholder="—">
                                 </div>
-                            </div>
-                            <div class="form-row full">
                                 <div class="form-group">
                                     <label class="form-label">Contact number</label>
                                     <input type="text" class="form-input" id="settledLogSubjectAutoPhone" readonly placeholder="—">
@@ -1003,11 +1015,11 @@
                     <h3 class="tha-section-title" style="cursor: pointer;" onclick="toggleSettledLogSection('settledLogDetailsBody', this)">
                         <span class="section-toggle-spacer" style="width: 1.1rem; flex-shrink: 0;" aria-hidden="true"></span>
                         <span style="flex: 1; text-align: center;">Incident Details</span>
-                        <svg class="section-toggle-icon" style="width: 1.1rem; height: 1.1rem; transition: transform 0.2s; color: #94a3b8;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg class="section-toggle-icon" style="width: 1.1rem; height: 1.1rem; transition: transform 0.2s; color: #94a3b8; flex-shrink: 0; transform: rotate(180deg);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </h3>
-                    <div id="settledLogDetailsBody" style="display: none;">
+                    <div id="settledLogDetailsBody" style="display: block;">
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Complaint Type <span class="req">*</span></label>
