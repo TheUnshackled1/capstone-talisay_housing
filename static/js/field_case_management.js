@@ -1393,6 +1393,10 @@
         stopNewCaseCamera();
         updateDescCount();
         syncNewCasePartyMode();
+        ['addCaseAccordion1', 'addCaseAccordion2', 'addCaseAccordion3'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('collapsed');
+        });
     }
 
     function formatHousingBeneficiaryRow(row) {
