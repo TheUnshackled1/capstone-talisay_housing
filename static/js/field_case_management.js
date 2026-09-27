@@ -1926,7 +1926,7 @@
                 }
                 closeSettledLogModal();
                 if (typeof showFlowAlert === 'function') {
-                    showFlowAlert('success', d.message || 'Settled incident logged.');
+                    showFlowAlert(d.message || 'Settled incident logged.', 'Success', null, 'success');
                 } else {
                     alert(d.message || 'Settled incident logged.');
                 }
