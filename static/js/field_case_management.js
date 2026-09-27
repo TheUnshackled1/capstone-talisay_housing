@@ -1851,7 +1851,7 @@
     function updateSettledLogDescCount() {
         const el = document.getElementById('settledLogDescription');
         const c = document.getElementById('settledLogDescriptionCount');
-        if (el && c) c.textContent = `${(el.value || '').length} / 150`;
+        if (el && c) c.textContent = `${(el.value || '').length} / 30`;
     }
 
     function runSettledLogComplainantSearch(q) {
