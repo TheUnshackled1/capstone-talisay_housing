@@ -712,7 +712,7 @@
     function updateDescCount() {
         const el = document.getElementById('newDescription');
         const c = document.getElementById('newDescriptionCount');
-        if (el && c) c.textContent = `${(el.value || '').length} / 100`;
+        if (el && c) c.textContent = `${(el.value || '').length} / 30`;
     }
 
     function resetNewCaseForm() {
@@ -842,8 +842,8 @@
             alert('Fill required fields: complainant, reported party, complaint type, and incident description.');
             return;
         }
-        if (data.initial_description.length > 100) {
-            alert('Incident description must be 100 characters or less.');
+        if (data.initial_description.length > 30) {
+            alert('Incident description must be 30 characters or less.');
             return;
         }
         fetch(`/cases/${CASE_POSITION}/create/`, {
