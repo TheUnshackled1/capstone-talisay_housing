@@ -1553,10 +1553,10 @@ def create_settled_incident_log(request, position):
             }, status=400)
         if not description:
             return JsonResponse({'success': False, 'error': 'Description is required.'}, status=400)
-        if len(description) > 150:
+        if len(description) > 30:
             return JsonResponse({
                 'success': False,
-                'error': 'Description must be 150 characters or less.',
+                'error': 'Description must be 30 characters or less.',
             }, status=400)
 
         valid_types = _valid_case_types_for_create(position, settled_log=True)

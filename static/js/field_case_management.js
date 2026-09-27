@@ -1891,8 +1891,8 @@
             alert('Enter an incident description.');
             return;
         }
-        if (description.length > 150) {
-            alert('Description must be 150 characters or less.');
+        if (description.length > 30) {
+            alert('Description must be 30 characters or less.');
             return;
         }
         const subjectApplicantId = (document.getElementById('settledLogSubjectApplicantId')?.value || '').trim();
