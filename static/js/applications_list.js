@@ -8,7 +8,7 @@
     let flowAlertOnNext = null;
     let lastPrecheckApplicantName = '';
     let lastPrecheckApplicantId = '';
-    let lastPrecheckMessage = 'No blacklist record found. The applicant may proceed to the Eligibility Evaluation Checklist.';
+    let lastPrecheckMessage = 'No blacklist record found. The applicant is eligible for the Eligibility Evaluation Checklist.';
     let currentEligibilityApplicantId = '';
     let lastEligibilitySnapshot = null;
     const eligibilityManualDecisions = {};
