@@ -2024,13 +2024,13 @@ function buildMonitoringTaskCardElement(task, initialVisitReviewed) {
     const details = document.createElement('details');
     const borderTone = task.task_type === 'day_60_inspection' ? 'border-green' : 'border-amber';
     details.className = `premium-data-card premium-data-card--collapsible ${borderTone} monitoring-task-details`;
-    details.open = false;
+    details.open = true;
 
     const card = document.createElement('div');
     const isNotified = Boolean(task.notified_at);
     const isCompleted = task.status === 'completed';
     const isBlocked = (
-        task.task_type === 'day_30_inspection' && !initialVisitReviewed
+        task.task_type === 'day_30_inspection' && !initialVisitReviewed 
     );
 
     let statusClass = 'upcoming';
