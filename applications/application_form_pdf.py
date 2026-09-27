@@ -13,16 +13,16 @@ import logging
 from decimal import Decimal
 from pathlib import Path
 
-try:
-    import fitz  # PyMuPDF
-except ImportError:
-    fitz = None
-    logger.warning("fitz (PyMuPDF) failed to import. PDF generation will be unavailable.")
 from django.conf import settings
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fitz = None
+    logger.warning("fitz (PyMuPDF) failed to import. PDF generation will be unavailable.")
 
 TEMPLATE_RELATIVE = Path('static') / 'forms' / 'APPLICATION-FORM-THA.pdf'
 
