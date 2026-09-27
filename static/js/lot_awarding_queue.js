@@ -184,14 +184,15 @@ function lawqShowAlert(message, title, onConfirm, variant) {
     }
 
     function showAwardConfirm() {
-        const unitSelect = document.getElementById('awardHousingUnit');
-        if (!unitSelect.value) {
+        const unitInput = document.getElementById('awardHousingUnit');
+        if (!unitInput.value) {
             lawqShowAlert('Please select a vacant unit first.', 'Notice', null, 'warning');
             return;
         }
         
         const applicantName = document.getElementById('awardModalName').textContent;
-        const selectedUnitText = unitSelect.options[unitSelect.selectedIndex].text;
+        const searchInput = document.getElementById('awardHousingUnitSearch');
+        const selectedUnitText = searchInput ? searchInput.value : '';
         
         document.getElementById('confirmApplicantName').textContent = applicantName;
         document.getElementById('confirmUnitName').textContent = selectedUnitText;
@@ -408,4 +409,81 @@ function lawqShowAlert(message, title, onConfirm, variant) {
                 hoverCard.classList.remove('active');
             }, 250);
         });
+    });
+
+    // Custom Searchable Combobox Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('awardHousingUnitSearch');
+        const dropdown = document.getElementById('awardHousingUnitDropdown');
+        const hiddenInput = document.getElementById('awardHousingUnit');
+
+        if (searchInput && dropdown && hiddenInput) {
+            const options = dropdown.querySelectorAll('.lawq-combobox-option');
+            
+            // Show dropdown on focus or click
+            searchInput.addEventListener('focus', () => {
+                dropdown.style.display = 'block';
+            });
+            searchInput.addEventListener('click', () => {
+                dropdown.style.display = 'block';
+            });
+
+            // Filter on type
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                dropdown.style.display = 'block';
+                
+                options.forEach(opt => {
+                    const text = opt.textContent.toLowerCase();
+                    // Search by the group label (site name) if needed
+                    let groupElement = opt.previousElementSibling;
+                    while (groupElement && !groupElement.classList.contains('lawq-combobox-group')) {
+                        groupElement = groupElement.previousElementSibling;
+                    }
+                    const groupName = groupElement ? groupElement.textContent.toLowerCase() : '';
+                    
+                    if (text.includes(query) || groupName.includes(query)) {
+                        opt.style.display = 'block';
+                    } else {
+                        opt.style.display = 'none';
+                    }
+                });
+            });
+
+            // Handle selection
+            options.forEach(opt => {
+                opt.addEventListener('mousedown', (e) => {
+                    // Use mousedown instead of click to fire before input blur
+                    e.preventDefault(); 
+                    hiddenInput.value = opt.getAttribute('data-value');
+                    
+                    let groupElement = opt.previousElementSibling;
+                    while (groupElement && !groupElement.classList.contains('lawq-combobox-group')) {
+                        groupElement = groupElement.previousElementSibling;
+                    }
+                    const siteName = groupElement ? groupElement.textContent + ' - ' : '';
+                    
+                    searchInput.value = siteName + opt.textContent.trim();
+                    dropdown.style.display = 'none';
+                });
+                
+                // Hover styling
+                opt.addEventListener('mouseenter', () => opt.style.background = '#f1f5f9');
+                opt.addEventListener('mouseleave', () => opt.style.background = 'transparent');
+            });
+
+            // Hide dropdown when clicking outside (or input blurring)
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                    // If they clicked away and didn't select a valid ID, clear text or revert
+                    if (!hiddenInput.value) {
+                        searchInput.value = '';
+                    } else {
+                        // Re-validate that the text matches a selection? 
+                        // It's safer to just leave the last valid text
+                    }
+                }
+            });
+        }
     });
