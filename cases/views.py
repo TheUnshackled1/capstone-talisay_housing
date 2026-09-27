@@ -225,8 +225,7 @@ def _case_management_list_context(request, position, include_drawer_rows=False):
 
     is_field_inspector = position in FIELD_INSPECTOR_POSITIONS
     use_split_case_desk = (
-        position in FIELD_INSPECTOR_POSITIONS
-        or position in wf.CASE_MONITOR_DESK_POSITIONS
+        position in wf.CASE_MONITOR_DESK_POSITIONS
     )
     # Field UI has no pending drawer — skip that query entirely.
     load_pending_drawer = (
