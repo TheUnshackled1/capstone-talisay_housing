@@ -1877,7 +1877,7 @@ function monitoringReportIsUnoccupied(report) {
 }
 
 /**
- * Caretaker report → recommended staff outcome: normal_progress | no_progress | null.
+ * Field inspector report → recommended staff outcome: normal_progress | no_progress | null.
  * 90 Day: Normal Progress vs No Progress. Final / extension 120 Day: Housing unit vs Explanation letter or Failed.
  */
 function monitoringRecommendedStaffDecision(task, report) {
@@ -1914,26 +1914,26 @@ function monitoringRecommendedDecisionHint(task, recommendation) {
     if (!task || !recommendation) return '';
     if (task.task_type === 'day_60_inspection') {
         if (recommendation === 'normal_progress') {
-            return 'Caretaker reported Properly Occupied and Ongoing Construction — use Normal Progress.';
+            return 'Field inspector reported Properly Occupied and Ongoing Construction — use Normal Progress.';
         }
         if (recommendation === 'no_progress') {
-            return 'Caretaker reported Unoccupied and No Structure — use No Progress.';
+            return 'Field inspector reported Unoccupied and No Structure — use No Progress.';
         }
     }
     if (task.task_type === 'day_30_inspection') {
         if (recommendation === 'normal_progress') {
-            return 'Caretaker reported Properly Occupied and Build finished — use Housing unit.';
+            return 'Field inspector reported Properly Occupied and Build finished — use Housing unit.';
         }
         if (recommendation === 'no_progress') {
-            return 'Caretaker reported Unoccupied and Build not finished — use Explanation letter.';
+            return 'Field inspector reported Unoccupied and Build not finished — use Explanation letter.';
         }
     }
     if (task.task_type === 'month_2_inspection') {
         if (recommendation === 'normal_progress') {
-            return 'Caretaker reported Properly Occupied and Build finished — use Housing unit.';
+            return 'Field inspector reported Properly Occupied and Build finished — use Housing unit.';
         }
         if (recommendation === 'no_progress') {
-            return 'Caretaker reported Unoccupied and Build not finished — use Failed.';
+            return 'Field inspector reported Unoccupied and Build not finished — use Failed.';
         }
     }
     return '';
@@ -2083,12 +2083,12 @@ function buildMonitoringTaskCardElement(task, initialVisitReviewed) {
             }
             hintClass += ' monitoring-task-hint--decision-no';
         } else {
-            availabilityText = 'Caretaker monitoring report submitted — staff decision pending';
+            availabilityText = 'Field inspector monitoring report submitted — staff decision pending';
             hintClass += ' monitoring-task-hint--pending-review';
         }
     } else {
         availabilityText = isCompleted
-            ? 'Caretaker monitoring report submitted'
+            ? 'Field inspector monitoring report submitted'
             : task.is_due
                 ? (monitoringTaskPhase(task) === 'final'
                     ? 'Final monitoring — available to inspect now'
@@ -2096,7 +2096,7 @@ function buildMonitoringTaskCardElement(task, initialVisitReviewed) {
                         ? 'Initial monitoring — available to inspect now'
                         : 'Available to inspect now'))
                 : (isNotified
-                    ? 'Waiting for caretaker monitoring report'
+                    ? 'Waiting for field inspector monitoring report'
                     : monitoringEarlyScheduleHint(task));
     }
 
@@ -2320,7 +2320,7 @@ function openInspectionBlockedModal(task) {
 
     activeInspectionTask = null;
     title.textContent = `${monitoringTaskDisplayTitle(task)} is blocked`;
-    text.textContent = '120 Day Inspection cannot be opened yet. Complete the 90 Day Inspection caretaker report first, then staff must mark the 90 Day Inspection result as Normal Progress or No Progress.';
+    text.textContent = '120 Day Inspection cannot be opened yet. Complete the 90 Day Inspection field inspector report first, then staff must mark the 90 Day Inspection result as Normal Progress or No Progress.';
     if (summary) {
         summary.classList.remove('active');
         summary.innerHTML = '';
@@ -2879,32 +2879,32 @@ function openInspectionInfoModal(task) {
             banner.classList.toggle('inspection-info-banner--explanation-letter', recommendNoProgress);
         }
         if (hasDecision) {
-            text.textContent = 'Caretaker monitoring report has been reviewed. The saved staff decision is shown in the summary below.';
+            text.textContent = 'Field inspector monitoring report has been reviewed. The saved staff decision is shown in the summary below.';
         } else if (recommendNormal && task.task_type === 'day_30_inspection') {
             text.textContent = (
                 'This beneficiary is ready for housing unit. '
-                + 'The caretaker reported Properly Occupied and Build finished. '
+                + 'The field inspector reported Properly Occupied and Build finished. '
                 + 'Choose Housing unit to record the completed lot and close monitoring. '
                 + 'Explanation letter does not apply for this visit.'
             );
         } else if (recommendNoProgress && task.task_type === 'day_30_inspection') {
             text.textContent = (
                 'Explanation letter applies for this beneficiary. '
-                + 'The caretaker reported Unoccupied and Build not finished. '
+                + 'The field inspector reported Unoccupied and Build not finished. '
                 + 'Choose Explanation letter to open that workflow. '
                 + 'Housing unit does not apply for this visit.'
             );
         } else if (recommendNormal && task.task_type === 'month_2_inspection') {
             text.textContent = (
                 'This beneficiary is ready for housing unit. '
-                + 'The caretaker reported Properly Occupied and Build finished on the extension final visit. '
+                + 'The field inspector reported Properly Occupied and Build finished on the extension final visit. '
                 + 'Choose Housing unit to record the completed lot and close monitoring. '
                 + 'Failed does not apply for this visit.'
             );
         } else if (recommendNoProgress && task.task_type === 'month_2_inspection') {
             text.textContent = (
                 'Failed applies for this extension final visit. '
-                + 'The caretaker reported Unoccupied and Build not finished. '
+                + 'The field inspector reported Unoccupied and Build not finished. '
                 + 'Choose Failed when the lot does not pass—Failed leads toward Blacklist beneficiary when office rules allow. '
                 + 'Housing unit does not apply for this visit.'
             );
@@ -2912,7 +2912,7 @@ function openInspectionInfoModal(task) {
             const labels = monitoringStaffDecisionLabels(task);
             text.textContent = (
                 'Initial monitoring supports ' + labels.normal_progress + '. '
-                + 'The caretaker reported Properly Occupied and Ongoing Construction. '
+                + 'The field inspector reported Properly Occupied and Ongoing Construction. '
                 + 'Choose ' + labels.normal_progress + ' to record initial monitoring. '
                 + labels.no_progress + ' does not match this visit.'
             );
@@ -2920,16 +2920,16 @@ function openInspectionInfoModal(task) {
             const labels = monitoringStaffDecisionLabels(task);
             text.textContent = (
                 'Initial monitoring supports ' + labels.no_progress + '. '
-                + 'The caretaker reported Unoccupied and No Structure. '
+                + 'The field inspector reported Unoccupied and No Structure. '
                 + 'Choose ' + labels.no_progress + ' for this visit. '
                 + labels.normal_progress + ' does not match this visit.'
             );
         } else if (monitoringTaskPhase(task) === 'final') {
             text.textContent = task.task_type === 'month_2_inspection'
-                ? 'Caretaker monitoring report was submitted for the Extension 120 Day visit. Review the summary, then choose Housing unit if the lot build is finished, or Failed if it does not pass—Failed leads to Blacklist beneficiary when the case is eligible.'
-                : 'Caretaker monitoring report has been submitted. Review the summary, then choose Housing unit if the lot build is finished, or Explanation letter to open that workflow.';
+                ? 'Field inspector monitoring report was submitted for the Extension 120 Day visit. Review the summary, then choose Housing unit if the lot build is finished, or Failed if it does not pass—Failed leads to Blacklist beneficiary when the case is eligible.'
+                : 'Field inspector monitoring report has been submitted. Review the summary, then choose Housing unit if the lot build is finished, or Explanation letter to open that workflow.';
         } else {
-            text.textContent = 'Caretaker monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.';
+            text.textContent = 'Field inspector monitoring report has been submitted. Review the summary, then mark the result as Normal Progress or No Progress.';
         }
         if (summary) {
             summary.innerHTML = renderCompletedReportSummary(task);
@@ -2940,7 +2940,7 @@ function openInspectionInfoModal(task) {
             updateInspectionDecisionButtons(task);
         }
     } else if (task.notified_at) {
-        title.textContent = `${monitoringTaskDisplayTitle(task)} is waiting for caretaker`;
+        title.textContent = `${monitoringTaskDisplayTitle(task)} is waiting for field inspector`;
         text.textContent = `This task was already notified to Monitoring Dashboard. It remains scheduled for ${formatDisplayDate(task.due_date)} and is waiting for the caretaker field report.`;
     } else {
         title.textContent = 'Inspection details';
@@ -3045,7 +3045,7 @@ function alertMonitoringStaffDecisionMismatch(task, attemptedDecision, recommend
     } else {
         body = (
             'You cannot record ' + attemptedLabel + ' for this beneficiary. Choose '
-            + recommendedLabel + ' based on the caretaker report.'
+            + recommendedLabel + ' based on the field inspector report.'
         );
     }
     monitoringFlowAlert(body, title, 'default', null);
