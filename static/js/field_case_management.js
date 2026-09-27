@@ -1792,7 +1792,7 @@
     }
 
     function clearSettledLogSubjectAutoFill() {
-        ['settledLogSubjectAutoName', 'settledLogSubjectAutoRef', 'settledLogSubjectAutoUnit'].forEach((id) => setReadonlyField(id, ''));
+        ['settledLogSubjectAutoName', 'settledLogSubjectAutoRef', 'settledLogSubjectAutoUnit', 'settledLogSubjectAutoPhone'].forEach((id) => setReadonlyField(id, ''));
         document.getElementById('settledLogSubjectAutoFill')?.classList.remove('is-linked');
     }
 
@@ -1835,6 +1835,7 @@
         setReadonlyField('settledLogSubjectAutoName', row.full_name);
         setReadonlyField('settledLogSubjectAutoRef', row.reference_number);
         setReadonlyField('settledLogSubjectAutoUnit', row.unit_label);
+        setReadonlyField('settledLogSubjectAutoPhone', row.phone_number);
         document.getElementById('settledLogSubjectAutoFill')?.classList.add('is-linked');
         document.getElementById('settledLogSubjectSearchResults').style.display = 'none';
         document.getElementById('settledLogSubjectSearchInput').value = row.full_name || '';
