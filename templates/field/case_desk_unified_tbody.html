@@ -189,18 +189,26 @@
         <span class="status-pill-flex status-pill-flex--incident_log">Settled on-site</span>
     </td>
     <td style="vertical-align: middle; text-align: center;">
-        <div class="case-desk-incident-actions">
-            <button type="button" class="case-prior-open-link"
-                onclick="viewSettledIncidentLog(this)"
-                data-complainant-unit-label="{{ row.incident_complainant_unit_label|escape }}"
-                data-respondent-unit-label="{{ row.incident_respondent_unit_label|escape }}"
-                data-complainant-name="{{ row.incident_complainant_name|escape }}"
-                data-respondent-name="{{ row.incident_respondent_name|escape }}"
-                data-case-type-display="{{ log.get_case_type_display|escape }}"
-                data-description="{{ log.description|escape }}"
-                data-logged-at="{{ log.logged_at|date:'M d, Y' }} · {{ log.logged_at|time:'g:i A' }}"
-                data-logged-by="{{ log.logged_by.get_full_name|default:'Field'|escape }}">View</button>
-        </div>
+        <button type="button" class="case-prior-open-link"
+            onclick="viewSettledIncidentLog(this)"
+            data-complainant-unit-label="{{ row.incident_complainant_unit_label|escape }}"
+            data-respondent-unit-label="{{ row.incident_respondent_unit_label|escape }}"
+            data-complainant-name="{{ row.incident_complainant_name|escape }}"
+            data-respondent-name="{{ row.incident_respondent_name|escape }}"
+            data-case-type-display="{{ log.get_case_type_display|escape }}"
+            data-description="{{ log.description|escape }}"
+            data-logged-at="{{ log.logged_at|date:'M d, Y' }} · {{ log.logged_at|time:'g:i A' }}"
+            data-logged-by="{{ log.logged_by.get_full_name|default:'Field'|escape }}"
+            style="padding: 0.3rem 1rem 0.3rem 0.3rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: auto; box-sizing: border-box; width: 100%; text-transform: uppercase; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; border-radius: 0.5rem; font-size: 0.65rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); transition: all 0.2s ease;">
+            <div style="width: 1.6rem; height: 1.6rem; border-radius: 0.35rem; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.3);">
+                <svg class="btn-icon" style="width:12px;height:12px;color:white;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="14" r="2"></circle>
+                </svg>
+            </div>
+            VIEW
+        </button>
     </td>
 </tr>
 {% endwith %}
