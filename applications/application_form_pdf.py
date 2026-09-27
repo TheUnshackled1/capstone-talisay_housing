@@ -13,7 +13,11 @@ import logging
 from decimal import Decimal
 from pathlib import Path
 
-import fitz  # PyMuPDF
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fitz = None
+    logger.warning("fitz (PyMuPDF) failed to import. PDF generation will be unavailable.")
 from django.conf import settings
 from django.utils import timezone
 
