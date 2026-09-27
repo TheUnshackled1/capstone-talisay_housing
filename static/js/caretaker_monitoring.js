@@ -591,7 +591,7 @@ function executeSubmitReport() {
             closeReportModal();
             document.getElementById('successSubmitUnit').textContent = document.getElementById('reportTaskUnit').textContent;
             const now = new Date();
-            const timeStr = now.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) + ' · ' + now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+            const timeStr = now.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) + ' \\u00B7 ' + now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
             document.getElementById('successSubmitTime').textContent = timeStr;
             
             document.getElementById('successSubmitModal').classList.add('active');
