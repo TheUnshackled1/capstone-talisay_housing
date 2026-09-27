@@ -416,22 +416,29 @@ function lawqShowAlert(message, title, onConfirm, variant) {
         const searchInput = document.getElementById('awardHousingUnitSearch');
         const dropdown = document.getElementById('awardHousingUnitDropdown');
         const hiddenInput = document.getElementById('awardHousingUnit');
+        const wrapper = document.getElementById('awardHousingUnitWrapper');
 
         if (searchInput && dropdown && hiddenInput) {
             const options = dropdown.querySelectorAll('.lawq-combobox-option');
             
+            const openDropdown = () => {
+                dropdown.style.display = 'block';
+                if (wrapper) wrapper.style.marginBottom = '225px';
+            };
+            
+            const closeDropdown = () => {
+                dropdown.style.display = 'none';
+                if (wrapper) wrapper.style.marginBottom = '0';
+            };
+            
             // Show dropdown on focus or click
-            searchInput.addEventListener('focus', () => {
-                dropdown.style.display = 'block';
-            });
-            searchInput.addEventListener('click', () => {
-                dropdown.style.display = 'block';
-            });
+            searchInput.addEventListener('focus', openDropdown);
+            searchInput.addEventListener('click', openDropdown);
 
             // Filter on type
             searchInput.addEventListener('input', (e) => {
                 const query = e.target.value.toLowerCase();
-                dropdown.style.display = 'block';
+                openDropdown();
                 
                 options.forEach(opt => {
                     const text = opt.textContent.toLowerCase();
@@ -464,7 +471,7 @@ function lawqShowAlert(message, title, onConfirm, variant) {
                     const siteName = groupElement ? groupElement.textContent + ' - ' : '';
                     
                     searchInput.value = siteName + opt.textContent.trim();
-                    dropdown.style.display = 'none';
+                    closeDropdown();
                 });
                 
                 // Hover styling
@@ -475,7 +482,7 @@ function lawqShowAlert(message, title, onConfirm, variant) {
             // Hide dropdown when clicking outside (or input blurring)
             document.addEventListener('click', (e) => {
                 if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.style.display = 'none';
+                    closeDropdown();
                     // If they clicked away and didn't select a valid ID, clear text or revert
                     if (!hiddenInput.value) {
                         searchInput.value = '';

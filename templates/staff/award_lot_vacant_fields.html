@@ -5,25 +5,25 @@
         Only vacant housing units are available for awarding.
     </p>
     {% if vacant_units_by_site %}
-    <div class="lawq-combobox-wrapper" style="position: relative;">
+    <div class="lawq-combobox-wrapper" id="awardHousingUnitWrapper" style="position: relative; transition: margin-bottom 0.2s ease;">
         <!-- Hidden input for form submission -->
         <input type="hidden" name="housing_unit_id" id="awardHousingUnit" required>
         
         <!-- Visible search input -->
-        <input type="text" id="awardHousingUnitSearch" class="lawq-award-input" placeholder="Search site, block, and lot…" autocomplete="off" style="padding-right: 2rem;">
+        <input type="text" id="awardHousingUnitSearch" class="lawq-award-input" placeholder="Search site, block, and lot…" autocomplete="off" style="padding-right: 2.2rem; cursor: text; text-align: left;">
         
         <!-- Dropdown Arrow Icon -->
-        <svg style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg style="position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%); width: 1.1rem; height: 1.1rem; color: #94a3b8; pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
 
         <!-- The Dropdown List -->
-        <div id="awardHousingUnitDropdown" class="lawq-combobox-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #cbd5e1; border-radius: 0.5rem; margin-top: 0.25rem; z-index: 50; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+        <div id="awardHousingUnitDropdown" class="lawq-combobox-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 220px; overflow-y: auto; background: #ffffff; border: 1px solid #10b981; border-radius: 0.5rem; margin-top: 0.35rem; z-index: 50; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); text-align: left;">
             {% for group in vacant_units_by_site %}
-                <div class="lawq-combobox-group" style="padding: 0.5rem 0.75rem; font-size: 0.7rem; font-weight: 700; color: #64748b; background: #f8fafc; text-transform: uppercase;">{{ group.site.name }}</div>
+                <div class="lawq-combobox-group" style="padding: 0.6rem 1rem; font-size: 0.72rem; font-weight: 800; color: #1e293b; background: #f8fafc; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2;">{{ group.site.name }}</div>
                 {% for u in group.units %}
-                    <div class="lawq-combobox-option" data-value="{{ u.id }}" style="padding: 0.5rem 1rem; font-size: 0.85rem; color: #1e293b; cursor: pointer; transition: background 0.15s ease;">
-                        Block {{ u.block_number }} · Lot {{ u.lot_number }}
+                    <div class="lawq-combobox-option" data-value="{{ u.id }}" style="padding: 0.6rem 1rem; font-size: 0.9rem; color: #334155; cursor: pointer; transition: background 0.15s ease; border-bottom: 1px solid #f1f5f9;">
+                        Block {{ u.block_number }} <span style="color: #cbd5e1; margin: 0 0.2rem;">&bull;</span> Lot {{ u.lot_number }}
                     </div>
                 {% endfor %}
             {% endfor %}
