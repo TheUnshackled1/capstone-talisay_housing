@@ -4258,7 +4258,7 @@ function getCsrfToken() {
                 </div>
                 <div class="form-group">
                     <label class="form-label">Age</label>
-                    <input type="number" class="form-input hh-member-field" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" onchange="updateHouseholdSize()">
+                    <input type="number" class="form-input hh-member-field hh-member-age" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" inputmode="numeric" onchange="updateHouseholdSize()">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Sex</label>
