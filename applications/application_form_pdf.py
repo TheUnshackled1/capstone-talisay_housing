@@ -267,6 +267,21 @@ def build_filled_application_pdf(applicant, application) -> bytes:
 
     _baseline(p0, LX, 336.0, 'Filipino', fontsize=FS)
     civ_display = applicant.get_civil_status_display() if applicant.civil_status else ''
+    if civ_display:
+        # White-out right portion of the Citizenship underline so Civil status sits clean.
+        p0.draw_rect(
+            fitz.Rect(330, 336.5, 545, 338.5),
+            color=(1, 1, 1),
+            fill=(1, 1, 1),
+        )
+        _baseline(p0, 332, 336.0, 'Civil status:', fontsize=FS)
+        # Draw underline for the Civil status value area.
+        p0.draw_line(
+            fitz.Point(390, 337.8),
+            fitz.Point(545, 337.8),
+            color=(0, 0, 0),
+            width=0.5,
+        )
     _baseline(p0, 392, 336.0, _overlay_ascii(civ_display, 22), fontsize=FS)
 
     barangay_name = getattr(applicant.barangay, 'name', None) or ''
