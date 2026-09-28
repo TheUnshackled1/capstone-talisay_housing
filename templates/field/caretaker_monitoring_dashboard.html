@@ -23,16 +23,17 @@
 
 <!-- KPI Cards -->
 <div class="monitoring-kpis">
-    <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiScheduledModal" data-kpi-scroll-tasks="1" aria-controls="kpiScheduledModal" aria-haspopup="dialog">
+    <button type="button" class="monitoring-kpi monitoring-kpi-active" data-kpi-modal="kpiActiveUnitsModal" aria-controls="kpiActiveUnitsModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
             </svg>
         </div>
         <div class="monitoring-kpi-text">
-            <h4>Scheduled Tasks</h4>
-            <div class="monitoring-kpi-number">{{ pending_count }}</div>
+            <h4>Total</h4>
+            <div class="monitoring-kpi-number">{{ active_units }}</div>
         </div>
     </button>
 
@@ -49,17 +50,16 @@
         </div>
     </button>
 
-    <button type="button" class="monitoring-kpi monitoring-kpi-active" data-kpi-modal="kpiActiveUnitsModal" aria-controls="kpiActiveUnitsModal" aria-haspopup="dialog">
+    <button type="button" class="monitoring-kpi monitoring-kpi-pending" data-kpi-modal="kpiScheduledModal" data-kpi-scroll-tasks="1" aria-controls="kpiScheduledModal" aria-haspopup="dialog">
         <div class="monitoring-kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
         </div>
         <div class="monitoring-kpi-text">
-            <h4>Active Units</h4>
-            <div class="monitoring-kpi-number">{{ active_units }}</div>
+            <h4>Scheduled Tasks</h4>
+            <div class="monitoring-kpi-number">{{ pending_count }}</div>
         </div>
     </button>
 </div>
