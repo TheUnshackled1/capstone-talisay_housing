@@ -1776,7 +1776,7 @@ function kpiFilter(card) {
     const showAll = reset || kind === 'all';
 
     function lotIsRecognizedHousingUnit(lot) {
-        return (lot.dataset.status || '') === 'Occupied'
+        return (lot.dataset.housingUnitOnFile || '') === '1'
             || (lot.dataset.historicalBeneficiary || '') === '1';
     }
 

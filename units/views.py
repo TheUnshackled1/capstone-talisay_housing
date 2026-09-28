@@ -411,9 +411,8 @@ def housing_units_monitoring(request, position):
         notice_30_count = sum(1 for u in units_list if u.status == 'Under notice (30-day)')
         notice_10_count = sum(1 for u in units_list if u.status == 'Final notice (10-day)')
         repossessed_count = sum(1 for u in units_list if u.status == 'Repossessed')
-        # Compute kpi_count here so it's available for both context and cache payload.
+        # _hist_count used later to compute housing_unit_kpi_count after the construction loop.
         _hist_count = sum(1 for u in units_list if getattr(u, 'is_historical_beneficiary', False))
-        housing_unit_kpi_count = occupied_count + _hist_count
 
         # Find critical alerts (final notices escalated) without extra SQL.
         escalated_units = next(
@@ -500,6 +499,11 @@ def housing_units_monitoring(request, position):
         else:
             for u in units_list:
                 setattr(u, 'extension_final_visit_failed', False)
+
+        # Compute kpi_count here — after the construction loop — so housing_unit_on_file_count is final.
+        # "Housing unit" = completed final monitoring (on-file) + historical beneficiaries.
+        # "Occupied" = status 'Occupied' only (excludes housing units and historical).
+        housing_unit_kpi_count = housing_unit_on_file_count + _hist_count
 
         # Cache all computed data for 120s — version stamp ensures invalidation on writes.
         if not no_relocation_sites:
