@@ -4327,6 +4327,11 @@ function getCsrfToken() {
         renderHouseholdMembers(preserved);
     }
 
+    // Expose inline onclick handlers to global window scope
+    window.addHouseholdMember = addHouseholdMember;
+    window.deleteHouseholdMember = deleteHouseholdMember;
+    window.updateHouseholdSize = updateHouseholdSize;
+
 
     /** Date inputs: material-style Flatpickr with native fallback. */
     function syncDateOfBirthMaxToToday() {

@@ -1056,7 +1056,7 @@
             const vaultUploadUrl = typeof entry.vault_upload_url === 'string' ? entry.vault_upload_url.trim() : '';
             const vaultScanUrl = typeof entry.vault_scan_url === 'string' ? entry.vault_scan_url.trim() : '';
             const hasManualStatus = manualStatus === 'passed' || manualStatus === 'failed';
-            const manualLabel = manualStatus === 'passed' ? 'Passed' : (manualStatus === 'failed' ? 'Missing' : '');
+            const manualLabel = manualStatus === 'passed' ? 'Valid' : (manualStatus === 'failed' ? 'Invalid' : '');
             const evidenceHtml = formatM2EvidenceHtml(entry.evidence);
             const isVoterAutoPassed = entry.key === 'voter' && entry.status === 'passed' && !hasManualStatus;
             const chipHtml = hasManualStatus
@@ -1078,8 +1078,8 @@
                 ? `<a class="eligibility-view-doc-btn" href="${safeDocHref}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(docName)}"><span class="btn-icon-block">${M2_VIEW_ICON_SVG}</span><span>View</span></a>`
                 : '';
             const decisionButtonsHtml = (entry.is_reviewable && !isVoterAutoPassed)
-                ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Pass</span></button>
-                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')"><span class="btn-icon-block">${M2_MISSING_ICON_SVG}</span><span>Missing</span></button>`
+                ? `<button type="button" class="eligibility-decision-btn ${manualStatus === 'passed' ? 'active-pass' : ''}" onclick="setEligibilityDecision('${entry.key}', 'passed')"><span class="btn-icon-block">${M2_PASS_ICON_SVG}</span><span>Valid</span></button>
+                    <button type="button" class="eligibility-decision-btn ${manualStatus === 'failed' ? 'active-fail' : ''}" onclick="setEligibilityDecision('${entry.key}', 'failed')"><span class="btn-icon-block">${M2_MISSING_ICON_SVG}</span><span>Invalid</span></button>`
                 : '';
             const actionsRow = (viewDocBtnHtml || decisionButtonsHtml)
                 ? `<div class="m2-elig-actions">
@@ -1153,9 +1153,9 @@
 
 
         const summaryChipsHtml = `<div class="m2-summary-chips">
-            <span class="m2-summary-chip m2-summary-chip--passed">&#x2714; Passed <span class="m2-summary-chip__count">${passedChecks.length}</span></span>
+            <span class="m2-summary-chip m2-summary-chip--passed">&#x2714; Valid <span class="m2-summary-chip__count">${passedChecks.length}</span></span>
             <span class="m2-summary-chip m2-summary-chip--pending">&#x23F3; Pending <span class="m2-summary-chip__count">${undecidedChecks.length}</span></span>
-            <span class="m2-summary-chip m2-summary-chip--failed">&#x26A0; Missing <span class="m2-summary-chip__count">${failedChecks.length}</span></span>
+            <span class="m2-summary-chip m2-summary-chip--failed">&#x26A0; Invalid <span class="m2-summary-chip__count">${failedChecks.length}</span></span>
             ${pendingLabel}
         </div>`;
 
