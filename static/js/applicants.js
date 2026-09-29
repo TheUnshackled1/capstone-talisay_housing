@@ -4351,7 +4351,6 @@ function getCsrfToken() {
                         allowInput: true,
                         disableMobile: true,
                         closeOnSelect: true,
-                        maxDate: today,
                         onReady: function (_selected, _dateStr, fp) {
                             if (fp.altInput) {
                                 fp.altInput.placeholder = 'dd/mm/yyyy';
@@ -4362,8 +4361,6 @@ function getCsrfToken() {
                             calculateAge();
                         },
                     });
-                } else {
-                    dateOfBirthPicker.set('maxDate', today);
                 }
             }
 
