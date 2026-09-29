@@ -486,12 +486,12 @@
             clearFieldEvidenceUI();
             stopFieldCamera();
 
-            // Reset accordions to collapsed state
+            // Reset accordions to expanded state
             ['sectionApplicantDec', 'cdrrmoStatusBox', 'sectionSitePhotos'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    el.classList.remove('expanded');
-                    el.classList.add('collapsed');
+                    el.classList.remove('collapsed');
+                    el.classList.add('expanded');
                 }
             });
 
