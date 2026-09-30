@@ -298,7 +298,7 @@ def _build_situation_vault_block(
                 },
                 {
                     'slot_id': 'ronda_verification',
-                    'label': 'Ronda on-site verification (photos)',
+                    'label': 'Field Inspector on-site Verification (photos)',
                     'kind': 'image',
                     'on_file': has_ronda_photos,
                     'type_key': None,
