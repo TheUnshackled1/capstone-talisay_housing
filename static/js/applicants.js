@@ -1262,6 +1262,63 @@ function getCsrfToken() {
         if (bodyEl) bodyEl.classList.add('notice-modal-body--blacklist-blocked');
     }
 
+    function showIneligibleProceedBlockedModal(payload, applicantRef) {
+        closeArchiveRequirementsModal();
+        const data = payload || {};
+        const attemptingRef = (applicantRef || data.applicant_reference || data.applicant_reference_number || data.referenceNumber || '').trim();
+        const attemptingName = (data.applicant_name || data.applicantName || data.fullName || '').trim();
+        const failedCriteria = data.failed_criteria || data.failedCriteria || [];
+        const esc = (typeof escapeHtml === 'function') ? escapeHtml : function (s) { return String(s || ''); };
+
+        const attemptBlock = attemptingRef || attemptingName
+            ? (
+                '<div class="bl-proceed-blocked__attempt">'
+                + '<span class="bl-proceed-blocked__attempt-label">Record you tried to promote</span>'
+                + (attemptingRef ? ('<span class="bl-proceed-blocked__attempt-ref">' + esc(attemptingRef) + '</span>') : '')
+                + (attemptingName ? ('<span class="bl-proceed-blocked__attempt-name">' + esc(attemptingName) + '</span>') : '')
+                + '</div>'
+            )
+            : '';
+            
+        let criteriaHtml = '';
+        if (failedCriteria.length > 0) {
+            criteriaHtml = '<ul style="text-align: left; background: #fff1f2; color: #9f1239; padding: 1rem 1rem 1rem 2.5rem; border-radius: 0.5rem; margin-top: 1rem; border: 1px solid #fecdd3;">';
+            for (let i = 0; i < failedCriteria.length; i++) {
+                criteriaHtml += '<li style="margin-bottom: 0.5rem; font-weight: 500;">' + esc(failedCriteria[i]) + '</li>';
+            }
+            criteriaHtml += '</ul>';
+        }
+
+        showNoticeModal({
+            title: 'Cannot proceed — Ineligible',
+            allowHtml: true,
+            messageHtml: (
+                '<div class="bl-proceed-blocked">'
+                + attemptBlock
+                + '<p class="bl-proceed-blocked__lead">'
+                + 'This applicant cannot move to <strong>Applicant Evaluation and Eligibility</strong> '
+                + 'because they do not meet the basic eligibility criteria.'
+                + '</p>'
+                + criteriaHtml
+                + '<p class="bl-proceed-blocked__note">Review the applicant record and update if necessary.</p>'
+                + '</div>'
+            ),
+            type: 'error',
+            refPill: '',
+            primaryText: 'OK',
+        });
+
+        const overlay = document.getElementById('noticeModalOverlay');
+        const modal = document.getElementById('noticeModal');
+        const bodyEl = document.getElementById('noticeModalBody');
+        if (overlay) {
+            overlay.classList.add('notice-modal-overlay--top');
+            overlay.style.zIndex = '13050';
+        }
+        if (modal) modal.classList.add('notice-modal--blacklist-blocked');
+        if (bodyEl) bodyEl.classList.add('notice-modal-body--blacklist-blocked');
+    }
+
     function logSmsDispatchPlan(flowName, details) {
     }
 
@@ -1276,6 +1333,10 @@ function getCsrfToken() {
                 blacklist_registry_ref: payload.blacklistRegistryRef || '',
                 blacklist_blocked: true,
             }, payload.referenceNumber || '');
+            return;
+        }
+        if (payload && payload.eligibilityBlocked) {
+            showIneligibleProceedBlockedModal(payload, payload.referenceNumber || '');
             return;
         }
         const rows = payload && Array.isArray(payload.rows) ? payload.rows : [];
@@ -1334,6 +1395,10 @@ function getCsrfToken() {
                 if (!data.success) {
                     if (data.blacklist_blocked || data.blacklistBlocked) {
                         showBlacklistProceedBlockedModal(data, ref);
+                        return;
+                    }
+                    if (data.eligibility_blocked || data.eligibilityBlocked) {
+                        showIneligibleProceedBlockedModal(data, ref);
                         return;
                     }
                     throw new Error(data.error || 'Unable to proceed to Applicant Evaluation & Eligibility.');

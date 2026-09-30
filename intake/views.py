@@ -1396,6 +1396,36 @@ def proceed_to_applications(request, position):
     promote_to_module2 = str(request.POST.get('promote_to_module2', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
 
     if promote_to_module2:
+        # Check eligibility criteria
+        failed_criteria = []
+        if not getattr(applicant, 'is_registered_voter_talisay', False):
+            failed_criteria.append("Not a registered voter in Talisay City")
+            
+        years_residing = getattr(applicant, 'years_residing', 0)
+        if not _is_residency_eligible(years_residing):
+            failed_criteria.append(f"Years of residence ({years_residing or 0}) is below the required 5 years")
+            
+        if getattr(applicant, 'has_property_in_talisay', False):
+            failed_criteria.append("Has property ownership in Talisay City")
+            
+        if not getattr(applicant, 'is_income_eligible', False):
+            income = float(getattr(applicant, 'monthly_income', 0) or 0)
+            failed_criteria.append(f"Monthly household income (₱{income:,.2f}) exceeds ceiling")
+
+        if failed_criteria:
+            return JsonResponse({
+                'success': False,
+                'eligibility_blocked': True,
+                'failed_criteria': failed_criteria,
+                'applicant_name': applicant.full_name or '',
+                'applicant_reference': applicant.reference_number or '',
+                'error': (
+                    f'{applicant.full_name or "This applicant"} cannot proceed to '
+                    'Applicant Evaluation and Eligibility because they do not meet the '
+                    'basic eligibility criteria.'
+                ),
+            }, status=400)
+
         # Use cached blacklist — avoids up to 6 DB queries per call.
         from applications.views import _fetch_all_blacklist_entries, _check_blacklist_from_cache
         bl_cache = _fetch_all_blacklist_entries()
@@ -1999,6 +2029,15 @@ def applicants_list(request, position):
                 'blacklistReason': r.get('blacklistReason', ''),
                 'blacklistRegistryName': r.get('blacklistRegistryName', ''),
                 'blacklistRegistryRef': r.get('blacklistRegistryRef', ''),
+                'eligibilityBlocked': not r.get('isRegisteredVoterTalisay', False) or not r.get('residencyEligible', False) or r.get('hasPropertyInTalisay', False) or not r.get('incomeEligible', False),
+                'failedCriteria': [
+                    msg for msg in [
+                        "Not a registered voter in Talisay City" if not r.get('isRegisteredVoterTalisay', False) else None,
+                        f"Years of residence ({r.get('yearsResiding') or 0}) is below the required 5 years" if not r.get('residencyEligible', False) else None,
+                        "Has property ownership in Talisay City" if r.get('hasPropertyInTalisay', False) else None,
+                        f"Monthly household income (₱{float(r.get('monthlyIncome') or 0):,.2f}) exceeds ceiling" if not r.get('incomeEligible', False) else None,
+                    ] if msg
+                ]
             }
             for r in archive_records
         }
