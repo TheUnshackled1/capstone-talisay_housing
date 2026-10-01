@@ -22,6 +22,104 @@
         return RfqDWTObject;
     }
 
+    /**
+     * Multi-page flatbed prompt: resolves true → scan another page, false → upload now.
+     */
+    function rfqAddPagePrompt(pageCount) {
+        return new Promise(function (resolve) {
+            var overlay = document.createElement('div');
+            overlay.style.cssText = [
+                'position:fixed;inset:0;background:rgba(0,0,0,0.55);',
+                'z-index:9999;display:flex;align-items:center;justify-content:center;'
+            ].join('');
+            overlay.innerHTML = [
+                '<div style="background:#fff;border-radius:1.5rem;overflow:hidden;',
+                'max-width:380px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.28);position:relative;">',
+
+                /* ── Header ── */
+                '<div style="background:#0f172a;border-bottom:4px solid #ea580c;',
+                'padding:1.25rem 1rem 1rem;text-align:center;position:relative;">',
+
+                /* THA logo crest */
+                '<div style="width:auto;max-width:min(100%,16rem);height:2.85rem;',
+                'margin:0 auto 0.625rem;border:2px solid rgba(248,250,252,0.95);',
+                'border-radius:0.375rem;overflow:hidden;display:flex;align-items:center;',
+                'justify-content:center;background:#ffffff;padding:0.2rem 0.5rem;box-sizing:border-box;">',
+                '<img src="/static/images/favicon.png" alt="" decoding="async"',
+                ' style="height:100%;max-height:2.35rem;width:auto;object-fit:contain;">',
+                '</div>',
+
+                /* Title */
+                '<p style="font-size:0.85rem;font-weight:800;color:#38bdf8;',
+                'letter-spacing:0.08em;text-transform:uppercase;margin:0;text-align:center;">',
+                'Page ' + pageCount + ' scanned</p>',
+
+                /* Close × */
+                '<button id="_rfqAddPageClose" aria-label="Close"',
+                ' style="position:absolute;top:0.75rem;right:0.75rem;',
+                'background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.1);',
+                'border-radius:0.375rem;color:#94a3b8;width:1.75rem;height:1.75rem;',
+                'display:flex;align-items:center;justify-content:center;',
+                'cursor:pointer;font-size:1.25rem;line-height:1;">&times;</button>',
+
+                '</div>',
+
+                /* ── Body ── */
+                '<div style="padding:1.5rem 1rem;text-align:center;color:#0f172a;font-weight:500;">',
+                'Place the next page on the scanner glass and click ',
+                '&ldquo;Scan Next Page&rdquo;, or click &ldquo;Done&rdquo; to upload the ',
+                pageCount + '-page document.',
+                '</div>',
+
+                /* ── Actions ── */
+                '<div style="display:flex;gap:0.75rem;padding:1rem 1.5rem 1.5rem;',
+                'justify-content:center;background:#f8fafc;border-top:1px solid #e2e8f0;">',
+
+                '<button id="_rfqAddPageNext"',
+                ' style="background:#ef4444;color:#fff;border:none;font-weight:700;',
+                'border-radius:0.5rem;padding:0.65rem 1.5rem;cursor:pointer;">',
+                'Scan Next Page</button>',
+
+                '<button id="_rfqAddPageDone"',
+                ' style="background:#10b981;color:#fff;border:none;font-weight:700;',
+                'border-radius:0.5rem;padding:0.65rem 1.5rem;cursor:pointer;">',
+                'Done</button>',
+
+                '</div></div>'
+            ].join('');
+            document.body.appendChild(overlay);
+            overlay.querySelector('#_rfqAddPageClose').onclick = function () {
+                document.body.removeChild(overlay);
+                resolve(false); // Close = same as Done (upload what we have)
+            };
+            overlay.querySelector('#_rfqAddPageDone').onclick = function () {
+                document.body.removeChild(overlay);
+                resolve(false);
+            };
+            overlay.querySelector('#_rfqAddPageNext').onclick = function () {
+                document.body.removeChild(overlay);
+                resolve(true);
+            };
+        });
+    }
+
+
+    async function rfqAcquireWithAddPagePrompt(dwt) {
+        if (Number(dwt.HowManyImagesInBuffer || 0) > 0) {
+            try { dwt.RemoveAllImages(); } catch (_e) { /* ignore */ }
+        }
+        await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: false });
+        var pageCount = Number(dwt.HowManyImagesInBuffer || 0);
+        if (pageCount <= 0) throw new Error('No image was acquired from the scanner.');
+        while (true) {
+            var addMore = await rfqAddPagePrompt(pageCount);
+            if (!addMore) break;
+            await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: false });
+            pageCount = Number(dwt.HowManyImagesInBuffer || 0);
+        }
+        return pageCount;
+    }
+
     function rfqCloseReplaceDocOverlay(event) {
         if (event && event.target && event.target.id !== 'rfqReplaceDocOverlay') return;
         rfqResolveReplaceDocConfirm(false);
@@ -90,19 +188,23 @@
             if (!dwt) throw new Error('Scanner SDK not ready. Refresh the page and try again.');
             btn.innerHTML = scanSvg + ' Select source…';
             await dwt.SelectSourceAsync();
-            const beforeCount = Number(dwt.HowManyImagesInBuffer || 0);
-            await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: true });
-            const afterCount = Number(dwt.HowManyImagesInBuffer || 0);
-            if (afterCount <= beforeCount) throw new Error('No image was acquired.');
-            const index = Number(dwt.CurrentImageIndexInBuffer);
+            btn.innerHTML = scanSvg + ' Scanning…';
+            // Multi-page flatbed support: prompt "Scan Next Page" between pages.
+            const totalPagesRfq = await rfqAcquireWithAddPagePrompt(dwt);
+            const isMultiPageRfq = totalPagesRfq > 1;
             const uploadUrl = `${RFQ_INTAKE_DWT_URL}?applicant_id=${encodeURIComponent(applicantId)}&doc_key=doc_signed_application&doc_code=SIGNED`;
-            const fileName = `${safeRef}_signed_application.png`;
+            const fileExtRfq = isMultiPageRfq ? 'pdf' : 'png';
+            const fileName = `${safeRef}_signed_application.${fileExtRfq}`;
+            const allIndicesRfq = Array.from({ length: totalPagesRfq }, function (_, i) { return i; });
+            const imageTypeRfq = isMultiPageRfq
+                ? Dynamsoft.DWT.EnumDWT_ImageType.IT_PDF
+                : Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG;
             btn.innerHTML = scanSvg + ' Uploading…';
             await new Promise(function (resolve, reject) {
                 dwt.HTTPUpload(
                     uploadUrl,
-                    [index],
-                    Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG,
+                    allIndicesRfq,
+                    imageTypeRfq,
                     Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary,
                     fileName,
                     function (httpResponse) { resolve(httpResponse); },
