@@ -1021,12 +1021,18 @@ def _staff_reports_analytics_payload(request):
     _registered_count = len(_registered_ids)
     _awarded_count = len(_awarded_ids)
 
+    # Dashboard 'Lot Awarded' uses total_isf which counts BOTH active LotAward 
+    # records AND historical occupant_name rows, matching GK Masterlist perfectly.
+    _active_lot_awards_early = isf_population_data.get('total_isf', 0)
+
     # Applicants by Status — all-time by default; period-scoped when filter is active
     applicant_by_status = [
         {'status': 'registered',   'label': 'Registered',               'count': _registered_count},
         {'status': 'evaluation',   'label': 'Evaluation & Eligibility', 'count': _evaluation_count},
         {'status': 'form',         'label': 'Form',                     'count': ready_for_form_queue_count},
-        {'status': 'awarded',      'label': 'Lot Awarded',              'count': _awarded_count},
+        # 'Lot Awarded' uses active LotAward rows (unit-based) — same source as Housing
+        # Units Monitoring map and GK Masterlist list, so all three stay in sync.
+        {'status': 'awarded',      'label': 'Lot Awarded',              'count': _active_lot_awards_early},
     ]
 
     # Applicant Situation — active pipeline (CDRRMO / Ejected / Displaced / None)
@@ -1292,15 +1298,9 @@ def _staff_reports_analytics_payload(request):
         row['label'] = blacklist_reason_labels.get(row['reason'], row['reason'] or '—')
     blacklist_count = sum(int(r.get('count') or 0) for r in blacklist_by_reason)
 
-    # Active lot awards
-    if filter_active:
-        active_lot_awards = LotAward.objects.filter(
-            status='active',
-            awarded_at__gte=period_start,
-            awarded_at__lte=period_end,
-        ).count()
-    else:
-        active_lot_awards = LotAward.objects.filter(status='active').count()
+    # Active lot awards — reuse the count already computed above for applicant_by_status
+    # to avoid a second DB round-trip.
+    active_lot_awards = _active_lot_awards_early
 
     # ===== VOTER REGISTRATION STATUS (Descriptive Analytics) =====
     # Count beneficiaries (awarded applicants) by voter registration status
