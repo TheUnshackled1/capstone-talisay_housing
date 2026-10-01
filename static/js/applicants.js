@@ -100,6 +100,55 @@ function getCsrfToken() {
         return true;
     }
 
+    /**
+     * Show an "Add Another Page?" prompt after scanning a page.
+     * Resolves true  → staff wants to scan another page.
+     * Resolves false → staff is done; proceed to upload.
+     */
+    function showAddAnotherPagePrompt(pageCount) {
+        return new Promise(function (resolve) {
+            showNoticeModal({
+                title: 'Page ' + pageCount + ' scanned',
+                message: 'Place the next page on the scanner glass and click "Scan Next Page", or click "Done" to upload the ' + pageCount + '-page document.',
+                type: 'success',
+                primaryText: 'Done',
+                secondaryText: 'Scan Next Page',
+                onPrimary: function () { resolve(false); },
+                onSecondary: function () { resolve(true); },
+            });
+        });
+    }
+
+    /**
+     * Acquire one or more pages from the flatbed with an "Add Another Page?" prompt
+     * between pages. DWT buffer accumulates all pages; the upload step handles
+     * combining them into a single document.
+     *
+     * The source must already be selected before calling this function.
+     * `closeSourceAfterAcquire` is always false here — the caller closes the source.
+     */
+    async function acquireWithAddPagePrompt(dwt) {
+        if (!dwt) throw new Error('Scanner SDK is not ready yet. Refresh the page and try again.');
+        // Clear any stale images from a previous scan session.
+        if (Number(dwt.HowManyImagesInBuffer || 0) > 0) {
+            try { dwt.RemoveAllImages(); } catch (_e) { /* ignore */ }
+        }
+        // Scan first page.
+        await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: false });
+        let pageCount = Number(dwt.HowManyImagesInBuffer || 0);
+        if (pageCount <= 0) throw new Error('No image was acquired from the scanner.');
+
+        // Prompt: add more pages?
+        while (true) {
+            const addMore = await showAddAnotherPagePrompt(pageCount);
+            if (!addMore) break;
+            // Scan next page — appends to buffer.
+            await dwt.AcquireImageAsync({ IfCloseSourceAfterAcquire: false });
+            pageCount = Number(dwt.HowManyImagesInBuffer || 0);
+        }
+        return pageCount;
+    }
+
     function applyScannedStateToApplicant(docKey) {
         if (!currentApplicant) return;
         const prop = DOC_KEY_TO_APPLICANT_PROP[docKey];
@@ -168,8 +217,9 @@ function getCsrfToken() {
                     reject(new Error('Scanner SDK is not ready.'));
                     return;
                 }
+                const totalPages = Number(dwt.HowManyImagesInBuffer || 0);
                 const index = Number(dwt.CurrentImageIndexInBuffer);
-                if (index < 0) {
+                if (totalPages <= 0 || index < 0) {
                     restoreAlert();
                     reject(new Error('No scanned image in buffer.'));
                     return;
@@ -177,13 +227,23 @@ function getCsrfToken() {
                 const safeApplicantId = encodeURIComponent(applicantId || '');
                 const safeDocKey = encodeURIComponent(docKey || '');
                 const safeDocCode = encodeURIComponent(docCode || '');
-                const uploadUrl = `${window.APPLICANTS_CONFIG.uploadScannedRequirementUrl}?applicant_id=${safeApplicantId}&doc_key=${safeDocKey}&doc_code=${safeDocCode}&capture_method=scan`;
-                const fileName = `${(referenceNumber || 'applicant')}_${docCode || 'scan'}.png`;
+                const captureMethod = encodeURIComponent('scan');
+                const uploadUrl = `${window.APPLICANTS_CONFIG.uploadScannedRequirementUrl}?applicant_id=${safeApplicantId}&doc_key=${safeDocKey}&doc_code=${safeDocCode}&capture_method=${captureMethod}`;
+
+                // Multi-page → PDF; single page → PNG (preserves existing behaviour).
+                const isMultiPage = totalPages > 1;
+                const imageType = isMultiPage
+                    ? Dynamsoft.DWT.EnumDWT_ImageType.IT_PDF
+                    : Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG;
+                const fileExt = isMultiPage ? 'pdf' : 'png';
+                const fileName = `${(referenceNumber || 'applicant')}_${docCode || 'scan'}.${fileExt}`;
+                // Upload all pages in buffer (indices 0..N-1)
+                const allIndices = Array.from({ length: totalPages }, function (_, i) { return i; });
 
                 dwt.HTTPUpload(
                     uploadUrl,
-                    [index],
-                    Dynamsoft.DWT.EnumDWT_ImageType.IT_PNG,
+                    allIndices,
+                    imageType,
                     Dynamsoft.DWT.EnumDWT_UploadDataFormat.Binary,
                     fileName,
                     function (httpResponse) {
@@ -894,7 +954,8 @@ function getCsrfToken() {
             const dwt = await waitForDwtReady();
             if (!dwt) throw new Error('Scanner SDK is not ready yet. Refresh the page and try again.');
             await dwt.SelectSourceAsync();
-            await acquireImageWithDwt({ selectSource: false, closeSourceAfterAcquire: false });
+            // Multi-page flatbed support: prompt "Scan Next Page" between pages.
+            await acquireWithAddPagePrompt(dwt);
             const uploadResult = await uploadCurrentScannedImageForApplicant(applicantId, referenceNumber, docKey, code);
             // Fire legacy boolean flag sync without blocking the UI update.
             saveArchiveRequirementDoc(applicantId, docKey, true);
@@ -3392,7 +3453,11 @@ function getCsrfToken() {
         const oldText = buttonEl.textContent;
         buttonEl.textContent = 'Scanning...';
         try {
-            await acquireImageWithDwt({ selectSource: true });
+            // Multi-page flatbed support: select source then prompt "Scan Next Page" between pages.
+            const dwt = await waitForDwtReady();
+            if (!dwt) throw new Error('Scanner SDK is not ready yet. Refresh the page and try again.');
+            await dwt.SelectSourceAsync();
+            await acquireWithAddPagePrompt(dwt);
             await uploadCurrentScannedImage(docKey, code);
             applyScannedStateToApplicant(docKey);
             const isSaved = await saveDocumentStatus(docKey, true);
