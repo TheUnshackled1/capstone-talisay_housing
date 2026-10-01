@@ -249,13 +249,16 @@ def build_filled_application_pdf(applicant, application) -> bytes:
 
     # Name-of-applicant lanes (Last / First / Middle) — slightly re-anchored so
     # values sit cleaner above each printed lane without drifting into each other.
-    _baseline(p0, 188, 288.95, _overlay_ascii(applicant.last_name, 16), fontsize=FS)
-    _baseline(p0, 326, 288.95, _overlay_ascii(applicant.first_name, 18), fontsize=FS)
+    # Last Name: x=216 aligns to left edge of 'Last Name' label (measured: label x0=216)
+    # First Name: x=329 aligns to left edge of 'First Name' label (measured: label x0=324)
+    # Middle Name: x=456 aligns to visible start of 'Middle Name' label text (label has leading spaces, actual text ~x=456)
+    _baseline(p0, 216, 288.95, _overlay_ascii(applicant.last_name, 14), fontsize=FS)
+    _baseline(p0, 329, 288.95, _overlay_ascii(applicant.first_name, 16), fontsize=FS)
     middle_with_ext = _safe_str(applicant.middle_name)
     ext = _safe_str(applicant.extension_name)
     if ext:
         middle_with_ext = f'{middle_with_ext} {ext}'.strip()
-    _baseline(p0, 432, 288.95, _overlay_ascii(middle_with_ext, 14), fontsize=FS)
+    _baseline(p0, 456, 288.95, _overlay_ascii(middle_with_ext, 12), fontsize=FS)
 
     sex_display = applicant.get_sex_display() if applicant.sex else ''
     _baseline(p0, LX, 309.45, sex_display[:22], fontsize=FS)
@@ -335,14 +338,9 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     inc = applicant.monthly_income
     inc_txt = _overlay_ascii(_safe_str(inc) if inc is not None else '', 22)
     _baseline(p0, 147, row2_bl, employer_txt, fontsize=FS)
-    _baseline_after_needle(
-        p0,
-        'Monthly Income :',
-        inc_txt,
-        dx=3,
-        baseline_y=row2_bl,
-        fontsize=FS,
-    )
+    # Place income value directly on the underline using measured coordinate.
+    # 'Monthly Income :' label ends at x≈398; underline starts at x≈401.
+    _baseline(p0, 401, row2_bl, inc_txt, fontsize=FS)
 
     # --- Page 2 ---
     if len(doc) > 1:
