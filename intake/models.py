@@ -196,7 +196,6 @@ class Applicant(models.Model):
     occupation = models.CharField(max_length=25, blank=True, verbose_name="Occupation")
     employment_status = models.CharField(
         max_length=50,
-        blank=True,
         verbose_name="Status of Employment",
         choices=[
             ('employed', 'Employed'),
