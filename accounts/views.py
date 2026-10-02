@@ -1141,7 +1141,7 @@ def _staff_reports_analytics_payload(request):
         row['label'] = housing_status_labels.get(row['status'], row['status'] or '—')
     _analytics_rows_bar_pct(housing_units_by_status)
 
-    cases_total = Case.objects.count()
+    cases_total = Case.objects.exclude(status__in=['resolved', 'closed']).count()
     case_status_labels = dict(Case.STATUS_CHOICES)
     case_type_labels = dict(Case.CASE_TYPE_CHOICES)
     # Filter cases by the selected period (cases received/opened in that month)
