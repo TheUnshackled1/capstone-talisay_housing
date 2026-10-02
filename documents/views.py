@@ -1194,6 +1194,11 @@ def upload_document(request, position):
             capture_method=Document.CAPTURE_UPLOAD,
         )
 
+        # Auto-flag: uploading a Voter's Certificate marks the applicant as a registered voter in Talisay City.
+        if doc_type == 'voter_certification' and not applicant.is_registered_voter_talisay:
+            applicant.is_registered_voter_talisay = True
+            applicant.save(update_fields=['is_registered_voter_talisay'])
+
         pipeline_note = ''
         application_advanced = False
         if doc_type == 'signed_application':

@@ -1175,6 +1175,11 @@ def upload_scanned_requirement(request, position):
         setattr(applicant, doc_key, True)
         applicant.save(update_fields=[doc_key])
 
+    # Auto-flag: scanning the Voter's Certificate marks the applicant as a registered voter in Talisay City.
+    if doc_key == 'doc_voter_cert' and not applicant.is_registered_voter_talisay:
+        applicant.is_registered_voter_talisay = True
+        applicant.save(update_fields=['is_registered_voter_talisay'])
+
     # Build the full checklist payload inline so the JS can update the UI in a
     # single round-trip — eliminates the extra GET to applicant-requirement-scan-status.
     try:
