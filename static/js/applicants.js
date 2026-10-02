@@ -1789,18 +1789,18 @@ function getCsrfToken() {
                 const income = parseFloat(raw);
                 const isInvalid = raw !== '' && Number.isFinite(income) && income > MODULE1_INCOME_CEILING;
                 if (isInvalid) {
-                    monthlyIncomeInput.setCustomValidity('Office requirement: Maximum gross monthly household income is PHP 10,000.');
+                    monthlyIncomeInput.setCustomValidity('Office requirement: Maximum gross monthly income is PHP 10,000.');
                     if (!hasShownIncomeRequirementAlert) {
                         hasShownIncomeRequirementAlert = true;
                         if (typeof window.showFlowAlert === 'function') {
                             window.showFlowAlert(
-                                'Applicants with gross monthly household income above PHP 10,000 are not accepted.',
+                                'Applicants with gross monthly income above PHP 10,000 are not accepted.',
                                 'Office requirement',
                                 null,
                                 'warning'
                             );
                         } else {
-                            window.alert('Office requirement: Applicants with gross monthly household income above PHP 10,000 are not accepted.');
+                            window.alert('Office requirement: Applicants with gross monthly income above PHP 10,000 are not accepted.');
                         }
                     }
                 } else {
@@ -4771,18 +4771,18 @@ function getCsrfToken() {
             return;
         }
 
-        // Office requirement: maximum gross monthly household income is PHP 10,000.
+        // Office requirement: maximum gross monthly income is PHP 10,000.
         const monthlyIncomeRaw = String(formData.get('monthly_income') || '').replace(/,/g, '').trim();
         const monthlyIncomeValue = parseFloat(monthlyIncomeRaw);
         if (!Number.isFinite(monthlyIncomeValue) || monthlyIncomeValue > MODULE1_INCOME_CEILING) {
             showNoticeModal({
                 title: 'Income Requirement',
-                message: 'Applicants with gross monthly household income above PHP 10,000 are not accepted.',
+                message: 'Applicants with gross monthly income above PHP 10,000 are not accepted.',
                 type: 'warning',
             });
             const monthlyIncome = document.getElementById('monthlyIncome');
             if (monthlyIncome) {
-                monthlyIncome.setCustomValidity('Office requirement: Maximum gross monthly household income is PHP 10,000.');
+                monthlyIncome.setCustomValidity('Office requirement: Maximum gross monthly income is PHP 10,000.');
                 monthlyIncome.reportValidity();
             }
             return;
