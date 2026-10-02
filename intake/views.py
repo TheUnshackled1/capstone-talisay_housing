@@ -1399,7 +1399,7 @@ def proceed_to_applications(request, position):
         # Check eligibility criteria
         failed_criteria = []
         if not getattr(applicant, 'is_registered_voter_talisay', False):
-            failed_criteria.append("Not a registered voter in Talisay City")
+            failed_criteria.append("Not a resident of Talisay City")
             
         years_residing = getattr(applicant, 'years_residing', 0)
         if not _is_residency_eligible(years_residing):
@@ -2032,7 +2032,7 @@ def applicants_list(request, position):
                 'eligibilityBlocked': not r.get('isRegisteredVoterTalisay', False) or not r.get('residencyEligible', False) or r.get('hasPropertyInTalisay', False) or not r.get('incomeEligible', False),
                 'failedCriteria': [
                     msg for msg in [
-                        "Not a registered voter in Talisay City" if not r.get('isRegisteredVoterTalisay', False) else None,
+                        "Not a resident of Talisay City" if not r.get('isRegisteredVoterTalisay', False) else None,
                         f"Years of residence ({r.get('yearsResiding') or 0}) is below the required 5 years" if not r.get('residencyEligible', False) else None,
                         "Has property ownership in Talisay City" if r.get('hasPropertyInTalisay', False) else None,
                         f"Monthly household income (₱{float(r.get('monthlyIncome') or 0):,.2f}) exceeds ceiling" if not r.get('incomeEligible', False) else None,

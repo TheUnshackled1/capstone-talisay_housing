@@ -231,7 +231,7 @@ class WalkInApplicantForm(forms.ModelForm):
         coerce=lambda value: str(value).lower() == 'yes',
         empty_value='',
         required=True,
-        label="Registered Voter in Talisay City",
+        label="Resident of Talisay City",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     civil_status = forms.ChoiceField(

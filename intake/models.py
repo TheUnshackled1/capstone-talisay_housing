@@ -177,8 +177,8 @@ class Applicant(models.Model):
     )
     is_registered_voter_talisay = models.BooleanField(
         default=False,
-        verbose_name="Registered Voter in Talisay City",
-        help_text="Declared voter registration status in Talisay City."
+        verbose_name="Resident of Talisay City",
+        help_text="Declared residency status in Talisay City."
     )
     
     # Household & Income

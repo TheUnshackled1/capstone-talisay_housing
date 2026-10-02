@@ -4760,12 +4760,12 @@ function getCsrfToken() {
         }
         yearsResiding.setCustomValidity('');
 
-        // Office requirement: applicant must be a registered voter in Talisay City.
+        // Office requirement: applicant must be a resident of Talisay City.
         const voterSelection = String(formData.get('is_registered_voter_talisay') || '').trim().toLowerCase();
         if (voterSelection !== 'true') {
             showNoticeModal({
-                title: 'Voter Requirement',
-                message: 'Applicants must be registered voters in Talisay City before you proceed with registration.',
+                title: 'Resident Requirement',
+                message: 'Applicants must be a Resident of Talisay City before you proceed with registration.',
                 type: 'warning',
             });
             return;
