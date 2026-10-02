@@ -1707,13 +1707,13 @@ function getCsrfToken() {
                     hasShownVoterRequirementAlert = true;
                     if (typeof window.showFlowAlert === 'function') {
                         window.showFlowAlert(
-                            'Applicants must be registered voters in Talisay City before you proceed with registration.',
+                            'Applicants must be a Resident of Talisay City before you proceed with registration.',
                             'Office requirement',
                             null,
                             'warning'
                         );
                     } else {
-                        window.alert('Office requirement: Applicants must be registered voters in Talisay City before you proceed with registration.');
+                        window.alert('Office requirement: Applicants must be a Resident of Talisay City before you proceed with registration.');
                     }
                 }
                 if (voterYes) {
