@@ -4323,31 +4323,48 @@ document.addEventListener('DOMContentLoaded', () => {
         // Position card — fixed positioning uses viewport coordinates directly (no scroll offset)
         const rect = anchor.getBoundingClientRect();
 
+        // Ensure the card is a direct child of <body> so position:fixed is always
+        // relative to the viewport — even if a parent has transform/overflow:hidden.
+        if (hoverCard.parentElement !== document.body) {
+            document.body.appendChild(hoverCard);
+        }
+
         hoverCard.style.visibility = 'hidden';
         hoverCard.style.display = 'block';
         const cardWidth  = hoverCard.offsetWidth  || 290;
         const cardHeight = hoverCard.offsetHeight || 220;
         hoverCard.style.visibility = '';
 
+        const MARGIN = 10;
         let targetLeft = rect.left + (rect.width / 2) - (cardWidth / 2);
         let targetTop  = rect.top  - cardHeight - 12;
 
-        if (targetLeft < 10) targetLeft = 10;
-        if (targetLeft + cardWidth > window.innerWidth - 10)
-            targetLeft = window.innerWidth - cardWidth - 10;
+        // Clamp horizontally
+        if (targetLeft < MARGIN) targetLeft = MARGIN;
+        if (targetLeft + cardWidth > window.innerWidth - MARGIN)
+            targetLeft = window.innerWidth - cardWidth - MARGIN;
 
-        if (rect.top - cardHeight - 12 < 10) {
+        // Prefer above; fall back to below if not enough room above
+        if (rect.top - cardHeight - 12 < MARGIN) {
             targetTop = rect.bottom + 12;
             hoverCard.classList.add('position-below');
         } else {
             hoverCard.classList.remove('position-below');
         }
 
+        // Final safety clamp — never go below viewport bottom
+        if (targetTop + cardHeight > window.innerHeight - MARGIN) {
+            targetTop = window.innerHeight - cardHeight - MARGIN;
+        }
+        // Never go above viewport top
+        if (targetTop < MARGIN) targetTop = MARGIN;
+
         hoverCard.style.left = targetLeft + 'px';
         hoverCard.style.top  = targetTop  + 'px';
         hoverCard.style.display = 'block';
         requestAnimationFrame(() => hoverCard.classList.add('active'));
     });
+
 
     document.addEventListener('mouseout', function (e) {
         if (!isHoverPopoverZone(e.target)) return;
