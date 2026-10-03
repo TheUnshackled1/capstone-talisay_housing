@@ -45,6 +45,8 @@ from applications.models import QueueEntry, Application
 from documents.models import Document, RequirementSubmission
 from units.models import HousingUnit, LotAward, ConstructionProgress, RelocationSite
 from units.isf_population import isf_population_stats, resolve_isf_population_site
+from units.housing_unit_status import housing_unit_on_file_for_lot_award
+from units.historical_beneficiary import is_historical_lot_award as _is_historical_lot_award
 from cases.models import Case
 
 
@@ -1141,6 +1143,40 @@ def _staff_reports_analytics_payload(request):
         row['label'] = housing_status_labels.get(row['status'], row['status'] or '—')
     _analytics_rows_bar_pct(housing_units_by_status)
 
+    # Split "Occupied" into "Housing Unit" (historical beneficiaries + on-file construction)
+    # and plain "Occupied" — mirrors the monitoring page KPI:
+    #   housing_unit_kpi_count = housing_unit_on_file_count + _hist_count
+    _occupied_unit_ids = set(
+        HousingUnit.objects.filter(status='Occupied').values_list('id', flat=True)
+    )
+    _occupied_awards = list(
+        LotAward.objects.filter(unit_id__in=_occupied_unit_ids, status='active')
+    )
+    _hist_count_dashboard = sum(1 for la in _occupied_awards if _is_historical_lot_award(la))
+    _progress_qs = (
+        ConstructionProgress.objects
+        .filter(lot_award__unit_id__in=_occupied_unit_ids, lot_award__status='active')
+        .select_related('lot_award')
+        .prefetch_related(
+            'lot_award__monitoring_tasks__reports',
+            'lot_award__monitoring_cycles',
+        )
+    )
+    _housing_on_file_count = sum(
+        1 for p in _progress_qs
+        if housing_unit_on_file_for_lot_award(p.lot_award)
+    )
+    _housing_unit_count = _hist_count_dashboard + _housing_on_file_count
+    _occupied_only_count = len(_occupied_unit_ids) - _housing_unit_count
+    _vacant_count = HousingUnit.objects.filter(
+        status__in=['Vacant \u2014 available', 'Vacant - available']
+    ).count()
+    housing_units_by_status_split = [
+        {'label': 'Housing Unit', 'count': _housing_unit_count},
+        {'label': 'Occupied',     'count': _occupied_only_count},
+        {'label': 'Vacant',       'count': _vacant_count},
+    ]
+
     cases_total = Case.objects.exclude(status__in=['resolved', 'closed']).count()
     case_status_labels = dict(Case.STATUS_CHOICES)
     case_type_labels = dict(Case.CASE_TYPE_CHOICES)
@@ -1329,7 +1365,7 @@ def _staff_reports_analytics_payload(request):
         monthly_upload_trend,
         applicant_by_status,
         application_by_status,
-        housing_units_by_status,
+        housing_units_by_status_split,
         cases_by_status,
         cases_by_type,
         applicants_top_barangays,
