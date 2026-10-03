@@ -1132,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     'flex-direction:column',
                     'gap:0.45rem',
                     'justify-content:center',
-                    'align-items:flex-start',
+                    'align-items:center',
                     'margin-top:0.55rem',
                     'padding:0 0.1rem'
                 ].join(';') + ';';
