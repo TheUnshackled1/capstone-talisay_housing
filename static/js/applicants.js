@@ -2595,6 +2595,9 @@ function getCsrfToken() {
             const situationLabel = document.getElementById('reviewSituationLabel');
             const situationDesc = document.getElementById('reviewSituationDescription');
             const displacementReason = currentApplicant.displacementReason || '';
+            const dispReasonEditEl = document.getElementById('reviewDisplacementReason');
+            if (dispReasonEditEl) dispReasonEditEl.value = displacementReason;
+
 
             if (situationLabel && situationDesc) {
                 if (displacementReason === 'danger_zone') {
@@ -3629,7 +3632,7 @@ function getCsrfToken() {
 
         // Channel B (Danger Zone) fields
         const dangerZoneFields = ['reviewFirstNameB', 'reviewLastNameB', 'reviewMiddleNameB', 'reviewExtensionNameB', 'reviewDateOfBirthB', 'reviewOccupationB', 'reviewFullNameB', 'reviewIncomeB', 'reviewHouseholdB', 'reviewYearsB', 'reviewPhoneB', 'reviewAddressB', 'reviewDangerLocation'];
-        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType', 'reviewVoterB', 'reviewPropertyB', 'reviewSexB', 'reviewCivilStatusB', 'reviewEmploymentStatusB'];
+        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType', 'reviewVoterB', 'reviewPropertyB', 'reviewSexB', 'reviewCivilStatusB', 'reviewEmploymentStatusB', 'reviewDisplacementReason'];
 
         // Channel A landowner fields
         const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress', 'reviewSubmissionBarangay'];
@@ -4024,6 +4027,7 @@ function getCsrfToken() {
             const propB = document.getElementById('reviewPropertyB');
             if (voterB) formData.append('is_registered_voter_talisay', voterB.value);
             if (propB) formData.append('has_property_in_talisay', propB.value);
+            formData.append('displacement_reason', getInputValue('reviewDisplacementReason'));
 
         } else {
             // Channel C: Regular walk-in applicant data
@@ -4113,6 +4117,9 @@ function getCsrfToken() {
                             currentApplicant.fullName = parts.join(' ');
                         } else if (formData.has('full_name')) {
                             currentApplicant.fullName = String(formData.get('full_name') || '');
+                        }
+                        if (formData.has('displacement_reason')) {
+                            currentApplicant.displacementReason = String(formData.get('displacement_reason') || '');
                         }
                         const ref = currentApplicant.referenceNumber;
                         if (ref && archiveReviewData[ref]) {

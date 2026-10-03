@@ -1117,6 +1117,13 @@ def update_applicant(request, position):
         elif prop_raw in ('no', 'false', '0'):
             applicant.has_property_in_talisay = False
 
+        # Displacement reason (Applicant Situation D. section)
+        _VALID_DISP_REASONS = frozenset({'danger_zone', 'ejected', 'relocated', 'not_abc', ''})
+        if 'displacement_reason' in request.POST:
+            disp_raw = request.POST.get('displacement_reason', '').strip()
+            if disp_raw in _VALID_DISP_REASONS:
+                applicant.displacement_reason = disp_raw
+
         # Channel B specific: Danger zone fields
         if channel == 'B':
             danger_zone_type = request.POST.get('danger_zone_type', '').strip()
