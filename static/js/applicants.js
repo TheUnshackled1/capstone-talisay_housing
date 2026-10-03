@@ -2434,7 +2434,7 @@ function getCsrfToken() {
             if (sexEl) sexEl.value = currentApplicant.sex || '';
             const csDisp = currentApplicant.civilStatus ? currentApplicant.civilStatus.charAt(0).toUpperCase() + currentApplicant.civilStatus.slice(1).replace('_', '-') : '';
             const csDispEl = document.getElementById('reviewCivilStatusDisplay'); if (csDispEl) csDispEl.textContent = csDisp;
-            if (civilStatusEl) civilStatusEl.value = currentApplicant.civilStatus || '';
+            if (civilStatusEl) civilStatusEl.value = currentApplicant.civilStatusRaw || '';
             if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
             if (ageEl) {
                 const computedAge = ageFromDobValue(currentApplicant.dateOfBirth || (dobEl && dobEl.value));
@@ -2450,7 +2450,7 @@ function getCsrfToken() {
             if (addressEl) addressEl.value = currentApplicant.currentAddress || '';
             if (occupationEl) occupationEl.value = currentApplicant.occupation || '';
             const empDispEl = document.getElementById('reviewEmploymentStatusDisplay'); if (empDispEl) empDispEl.textContent = currentApplicant.employmentStatus || '';
-            if (employmentStatusEl) employmentStatusEl.value = currentApplicant.employmentStatus || '';
+            if (employmentStatusEl) employmentStatusEl.value = currentApplicant.employmentStatusRaw || '';
 
             // Populate danger zone status
             if (dangerZoneStatusEl) {
@@ -3014,7 +3014,7 @@ function getCsrfToken() {
         const sexBEl = document.getElementById('reviewSexB'); if (sexBEl) sexBEl.value = applicant.sex || '';
         const csDisplayB = applicant.civilStatus ? applicant.civilStatus.charAt(0).toUpperCase() + applicant.civilStatus.slice(1).replace('_', '-') : '';
         const csBDisplayEl = document.getElementById('reviewCivilStatusBDisplay'); if (csBDisplayEl) csBDisplayEl.textContent = csDisplayB;
-        const csBEl = document.getElementById('reviewCivilStatusB'); if (csBEl) csBEl.value = applicant.civilStatus || '';
+        const csBEl = document.getElementById('reviewCivilStatusB'); if (csBEl) csBEl.value = applicant.civilStatusRaw || '';
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
         const computedAgeB = ageFromDobValue(applicant.dateOfBirth);
         setValue('reviewAgeB', computedAgeB != null ? computedAgeB : (applicant.age ?? ''));
@@ -3034,7 +3034,7 @@ function getCsrfToken() {
         }
         setValue('reviewOccupationB', applicant.occupation);
         const empBDisplayEl = document.getElementById('reviewEmploymentStatusBDisplay'); if (empBDisplayEl) empBDisplayEl.textContent = applicant.employmentStatus || '';
-        const empBEl = document.getElementById('reviewEmploymentStatusB'); if (empBEl) empBEl.value = applicant.employmentStatus || '';
+        const empBEl = document.getElementById('reviewEmploymentStatusB'); if (empBEl) empBEl.value = applicant.employmentStatusRaw || '';
 
         const listEl = document.getElementById('reviewHouseholdListB');
         if (listEl) {
