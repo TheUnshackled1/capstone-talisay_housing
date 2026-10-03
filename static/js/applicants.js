@@ -3010,10 +3010,10 @@ function getCsrfToken() {
         setValue('reviewMiddleNameB', applicant.middleName);
         setValue('reviewExtensionNameB', applicant.extensionName);
         const sexDisplay = applicant.sex === 'M' ? 'Male' : applicant.sex === 'F' ? 'Female' : (applicant.sex || '');
-        setValue('reviewSexBDisplay', sexDisplay);
+        const sexBDisplayEl = document.getElementById('reviewSexBDisplay'); if (sexBDisplayEl) sexBDisplayEl.textContent = sexDisplay;
         const sexBEl = document.getElementById('reviewSexB'); if (sexBEl) sexBEl.value = applicant.sex || '';
         const csDisplayB = applicant.civilStatus ? applicant.civilStatus.charAt(0).toUpperCase() + applicant.civilStatus.slice(1).replace('_', '-') : '';
-        setValue('reviewCivilStatusBDisplay', csDisplayB);
+        const csBDisplayEl = document.getElementById('reviewCivilStatusBDisplay'); if (csBDisplayEl) csBDisplayEl.textContent = csDisplayB;
         const csBEl = document.getElementById('reviewCivilStatusB'); if (csBEl) csBEl.value = applicant.civilStatus || '';
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
         const computedAgeB = ageFromDobValue(applicant.dateOfBirth);
@@ -3033,7 +3033,7 @@ function getCsrfToken() {
             propDisplayEl.textContent = (hp === true || hp === 'true' || hp === 1) ? 'Yes' : 'No';
         }
         setValue('reviewOccupationB', applicant.occupation);
-        setValue('reviewEmploymentStatusBDisplay', applicant.employmentStatus);
+        const empBDisplayEl = document.getElementById('reviewEmploymentStatusBDisplay'); if (empBDisplayEl) empBDisplayEl.textContent = applicant.employmentStatus || '';
         const empBEl = document.getElementById('reviewEmploymentStatusB'); if (empBEl) empBEl.value = applicant.employmentStatus || '';
 
         const listEl = document.getElementById('reviewHouseholdListB');
