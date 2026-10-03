@@ -3632,7 +3632,7 @@ function getCsrfToken() {
 
         // Channel B (Danger Zone) fields
         const dangerZoneFields = ['reviewFirstNameB', 'reviewLastNameB', 'reviewMiddleNameB', 'reviewExtensionNameB', 'reviewDateOfBirthB', 'reviewOccupationB', 'reviewFullNameB', 'reviewIncomeB', 'reviewHouseholdB', 'reviewYearsB', 'reviewPhoneB', 'reviewAddressB', 'reviewDangerLocation'];
-        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType', 'reviewVoterB', 'reviewPropertyB', 'reviewSexB', 'reviewCivilStatusB', 'reviewEmploymentStatusB', 'reviewDisplacementReason'];
+        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType', 'reviewVoterB', 'reviewPropertyB', 'reviewSexB', 'reviewCivilStatusB', 'reviewEmploymentStatusB'];
 
         // Channel A landowner fields
         const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress', 'reviewSubmissionBarangay'];
@@ -4027,7 +4027,7 @@ function getCsrfToken() {
             const propB = document.getElementById('reviewPropertyB');
             if (voterB) formData.append('is_registered_voter_talisay', voterB.value);
             if (propB) formData.append('has_property_in_talisay', propB.value);
-            formData.append('displacement_reason', getInputValue('reviewDisplacementReason'));
+
 
         } else {
             // Channel C: Regular walk-in applicant data
