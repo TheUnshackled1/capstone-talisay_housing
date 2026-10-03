@@ -1146,7 +1146,6 @@ def update_applicant(request, position):
         try:
             linked_archives = applicant.archives.filter(formally_archived=False)
             if linked_archives.exists():
-                snapshot_fields_to_update = []
                 for archive in linked_archives:
                     changed = False
                     if applicant.full_name and archive.full_name_snapshot != applicant.full_name:
