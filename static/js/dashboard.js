@@ -1202,6 +1202,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
+            if (isVoterChart) {
+                var totalPill = document.createElement('span');
+                totalPill.style.cssText = [
+                    'display:inline-flex', 'align-items:center', 'gap:0.25rem',
+                    'font-size:0.68rem',
+                    'color:var(--text-secondary,#64748b)',
+                    'white-space:nowrap',
+                    'margin-top:0.25rem'
+                ].join(';') + ';';
+
+                var totalLabelTxt = document.createElement('span');
+                totalLabelTxt.textContent = 'Total Registered Voters:';
+                totalLabelTxt.style.cssText = 'color:#475569;';
+
+                var totalCountTxt = document.createElement('strong');
+                var totalVoters = (dataset.values[0] || 0) + (dataset.values[1] || 0);
+                totalCountTxt.textContent = totalVoters;
+                totalCountTxt.style.cssText = 'color:#1e293b;font-weight:700;';
+
+                totalPill.appendChild(totalLabelTxt);
+                totalPill.appendChild(totalCountTxt);
+                bottomLegend.appendChild(totalPill);
+            }
+
             // Insert after the canvas wrapper (rep-chart-canvas div)
             canvasWrapForLegend.insertAdjacentElement('afterend', bottomLegend);
         }
