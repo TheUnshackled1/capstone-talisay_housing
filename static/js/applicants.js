@@ -2429,7 +2429,11 @@ function getCsrfToken() {
             }
 
             // Populate all fields
-            if (sexEl) sexEl.value = currentApplicant.sex === 'M' ? 'Male' : currentApplicant.sex === 'F' ? 'Female' : (currentApplicant.sex || '');
+            const sexDisp = currentApplicant.sex === 'M' ? 'Male' : currentApplicant.sex === 'F' ? 'Female' : (currentApplicant.sex || '');
+            const sexDispEl = document.getElementById('reviewSexDisplay'); if (sexDispEl) sexDispEl.textContent = sexDisp;
+            if (sexEl) sexEl.value = currentApplicant.sex || '';
+            const csDisp = currentApplicant.civilStatus ? currentApplicant.civilStatus.charAt(0).toUpperCase() + currentApplicant.civilStatus.slice(1).replace('_', '-') : '';
+            const csDispEl = document.getElementById('reviewCivilStatusDisplay'); if (csDispEl) csDispEl.textContent = csDisp;
             if (civilStatusEl) civilStatusEl.value = currentApplicant.civilStatus || '';
             if (dobEl) dobEl.value = currentApplicant.dateOfBirth || '';
             if (ageEl) {
@@ -2445,6 +2449,7 @@ function getCsrfToken() {
             if (phoneEl) phoneEl.value = currentApplicant.phoneNumber || '';
             if (addressEl) addressEl.value = currentApplicant.currentAddress || '';
             if (occupationEl) occupationEl.value = currentApplicant.occupation || '';
+            const empDispEl = document.getElementById('reviewEmploymentStatusDisplay'); if (empDispEl) empDispEl.textContent = currentApplicant.employmentStatus || '';
             if (employmentStatusEl) employmentStatusEl.value = currentApplicant.employmentStatus || '';
 
             // Populate danger zone status
@@ -3002,8 +3007,11 @@ function getCsrfToken() {
         setValue('reviewMiddleNameB', applicant.middleName);
         setValue('reviewExtensionNameB', applicant.extensionName);
         const sexDisplay = applicant.sex === 'M' ? 'Male' : applicant.sex === 'F' ? 'Female' : (applicant.sex || '');
-        setValue('reviewSexB', sexDisplay);
-        setValue('reviewCivilStatusB', applicant.civilStatus || '');
+        setValue('reviewSexBDisplay', sexDisplay);
+        const sexBEl = document.getElementById('reviewSexB'); if (sexBEl) sexBEl.value = applicant.sex || '';
+        const csDisplayB = applicant.civilStatus ? applicant.civilStatus.charAt(0).toUpperCase() + applicant.civilStatus.slice(1).replace('_', '-') : '';
+        setValue('reviewCivilStatusBDisplay', csDisplayB);
+        const csBEl = document.getElementById('reviewCivilStatusB'); if (csBEl) csBEl.value = applicant.civilStatus || '';
         setValue('reviewDateOfBirthB', applicant.dateOfBirth);
         const computedAgeB = ageFromDobValue(applicant.dateOfBirth);
         setValue('reviewAgeB', computedAgeB != null ? computedAgeB : (applicant.age ?? ''));
@@ -3022,7 +3030,8 @@ function getCsrfToken() {
             propDisplayEl.textContent = (hp === true || hp === 'true' || hp === 1) ? 'Yes' : 'No';
         }
         setValue('reviewOccupationB', applicant.occupation);
-        setValue('reviewEmploymentStatusB', applicant.employmentStatus);
+        setValue('reviewEmploymentStatusBDisplay', applicant.employmentStatus);
+        const empBEl = document.getElementById('reviewEmploymentStatusB'); if (empBEl) empBEl.value = applicant.employmentStatus || '';
 
         const listEl = document.getElementById('reviewHouseholdListB');
         if (listEl) {
@@ -3615,12 +3624,12 @@ function getCsrfToken() {
         if (modal) modal.classList.toggle('tha-edit-mode', isEditMode);
 
         // Channel C fields
-        const walkinFields = ['reviewFullName', 'reviewIncome', 'reviewHousehold', 'reviewYears', 'reviewPhone', 'reviewAddress'];
-        const selectFieldsC = ['reviewBarangay'];
+        const walkinFields = ['reviewFirstName', 'reviewLastName', 'reviewMiddleName', 'reviewExtensionName', 'reviewDateOfBirth', 'reviewOccupation', 'reviewFullName', 'reviewIncome', 'reviewHousehold', 'reviewYears', 'reviewPhone', 'reviewAddress'];
+        const selectFieldsC = ['reviewBarangay', 'reviewSex', 'reviewCivilStatus', 'reviewEmploymentStatus'];
 
         // Channel B (Danger Zone) fields
-        const dangerZoneFields = ['reviewFullNameB', 'reviewIncomeB', 'reviewHouseholdB', 'reviewYearsB', 'reviewPhoneB', 'reviewAddressB', 'reviewDangerLocation'];
-        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType', 'reviewVoterB', 'reviewPropertyB'];
+        const dangerZoneFields = ['reviewFirstNameB', 'reviewLastNameB', 'reviewMiddleNameB', 'reviewExtensionNameB', 'reviewDateOfBirthB', 'reviewOccupationB', 'reviewFullNameB', 'reviewIncomeB', 'reviewHouseholdB', 'reviewYearsB', 'reviewPhoneB', 'reviewAddressB', 'reviewDangerLocation'];
+        const selectFieldsB = ['reviewBarangayB', 'reviewDangerType', 'reviewVoterB', 'reviewPropertyB', 'reviewSexB', 'reviewCivilStatusB', 'reviewEmploymentStatusB'];
 
         // Channel A landowner fields
         const landownerFields = ['reviewLandownerName', 'reviewLandownerPhone', 'reviewPropertyAddress', 'reviewSubmissionBarangay'];
@@ -3991,6 +4000,15 @@ function getCsrfToken() {
 
         } else if (currentApplicant.channel === 'B') {
             // Channel B: Danger Zone applicant data
+            formData.append('first_name', getInputValue('reviewFirstNameB'));
+            formData.append('last_name', getInputValue('reviewLastNameB'));
+            formData.append('middle_name', getInputValue('reviewMiddleNameB'));
+            formData.append('extension_name', getInputValue('reviewExtensionNameB'));
+            formData.append('date_of_birth', getInputValue('reviewDateOfBirthB'));
+            formData.append('occupation', getInputValue('reviewOccupationB'));
+            formData.append('sex', getInputValue('reviewSexB'));
+            formData.append('civil_status', getInputValue('reviewCivilStatusB'));
+            formData.append('employment_status', getInputValue('reviewEmploymentStatusB'));
             formData.append('full_name', getInputValue('reviewFullNameB'));
             formData.append('barangay', getInputValue('reviewBarangayB'));
             formData.append('monthly_income', getInputValue('reviewIncomeB').replace(/,/g, ''));
@@ -4009,6 +4027,15 @@ function getCsrfToken() {
 
         } else {
             // Channel C: Regular walk-in applicant data
+            formData.append('first_name', getInputValue('reviewFirstName'));
+            formData.append('last_name', getInputValue('reviewLastName'));
+            formData.append('middle_name', getInputValue('reviewMiddleName'));
+            formData.append('extension_name', getInputValue('reviewExtensionName'));
+            formData.append('date_of_birth', getInputValue('reviewDateOfBirth'));
+            formData.append('occupation', getInputValue('reviewOccupation'));
+            formData.append('sex', getInputValue('reviewSex'));
+            formData.append('civil_status', getInputValue('reviewCivilStatus'));
+            formData.append('employment_status', getInputValue('reviewEmploymentStatus'));
             formData.append('full_name', getInputValue('reviewFullName'));
             formData.append('barangay', getInputValue('reviewBarangay'));
             formData.append('monthly_income', getInputValue('reviewIncome').replace(/,/g, ''));

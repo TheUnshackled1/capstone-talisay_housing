@@ -1035,15 +1035,58 @@ def update_applicant(request, position):
             })
 
         full_name = request.POST.get('full_name', '').strip()
+        first_name = request.POST.get('first_name', '').strip().upper()
+        last_name = request.POST.get('last_name', '').strip().upper()
+        middle_name = request.POST.get('middle_name', '').strip().upper()
+        extension_name = request.POST.get('extension_name', '').strip()
+        sex = request.POST.get('sex', '').strip()
+        date_of_birth = request.POST.get('date_of_birth', '').strip()
+        civil_status = request.POST.get('civil_status', '').strip()
+        occupation = request.POST.get('occupation', '').strip().upper()
+        employment_status = request.POST.get('employment_status', '').strip()
+
         barangay_name = request.POST.get('barangay', '').strip()
         monthly_income = request.POST.get('monthly_income')
         household_size = request.POST.get('household_size')
         years_residing = request.POST.get('years_residing')
         phone_number = request.POST.get('phone_number', '').strip()
-        current_address = request.POST.get('current_address', '').strip()
+        current_address = request.POST.get('current_address', '').strip().upper()
 
-        if full_name:
+        # Update identity fields if provided
+        if first_name: applicant.first_name = first_name
+        if last_name: applicant.last_name = last_name
+        if middle_name: applicant.middle_name = middle_name
+        # Extension name can be explicitly emptied, but we'll only update if it was submitted in the payload
+        if 'extension_name' in request.POST: applicant.extension_name = extension_name
+        if sex: applicant.sex = sex
+        if civil_status: applicant.civil_status = civil_status
+        if occupation: applicant.occupation = occupation
+        if employment_status: applicant.employment_status = employment_status
+        if date_of_birth:
+            try:
+                import datetime
+                dob_val = datetime.datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+                applicant.date_of_birth = dob_val
+                
+                # Recalculate age
+                from django.utils import timezone
+                today = timezone.now().date()
+                age = today.year - dob_val.year - ((today.month, today.day) < (dob_val.month, dob_val.day))
+                applicant.age = age
+            except ValueError:
+                pass
+        
+        # Recalculate full name
+        if first_name and last_name:
+            names = [last_name, first_name]
+            if middle_name:
+                names.append(middle_name)
+            if extension_name:
+                names.append(extension_name)
+            applicant.full_name = " ".join(names)[:30]
+        elif full_name:
             applicant.full_name = full_name[:30]
+
         if barangay_name:
             try:
                 brgy = Barangay.objects.get(name=barangay_name)
