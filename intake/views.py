@@ -1142,6 +1142,39 @@ def update_applicant(request, position):
         applicant.save()
         cache.delete('intake_applicants_list_payload')
 
+        # Sync Archive snapshot so the Registered Applicants table reflects edits.
+        try:
+            linked_archives = applicant.archives.filter(formally_archived=False)
+            if linked_archives.exists():
+                snapshot_fields_to_update = []
+                for archive in linked_archives:
+                    changed = False
+                    if applicant.full_name and archive.full_name_snapshot != applicant.full_name:
+                        archive.full_name_snapshot = applicant.full_name
+                        changed = True
+                    if applicant.last_name and archive.last_name_snapshot != applicant.last_name:
+                        archive.last_name_snapshot = applicant.last_name
+                        changed = True
+                    if applicant.first_name and archive.first_name_snapshot != applicant.first_name:
+                        archive.first_name_snapshot = applicant.first_name
+                        changed = True
+                    if archive.middle_name_snapshot != (applicant.middle_name or ''):
+                        archive.middle_name_snapshot = applicant.middle_name or ''
+                        changed = True
+                    if archive.extension_name_snapshot != (applicant.extension_name or ''):
+                        archive.extension_name_snapshot = applicant.extension_name or ''
+                        changed = True
+                    if applicant.date_of_birth and archive.date_of_birth_snapshot != applicant.date_of_birth:
+                        archive.date_of_birth_snapshot = applicant.date_of_birth
+                        changed = True
+                    if changed:
+                        archive.save(update_fields=[
+                            'full_name_snapshot', 'last_name_snapshot', 'first_name_snapshot',
+                            'middle_name_snapshot', 'extension_name_snapshot', 'date_of_birth_snapshot',
+                        ])
+        except Exception:
+            pass  # Never let snapshot sync block the main save response
+
         new_danger_zone_type = (applicant.danger_zone_type or '').strip()
         new_danger_zone_location = (applicant.danger_zone_location or '').strip()
         new_declared = bool(new_danger_zone_type)

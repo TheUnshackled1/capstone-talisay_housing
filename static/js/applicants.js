@@ -4091,7 +4091,27 @@ function getCsrfToken() {
                         if (formData.has('barangay')) {
                             currentApplicant.barangay = String(formData.get('barangay') || '');
                         }
-                        if (formData.has('full_name')) {
+                        // Patch name components and reconstruct fullName from them
+                        if (formData.has('last_name')) {
+                            currentApplicant.lastName = String(formData.get('last_name') || '').toUpperCase();
+                        }
+                        if (formData.has('first_name')) {
+                            currentApplicant.firstName = String(formData.get('first_name') || '').toUpperCase();
+                        }
+                        if (formData.has('middle_name')) {
+                            currentApplicant.middleName = String(formData.get('middle_name') || '').toUpperCase();
+                        }
+                        if (formData.has('extension_name')) {
+                            currentApplicant.extensionName = String(formData.get('extension_name') || '');
+                        }
+                        // Rebuild fullName from components if any name part was sent
+                        if (formData.has('last_name') || formData.has('first_name')) {
+                            const ln = (formData.get('last_name') || currentApplicant.lastName || '').toUpperCase();
+                            const fn = (formData.get('first_name') || currentApplicant.firstName || '').toUpperCase();
+                            const mn = (formData.get('middle_name') || currentApplicant.middleName || '').toUpperCase();
+                            const parts = [fn, mn, ln].filter(p => p.trim());
+                            currentApplicant.fullName = parts.join(' ');
+                        } else if (formData.has('full_name')) {
                             currentApplicant.fullName = String(formData.get('full_name') || '');
                         }
                         const ref = currentApplicant.referenceNumber;
