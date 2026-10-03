@@ -3008,7 +3008,7 @@ def eligibility_snapshot(request, position):
             'title': "Voter's Certificate",
             'status': _status(bool(rules.get('voter_ok')), pending=(not voter_value_known)),
             'reason': (
-                'Resident of Talisay City.'
+                ''
                 if rules.get('voter_ok')
                 else 'Not a resident of Talisay City.'
             ),
