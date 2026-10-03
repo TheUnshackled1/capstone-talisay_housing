@@ -2595,9 +2595,6 @@ function getCsrfToken() {
             const situationLabel = document.getElementById('reviewSituationLabel');
             const situationDesc = document.getElementById('reviewSituationDescription');
             const displacementReason = currentApplicant.displacementReason || '';
-            const dispReasonEditEl = document.getElementById('reviewDisplacementReason');
-            if (dispReasonEditEl) dispReasonEditEl.value = displacementReason;
-
 
             if (situationLabel && situationDesc) {
                 if (displacementReason === 'danger_zone') {
