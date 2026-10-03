@@ -778,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'chartVoterRegistration':
                 return {
                     type: 'single',
-                    labels: ['Registered Voter', 'Not Registered'],
+                    labels: ["With Voter's Certificate/ID", "No Voter's Certificate/ID"],
                     values: [
                         (D.voterRegistration && D.voterRegistration.values) ? (D.voterRegistration.values[0] || 0) : 0,
                         (D.voterRegistration && D.voterRegistration.values) ? (D.voterRegistration.values[1] || 0) : 0,
@@ -1099,6 +1099,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var isTwoItem = dataset.labels.length <= 2;
             var isChannels = canvasId === 'chartChannels';
             var isApplicants = canvasId === 'chartApplicants';
+            var isVoterChart = canvasId === 'chartVoterRegistration';
             var bottomLegend = document.createElement('div');
             var legendClass = 'chart-bottom-legend';
             if (isChannels) legendClass += ' chart-legend-2col';
@@ -1124,6 +1125,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     'align-items:center',
                     'margin-top:0.55rem',
                     'padding:0 0.15rem'
+                ].join(';') + ';';
+            } else if (isVoterChart) {
+                bottomLegend.style.cssText = [
+                    'display:flex',
+                    'flex-direction:column',
+                    'gap:0.45rem',
+                    'justify-content:center',
+                    'align-items:flex-start',
+                    'margin-top:0.55rem',
+                    'padding:0 0.1rem'
                 ].join(';') + ';';
             } else {
                 bottomLegend.style.cssText = [
