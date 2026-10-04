@@ -2370,7 +2370,7 @@ function buildHouseholdAddPanel(relOpts) {
         <div class="household-add-form">
             <div class="household-add-field">
                 <label class="household-add-label" for="hhAddFullName">Full name</label>
-                <input type="text" id="hhAddFullName" class="household-add-input" maxlength="30" placeholder="" autocomplete="name">
+                <input type="text" id="hhAddFullName" class="household-add-input" maxlength="30" placeholder="" autocomplete="name" style="text-transform:uppercase;">
             </div>
             <div class="household-add-field">
                 <label class="household-add-label" for="hhAddRelationship">Relationship to beneficiary</label>
@@ -2386,7 +2386,7 @@ function buildHouseholdAddPanel(relOpts) {
             <div class="household-add-inline-row">
                 <div class="household-add-field household-add-field--age">
                     <label class="household-add-label" for="hhAddAge">Age</label>
-                    <input type="number" id="hhAddAge" class="household-add-input household-add-age-input" min="0" max="120" placeholder="">
+                    <input type="number" id="hhAddAge" class="household-add-input household-add-age-input" min="0" max="99" placeholder="" oninput="if(this.value.length>2)this.value=this.value.slice(0,2);">
                 </div>
                 <div class="household-add-actions--inline">
                     <button type="button" class="household-add-btn" onclick="submitAddHouseholdMember(event)">Add member</button>
@@ -2440,7 +2440,7 @@ function renderHouseholdMembersRecord(members, meta) {
 async function submitAddHouseholdMember(event) {
     if (event) event.preventDefault();
     if (!currentUnitId) return;
-    const name = (document.getElementById('hhAddFullName') && document.getElementById('hhAddFullName').value || '').trim();
+    const name = (document.getElementById('hhAddFullName') && document.getElementById('hhAddFullName').value || '').trim().toUpperCase();
     const relationship = (document.getElementById('hhAddRelationship') && document.getElementById('hhAddRelationship').value || '').trim();
     const sexRadio = document.querySelector('input[name="hhAddSex"]:checked');
     const sex = sexRadio ? String(sexRadio.value || '').trim() : '';

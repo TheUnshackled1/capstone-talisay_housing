@@ -2278,7 +2278,7 @@ def add_household_member_for_unit(request, position, unit_id):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
 
-    full_name = (payload.get('full_name') or '').strip()
+    full_name = (payload.get('full_name') or '').strip().upper()
     relationship = (payload.get('relationship') or '').strip()
     sex_raw = (payload.get('sex') or '').strip().upper()[:1]
     sex = sex_raw if sex_raw in ('M', 'F') else ''
@@ -2287,8 +2287,8 @@ def add_household_member_for_unit(request, position, unit_id):
         age = int(age_raw) if age_raw is not None and str(age_raw).strip() != '' else 0
     except (TypeError, ValueError):
         age = 0
-    if age < 0 or age > 120:
-        return JsonResponse({'success': False, 'error': 'Age must be between 0 and 120.'}, status=400)
+    if age < 0 or age > 99:
+        return JsonResponse({'success': False, 'error': 'Age must be between 0 and 99.'}, status=400)
 
     valid_rel = {k for k, _ in HouseholdMember.RELATIONSHIP_CHOICES}
     if not full_name:
