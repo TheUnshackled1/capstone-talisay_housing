@@ -857,17 +857,14 @@ def document_management(request, position):
             'color_bg': 'bg-blue-100',
             'color_text': 'text-blue-700',
             'documents': [
-                ('barangay_residency', 'Brgy. Certificate of Residency'),
-                ('barangay_indigency', 'Brgy. Certificate of Indigency'),
-                ('cedula', 'Cedula'),
-                ('police_clearance', 'Police Clearance'),
-                ('no_property', 'Certificate of No Property'),
                 ('photo_2x2', '2x2 Picture'),
+                ('barangay_indigency', 'Brgy. Certificate of Indigency'),
+                ('barangay_residency', 'Brgy. Certificate of Residency'),
+                ('cedula', 'Cedula'),
+                ('no_property', 'Certificate of No Property'),
+                ('police_clearance', 'Police Clearance'),
                 ('house_sketch', 'Sketch of House Location'),
-                (
-                    'voter_certification',
-                    'Voter Certification',
-                ),
+                ('voter_certification', "Voter's Certificate"),
             ]
         },
     }
