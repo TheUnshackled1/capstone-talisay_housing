@@ -2992,11 +2992,7 @@ def eligibility_snapshot(request, position):
         'household': {
             'title': 'Household Composition',
             'status': _status(bool(rules.get('household_ok')), pending=not household_evidence_ready),
-            'reason': (
-                'Household composition.'
-                if rules.get('household_ok')
-                else 'Household composition has a policy flag (e.g., live-in partner).'
-            ),
+            'reason': 'Household composition.',
             'evidence': [
                 f'Household size: {applicant.household_size if applicant.household_size is not None else "Missing"}',
                 f'Computed size: {rules.get("listed_household_size", "N/A")}',
