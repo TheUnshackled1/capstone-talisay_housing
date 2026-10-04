@@ -2818,7 +2818,7 @@ _STATUS_PIPELINE = [
     },
     {
         'key': 'document_review',
-        'label': 'Pagsumiter sang Dokumento',
+        'label': 'Pagpasa sang mga Dokumento',
         'label_en': 'Document Submission',
         'statuses': ['pending', 'pending_cdrrmo', 'pending_followup', 'requirements'],
         'description': 'Ang imo mga dokumento yara pa sa proseso sang pagsurob-suroy. Palihog maghulat.',
@@ -2845,7 +2845,7 @@ _STATUS_PIPELINE = [
         'label': 'Lot Awarding',
         'label_en': 'Lot Awarding',
         'statuses': ['awarded'],
-        'description': 'Congratulations! Ikaw na ang assignan sang lote. Palihog magdu-aw sa amon opisina para sa mga detalye.',
+        'description': 'Congratulations! Ikaw na ang assignan sang lote. Palihog magbisita sa amon opisina para sa mga detalye.',
         'description_en': 'Congratulations! You have been assigned a lot. Please visit our office for details.',
     },
 ]
@@ -2854,7 +2854,7 @@ _DISQUALIFIED_STAGE = {
     'key': 'disqualified',
     'label': 'Nasarado',
     'label_en': 'Application Closed',
-    'description': 'Ang imo aplikasyon indi ma-proseso pa. Palihog magdu-aw sa amon opisina para sa katarungan.',
+    'description': 'Ang imo aplikasyon indi ma-proseso pa. Palihog magbisita sa amon opisina para sa katarungan.',
     'description_en': 'Your application could not be processed. Please visit our office for more information.',
 }
 
