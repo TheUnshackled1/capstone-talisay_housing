@@ -1,6 +1,13 @@
 const VAULT_MGMT_INTAKE_DWT_URL = window.MANAGEMENT_CONFIG.intakeDwtUrl;
 const VAULT_DRAWER_CAN_INTAKE_SCAN = window.MANAGEMENT_CONFIG.canIntakeScan;
 
+/** Force a cache-busting reload so progress bars/counts always reflect the latest DB state. */
+function hardReloadPage() {
+    const u = new URL(window.location.href);
+    u.searchParams.set('_cb', Date.now());
+    window.location.replace(u.toString());
+}
+
 let VaultMgmtDWTObject = null;
 let vaultDrawerPendingUploadContext = null;
     if (window.Dynamsoft && window.Dynamsoft.DWT) {
@@ -192,7 +199,7 @@ let vaultDrawerPendingUploadContext = null;
             });
             vaultMgmtNotify('Scan saved to the document vault.', 'Scan complete', 'success');
             closeUploadModal();
-            location.reload();
+            hardReloadPage();
         } catch (error) {
             vaultMgmtNotify((error && error.message) ? error.message : 'Unable to complete scan.');
             if (labelEl) labelEl.textContent = oldText || 'Scan document';
@@ -493,7 +500,7 @@ async function _handlePickerSelection(doc, accessToken, buttonEl, oldHtml) {
         }
 
         vaultMgmtNotify('File from Google Drive saved to the document vault.', 'Upload complete', 'success');
-        location.reload();
+        hardReloadPage();
 
     } catch (err) {
         console.error('[GooglePicker] error:', err);
@@ -688,7 +695,7 @@ async function vaultDrawerTriggerScan(buttonEl) {
             );
         });
         vaultMgmtNotify('Scan saved to the document vault.', 'Scan complete', 'success');
-        location.reload();
+        hardReloadPage();
     } catch (error) {
         vaultMgmtNotify((error && error.message) ? error.message : 'Unable to complete scan.');
         buttonEl.innerHTML = oldHtml;
@@ -733,7 +740,7 @@ async function vaultDrawerHandleFileSelected(ev) {
             throw new Error((data && data.error) ? data.error : 'Upload failed.');
         }
         vaultMgmtNotify('File saved to the document vault.', 'Upload complete', 'success');
-        location.reload();
+        hardReloadPage();
     } catch (err) {
         vaultMgmtNotify(err.message || 'Upload failed.');
         if (busyBtn) {
@@ -1461,7 +1468,7 @@ function submitUpload() {
         if (d.success) {
             showFlowAlert('Document uploaded', 'Success', null, 'success');
             closeUploadModal();
-            location.reload();
+            hardReloadPage();
         } else {
             showFlowAlert('Error: ' + (d.error || 'Upload failed'));
         }
@@ -1481,7 +1488,7 @@ function deleteDocument(docId) {
     .then(d => {
         if (d.success) {
             showFlowAlert('Document deleted', 'Success', null, 'success');
-            location.reload();
+            hardReloadPage();
         } else {
             showFlowAlert('Error: ' + (d.error || 'Delete failed'));
         }
