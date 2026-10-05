@@ -2446,6 +2446,7 @@ def walkin_register(request, position):
         if not created and archive_record.is_restored:
             archive_record.is_restored = False
             archive_record.save(update_fields=['is_restored'])
+    cache.delete('intake_applicants_list_payload')
 
     # No SMS on registration.
     # Policy: first applicant-facing SMS is sent when staff proceeds record to Module 2.
