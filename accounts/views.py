@@ -1130,8 +1130,12 @@ def _staff_reports_analytics_payload(request):
     # Split "Occupied" into "Housing Unit" (historical beneficiaries + on-file construction)
     # and plain "Occupied" — mirrors the monitoring page KPI:
     #   housing_unit_kpi_count = housing_unit_on_file_count + _hist_count
+    _base_hu_qs = HousingUnit.objects.all()
+    if filter_active:
+        _base_hu_qs = _base_hu_qs.filter(id__in=_period_unit_ids)
+
     _occupied_unit_ids = set(
-        HousingUnit.objects.filter(status='Occupied').values_list('id', flat=True)
+        _base_hu_qs.filter(status='Occupied').values_list('id', flat=True)
     )
     _occupied_awards = list(
         LotAward.objects.filter(unit_id__in=_occupied_unit_ids, status='active')
@@ -1152,7 +1156,7 @@ def _staff_reports_analytics_payload(request):
     )
     _housing_unit_count = _hist_count_dashboard + _housing_on_file_count
     _occupied_only_count = len(_occupied_unit_ids) - _housing_unit_count
-    _vacant_count = HousingUnit.objects.filter(
+    _vacant_count = _base_hu_qs.filter(
         status__in=['Vacant \u2014 available', 'Vacant - available']
     ).count()
     housing_units_by_status_split = [
