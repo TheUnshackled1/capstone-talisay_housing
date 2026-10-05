@@ -1338,8 +1338,13 @@ def _staff_reports_analytics_payload(request):
     active_lot_awards = _active_lot_awards_early
 
     # ===== VOTER REGISTRATION STATUS (Descriptive Analytics) =====
-    # Count beneficiaries (awarded applicants) by voter registration status
-    _voter_qs = Applicant.objects.filter(status='awarded')
+    # Count beneficiaries (awarded applicants) by voter registration status.
+    # Apply the same backfill exclusion used by Applicants by Status so that
+    # historical/legacy records are not double-counted.
+    from units.historical_beneficiary import intake_registration_exclude_q as _voter_excl_q
+    _voter_qs = Applicant.objects.filter(status='awarded').exclude(
+        _voter_excl_q()
+    )
     if filter_active:
         _voter_qs = _voter_qs.filter(
             created_at__gte=period_start,
