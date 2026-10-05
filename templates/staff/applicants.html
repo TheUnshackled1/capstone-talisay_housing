@@ -1213,17 +1213,20 @@
                             <div class="form-group">
                                 <label class="form-label">Last Name</label>
                                 <input type="text" class="form-input" id="reviewLastName" name="last_name"
-                                    maxlength="10" readonly style="text-transform: uppercase;">
+                                    maxlength="30" readonly style="text-transform: uppercase;"
+                                    oninput="(function(){var ln=(document.getElementById('reviewLastName').value||'').trim().toUpperCase();var fn=(document.getElementById('reviewFirstName').value||'').trim().toUpperCase();var mn=(document.getElementById('reviewMiddleName').value||'').trim().toUpperCase();var parts=[fn,mn,ln].filter(function(p){return p.length>0;});var fnEl=document.getElementById('reviewFullName');if(fnEl) fnEl.value=parts.join(' ');})();">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">First Name</label>
                                 <input type="text" class="form-input" id="reviewFirstName" name="first_name"
-                                    maxlength="15" readonly style="text-transform: uppercase;">
+                                    maxlength="30" readonly style="text-transform: uppercase;"
+                                    oninput="(function(){var ln=(document.getElementById('reviewLastName').value||'').trim().toUpperCase();var fn=(document.getElementById('reviewFirstName').value||'').trim().toUpperCase();var mn=(document.getElementById('reviewMiddleName').value||'').trim().toUpperCase();var parts=[fn,mn,ln].filter(function(p){return p.length>0;});var fnEl=document.getElementById('reviewFullName');if(fnEl) fnEl.value=parts.join(' ');})();">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Middle Name</label>
                                 <input type="text" class="form-input" id="reviewMiddleName" name="middle_name"
-                                    maxlength="10" readonly style="text-transform: uppercase;">
+                                    maxlength="30" readonly style="text-transform: uppercase;"
+                                    oninput="(function(){var ln=(document.getElementById('reviewLastName').value||'').trim().toUpperCase();var fn=(document.getElementById('reviewFirstName').value||'').trim().toUpperCase();var mn=(document.getElementById('reviewMiddleName').value||'').trim().toUpperCase();var parts=[fn,mn,ln].filter(function(p){return p.length>0;});var fnEl=document.getElementById('reviewFullName');if(fnEl) fnEl.value=parts.join(' ');})();">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Extension Name</label>
@@ -1252,7 +1255,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Age</label>
-                                <input type="number" class="form-input" id="reviewAge" name="age" readonly>
+                                <input type="number" class="form-input" id="reviewAge" name="age" max="99" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Date of Birth</label>
@@ -1277,7 +1280,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Applicant Contact Number</label>
-                                <input type="tel" class="form-input" id="reviewPhone" name="phone_number" readonly>
+                                <input type="tel" class="form-input" id="reviewPhone" name="phone_number" maxlength="11" readonly>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Years Residing in Talisay</label>
@@ -1308,7 +1311,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Occupation</label>
-                                <input type="text" class="form-input" id="reviewOccupation" name="occupation" readonly style="text-transform: uppercase;">
+                                <input type="text" class="form-input" id="reviewOccupation" name="occupation" maxlength="20" readonly style="text-transform: uppercase;">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Status of Employment</label>
@@ -1322,7 +1325,7 @@
                             <div class="form-group">
                                 <label class="form-label">Monthly Income (₱)</label>
                                 <input type="text" class="form-input" id="reviewIncome" name="monthly_income"
-                                    inputmode="decimal" pattern="[0-9,]*" readonly>
+                                    inputmode="decimal" pattern="[0-9,]*" maxlength="9" readonly>
                             </div>
                         </div>
                     </div>
