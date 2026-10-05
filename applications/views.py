@@ -1871,6 +1871,8 @@ def proceed_to_form_queue(request, position):
 
     cache.delete('rfq_rows_second_member')
     cache.delete('rfq_rows_fourth_member')
+    cache.delete('applications_list_data_second_member')
+    cache.delete('applications_list_data_fourth_member')
 
     has_phone = bool((applicant.phone_number or '').strip())
     sms_deduped = has_phone and _applicant_already_received_ready_for_form_reminder_sms(applicant)
