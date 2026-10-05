@@ -505,6 +505,13 @@ def housing_units_monitoring(request, position):
         # "Occupied" = status 'Occupied' only (excludes housing units and historical).
         housing_unit_kpi_count = housing_unit_on_file_count + _hist_count
 
+        occupied_count = sum(
+            1 for u in units_list
+            if u.status == 'Occupied'
+            and not getattr(u, 'is_historical_beneficiary', False)
+            and not getattr(u, 'is_housing_unit_on_file', False)
+        )
+
         # Cache all computed data for 120s — version stamp ensures invalidation on writes.
         if not no_relocation_sites:
             cache.set(_ctx_cache_key, {
