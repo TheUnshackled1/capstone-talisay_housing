@@ -756,7 +756,7 @@ def _staff_reports_analytics_payload(request):
     total_applicants = Applicant.objects.count()
     housing_application_records = Application.objects.count()
 
-    # ── Smart dropdown: continuous months between first and last recorded activity ──
+    # ── Smart dropdown: only months that have ACTUAL recorded activity ──
     from django.db.models import Min, Max
     from django.db.models import Exists, OuterRef, Q
     from units.historical_beneficiary import HISTORICAL_BACKFILL_NOTE
@@ -766,41 +766,25 @@ def _staff_reports_analytics_payload(request):
         Q(application__notes__icontains=HISTORICAL_BACKFILL_NOTE) & ~Exists(_has_lot_award)
     )
 
-    _min_max = []
-    
-    _ap_agg = _ap_for_periods.aggregate(min=Min('created_at'), max=Max('created_at'))
-    if _ap_agg['min'] and _ap_agg['max']:
-        _min_max.append((_ap_agg['min'], _ap_agg['max']))
-        
-    _case_agg = Case.objects.filter(received_at__isnull=False).aggregate(min=Min('received_at'), max=Max('received_at'))
-    if _case_agg['min'] and _case_agg['max']:
-        _min_max.append((_case_agg['min'], _case_agg['max']))
-        
-    _award_agg = LotAward.objects.aggregate(min=Min('awarded_at'), max=Max('awarded_at'))
-    if _award_agg['min'] and _award_agg['max']:
-        _min_max.append((_award_agg['min'], _award_agg['max']))
-
+    # Collect the exact (year, month) tuples where real data exists — no gap-filling.
     _all_periods_set = set()
-    if _min_max:
-        overall_min = min(dt for (dt, _) in _min_max)
-        overall_max = max(dt for (_, dt) in _min_max)
-        
-        # Ensure we're working in the local timezone just in case
-        overall_min = timezone.localtime(overall_min)
-        overall_max = timezone.localtime(overall_max)
-        
-        curr_y, curr_m = overall_min.year, overall_min.month
-        end_y, end_m = overall_max.year, overall_max.month
-        
-        while (curr_y, curr_m) <= (end_y, end_m):
-            _all_periods_set.add((curr_y, curr_m))
-            curr_m += 1
-            if curr_m > 12:
-                curr_m = 1
-                curr_y += 1
 
-    # Do NOT inject the currently selected year/month — if it's out of range, let it disappear
-    available_periods = sorted(_all_periods_set)  # list of (year, month) tuples
+    for _dt in _ap_for_periods.values_list('created_at', flat=True).distinct():
+        if _dt:
+            _lt = timezone.localtime(_dt)
+            _all_periods_set.add((_lt.year, _lt.month))
+
+    for _dt in Case.objects.filter(received_at__isnull=False).values_list('received_at', flat=True).distinct():
+        if _dt:
+            _lt = timezone.localtime(_dt)
+            _all_periods_set.add((_lt.year, _lt.month))
+
+    for _dt in LotAward.objects.values_list('awarded_at', flat=True).distinct():
+        if _dt:
+            _lt = timezone.localtime(_dt)
+            _all_periods_set.add((_lt.year, _lt.month))
+
+    available_periods = sorted(_all_periods_set)  # list of (year, month) tuples — only real ones
     available_years = sorted(set(y for y, m in available_periods))
     # Map year → list of (month_num, month_name) for that year
     available_months_by_year = {}
@@ -1223,13 +1207,24 @@ def _staff_reports_analytics_payload(request):
         row['label'] = queue_type_labels.get(row['queue_type'], row['queue_type'] or '—')
     _analytics_rows_bar_pct(queue_by_type)
 
-    # Case aging bands (open cases only)
-    # Replaced Python for-loop (full table scan) with a single SQL aggregate
+    # Case aging bands — scoped to period when a filter is active.
+    # When filtered: shows aging of cases opened in that period.
+    # When no filter (All): shows aging of all currently open cases.
     _3d_ago  = now - timedelta(days=3)
     _7d_ago  = now - timedelta(days=7)
     _14d_ago = now - timedelta(days=14)
     _30d_ago = now - timedelta(days=30)
-    _open_cases_agg = Case.objects.exclude(status__in=['resolved', 'closed']).aggregate(
+    _aging_base_qs = Case.objects.all()
+    if filter_active:
+        # Scope to cases received in the selected period
+        _aging_base_qs = _aging_base_qs.filter(
+            received_at__gte=period_start,
+            received_at__lte=period_end,
+        )
+    else:
+        # Default: only open cases (real-time operational view)
+        _aging_base_qs = _aging_base_qs.exclude(status__in=['resolved', 'closed'])
+    _open_cases_agg = _aging_base_qs.aggregate(
         total=Count('pk'),
         # received_at=None → treated as 0 days (matches original logic)
         band_0_3=Count('pk', filter=Q(received_at__gte=_3d_ago) | Q(received_at__isnull=True)),
