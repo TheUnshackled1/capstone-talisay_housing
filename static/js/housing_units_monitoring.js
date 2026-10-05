@@ -1786,7 +1786,8 @@ function kpiFilter(card) {
             if (kind === 'status') {
                 if (val === 'Occupied') {
                     show = (lot.dataset.status || '') === val
-                        && (lot.dataset.historicalBeneficiary || '') !== '1';
+                        && (lot.dataset.historicalBeneficiary || '') !== '1'
+                        && (lot.dataset.housingUnitOnFile || '') !== '1';
                 } else {
                     show = (lot.dataset.status || '') === val;
                 }
@@ -1810,7 +1811,8 @@ function kpiFilter(card) {
             if (kind === 'status') {
                 if (val === 'Occupied') {
                     show = (lot.dataset.status || '') === val
-                        && (lot.dataset.historicalBeneficiary || '') !== '1';
+                        && (lot.dataset.historicalBeneficiary || '') !== '1'
+                        && (lot.dataset.housingUnitOnFile || '') !== '1';
                 } else {
                     show = (lot.dataset.status || '') === val;
                 }
