@@ -1339,9 +1339,11 @@ def _staff_reports_analytics_payload(request):
 
     # ===== VOTER REGISTRATION STATUS (Descriptive Analytics) =====
     # Count beneficiaries (awarded applicants) by voter registration status.
-    # Apply the same backfill exclusion used by Applicants by Status so that
-    # historical/legacy records are not double-counted.
-    from units.historical_beneficiary import intake_registration_exclude_q as _voter_excl_q
+    # Exclude historical backfill ghost records (document_vault_applicant_q) so
+    # they don't inflate the count — but do NOT use intake_registration_exclude_q
+    # because that also excludes applicants with any active lot award, which would
+    # wrongly zero-out the entire voter count.
+    from units.historical_beneficiary import document_vault_applicant_q as _voter_excl_q
     _voter_qs = Applicant.objects.filter(status='awarded').exclude(
         _voter_excl_q()
     )
