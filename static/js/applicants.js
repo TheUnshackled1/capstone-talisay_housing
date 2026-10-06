@@ -943,7 +943,7 @@ function getCsrfToken() {
             }
             const refreshed = await refreshApplicantRequirementScanPayload(payload);
             finalizeArchiveVaultSync(refreshed);
-            showFlowAlert(label + ' removed from file.', 'Success', null, 'success');
+            showFlowAlert(docDisplayName + ' removed from file.', 'Success', null, 'success');
         } catch (error) {
             showFlowAlert(error.message || 'Unable to remove requirement.', 'Notice', null, 'warning');
         }
