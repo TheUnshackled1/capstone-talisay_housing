@@ -859,15 +859,23 @@ function getCsrfToken() {
         const existing = document.getElementById('tha-confirm-dialog');
         if (existing) existing.remove();
 
+        const logoUrl = (window.APPLICANTS_CONFIG && window.APPLICANTS_CONFIG.thaLogoUrl) || '';
         const dialog = document.createElement('div');
         dialog.id = 'tha-confirm-dialog';
         dialog.innerHTML = `
             <div class="tha-confirm-backdrop"></div>
             <div class="tha-confirm-box">
-                <div class="tha-confirm-title">${title}</div>
-                <div class="tha-confirm-message">${messageHtml}</div>
+                <div class="tha-confirm-header">
+                    <button class="tha-confirm-close" id="tha-confirm-close" title="Close">&times;</button>
+                    <div class="tha-confirm-logo-wrap">
+                        <img src="${logoUrl}" alt="Talisay City Housing Authority Logo">
+                    </div>
+                    <div class="tha-confirm-title">${title}</div>
+                </div>
+                <div class="tha-confirm-accent"></div>
+                <div class="tha-confirm-body">${messageHtml}</div>
                 <div class="tha-confirm-actions">
-                    <button id="tha-confirm-no" class="tha-confirm-btn tha-confirm-btn--cancel">Cancel</button>
+                    <button id="tha-confirm-no"  class="tha-confirm-btn tha-confirm-btn--cancel">Cancel</button>
                     <button id="tha-confirm-yes" class="tha-confirm-btn tha-confirm-btn--danger">Yes, Remove</button>
                 </div>
             </div>
@@ -878,10 +886,11 @@ function getCsrfToken() {
 
         function cleanup(cb) {
             dialog.classList.remove('tha-confirm-visible');
-            setTimeout(() => { dialog.remove(); cb(); }, 180);
+            setTimeout(() => { dialog.remove(); cb(); }, 200);
         }
-        document.getElementById('tha-confirm-yes').onclick = () => cleanup(onConfirm);
-        document.getElementById('tha-confirm-no').onclick  = () => cleanup(onCancel);
+        document.getElementById('tha-confirm-yes').onclick   = () => cleanup(onConfirm);
+        document.getElementById('tha-confirm-no').onclick    = () => cleanup(onCancel);
+        document.getElementById('tha-confirm-close').onclick = () => cleanup(onCancel);
         // Click backdrop to cancel
         dialog.querySelector('.tha-confirm-backdrop').onclick = () => cleanup(onCancel);
     }
