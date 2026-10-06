@@ -87,7 +87,6 @@ CIVIL_STATUS_CHOICES = [
     ('widowed', 'Widowed'),
     ('divorced', 'Divorced'),
     ('separated', 'Separated'),
-    ('common_law', 'Common-law'),
 ]
 
 

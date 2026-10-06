@@ -4512,7 +4512,6 @@ function getCsrfToken() {
                         <option value="widowed">Widowed</option>
                         <option value="divorced">Divorced</option>
                         <option value="separated">Separated</option>
-                        <option value="common_law">Common-law</option>
                     </select>
                 </div>
                 <div class="form-group">
