@@ -119,7 +119,7 @@ class Applicant(models.Model):
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
 
     # Personal Information - Name Fields (A. APPLICATION IDENTITY)
-    last_name = models.CharField(max_length=10, verbose_name="Last Name (Surname)", default="")
+    last_name = models.CharField(max_length=15, verbose_name="Last Name (Surname)", default="")
     first_name = models.CharField(max_length=15, verbose_name="First Name (Given Name)", default="")
     middle_name = models.CharField(max_length=10, blank=True, default="", verbose_name="Middle Name")
     extension_name = models.CharField(max_length=5, blank=True, default="", verbose_name="Extension Name", help_text="Jr., Sr., II, III, IV, etc.")
@@ -557,7 +557,7 @@ class Archive(models.Model):
     reference_number_snapshot = models.CharField(max_length=50, db_index=True)
     full_name_snapshot = models.CharField(max_length=30)
     # Individual name components (for display in reports/modals)
-    last_name_snapshot = models.CharField(max_length=10, blank=True)
+    last_name_snapshot = models.CharField(max_length=15, blank=True)
     first_name_snapshot = models.CharField(max_length=15, blank=True)
     middle_name_snapshot = models.CharField(max_length=10, blank=True)
     extension_name_snapshot = models.CharField(max_length=5, blank=True)
