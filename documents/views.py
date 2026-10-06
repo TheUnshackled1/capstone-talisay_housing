@@ -289,7 +289,7 @@ def _build_situation_vault_block(
                     'kind': 'document',
                     'on_file': has_cdrrmo,
                     'type_key': 'cdrrmo_cert',
-                    'add_file': not has_cdrrmo,
+                    'add_file': True,
                     'note': '',
                     'view_url': _vault_blob_view_url(
                         'cdrrmo_cert', has_cdrrmo, latest_doc_by_type, position
@@ -338,7 +338,7 @@ def _build_situation_vault_block(
                     'kind': 'document',
                     'on_file': has_isf,
                     'type_key': 'isf_situational_docs',
-                    'add_file': not has_isf,
+                    'add_file': True,
                     'note': '',
                     'view_url': _vault_blob_view_url(
                         'isf_situational_docs', has_isf, latest_doc_by_type, position
@@ -367,7 +367,7 @@ def _build_situation_vault_block(
                     'kind': 'document',
                     'on_file': has_isf,
                     'type_key': 'isf_situational_docs',
-                    'add_file': not has_isf,
+                    'add_file': True,
                     'note': '',
                     'view_url': _vault_blob_view_url(
                         'isf_situational_docs', has_isf, latest_doc_by_type, position
