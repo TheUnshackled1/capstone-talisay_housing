@@ -27,6 +27,49 @@
     -moz-appearance: textfield !important;
     appearance: textfield !important;
 }
+
+/* ── Document Remove Confirmation Dialog ─────────────────────────────── */
+#tha-confirm-dialog {
+    position: fixed; inset: 0; z-index: 99999;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.18s ease;
+}
+#tha-confirm-dialog.tha-confirm-visible { opacity: 1; }
+#tha-confirm-dialog .tha-confirm-backdrop {
+    position: absolute; inset: 0; background: rgba(15,23,42,0.55); backdrop-filter: blur(2px);
+}
+#tha-confirm-dialog .tha-confirm-box {
+    position: relative; background: #fff; border-radius: 0.875rem;
+    padding: 1.75rem 1.75rem 1.5rem; max-width: 380px; width: 90%;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.22);
+    transform: translateY(-8px); transition: transform 0.18s ease;
+}
+#tha-confirm-dialog.tha-confirm-visible .tha-confirm-box { transform: translateY(0); }
+#tha-confirm-dialog .tha-confirm-title {
+    font-weight: 700; font-size: 1rem; color: #0f172a; margin-bottom: 0.6rem;
+    display: flex; align-items: center; gap: 0.5rem;
+}
+#tha-confirm-dialog .tha-confirm-title::before {
+    content: '⚠'; font-size: 1.1rem; color: #ef4444;
+}
+#tha-confirm-dialog .tha-confirm-message {
+    font-size: 0.875rem; color: #475569; line-height: 1.55; margin-bottom: 1.4rem;
+}
+#tha-confirm-dialog .tha-confirm-actions {
+    display: flex; gap: 0.75rem; justify-content: flex-end;
+}
+.tha-confirm-btn {
+    padding: 0.5rem 1.1rem; border-radius: 0.5rem; font-size: 0.8125rem;
+    font-weight: 600; border: none; cursor: pointer; transition: all 0.15s ease;
+}
+.tha-confirm-btn--cancel {
+    background: #f1f5f9; color: #475569;
+}
+.tha-confirm-btn--cancel:hover { background: #e2e8f0; }
+.tha-confirm-btn--danger {
+    background: #ef4444; color: #fff;
+}
+.tha-confirm-btn--danger:hover { background: #dc2626; }
 </style>
 {% endblock %}
 

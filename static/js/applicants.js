@@ -854,14 +854,60 @@ function getCsrfToken() {
         setArchiveScanButtonBusy(false);
     }
 
+    // ── Confirmation dialog helper ──────────────────────────────────────────────
+    function showConfirmDialog(title, messageHtml, onConfirm, onCancel) {
+        const existing = document.getElementById('tha-confirm-dialog');
+        if (existing) existing.remove();
+
+        const dialog = document.createElement('div');
+        dialog.id = 'tha-confirm-dialog';
+        dialog.innerHTML = `
+            <div class="tha-confirm-backdrop"></div>
+            <div class="tha-confirm-box">
+                <div class="tha-confirm-title">${title}</div>
+                <div class="tha-confirm-message">${messageHtml}</div>
+                <div class="tha-confirm-actions">
+                    <button id="tha-confirm-no" class="tha-confirm-btn tha-confirm-btn--cancel">Cancel</button>
+                    <button id="tha-confirm-yes" class="tha-confirm-btn tha-confirm-btn--danger">Yes, Remove</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(dialog);
+        // Animate in
+        requestAnimationFrame(() => dialog.classList.add('tha-confirm-visible'));
+
+        function cleanup(cb) {
+            dialog.classList.remove('tha-confirm-visible');
+            setTimeout(() => { dialog.remove(); cb(); }, 180);
+        }
+        document.getElementById('tha-confirm-yes').onclick = () => cleanup(onConfirm);
+        document.getElementById('tha-confirm-no').onclick  = () => cleanup(onCancel);
+        // Click backdrop to cancel
+        dialog.querySelector('.tha-confirm-backdrop').onclick = () => cleanup(onCancel);
+    }
+
     async function removeArchiveRequirementByCode(codeRaw) {
         const code = String(codeRaw || '').trim().toUpperCase();
         const docKey = ARCHIVE_DOC_KEY_BY_CODE[code];
         const payload = currentArchiveRequirementsPayload;
         const row = archiveReqFindRow(code);
         const label = row && row.code && row.name
-            ? (String(row.code).trim() + ' — ' + String(row.name).trim())
+            ? (String(row.code).trim() + ' \u2014 ' + String(row.name).trim())
             : code;
+        const docDisplayName = (row && row.name) ? row.name : code;
+
+        // ── Confirmation step ────────────────────────────────────────────────────
+        const confirmed = await new Promise((resolve) => {
+            showConfirmDialog(
+                'Remove Document',
+                `Are you sure you want to remove <strong>${docDisplayName}</strong> from file?<br><span style="color:#ef4444;font-size:0.8rem;">This action cannot be undone.</span>`,
+                () => resolve(true),
+                () => resolve(false)
+            );
+        });
+        if (!confirmed) return;
+        // ─────────────────────────────────────────────────────────────────────────
+
         if (!docKey || !payload || !payload.applicantId) {
             showFlowAlert('Unable to remove this requirement.');
             return;
