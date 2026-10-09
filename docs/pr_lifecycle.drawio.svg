@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 440" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+      text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .title { font-size: 20px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 13px; font-weight: 500; fill: #64748b; }
+      .step-num { font-size: 10px; font-weight: 700; fill: #ffffff; letter-spacing: 0.5px; }
+      .node-title { font-size: 14px; font-weight: 600; fill: #0f172a; }
+      .node-desc { font-size: 11px; font-weight: 400; fill: #475569; line-height: 1.4; }
+      .badge-text { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+      .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .arrow-return { stroke: #f59e0b; stroke-width: 2; stroke-dasharray: 4 4; fill: none; stroke-linecap: round; }
+    </style>
+    <linearGradient id="pr-step1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eff6ff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="pr-step2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f3ff"/>
+      <stop offset="100%" stop-color="#ede9fe"/>
+    </linearGradient>
+    <linearGradient id="pr-step3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="100%" stop-color="#fef3c7"/>
+    </linearGradient>
+    <linearGradient id="pr-step4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="100%" stop-color="#d1fae5"/>
+    </linearGradient>
+    <marker id="pr-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <marker id="pr-arrow-warn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/>
+    </marker>
+    <filter id="pr-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1020" height="440" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Top Title Banner -->
+  <g transform="translate(36, 30)">
+    <text x="0" y="22" class="title">Pull Request Review Lifecycle</text>
+    <text x="0" y="42" class="subtitle">Review criteria, automated validation, and merge procedure for IHSMS</text>
+  </g>
+
+  <!-- Stage 1: PR Opened -->
+  <g transform="translate(36, 95)" filter="url(#pr-shadow)">
+    <rect width="210" height="260" rx="12" fill="url(#pr-step1)" stroke="#bfdbfe" stroke-width="1.5"/>
+    <rect x="14" y="14" width="64" height="20" rx="10" fill="#2563eb"/>
+    <text x="46" y="28" class="step-num" text-anchor="middle">STAGE 1</text>
+    <text x="14" y="58" class="node-title">Pull Request Opened</text>
+    <text x="14" y="80" class="node-desc">• Author opens PR targeting <tspan font-weight="600">main</tspan></text>
+    <text x="14" y="98" class="node-desc">• Clear title and descriptive summary</text>
+    <text x="14" y="116" class="node-desc">• References issue ID (e.g. Closes #12)</text>
+    <text x="14" y="134" class="node-desc">• Screenshots/proofs attached if UI</text>
+
+    <rect x="14" y="156" width="182" height="74" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="24" y="176" class="node-desc" font-weight="600" fill="#1e40af">PR Template Checklist:</text>
+    <text x="24" y="194" class="node-desc" fill="#475569">✔ Scope clearly bounded</text>
+    <text x="24" y="212" class="node-desc" fill="#475569">✔ Branch up-to-date with main</text>
+  </g>
+
+  <!-- Connector 1 -> 2 -->
+  <path d="M 246 225 L 280 225" class="arrow" marker-end="url(#pr-arrow)"/>
+
+  <!-- Stage 2: Automated Verification -->
+  <g transform="translate(285, 95)" filter="url(#pr-shadow)">
+    <rect width="210" height="260" rx="12" fill="url(#pr-step2)" stroke="#ddd6fe" stroke-width="1.5"/>
+    <rect x="14" y="14" width="64" height="20" rx="10" fill="#7c3aed"/>
+    <text x="46" y="28" class="step-num" text-anchor="middle">STAGE 2</text>
+    <text x="14" y="58" class="node-title">Automated Checks</text>
+    <text x="14" y="80" class="node-desc">• Django system integrity check</text>
+    <text x="14" y="98" class="node-desc">• Test suite execution (<tspan font-weight="600">manage.py test</tspan>)</text>
+    <text x="14" y="116" class="node-desc">• Tailwind CSS build verification</text>
+    <text x="14" y="134" class="node-desc">• Migration compatibility check</text>
+
+    <rect x="14" y="156" width="182" height="74" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="24" y="176" class="node-desc" font-weight="600" fill="#5b21b6">Automated Guardrails:</text>
+    <text x="24" y="194" class="node-desc" fill="#475569">✔ Zero failing tests</text>
+    <text x="24" y="212" class="node-desc" fill="#475569">✔ No conflicting migrations</text>
+  </g>
+
+  <!-- Connector 2 -> 3 -->
+  <path d="M 495 225 L 530 225" class="arrow" marker-end="url(#pr-arrow)"/>
+
+  <!-- Stage 3: Maintainer Review -->
+  <g transform="translate(535, 95)" filter="url(#pr-shadow)">
+    <rect width="210" height="260" rx="12" fill="url(#pr-step3)" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="14" y="14" width="64" height="20" rx="10" fill="#d97706"/>
+    <text x="46" y="28" class="step-num" text-anchor="middle">STAGE 3</text>
+    <text x="14" y="58" class="node-title">Maintainer Review</text>
+    <text x="14" y="80" class="node-desc">• Evaluated by THA core maintainers</text>
+    <text x="14" y="98" class="node-desc">• Code style &amp; architecture review</text>
+    <text x="14" y="116" class="node-desc">• Role access &amp; security audit</text>
+    <text x="14" y="134" class="node-desc">• Verification of housing workflows</text>
+
+    <rect x="14" y="156" width="182" height="74" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="24" y="176" class="node-desc" font-weight="600" fill="#92400e">Review Outcomes:</text>
+    <text x="24" y="194" class="node-desc" fill="#059669">✔ Approved for merge</text>
+    <text x="24" y="212" class="node-desc" fill="#d97706">↺ Changes requested</text>
+  </g>
+
+  <!-- Connector 3 -> 4 (Approved) -->
+  <path d="M 745 225 L 780 225" class="arrow" marker-end="url(#pr-arrow)"/>
+
+  <!-- Feedback Return Loop from Stage 3 back to Stage 1 -->
+  <path d="M 640 355 L 640 385 L 141 385 L 141 355" class="arrow-return" marker-end="url(#pr-arrow-warn)"/>
+  <rect x="330" y="375" width="170" height="20" rx="4" fill="#fef3c7" stroke="#fde68a"/>
+  <text x="415" y="389" font-size="10" font-weight="600" fill="#92400e" text-anchor="middle">Revisions / Feedback Cycle</text>
+
+  <!-- Stage 4: Merge & Deploy -->
+  <g transform="translate(785, 95)" filter="url(#pr-shadow)">
+    <rect width="195" height="260" rx="12" fill="url(#pr-step4)" stroke="#a7f3d0" stroke-width="1.5"/>
+    <rect x="14" y="14" width="64" height="20" rx="10" fill="#059669"/>
+    <text x="46" y="28" class="step-num" text-anchor="middle">STAGE 4</text>
+    <text x="14" y="58" class="node-title">Merge &amp; Deploy</text>
+    <text x="14" y="80" class="node-desc">• PR merged into <tspan font-weight="600">main</tspan></text>
+    <text x="14" y="98" class="node-desc">• Squash &amp; merge commit</text>
+    <text x="14" y="116" class="node-desc">• Auto-deploy triggered on Railway</text>
+    <text x="14" y="134" class="node-desc">• Associated issues closed</text>
+
+    <rect x="14" y="156" width="167" height="74" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="22" y="176" class="node-desc" font-weight="600" fill="#047857">Production Ready:</text>
+    <text x="22" y="194" class="node-desc" fill="#475569">🚀 Railway container live</text>
+    <text x="22" y="212" class="node-desc" fill="#475569">🎉 Contributor credited</text>
+  </g>
+</svg>

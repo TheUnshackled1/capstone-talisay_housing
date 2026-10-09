@@ -12,6 +12,7 @@
 [![Requirements](https://img.shields.io/badge/📦_Dependencies-requirements.txt-16a34a?style=flat-square)](requirements.txt)
 [![ERD Source](https://img.shields.io/badge/🖊️_ERD_Draw.io-docs/ERD.drawio-8b5cf6?style=flat-square)](docs/ERD.drawio)
 [![Code of Conduct](https://img.shields.io/badge/📜_Code_of_Conduct-CODE__OF__CONDUCT.md-f43f5e?style=flat-square)](CODE_OF_CONDUCT.md)
+[![Contributing](https://img.shields.io/badge/🤝_Contributing-CONTRIBUTING.md-10b981?style=flat-square)](CONTRIBUTING.md)
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-6.0.6-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -634,6 +635,7 @@ The application will be available at `http://127.0.0.1:8000/`.
 ├── ⚙️ .python-version                 # Python version pin (3.12)
 ├── ⚙️ .gitignore                      # Git ignore rules
 ├── 📜 CODE_OF_CONDUCT.md             # Contributor Covenant Code of Conduct
+├── 🤝 CONTRIBUTING.md                # Contributor onboarding & development guidelines
 └── 📄 README.md                       # This document
 ```
 

@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 440" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+      text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .title { font-size: 20px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 13px; font-weight: 500; fill: #64748b; }
+      .step-num { font-size: 10px; font-weight: 700; fill: #ffffff; letter-spacing: 0.5px; }
+      .node-title { font-size: 14px; font-weight: 600; fill: #0f172a; }
+      .node-desc { font-size: 11px; font-weight: 400; fill: #475569; line-height: 1.4; }
+      .cmd-text { font-family: 'Consolas', 'Courier New', monospace; font-size: 10.5px; fill: #1e293b; background: #e2e8f0; }
+      .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+    <linearGradient id="cw-step1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eff6ff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="cw-step2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f3ff"/>
+      <stop offset="100%" stop-color="#ede9fe"/>
+    </linearGradient>
+    <linearGradient id="cw-step3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ecfeff"/>
+      <stop offset="100%" stop-color="#cffafe"/>
+    </linearGradient>
+    <linearGradient id="cw-step4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="100%" stop-color="#fef3c7"/>
+    </linearGradient>
+    <linearGradient id="cw-step5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="100%" stop-color="#d1fae5"/>
+    </linearGradient>
+    <marker id="cw-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <filter id="cw-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1020" height="440" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Top Title Banner -->
+  <g transform="translate(36, 30)">
+    <text x="0" y="22" class="title">Developer Contribution Workflow</text>
+    <text x="0" y="42" class="subtitle">Step-by-step engineering cycle for IHSMS &amp; Talisay City Housing Authority contributions</text>
+  </g>
+
+  <!-- 5 Workflow Columns -->
+  <!-- Step 1: Fork & Setup -->
+  <g transform="translate(36, 95)" filter="url(#cw-shadow)">
+    <rect width="170" height="305" rx="12" fill="url(#cw-step1)" stroke="#bfdbfe" stroke-width="1.5"/>
+    <rect x="14" y="14" width="56" height="20" rx="10" fill="#2563eb"/>
+    <text x="42" y="28" class="step-num" text-anchor="middle">STEP 1</text>
+    <text x="14" y="56" class="node-title">Fork &amp; Clone</text>
+    <text x="14" y="76" class="node-desc">• Fork repository on GitHub</text>
+    <text x="14" y="93" class="node-desc">• Clone your fork locally</text>
+    <text x="14" y="110" class="node-desc">• Create Python virtualenv</text>
+    <text x="14" y="127" class="node-desc">• Install dependencies</text>
+    
+    <rect x="12" y="145" width="146" height="66" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="18" y="163" class="cmd-text">git clone &lt;fork-url&gt;</text>
+    <text x="18" y="181" class="cmd-text">python -m venv venv</text>
+    <text x="18" y="199" class="cmd-text">pip install -r reqs</text>
+
+    <text x="14" y="232" class="node-desc">• Copy <tspan font-weight="600">.env.example</tspan></text>
+    <text x="14" y="249" class="node-desc">• Run <tspan font-weight="600">migrate</tspan></text>
+    <text x="14" y="266" class="node-desc">• Seed Talisay barangays</text>
+  </g>
+
+  <!-- Connector 1 -> 2 -->
+  <path d="M 206 247 L 226 247" class="arrow" marker-end="url(#cw-arrow)"/>
+
+  <!-- Step 2: Branch -->
+  <g transform="translate(230, 95)" filter="url(#cw-shadow)">
+    <rect width="170" height="305" rx="12" fill="url(#cw-step2)" stroke="#ddd6fe" stroke-width="1.5"/>
+    <rect x="14" y="14" width="56" height="20" rx="10" fill="#7c3aed"/>
+    <text x="42" y="28" class="step-num" text-anchor="middle">STEP 2</text>
+    <text x="14" y="56" class="node-title">Create Branch</text>
+    <text x="14" y="76" class="node-desc">• Branch from clean <tspan font-weight="600">main</tspan></text>
+    <text x="14" y="93" class="node-desc">• Use standard naming:</text>
+    
+    <rect x="12" y="110" width="146" height="74" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="18" y="128" class="cmd-text">feature/lot-filter</text>
+    <text x="18" y="146" class="cmd-text">fix/modal-overflow</text>
+    <text x="18" y="164" class="cmd-text">docs/api-guide</text>
+
+    <text x="14" y="208" class="node-desc">• Keep scope small</text>
+    <text x="14" y="225" class="node-desc">• Single responsibility</text>
+    <text x="14" y="242" class="node-desc">• Easy for team to review</text>
+  </g>
+
+  <!-- Connector 2 -> 3 -->
+  <path d="M 400 247 L 420 247" class="arrow" marker-end="url(#cw-arrow)"/>
+
+  <!-- Step 3: Develop & Compile -->
+  <g transform="translate(424, 95)" filter="url(#cw-shadow)">
+    <rect width="170" height="305" rx="12" fill="url(#cw-step3)" stroke="#a5f3fc" stroke-width="1.5"/>
+    <rect x="14" y="14" width="56" height="20" rx="10" fill="#0891b2"/>
+    <text x="42" y="28" class="step-num" text-anchor="middle">STEP 3</text>
+    <text x="14" y="56" class="node-title">Code &amp; Compile</text>
+    <text x="14" y="76" class="node-desc">• Django view &amp; model logic</text>
+    <text x="14" y="93" class="node-desc">• Follow PEP 8 standards</text>
+    <text x="14" y="110" class="node-desc">• Role access security checks</text>
+    
+    <rect x="12" y="127" width="146" height="66" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="18" y="145" class="cmd-text">npm run</text>
+    <text x="18" y="163" class="cmd-text">  watch:tailwind</text>
+    <text x="18" y="181" class="cmd-text">python runserver</text>
+
+    <text x="14" y="215" class="node-desc">• Atomic commit messages</text>
+    <text x="14" y="232" class="node-desc">• Preserve doc integrity</text>
+  </g>
+
+  <!-- Connector 3 -> 4 -->
+  <path d="M 594 247 L 614 247" class="arrow" marker-end="url(#cw-arrow)"/>
+
+  <!-- Step 4: Validate & Test -->
+  <g transform="translate(618, 95)" filter="url(#cw-shadow)">
+    <rect width="170" height="305" rx="12" fill="url(#cw-step4)" stroke="#fde68a" stroke-width="1.5"/>
+    <rect x="14" y="14" width="56" height="20" rx="10" fill="#d97706"/>
+    <text x="42" y="28" class="step-num" text-anchor="middle">STEP 4</text>
+    <text x="14" y="56" class="node-title">Validate &amp; Test</text>
+    <text x="14" y="76" class="node-desc">• Run Django health check</text>
+    <text x="14" y="93" class="node-desc">• Run automated tests</text>
+    <text x="14" y="110" class="node-desc">• Build static assets</text>
+    
+    <rect x="12" y="127" width="146" height="66" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="18" y="145" class="cmd-text">python manage.py</text>
+    <text x="18" y="163" class="cmd-text">  check</text>
+    <text x="18" y="181" class="cmd-text">python manage.py test</text>
+
+    <text x="14" y="215" class="node-desc">• Zero linter / syntax errors</text>
+    <text x="14" y="232" class="node-desc">• Minify Tailwind CSS</text>
+  </g>
+
+  <!-- Connector 4 -> 5 -->
+  <path d="M 788 247 L 808 247" class="arrow" marker-end="url(#cw-arrow)"/>
+
+  <!-- Step 5: Push & PR -->
+  <g transform="translate(812, 95)" filter="url(#cw-shadow)">
+    <rect width="172" height="305" rx="12" fill="url(#cw-step5)" stroke="#a7f3d0" stroke-width="1.5"/>
+    <rect x="14" y="14" width="56" height="20" rx="10" fill="#059669"/>
+    <text x="42" y="28" class="step-num" text-anchor="middle">STEP 5</text>
+    <text x="14" y="56" class="node-title">Push &amp; Open PR</text>
+    <text x="14" y="76" class="node-desc">• Push to remote fork</text>
+    <text x="14" y="93" class="node-desc">• Open PR against <tspan font-weight="600">main</tspan></text>
+    
+    <rect x="12" y="110" width="148" height="52" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="18" y="128" class="cmd-text">git push origin</text>
+    <text x="18" y="146" class="cmd-text">  feature/your-branch</text>
+
+    <text x="14" y="185" class="node-desc">• Describe changes in PR</text>
+    <text x="14" y="202" class="node-desc">• Attach testing proofs</text>
+    <text x="14" y="219" class="node-desc">• Collaborate with THA team</text>
+    <text x="14" y="236" class="node-desc">• Merged to <tspan font-weight="600">main</tspan> &amp; deployed</text>
+  </g>
+</svg>

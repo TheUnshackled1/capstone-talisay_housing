@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="IHSMS-Contribution-Workflow" version="22.1.0" type="device">
+  <diagram id="contribution_workflow" name="Developer Contribution Workflow">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title_node" value="&lt;b style=&quot;font-size: 18px;&quot;&gt;Developer Contribution Workflow&lt;/b&gt;&lt;br&gt;Integrated Housing Services and Monitoring System (IHSMS) · Talisay City Housing Authority (THA)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="100" y="20" width="800" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 1: Fork & Clone -->
+        <mxCell id="s1" value="&lt;b&gt;STEP 1: Fork &amp;amp; Setup&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Fork repository on GitHub&lt;br&gt;• Clone locally&lt;br&gt;• Create virtualenv (`venv`)&lt;br&gt;• Install `requirements.txt`&lt;br&gt;• Run `npm install`&lt;br&gt;• Configure `.env` from example&lt;br&gt;• Run `migrate` &amp;amp; `seed_requirements.py`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#3B82F6;align=left;spacing=10;fontSize=11;fontColor=#1E3A8A;" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="170" height="260" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 2: Branch -->
+        <mxCell id="s2" value="&lt;b&gt;STEP 2: Create Branch&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Branch from latest `main`&lt;br&gt;• Standard branch prefixes:&lt;br&gt;  - `feature/lot-award-modal`&lt;br&gt;  - `fix/document-filter-bug`&lt;br&gt;  - `docs/setup-guide`&lt;br&gt;• Keep scope focused and atomic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#8B5CF6;align=left;spacing=10;fontSize=11;fontColor=#4C1D95;" vertex="1" parent="1">
+          <mxGeometry x="235" y="100" width="170" height="260" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 1 -> 2 -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s1" target="s2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 3: Develop & Compile -->
+        <mxCell id="s3" value="&lt;b&gt;STEP 3: Code &amp;amp; Compile&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Implement Django models, views, templates&lt;br&gt;• Adhere to PEP 8 style standards&lt;br&gt;• Apply `@login_required` &amp;amp; CSRF protection&lt;br&gt;• Run Tailwind CLI:&lt;br&gt;  `npm run watch:tailwind`&lt;br&gt;• Run dev server: `python manage.py runserver`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#06B6D4;align=left;spacing=10;fontSize=11;fontColor=#0E7490;" vertex="1" parent="1">
+          <mxGeometry x="430" y="100" width="170" height="260" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 2 -> 3 -->
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s2" target="s3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 4: Validate & Test -->
+        <mxCell id="s4" value="&lt;b&gt;STEP 4: Validate &amp;amp; Test&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Execute Django system checks:&lt;br&gt;  `python manage.py check`&lt;br&gt;• Execute test suite:&lt;br&gt;  `python manage.py test`&lt;br&gt;• Build &amp;amp; minify CSS:&lt;br&gt;  `npm run build:tailwind`&lt;br&gt;• Ensure zero regressions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#F59E0B;align=left;spacing=10;fontSize=11;fontColor=#78350F;" vertex="1" parent="1">
+          <mxGeometry x="625" y="100" width="170" height="260" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 3 -> 4 -->
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s3" target="s4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 5: Push & PR -->
+        <mxCell id="s5" value="&lt;b&gt;STEP 5: Push &amp;amp; Submit PR&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Commit changes with clear messages&lt;br&gt;• Push branch to GitHub fork&lt;br&gt;• Open Pull Request against `main`&lt;br&gt;• Provide description &amp;amp; test proofs&lt;br&gt;• Address team code reviews&lt;br&gt;• Merged &amp;amp; deployed to Railway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#10B981;align=left;spacing=10;fontSize=11;fontColor=#064E3B;" vertex="1" parent="1">
+          <mxGeometry x="820" y="100" width="170" height="260" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 4 -> 5 -->
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s4" target="s5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
