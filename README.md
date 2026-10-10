@@ -19,7 +19,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Primary_DB-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.2.4_(Compiled)-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Railway](https://img.shields.io/badge/Deployed_on-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app/)
-[![License](https://img.shields.io/badge/License-ISC-22c55e?logo=opensourceinitiative&logoColor=white)](package.json)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?logo=opensourceinitiative&logoColor=white)](LICENSE)
 
 ---
 
@@ -636,6 +636,7 @@ The application will be available at `http://127.0.0.1:8000/`.
 ├── ⚙️ .gitignore                      # Git ignore rules
 ├── 📜 CODE_OF_CONDUCT.md             # Contributor Covenant Code of Conduct
 ├── 🤝 CONTRIBUTING.md                # Contributor onboarding & development guidelines
+├── ⚖️ LICENSE                         # MIT License
 └── 📄 README.md                       # This document
 ```
 
