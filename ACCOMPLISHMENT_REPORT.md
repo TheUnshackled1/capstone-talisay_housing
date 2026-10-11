@@ -17,28 +17,28 @@ Designed, developed, and deployed the central **Integrated Housing Services and 
 #### **Visual Evidence & Snapshots**
 
 ##### **Figure 4.1: IHSMS Statistical Dashboard & Demographic Analytics**
-![IHSMS Dashboard and Analytics](docs/screenshots/04_dashboard.png)
+![IHSMS Dashboard and Analytics](accomplishments-images/04_ihsms_dashboard_analytics.png)
 
 ##### **Figure 4.2: Applicant Intake & Master Registration Management**
-![Applicant Master Registration List](docs/screenshots/application-stage/05_applicants.png)
+![Applicant Master Registration List](accomplishments-images/04_applicant_records_management.png)
 
 ##### **Figure 4.3: Walk-in Applicant Registration Sheet**
-![Applicant Registration Sheet](docs/screenshots/application-stage/05_applicant_registration_sheet.png)
+![Applicant Registration Sheet](accomplishments-images/04_applicant_registration_sheet.png)
 
 ##### **Figure 4.4: Digital Document Vault & Scanner Checklist**
-![Document Scan Checklist](docs/screenshots/application-stage/05_document_scan_checklist.png)
+![Document Scan Checklist](accomplishments-images/04_document_scan_checklist.png)
 
 ##### **Figure 4.5: Document Upload & Verification Confirmation**
-![Document Upload Confirmation](docs/screenshots/application-stage/06_document_scan_successful.png)
+![Document Upload Confirmation](accomplishments-images/04_document_scan_successful.png)
 
 ##### **Figure 4.6: Applicant Eligibility Evaluation Pipeline**
-![Eligibility Evaluation Pipeline](docs/screenshots/evaluation/evaluation_list.png)
+![Eligibility Evaluation Pipeline](accomplishments-images/04_eligibility_evaluation_pipeline.png)
 
 ##### **Figure 4.7: Standardized Eligibility Verification Checklist**
-![Eligibility Verification Checklist](docs/screenshots/evaluation/eligibility_evaluation_checklist.png)
+![Eligibility Verification Checklist](accomplishments-images/04_eligibility_evaluation_checklist.png)
 
 ##### **Figure 4.8: Housing Unit & Relocation Site Occupancy Monitoring**
-![Housing Units and Occupancy Monitoring](docs/screenshots/10_housing_units.png)
+![Housing Units and Occupancy Monitoring](accomplishments-images/04_housing_unit_occupancy_monitoring.png)
 
 ---
 
@@ -56,15 +56,15 @@ Engineered automated document generation and reporting modules within the IHSMS 
 #### **Visual Evidence & Snapshots**
 
 ##### **Figure 9.1: System-Generated Form Generation Queue**
-![Form Generation Queue](docs/screenshots/form-generation/01_form_generation_list.png)
+![Form Generation Queue](accomplishments-images/09_form_generation_queue.png)
 
 ##### **Figure 9.2: System-Generated Official Housing Application Form (Page 1)**
-![Official Application Form Page 1](docs/screenshots/form-generation/application_form_page1_1789715670792.png)
+![Official Application Form Page 1](accomplishments-images/09_housing_application_form_page1.png)
 
 ##### **Figure 9.3: System-Generated Official Housing Application Form (Page 2)**
-![Official Application Form Page 2](docs/screenshots/form-generation/application_form_page2_1789715731086.png)
+![Official Application Form Page 2](accomplishments-images/09_housing_application_form_page2.png)
 
 ##### **Figure 9.4: Applicant Evaluation Pre-check & Verification Summary**
-![Evaluation Pre-check Summary](docs/screenshots/evaluation/evaluation_precheck.png)
+![Evaluation Pre-check Summary](accomplishments-images/09_evaluation_precheck_summary.png)
 
 ---
