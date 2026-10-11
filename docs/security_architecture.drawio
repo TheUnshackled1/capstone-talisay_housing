@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="IHSMS-Security-Architecture" version="22.1.0" type="device">
+  <diagram id="security_architecture" name="Security Architecture Defense Layers">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Header -->
+        <mxCell id="sec_title" value="&lt;b style=&quot;font-size: 18px;&quot;&gt;Security Architecture Defense Layers&lt;/b&gt;&lt;br&gt;Integrated Housing Services and Monitoring System (IHSMS) · Talisay City Housing Authority (THA)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="100" y="20" width="800" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Traffic Banner -->
+        <mxCell id="traffic_banner" value="🌐 Incoming Traffic: Citizen Inquiries, Staff Portal Requests, Google OAuth Callbacks, Twilio Webhooks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#0F172A;fontColor=#F8FAFC;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="85" width="940" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Layer 1: Network & Edge -->
+        <mxCell id="l1_card" value="&lt;b&gt;LAYER 1: Network &amp;amp; Edge&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;TLS / HTTPS Termination&lt;/b&gt;&lt;br&gt;  Railway edge SSL encryption&lt;br&gt;&lt;br&gt;• &lt;b&gt;Host Validation&lt;/b&gt;&lt;br&gt;  Strict `ALLOWED_HOSTS` checks&lt;br&gt;&lt;br&gt;• &lt;b&gt;CSRF Origin Validation&lt;/b&gt;&lt;br&gt;  `CSRF_TRUSTED_ORIGINS` filtering&lt;br&gt;&lt;br&gt;• &lt;b&gt;Proxy SSL Protection&lt;/b&gt;&lt;br&gt;  `SECURE_PROXY_SSL_HEADER`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#3B82F6;align=left;spacing=10;fontSize=11;fontColor=#1E3A8A;" vertex="1" parent="1">
+          <mxGeometry x="40" y="150" width="215" height="300" as="geometry"/>
+        </mxCell>
+
+        <!-- Layer 2: Identity & Access -->
+        <mxCell id="l2_card" value="&lt;b&gt;LAYER 2: Identity &amp;amp; Access&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;Multi-Portal Role Guards&lt;/b&gt;&lt;br&gt;  Second/Fourth Member &amp;amp; Inspector&lt;br&gt;&lt;br&gt;• &lt;b&gt;Google OAuth Security&lt;/b&gt;&lt;br&gt;  `django-allauth` state validation&lt;br&gt;&lt;br&gt;• &lt;b&gt;@login_required Guards&lt;/b&gt;&lt;br&gt;  Gated staff endpoints &amp;amp; views&lt;br&gt;&lt;br&gt;• &lt;b&gt;Secure Session Cookies&lt;/b&gt;&lt;br&gt;  HttpOnly session cookies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#8B5CF6;align=left;spacing=10;fontSize=11;fontColor=#4C1D95;" vertex="1" parent="1">
+          <mxGeometry x="280" y="150" width="215" height="300" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector L1 -> L2 -->
+        <mxCell id="sec_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="l1_card" target="l2_card">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Layer 3: Application & Vault -->
+        <mxCell id="l3_card" value="&lt;b&gt;LAYER 3: Application &amp;amp; Vault&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;100% CSRF Enforcement&lt;/b&gt;&lt;br&gt;  `CsrfViewMiddleware` + POST tokens&lt;br&gt;&lt;br&gt;• &lt;b&gt;PyMuPDF Document Vault&lt;/b&gt;&lt;br&gt;  Server-side sanitization &amp;amp; size caps&lt;br&gt;&lt;br&gt;• &lt;b&gt;DWT Scanner Sandbox&lt;/b&gt;&lt;br&gt;  Local desktop hardware isolation&lt;br&gt;&lt;br&gt;• &lt;b&gt;Secret Decoupling&lt;/b&gt;&lt;br&gt;  Zero secrets in repo (`.env` loaded)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#06B6D4;align=left;spacing=10;fontSize=11;fontColor=#0E7490;" vertex="1" parent="1">
+          <mxGeometry x="520" y="150" width="215" height="300" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector L2 -> L3 -->
+        <mxCell id="sec_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="l2_card" target="l3_card">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Layer 4: Audit & Compliance -->
+        <mxCell id="l4_card" value="&lt;b&gt;LAYER 4: Audit &amp;amp; Compliance&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;Staff Activity Feed&lt;/b&gt;&lt;br&gt;  Cross-module real-time audit log&lt;br&gt;&lt;br&gt;• &lt;b&gt;Case Action Timeline&lt;/b&gt;&lt;br&gt;  Immutable hearing &amp;amp; order history&lt;br&gt;&lt;br&gt;• &lt;b&gt;Lot Award Audit Trail&lt;/b&gt;&lt;br&gt;  Occupant &amp;amp; blacklist verification&lt;br&gt;&lt;br&gt;• &lt;b&gt;Twilio SMS Logging&lt;/b&gt;&lt;br&gt;  Logged notices &amp;amp; delivery receipts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#10B981;align=left;spacing=10;fontSize=11;fontColor=#064E3B;" vertex="1" parent="1">
+          <mxGeometry x="765" y="150" width="215" height="300" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector L3 -> L4 -->
+        <mxCell id="sec_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="l3_card" target="l4_card">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Flow line from Banner to L1 -->
+        <mxCell id="sec_entry" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="traffic_banner" target="l1_card">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
