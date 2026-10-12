@@ -801,11 +801,14 @@ function getCsrfToken() {
         const label = escapeHtml(filedLabel || 'SCANNED');
         const docTitle = escapeHtml(String((row && row.latest_file_name) || filedLabel || 'Document on file').trim());
         const checkSvg = '<span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
+        const eyeSvg = '<span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>';
         const scanPill = latestFileUrl
             ? '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + escapeHtml(latestFileUrl) + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + '">' + checkSvg + '<span>' + label + '</span></button>'
             : '<span class="req-scan req-scan-done">' + checkSvg + '<span>' + label + '</span></span>';
-        const samplePill = '<span class="req-scan req-scan-done req-scan-sample"><span>sample</span></span>';
-        return '<div class="archive-req-status-group">' + scanPill + samplePill + '</div>';
+        const viewPill = latestFileUrl
+            ? '<button type="button" class="req-scan req-scan-done req-scan-view archive-req-scan-link" data-archive-view-url="' + escapeHtml(latestFileUrl) + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="View ' + docTitle + '">' + eyeSvg + '<span>VIEW</span></button>'
+            : '<span class="req-scan req-scan-done req-scan-view" title="View ' + docTitle + '">' + eyeSvg + '<span>VIEW</span></span>';
+        return '<div class="archive-req-status-group">' + scanPill + viewPill + '</div>';
     }
 
     function renderArchiveRequirementsChecklistTable(payload) {
