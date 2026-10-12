@@ -6,6 +6,7 @@
 
 📄 **Quick File Links:**
 [![ERD Diagram](https://img.shields.io/badge/🗂️_Entity_Relationship_Diagram-docs/ERD.md-2563eb?style=flat-square)](docs/ERD.md)
+[![Architecture Deep Dive](https://img.shields.io/badge/🏗️_Architecture-ARCHITECTURE.md-6366f1?style=flat-square)](ARCHITECTURE.md)
 [![User Guide](https://img.shields.io/badge/📖_Staff_User_Guide-notes/user__guide.md-6366f1?style=flat-square)](notes/user_guide.md)
 [![Dashboard Analytics](https://img.shields.io/badge/📊_Analytics_Explainer-notes/dashboard__analytics__explainer.md-0891b2?style=flat-square)](notes/dashboard_analytics_explainer.md)
 [![Environment Variables](https://img.shields.io/badge/⚙️_Environment_Variables-.env.example-d97706?style=flat-square)](.env.example)
@@ -641,6 +642,7 @@ The application will be available at `http://127.0.0.1:8000/`.
 ├── ⚖️ LICENSE                         # MIT License
 ├── 🛡️ SECURITY.md                    # Security policy & vulnerability reporting
 ├── 📊 ACCOMPLISHMENT_REPORT.md       # Web application snapshots & accomplishment report
+├── 🏗️ ARCHITECTURE.md                # System design & technical architecture deep-dive
 └── 📄 README.md                       # This document
 ```
 

@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 620" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+      text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .title { font-size: 20px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 13px; font-weight: 500; fill: #64748b; }
+      .model-name { font-size: 14px; font-weight: 700; fill: #ffffff; }
+      .field-pk { font-size: 11px; font-weight: 600; fill: #1e293b; }
+      .field-text { font-size: 11px; font-weight: 400; fill: #475569; }
+      .field-type { font-size: 10px; font-weight: 500; fill: #64748b; }
+      .rel-label { font-size: 10px; font-weight: 600; fill: #475569; }
+      .protect-tag { fill: #dc2626; font-size: 9px; font-weight: 700; }
+      .cascade-tag { fill: #2563eb; font-size: 9px; font-weight: 700; }
+      .setnull-tag { fill: #d97706; font-size: 9px; font-weight: 700; }
+      .arrow { stroke: #64748b; stroke-width: 1.8; fill: none; }
+    </style>
+    <filter id="orm-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.08"/>
+    </filter>
+    <marker id="orm-marker" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1020" height="620" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Title -->
+  <g transform="translate(36, 28)">
+    <text x="0" y="22" class="title">Core ORM Relationships &amp; Cascade Integrity Rules</text>
+    <text x="0" y="42" class="subtitle">Entity foreign key dependencies, cardinalities, and institutional data retention constraints</text>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(680, 26)">
+    <rect width="300" height="44" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+    <circle cx="20" cy="22" r="5" fill="#dc2626"/>
+    <text x="32" y="26" font-size="11" font-weight="600" fill="#334155">PROTECT</text>
+    <circle cx="115" cy="22" r="5" fill="#2563eb"/>
+    <text x="127" y="26" font-size="11" font-weight="600" fill="#334155">CASCADE</text>
+    <circle cx="205" cy="22" r="5" fill="#d97706"/>
+    <text x="217" y="26" font-size="11" font-weight="600" fill="#334155">SET_NULL</text>
+  </g>
+
+  <!-- Model 1: Barangay -->
+  <g transform="translate(36, 95)" filter="url(#orm-shadow)">
+    <rect width="180" height="115" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 180 0 L 180 28 L 0 28 Z" fill="#475569" rx="8"/>
+    <text x="12" y="19" class="model-name">Barangay</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(bigint, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">name <tspan class="field-type">(varchar, UK)</tspan></text>
+    <text x="12" y="88" class="field-text">is_active <tspan class="field-type">(bool)</tspan></text>
+  </g>
+
+  <!-- Model 2: Applicant (Central Hub) -->
+  <g transform="translate(280, 95)" filter="url(#orm-shadow)">
+    <rect width="220" height="235" rx="8" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+    <path d="M 0 0 L 220 0 L 220 28 L 0 28 Z" fill="#2563eb"/>
+    <text x="12" y="19" class="model-name">Applicant (Hub)</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">reference_number <tspan class="field-type">(varchar, UK)</tspan></text>
+    <text x="12" y="88" class="field-text">full_name <tspan class="field-type">(varchar)</tspan></text>
+    <text x="12" y="108" class="field-text">barangay_id <tspan class="field-type">(FK → Barangay)</tspan></text>
+    <text x="12" y="128" class="field-text">monthly_income <tspan class="field-type">(decimal)</tspan></text>
+    <text x="12" y="148" class="field-text">household_size <tspan class="field-type">(int)</tspan></text>
+    <text x="12" y="168" class="field-text">years_residing <tspan class="field-type">(int &lt;= 99)</tspan></text>
+    <text x="12" y="188" class="field-text">status <tspan class="field-type">(choice varchar)</tspan></text>
+    <text x="12" y="208" class="field-text">created_by_id <tspan class="field-type">(FK → User)</tspan></text>
+  </g>
+
+  <!-- Connector: Barangay -> Applicant (PROTECT) -->
+  <path d="M 216 150 L 280 150" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="220" y="136" width="56" height="14" rx="3" fill="#fee2e2"/>
+  <text x="224" y="147" class="protect-tag">PROTECT</text>
+
+  <!-- Model 3: HouseholdMember -->
+  <g transform="translate(36, 255)" filter="url(#orm-shadow)">
+    <rect width="180" height="115" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 180 0 L 180 28 L 0 28 Z" fill="#64748b"/>
+    <text x="12" y="19" class="model-name">HouseholdMember</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">applicant_id <tspan class="field-type">(FK → Applicant)</tspan></text>
+    <text x="12" y="88" class="field-text">full_name <tspan class="field-type">(varchar)</tspan></text>
+    <text x="12" y="108" class="field-text">relationship <tspan class="field-type">(varchar)</tspan></text>
+  </g>
+
+  <!-- Connector: Applicant -> HouseholdMember (CASCADE) -->
+  <path d="M 280 285 L 216 285" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="220" y="271" width="56" height="14" rx="3" fill="#dbeafe"/>
+  <text x="224" y="282" class="cascade-tag">CASCADE</text>
+
+  <!-- Model 4: Document Vault -->
+  <g transform="translate(36, 410)" filter="url(#orm-shadow)">
+    <rect width="180" height="135" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 180 0 L 180 28 L 0 28 Z" fill="#0891b2"/>
+    <text x="12" y="19" class="model-name">Document (Vault)</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">applicant_id <tspan class="field-type">(FK → Applicant)</tspan></text>
+    <text x="12" y="88" class="field-text">document_type <tspan class="field-type">(varchar)</tspan></text>
+    <text x="12" y="108" class="field-text">file_name <tspan class="field-type">(varchar)</tspan></text>
+    <text x="12" y="128" class="field-text">blob_id <tspan class="field-type">(FK → Blob)</tspan></text>
+  </g>
+
+  <!-- Connector: Applicant -> Document (CASCADE) -->
+  <path d="M 330 330 L 330 460 L 216 460" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="230" y="446" width="56" height="14" rx="3" fill="#dbeafe"/>
+  <text x="234" y="457" class="cascade-tag">CASCADE</text>
+
+  <!-- Model 5: Application -->
+  <g transform="translate(560, 95)" filter="url(#orm-shadow)">
+    <rect width="200" height="175" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 200 0 L 200 28 L 0 28 Z" fill="#7c3aed"/>
+    <text x="12" y="19" class="model-name">Application</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">application_no <tspan class="field-type">(varchar, UK)</tspan></text>
+    <text x="12" y="88" class="field-text">applicant_id <tspan class="field-type">(1:1 → Applicant)</tspan></text>
+    <text x="12" y="108" class="field-text">status <tspan class="field-type">(approved, etc.)</tspan></text>
+    <text x="12" y="128" class="field-text">standby_position <tspan class="field-type">(int)</tspan></text>
+    <text x="12" y="148" class="field-text">form_generated_at <tspan class="field-type">(dt)</tspan></text>
+    <text x="12" y="168" class="field-text">form_generated_by <tspan class="field-type">(User)</tspan></text>
+  </g>
+
+  <!-- Connector: Applicant -> Application (CASCADE) -->
+  <path d="M 500 150 L 560 150" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="502" y="136" width="56" height="14" rx="3" fill="#dbeafe"/>
+  <text x="506" y="147" class="cascade-tag">CASCADE</text>
+
+  <!-- Model 6: LotAward -->
+  <g transform="translate(800, 95)" filter="url(#orm-shadow)">
+    <rect width="180" height="155" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 180 0 L 180 28 L 0 28 Z" fill="#059669"/>
+    <text x="12" y="19" class="model-name">LotAward</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">application_id <tspan class="field-type">(FK)</tspan></text>
+    <text x="12" y="88" class="field-text">housing_unit_id <tspan class="field-type">(FK)</tspan></text>
+    <text x="12" y="108" class="field-text">status <tspan class="field-type">(awarded, etc.)</tspan></text>
+    <text x="12" y="128" class="field-text">via_draw_lots <tspan class="field-type">(bool)</tspan></text>
+    <text x="12" y="148" class="field-text">awarded_by <tspan class="field-type">(FK User)</tspan></text>
+  </g>
+
+  <!-- Connector: Application -> LotAward (PROTECT) -->
+  <path d="M 760 150 L 800 150" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="752" y="136" width="56" height="14" rx="3" fill="#fee2e2"/>
+  <text x="756" y="147" class="protect-tag">PROTECT</text>
+
+  <!-- Model 7: HousingUnit -->
+  <g transform="translate(800, 310)" filter="url(#orm-shadow)">
+    <rect width="180" height="145" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 180 0 L 180 28 L 0 28 Z" fill="#d97706"/>
+    <text x="12" y="19" class="model-name">HousingUnit</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">site_id <tspan class="field-type">(FK RelocationSite)</tspan></text>
+    <text x="12" y="88" class="field-text">block_number <tspan class="field-type">(varchar)</tspan></text>
+    <text x="12" y="108" class="field-text">lot_number <tspan class="field-type">(varchar)</tspan></text>
+    <text x="12" y="128" class="field-text">status <tspan class="field-type">(vacant, etc.)</tspan></text>
+    <text x="12" y="148" class="field-text">polygon_index <tspan class="field-type">(int)</tspan></text>
+  </g>
+
+  <!-- Connector: HousingUnit -> LotAward (PROTECT) -->
+  <path d="M 890 310 L 890 250" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="895" y="272" width="56" height="14" rx="3" fill="#fee2e2"/>
+  <text x="899" y="283" class="protect-tag">PROTECT</text>
+
+  <!-- Model 8: Case Management -->
+  <g transform="translate(560, 370)" filter="url(#orm-shadow)">
+    <rect width="200" height="155" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 200 0 L 200 28 L 0 28 Z" fill="#b91c1c"/>
+    <text x="12" y="19" class="model-name">Case (Disputes)</text>
+    <text x="12" y="48" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="68" class="field-text">case_number <tspan class="field-type">(varchar, UK)</tspan></text>
+    <text x="12" y="88" class="field-text">case_type <tspan class="field-type">(varchar)</tspan></text>
+    <text x="12" y="108" class="field-text">status <tspan class="field-type">(opened, etc.)</tspan></text>
+    <text x="12" y="128" class="field-text">applicant_id <tspan class="field-type">(FK Applicant)</tspan></text>
+    <text x="12" y="148" class="field-text">housing_unit_id <tspan class="field-type">(FK Unit)</tspan></text>
+  </g>
+
+  <!-- Connector: Applicant -> Case (SET_NULL) -->
+  <path d="M 450 330 L 450 430 L 560 430" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="460" y="416" width="60" height="14" rx="3" fill="#fef3c7"/>
+  <text x="464" y="427" class="setnull-tag">SET_NULL</text>
+
+  <!-- Connector: HousingUnit -> Case (SET_NULL) -->
+  <path d="M 800 430 L 760 430" class="arrow" marker-end="url(#orm-marker)"/>
+  <rect x="758" y="416" width="60" height="14" rx="3" fill="#fef3c7"/>
+  <text x="762" y="427" class="setnull-tag">SET_NULL</text>
+
+  <!-- Model 9: RelocationSite -->
+  <g transform="translate(800, 485)" filter="url(#orm-shadow)">
+    <rect width="180" height="85" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <path d="M 0 0 L 180 0 L 180 24 L 0 24 Z" fill="#334155"/>
+    <text x="12" y="17" class="model-name" font-size="12">RelocationSite</text>
+    <text x="12" y="42" class="field-pk">id <tspan class="field-type">(uuid, PK)</tspan></text>
+    <text x="12" y="60" class="field-text">name, code <tspan class="field-type">(UK)</tspan></text>
+    <text x="12" y="78" class="field-text">total_lots <tspan class="field-type">(int)</tspan></text>
+  </g>
+
+  <!-- Connector: RelocationSite -> HousingUnit (PROTECT) -->
+  <path d="M 890 485 L 890 455" class="arrow" marker-end="url(#orm-marker)"/>
+</svg>
