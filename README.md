@@ -16,6 +16,7 @@
 [![Contributing](https://img.shields.io/badge/🤝_Contributing-CONTRIBUTING.md-10b981?style=flat-square)](CONTRIBUTING.md)
 [![Security Policy](https://img.shields.io/badge/🛡️_Security_Policy-SECURITY.md-dc2626?style=flat-square)](SECURITY.md)
 [![Accomplishment Report](https://img.shields.io/badge/📊_Accomplishment_Report-ACCOMPLISHMENT__REPORT.md-8b5cf6?style=flat-square)](ACCOMPLISHMENT_REPORT.md)
+[![Changelog](https://img.shields.io/badge/📜_Changelog-CHANGELOG.md-ec4899?style=flat-square)](CHANGELOG.md)
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-6.0.6-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -643,6 +644,7 @@ The application will be available at `http://127.0.0.1:8000/`.
 ├── 🛡️ SECURITY.md                    # Security policy & vulnerability reporting
 ├── 📊 ACCOMPLISHMENT_REPORT.md       # Web application snapshots & accomplishment report
 ├── 🏗️ ARCHITECTURE.md                # System design & technical architecture deep-dive
+├── 📜 CHANGELOG.md                   # Version release notes & milestone history
 └── 📄 README.md                       # This document
 ```
 
