@@ -1721,12 +1721,25 @@ function getCsrfToken() {
         if (toggle && menu && displacementSelect) {
             toggle.addEventListener('click', function (e) {
                 e.stopPropagation();
-                menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+                const willOpen = menu.style.display !== 'flex';
+                menu.style.display = willOpen ? 'flex' : 'none';
+                toggle.classList.toggle('is-open', willOpen);
+                if (willOpen) {
+                    const modalBody = toggle.closest('.modal-body');
+                    if (modalBody) {
+                        const toggleRect = toggle.getBoundingClientRect();
+                        const bodyRect = modalBody.getBoundingClientRect();
+                        if (toggleRect.top - 360 < bodyRect.top) {
+                            toggle.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                        }
+                    }
+                }
             });
 
             document.addEventListener('click', function (e) {
                 if (!menu.contains(e.target) && !toggle.contains(e.target)) {
                     menu.style.display = 'none';
+                    toggle.classList.remove('is-open');
                 }
             });
 
@@ -1749,6 +1762,7 @@ function getCsrfToken() {
                     toggle.style.color = colors[val] || '#064e3b';
 
                     menu.style.display = 'none';
+                    toggle.classList.remove('is-open');
                 });
 
                 item.addEventListener('mouseenter', () => {
@@ -4302,6 +4316,16 @@ function getCsrfToken() {
         }
         if (modal) modal.classList.remove('active');
         if (form) form.reset();
+        const dispMenu = document.getElementById('displacementMenu');
+        const dispToggle = document.getElementById('displacementToggle');
+        const dispText = document.getElementById('displacementToggleText');
+        if (dispMenu) dispMenu.style.display = 'none';
+        if (dispToggle) {
+            dispToggle.classList.remove('is-open');
+            dispToggle.style.borderColor = '#10b981';
+            dispToggle.style.color = '#064e3b';
+        }
+        if (dispText) dispText.textContent = '— Select Applicant Situation —';
         hideDuplicatePreview();
         syncRegistrationDisplacementPanels();
     }
