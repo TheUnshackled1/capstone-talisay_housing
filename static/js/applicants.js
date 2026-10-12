@@ -4525,7 +4525,7 @@ function getCsrfToken() {
                 </div>
                 <div class="form-group">
                     <label class="form-label">Age</label>
-                    <input type="number" class="form-input hh-member-field hh-member-age" placeholder="Years" name="hh_member_${i}_age" min="0" max="120" inputmode="numeric" onchange="updateHouseholdSize()">
+                    <input type="text" class="form-input hh-member-field hh-member-age" placeholder="Years" name="hh_member_${i}_age" maxlength="2" inputmode="numeric" pattern="[0-9]{1,2}" oninput="this.value = this.value.replace(/\\D/g, '').slice(0, 2); updateHouseholdSize();" onchange="updateHouseholdSize()" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Sex</label>
@@ -4557,6 +4557,11 @@ function getCsrfToken() {
         initializePhoneInputs();
         container.querySelectorAll('input[name^="hh_member_"][name$="_name"]').forEach((el) => {
             attachUppercaseField(el);
+        });
+        container.querySelectorAll('input[name*="_age"]').forEach((el) => {
+            el.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 2);
+            });
         });
         updateHouseholdSize();
     }
