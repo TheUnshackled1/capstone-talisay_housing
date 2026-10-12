@@ -4476,9 +4476,34 @@ function getCsrfToken() {
             memberDiv.id = `hhMember${i}`;
             memberDiv.className = 'hh-member-row';
             memberDiv.innerHTML = `
-                <div class="form-group hh-member-name-span">
-                    <label class="form-label">Full name</label>
-                    <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="30" minlength="2" onchange="updateHouseholdSize()" oninput="updateHouseholdSize()" autocomplete="name">
+                <div class="hh-member-row-top">
+                    <div class="form-group hh-member-name-group">
+                        <label class="form-label">Full name</label>
+                        <input type="text" class="form-input hh-member-field" placeholder="Surname, given name, extension" name="hh_member_${i}_name" maxlength="30" minlength="2" onchange="updateHouseholdSize()" oninput="updateHouseholdSize()" autocomplete="name">
+                    </div>
+                    <div class="form-group hh-member-actions-group">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="hh-member-btn-cluster">
+                            <button type="button" class="tha-btn-add-member" onclick="addHouseholdMember()" title="Add another member">
+                                <span class="btn-icon-block">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </span>
+                                <span>Add Member</span>
+                            </button>
+                            <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">
+                                <span class="btn-icon-block">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </span>
+                                <span>Remove</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Relationship</label>
@@ -4524,18 +4549,6 @@ function getCsrfToken() {
                     <label class="form-label">Contact (Opt)</label>
                     <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" maxlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
                     <span class="hh-member-help">11 digits only</span>
-                </div>
-                <div class="form-group hh-member-remove-cell">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="button" onclick="deleteHouseholdMember(${i})" class="tha-reg-remove-member" title="Remove this member">
-                        <span class="btn-icon-block">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                        </span>
-                        <span>Remove</span>
-                    </button>
                 </div>
             `;
             container.appendChild(memberDiv);
