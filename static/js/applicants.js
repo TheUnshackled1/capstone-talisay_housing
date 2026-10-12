@@ -801,11 +801,11 @@ function getCsrfToken() {
         const label = escapeHtml(filedLabel || 'SCANNED');
         const docTitle = escapeHtml(String((row && row.latest_file_name) || filedLabel || 'Document on file').trim());
         const checkSvg = '<span class="btn-icon-block"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
-        if (latestFileUrl) {
-            const safeLatestFileUrl = escapeHtml(latestFileUrl);
-            return '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + safeLatestFileUrl + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + '">' + checkSvg + '<span>' + label + '</span></button>';
-        }
-        return '<span class="req-scan req-scan-done">' + checkSvg + '<span>' + label + '</span></span>';
+        const scanPill = latestFileUrl
+            ? '<button type="button" class="req-scan req-scan-done archive-req-scan-link" data-archive-view-url="' + escapeHtml(latestFileUrl) + '" onclick="openArchiveRequirementDocument(this.getAttribute(\'data-archive-view-url\'))" title="Open ' + docTitle + '">' + checkSvg + '<span>' + label + '</span></button>'
+            : '<span class="req-scan req-scan-done">' + checkSvg + '<span>' + label + '</span></span>';
+        const samplePill = '<span class="req-scan req-scan-done req-scan-sample"><span>sample</span></span>';
+        return '<div class="archive-req-status-group">' + scanPill + samplePill + '</div>';
     }
 
     function renderArchiveRequirementsChecklistTable(payload) {
