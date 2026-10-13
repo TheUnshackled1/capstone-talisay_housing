@@ -2486,7 +2486,6 @@ function getCsrfToken() {
         const filterBtn = document.getElementById('archiveFilterBtn');
         const filterPopover = document.getElementById('archiveFilterPopover');
         const clearBtn = document.getElementById('archiveClearFiltersBtn');
-        const applyBtn = document.getElementById('archiveApplyFiltersBtn');
         const searchInput = document.getElementById('archiveSearchInput');
         const searchForm = document.getElementById('archiveListSearchForm');
 
@@ -2522,17 +2521,6 @@ function getCsrfToken() {
                 if (brgyEl) brgyEl.value = 'all';
                 if (statusEl) statusEl.value = 'all';
                 if (situationEl) situationEl.value = 'all';
-                filterArchiveTable(true);
-            });
-        }
-
-        if (applyBtn) {
-            applyBtn.addEventListener('click', function () {
-                if (filterPopover) filterPopover.style.display = 'none';
-                if (filterBtn) {
-                    filterBtn.classList.remove('is-open');
-                    filterBtn.setAttribute('aria-expanded', 'false');
-                }
                 filterArchiveTable(true);
             });
         }
