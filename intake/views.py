@@ -2012,6 +2012,7 @@ def applicants_list(request, position):
             live_income = float(live.monthly_income) if live is not None and live.monthly_income is not None else None
             archive_records.append({
                 'id': str(archive.id),
+                'timestamp': int(archive.archived_at.timestamp()) if archive.archived_at else 0,
                 'dateTime': local_archived_at.strftime('%b %d, %Y | %I:%M %p') if local_archived_at else '',
                 'proceededAgo': _relative_time_ago(archive.archived_at) if archive.archived_at else '—',
                 'dateOfBirthDisplay': archive.date_of_birth_snapshot.strftime('%m/%d/%Y') if archive.date_of_birth_snapshot else '',

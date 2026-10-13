@@ -2197,6 +2197,7 @@ function getCsrfToken() {
     const archiveSearchInput = document.getElementById('archiveSearchInput');
     if (archiveSearchInput) archiveSearchInput.value = params.get('archive_q') || '';
         }
+        initializeArchiveFilterAndSort();
         filterTable(true);
     });
 
@@ -2284,21 +2285,99 @@ function getCsrfToken() {
         const searchInputEl = document.getElementById('archiveSearchInput');
         const channelFilterEl = document.getElementById('archiveFilterChannel');
         const barangayFilterEl = document.getElementById('archiveFilterBarangay');
+        const statusFilterEl = document.getElementById('archiveFilterStatus');
+        const situationFilterEl = document.getElementById('archiveFilterSituation');
 
-        const searchValue = searchInputEl ? searchInputEl.value.toLowerCase() : '';
+        const searchValue = searchInputEl ? searchInputEl.value.trim().toLowerCase() : '';
         const channelFilter = channelFilterEl ? channelFilterEl.value : 'all';
         const barangayFilter = barangayFilterEl ? barangayFilterEl.value : 'all';
+        const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
+        const situationFilter = situationFilterEl ? situationFilterEl.value : 'all';
         const rows = Array.from(document.querySelectorAll('#archiveTableBody tr[data-archive-row="true"]'));
 
         return rows.filter(row => {
             const channel = row.dataset.channel;
             const barangay = row.dataset.barangay;
-            const searchable = row.dataset.searchable;
+            const reqTier = row.dataset.reqTier;
+            const dispReason = row.dataset.displacementReason;
+            const searchable = row.dataset.searchable || '';
 
-            const matchSearch = searchValue === '' || (searchable && searchable.includes(searchValue));
+            const matchSearch = searchValue === '' || searchable.includes(searchValue);
             const matchChannel = channelFilter === 'all' || channel === channelFilter;
             const matchBarangay = barangayFilter === 'all' || barangay === barangayFilter;
-            return matchSearch && matchChannel && matchBarangay;
+            const matchStatus = statusFilter === 'all' || reqTier === statusFilter;
+            const matchSituation = situationFilter === 'all' || dispReason === situationFilter;
+
+            return matchSearch && matchChannel && matchBarangay && matchStatus && matchSituation;
+        });
+    }
+
+    function sortArchiveRows(rows) {
+        const sortSelect = document.getElementById('archiveSortSelect');
+        const sortKey = sortSelect ? sortSelect.value : 'date_desc';
+
+        return rows.sort((a, b) => {
+            if (sortKey === 'date_desc') {
+                const timeA = parseInt(a.dataset.timestamp || '0', 10);
+                const timeB = parseInt(b.dataset.timestamp || '0', 10);
+                return timeB - timeA;
+            }
+            if (sortKey === 'date_asc') {
+                const timeA = parseInt(a.dataset.timestamp || '0', 10);
+                const timeB = parseInt(b.dataset.timestamp || '0', 10);
+                return timeA - timeB;
+            }
+            if (sortKey === 'name_asc') {
+                const nameA = (a.dataset.fullName || '').toLowerCase();
+                const nameB = (b.dataset.fullName || '').toLowerCase();
+                return nameA.localeCompare(nameB);
+            }
+            if (sortKey === 'name_desc') {
+                const nameA = (a.dataset.fullName || '').toLowerCase();
+                const nameB = (b.dataset.fullName || '').toLowerCase();
+                return nameB.localeCompare(nameA);
+            }
+            if (sortKey === 'status_asc') {
+                const tierRank = { 'complete': 1, 'pending': 2, 'incomplete': 3 };
+                const rankA = tierRank[a.dataset.reqTier] || 4;
+                const rankB = tierRank[b.dataset.reqTier] || 4;
+                if (rankA !== rankB) return rankA - rankB;
+                return (a.dataset.fullName || '').localeCompare(b.dataset.fullName || '');
+            }
+            if (sortKey === 'barangay_asc') {
+                const brgyA = (a.dataset.barangay || '').toLowerCase();
+                const brgyB = (b.dataset.barangay || '').toLowerCase();
+                if (brgyA !== brgyB) return brgyA.localeCompare(brgyB);
+                return (a.dataset.fullName || '').localeCompare(b.dataset.fullName || '');
+            }
+            return 0;
+        });
+    }
+
+    function updateArchiveFilterBadge() {
+        const barangayFilterEl = document.getElementById('archiveFilterBarangay');
+        const statusFilterEl = document.getElementById('archiveFilterStatus');
+        const situationFilterEl = document.getElementById('archiveFilterSituation');
+        const badgeEl = document.getElementById('archiveFilterActiveBadge');
+        const filterBtn = document.getElementById('archiveFilterBtn');
+
+        let activeCount = 0;
+        if (barangayFilterEl && barangayFilterEl.value !== 'all') activeCount++;
+        if (statusFilterEl && statusFilterEl.value !== 'all') activeCount++;
+        if (situationFilterEl && situationFilterEl.value !== 'all') activeCount++;
+
+        if (badgeEl) {
+            badgeEl.textContent = activeCount;
+            badgeEl.style.display = activeCount > 0 ? 'inline-flex' : 'none';
+        }
+        if (filterBtn) {
+            filterBtn.classList.toggle('has-active-filters', activeCount > 0);
+        }
+
+        const currentStatus = statusFilterEl ? statusFilterEl.value : 'all';
+        document.querySelectorAll('.js-archive-status-chip').forEach(chip => {
+            const chipStatus = chip.dataset.statusFilter;
+            chip.classList.toggle('is-active', chipStatus === currentStatus);
         });
     }
 
@@ -2355,20 +2434,28 @@ function getCsrfToken() {
         const archiveRows = Array.from(document.querySelectorAll('#archiveTableBody tr[data-archive-row="true"]'));
         const filteredRows = getFilteredArchiveRows();
         renderArchiveTablePage(archiveRows, filteredRows);
+        updateArchiveFilterBadge();
     }
 
     function renderArchiveTablePage(allArchiveRows, filteredArchiveRows) {
         const archiveRows = allArchiveRows || Array.from(document.querySelectorAll('#archiveTableBody tr[data-archive-row="true"]'));
         const filteredRows = filteredArchiveRows || getFilteredArchiveRows();
+        const sortedRows = sortArchiveRows(filteredRows);
         const archiveEmptyRow = document.getElementById('archiveEmptyRow');
         const archiveTotalCountEl = document.getElementById('archiveTotalCount');
-        const totalRows = filteredRows.length;
+        const totalRows = sortedRows.length;
         const totalPages = Math.max(1, Math.ceil(totalRows / ARCHIVE_TABLE_PAGE_SIZE));
         archiveCurrentPage = Math.min(archiveCurrentPage, totalPages);
 
         const startIndex = (archiveCurrentPage - 1) * ARCHIVE_TABLE_PAGE_SIZE;
         const endIndex = startIndex + ARCHIVE_TABLE_PAGE_SIZE;
-        const rowsOnPage = filteredRows.slice(startIndex, endIndex);
+        const rowsOnPage = sortedRows.slice(startIndex, endIndex);
+
+        const tableBody = document.getElementById('archiveTableBody');
+        if (tableBody) {
+            sortedRows.forEach(row => tableBody.appendChild(row));
+            if (archiveEmptyRow) tableBody.appendChild(archiveEmptyRow);
+        }
 
         archiveRows.forEach(row => {
             if (rowsOnPage.includes(row)) {
@@ -2392,6 +2479,106 @@ function getCsrfToken() {
         const displayStart = totalRows === 0 ? 0 : startIndex + 1;
         const displayEnd = totalRows === 0 ? 0 : Math.min(endIndex, totalRows);
         updatePaginationUI('archive', totalRows, archiveCurrentPage, totalPages, displayStart, displayEnd);
+    }
+
+    function initializeArchiveFilterAndSort() {
+        const sortSelect = document.getElementById('archiveSortSelect');
+        const filterBtn = document.getElementById('archiveFilterBtn');
+        const filterPopover = document.getElementById('archiveFilterPopover');
+        const clearBtn = document.getElementById('archiveClearFiltersBtn');
+        const applyBtn = document.getElementById('archiveApplyFiltersBtn');
+        const searchInput = document.getElementById('archiveSearchInput');
+        const searchForm = document.getElementById('archiveListSearchForm');
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function () {
+                filterArchiveTable(true);
+            });
+        }
+
+        if (filterBtn && filterPopover) {
+            filterBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const isOpen = filterPopover.style.display !== 'none';
+                filterPopover.style.display = isOpen ? 'none' : 'block';
+                filterBtn.classList.toggle('is-open', !isOpen);
+                filterBtn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!filterPopover.contains(e.target) && !filterBtn.contains(e.target)) {
+                    filterPopover.style.display = 'none';
+                    filterBtn.classList.remove('is-open');
+                    filterBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                const brgyEl = document.getElementById('archiveFilterBarangay');
+                const statusEl = document.getElementById('archiveFilterStatus');
+                const situationEl = document.getElementById('archiveFilterSituation');
+                if (brgyEl) brgyEl.value = 'all';
+                if (statusEl) statusEl.value = 'all';
+                if (situationEl) situationEl.value = 'all';
+                filterArchiveTable(true);
+            });
+        }
+
+        if (applyBtn) {
+            applyBtn.addEventListener('click', function () {
+                if (filterPopover) filterPopover.style.display = 'none';
+                if (filterBtn) {
+                    filterBtn.classList.remove('is-open');
+                    filterBtn.setAttribute('aria-expanded', 'false');
+                }
+                filterArchiveTable(true);
+            });
+        }
+
+        ['archiveFilterBarangay', 'archiveFilterStatus', 'archiveFilterSituation'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', function () {
+                    filterArchiveTable(true);
+                });
+            }
+        });
+
+        let debounceTimer = null;
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    filterArchiveTable(true);
+                }, 250);
+            });
+        }
+
+        if (searchForm) {
+            searchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                filterArchiveTable(true);
+            });
+        }
+
+        document.querySelectorAll('.js-archive-status-chip').forEach(chip => {
+            chip.addEventListener('click', function () {
+                const targetStatus = this.dataset.statusFilter || 'all';
+                const statusEl = document.getElementById('archiveFilterStatus');
+                if (statusEl) {
+                    statusEl.value = targetStatus;
+                    filterArchiveTable(true);
+                }
+            });
+            chip.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
     }
 
     // ====== REVIEW MODAL ======

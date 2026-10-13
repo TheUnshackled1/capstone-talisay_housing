@@ -255,6 +255,280 @@
         background-position: right 0.5rem center;
     }
 
+    /* ===================================================================
+       Registered Applicants Toolbar: Sort Dropdown & Filter Popover
+       =================================================================== */
+    .summary-chip-card.js-archive-status-chip {
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .summary-chip-card.js-archive-status-chip:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-chip-card.js-archive-status-chip.is-active {
+        box-shadow: 0 0 0 2px #0f766e, 0 4px 6px -1px rgba(15, 118, 110, 0.2);
+    }
+
+    /* Sort Control */
+    .archive-sort-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .archive-sort-select {
+        height: 2.35rem;
+        padding: 0 1.85rem 0 2.2rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #334155;
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        min-width: 135px;
+    }
+
+    .archive-sort-select:hover {
+        border-color: #94a3b8;
+        background-color: #f8fafc;
+    }
+
+    .archive-sort-select:focus {
+        outline: none;
+        border-color: #15803d;
+        box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+    }
+
+    .archive-sort-icon-prefix {
+        position: absolute;
+        left: 0.7rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.95rem;
+        height: 0.95rem;
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    .archive-sort-icon-suffix {
+        position: absolute;
+        right: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.85rem;
+        height: 0.85rem;
+        color: #94a3b8;
+        pointer-events: none;
+    }
+
+    /* Filter Popover Button */
+    .archive-filter-popover-wrap {
+        position: relative;
+        display: inline-block;
+    }
+
+    .btn-archive-filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        height: 2.35rem;
+        padding: 0 0.85rem;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.5rem;
+        color: #334155;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        transition: all 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .btn-archive-filter:hover {
+        border-color: #94a3b8;
+        background-color: #f8fafc;
+        color: #0f172a;
+    }
+
+    .btn-archive-filter.is-open,
+    .btn-archive-filter.has-active-filters {
+        border-color: #15803d;
+        color: #15803d;
+        background-color: #f0fdf4;
+    }
+
+    .archive-filter-btn-icon {
+        width: 0.95rem;
+        height: 0.95rem;
+        color: currentColor;
+    }
+
+    .archive-filter-btn-caret {
+        width: 0.8rem;
+        height: 0.8rem;
+        color: #94a3b8;
+        transition: transform 0.2s ease;
+    }
+
+    .btn-archive-filter.is-open .archive-filter-btn-caret {
+        transform: rotate(180deg);
+    }
+
+    .archive-filter-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.15rem;
+        height: 1.15rem;
+        padding: 0 0.3rem;
+        background: #15803d;
+        color: #ffffff;
+        font-size: 0.65rem;
+        font-weight: 700;
+        border-radius: 999px;
+    }
+
+    /* Filter Popover Dropdown Panel */
+    .archive-filter-popover {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        width: 290px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.14), 0 4px 8px -2px rgba(15, 23, 42, 0.06);
+        z-index: 100;
+        animation: archivePopoverFadeIn 0.16s ease-out;
+        overflow: hidden;
+    }
+
+    @keyframes archivePopoverFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .archive-filter-popover-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0.95rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .archive-filter-popover-title {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .btn-archive-filter-reset {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        transition: color 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-archive-filter-reset:hover {
+        color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .archive-filter-popover-body {
+        padding: 0.9rem 0.95rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .archive-filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .archive-filter-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .archive-filter-select {
+        width: 100%;
+        height: 2.15rem;
+        padding: 0 1.8rem 0 0.65rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.45rem;
+        font-size: 0.76rem;
+        color: #1e293b;
+        background: #ffffff;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2364748b'%3E%3Cpath d='M3 5l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.55rem center;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .archive-filter-select:focus {
+        outline: none;
+        border-color: #15803d;
+        box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15);
+    }
+
+    .archive-filter-popover-footer {
+        padding: 0.65rem 0.95rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-archive-filter-apply {
+        padding: 0.42rem 0.9rem;
+        background: #15803d;
+        color: #ffffff;
+        border: none;
+        border-radius: 0.45rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-archive-filter-apply:hover {
+        background: #166534;
+    }
+
     /* Boxed grid for formal applicant tables — lives in this template because
        extra_css reloads tailwind.css after dashboard.css (Tailwind preflight can
        strip table borders). Mirrors Document Management .documents-table treatment. */

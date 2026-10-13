@@ -590,8 +590,8 @@
 
     <!-- Archive Controls Bar -->
     <div class="controls-bar" style="margin-bottom: 0.5rem;">
-        <!-- Summary Cards -->
-        <div class="summary-chip-card summary-chip-card--blue">
+        <!-- Summary Cards (Interactive Status Filters) -->
+        <div class="summary-chip-card summary-chip-card--blue js-archive-status-chip" data-status-filter="all" role="button" tabindex="0" title="Click to view all registered applicants">
             <div class="summary-icon-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
                     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -605,7 +605,7 @@
             </div>
         </div>
 
-        <div class="summary-chip-card summary-chip-card--emerald">
+        <div class="summary-chip-card summary-chip-card--emerald js-archive-status-chip" data-status-filter="complete" role="button" tabindex="0" title="Click to filter Complete applicants">
             <div class="summary-icon-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -618,7 +618,7 @@
             </div>
         </div>
 
-        <div class="summary-chip-card summary-chip-card--amber">
+        <div class="summary-chip-card summary-chip-card--amber js-archive-status-chip" data-status-filter="pending" role="button" tabindex="0" title="Click to filter Pending applicants">
             <div class="summary-icon-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -631,7 +631,7 @@
             </div>
         </div>
 
-        <div class="summary-chip-card summary-chip-card--rose">
+        <div class="summary-chip-card summary-chip-card--rose js-archive-status-chip" data-status-filter="incomplete" role="button" tabindex="0" title="Click to filter Incomplete applicants">
             <div class="summary-icon-wrap">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.2rem; height: 1.2rem;">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -645,9 +645,9 @@
             </div>
         </div>
 
-        <!-- Search Box (server-side across full LIST OF APPLICANTS, then client pagination) -->
+        <!-- Search Box (client & server integrated search) -->
         <form method="get" class="search-box" id="archiveListSearchForm"
-            style="flex: 1 1 240px; min-width: 220px; position: relative; display: flex;">
+            style="flex: 1 1 200px; min-width: 180px; position: relative; display: flex;">
             {% if active_list_q %}<input type="hidden" name="q" value="{{ active_list_q }}">{% endif %}
             <svg class="search-icon"
                 style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
@@ -665,15 +665,99 @@
             </button>
         </form>
 
-        <!-- Barangay Filter -->
-        <select class="filter-select" id="archiveFilterBarangay" name="archive_barangay" form="archiveListSearchForm"
-            onchange="document.getElementById('archiveListSearchForm')?.submit()">
-            <option value="all" {% if archive_list_barangay == 'all' or not archive_list_barangay %}selected{% endif %}>
-                All Barangays</option>
-            {% for brgy in barangays %}
-            <option value="{{ brgy }}" {% if archive_list_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
-            {% endfor %}
-        </select>
+        <!-- Archive Filter & Sort Actions Group -->
+        <div class="archive-toolbar-actions" style="display: flex; align-items: center; gap: 0.5rem; position: relative;">
+            <!-- Sort Dropdown -->
+            <div class="archive-sort-wrap">
+                <select class="archive-sort-select" id="archiveSortSelect" aria-label="Sort registered applicants">
+                    <option value="date_desc">Newest First</option>
+                    <option value="date_asc">Oldest First</option>
+                    <option value="name_asc">Name (A → Z)</option>
+                    <option value="name_desc">Name (Z → A)</option>
+                    <option value="status_asc">Status</option>
+                    <option value="barangay_asc">Barangay (A → Z)</option>
+                </select>
+                <!-- Prefix Sort Icon -->
+                <svg class="archive-sort-icon-prefix" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="15" y2="6"></line>
+                    <line x1="3" y1="12" x2="11" y2="12"></line>
+                    <line x1="3" y1="18" x2="7" y2="18"></line>
+                    <polyline points="17 9 20 6 23 9"></polyline>
+                    <line x1="20" y1="6" x2="20" y2="18"></line>
+                </svg>
+                <!-- Suffix Chevron -->
+                <svg class="archive-sort-icon-suffix" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"></path>
+                </svg>
+            </div>
+
+            <!-- Filter Popover Button & Popover -->
+            <div class="archive-filter-popover-wrap">
+                <button type="button" class="btn-archive-filter" id="archiveFilterBtn" aria-expanded="false" aria-haspopup="true">
+                    <svg class="archive-filter-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span>Filter</span>
+                    <span class="archive-filter-badge" id="archiveFilterActiveBadge" style="display: none;">0</span>
+                    <svg class="archive-filter-btn-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6"></path>
+                    </svg>
+                </button>
+
+                <!-- Filter Popover Panel -->
+                <div class="archive-filter-popover" id="archiveFilterPopover" style="display: none;">
+                    <div class="archive-filter-popover-header">
+                        <div class="archive-filter-popover-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 0.95rem; height: 0.95rem;">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            <span>Filter Applicants</span>
+                        </div>
+                        <button type="button" class="btn-archive-filter-reset" id="archiveClearFiltersBtn">Reset</button>
+                    </div>
+
+                    <div class="archive-filter-popover-body">
+                        <!-- Barangay Filter -->
+                        <div class="archive-filter-group">
+                            <label class="archive-filter-label" for="archiveFilterBarangay">Barangay</label>
+                            <select class="archive-filter-select" id="archiveFilterBarangay">
+                                <option value="all">All Barangays</option>
+                                {% for brgy in barangays %}
+                                <option value="{{ brgy }}" {% if archive_list_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Requirements Status Filter -->
+                        <div class="archive-filter-group">
+                            <label class="archive-filter-label" for="archiveFilterStatus">Requirements Status</label>
+                            <select class="archive-filter-select" id="archiveFilterStatus">
+                                <option value="all">All Statuses</option>
+                                <option value="complete">Complete</option>
+                                <option value="pending">Pending</option>
+                                <option value="incomplete">Incomplete</option>
+                            </select>
+                        </div>
+
+                        <!-- Situation Filter -->
+                        <div class="archive-filter-group">
+                            <label class="archive-filter-label" for="archiveFilterSituation">Applicant Situation</label>
+                            <select class="archive-filter-select" id="archiveFilterSituation">
+                                <option value="all">All Situations</option>
+                                <option value="danger_zone">Option A — Danger Zone</option>
+                                <option value="ejected">Option B — Ejected</option>
+                                <option value="relocated">Option C — Relocated</option>
+                                <option value="not_abc">Option D — Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="archive-filter-popover-footer">
+                        <button type="button" class="btn-archive-filter-apply" id="archiveApplyFiltersBtn">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="formal-table-card">
         <div class="formal-table-scroll">
@@ -695,6 +779,8 @@
                         data-req-tier="{{ row.requirementsStatusTier }}"
                         data-displacement-reason="{{ row.displacementReason|default:''|escape }}"
                         data-channel="{{ row.channel }}" data-barangay="{{ row.barangay }}"
+                        data-timestamp="{{ row.timestamp }}"
+                        data-full-name="{{ row.fullName|default:'' }}"
                         data-blacklist-blocked="{% if row.blacklistBlocked %}1{% else %}0{% endif %}"
                         data-searchable="{{ row.fullName|lower }} {{ row.referenceNumber|lower }} {{ row.barangay|lower }} {{ row.requirementsStatusLabel|lower }} cannot proceed {{ row.proceededAgo|default:''|lower }}{% if row.blacklistBlocked %} blacklisted blacklist registry{% endif %}{% if row.blacklistRegistryName %} {{ row.blacklistRegistryName|lower }}{% endif %}">
                         <td style="font-weight: 700; color: #1e293b; text-align: center; vertical-align: middle;">{{ forloop.counter }}</td>
