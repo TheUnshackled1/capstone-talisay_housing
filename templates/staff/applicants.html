@@ -645,9 +645,9 @@
             </div>
         </div>
 
-        <!-- Search Box (client & server integrated search) -->
+        <!-- Search Box (client & server integrated search, expanded) -->
         <form method="get" class="search-box" id="archiveListSearchForm"
-            style="flex: 1 1 200px; min-width: 180px; position: relative; display: flex;">
+            style="flex: 1 1 320px; min-width: 200px; position: relative; display: flex;">
             {% if active_list_q %}<input type="hidden" name="q" value="{{ active_list_q }}">{% endif %}
             <svg class="search-icon"
                 style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; color: #94a3b8; z-index: 2;"
@@ -665,96 +665,69 @@
             </button>
         </form>
 
-        <!-- Archive Filter & Sort Actions Group -->
-        <div class="archive-toolbar-actions" style="display: flex; align-items: center; gap: 0.5rem; position: relative;">
-            <!-- Sort Dropdown -->
-            <div class="archive-sort-wrap">
-                <select class="archive-sort-select" id="archiveSortSelect" aria-label="Sort registered applicants">
-                    <option value="date_desc">Newest First</option>
-                    <option value="date_asc">Oldest First</option>
-                    <option value="name_asc">Name (A → Z)</option>
-                    <option value="name_desc">Name (Z → A)</option>
-                    <option value="status_asc">Status</option>
-                    <option value="barangay_asc">Barangay (A → Z)</option>
-                </select>
-                <!-- Prefix Sort Icon -->
-                <svg class="archive-sort-icon-prefix" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="6" x2="15" y2="6"></line>
-                    <line x1="3" y1="12" x2="11" y2="12"></line>
-                    <line x1="3" y1="18" x2="7" y2="18"></line>
-                    <polyline points="17 9 20 6 23 9"></polyline>
-                    <line x1="20" y1="6" x2="20" y2="18"></line>
+        <!-- Filter Popover Button & Popover -->
+        <div class="archive-filter-popover-wrap">
+            <button type="button" class="btn-archive-filter" id="archiveFilterBtn" aria-expanded="false" aria-haspopup="true">
+                <svg class="archive-filter-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                 </svg>
-                <!-- Suffix Chevron -->
-                <svg class="archive-sort-icon-suffix" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <span>Filter</span>
+                <span class="archive-filter-badge" id="archiveFilterActiveBadge" style="display: none;">0</span>
+                <svg class="archive-filter-btn-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M6 9l6 6 6-6"></path>
                 </svg>
-            </div>
+            </button>
 
-            <!-- Filter Popover Button & Popover -->
-            <div class="archive-filter-popover-wrap">
-                <button type="button" class="btn-archive-filter" id="archiveFilterBtn" aria-expanded="false" aria-haspopup="true">
-                    <svg class="archive-filter-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                    </svg>
-                    <span>Filter</span>
-                    <span class="archive-filter-badge" id="archiveFilterActiveBadge" style="display: none;">0</span>
-                    <svg class="archive-filter-btn-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6"></path>
-                    </svg>
-                </button>
+            <!-- Filter Popover Panel -->
+            <div class="archive-filter-popover" id="archiveFilterPopover" style="display: none;">
+                <div class="archive-filter-popover-header">
+                    <div class="archive-filter-popover-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 0.95rem; height: 0.95rem;">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg>
+                        <span>Filter Applicants</span>
+                    </div>
+                    <button type="button" class="btn-archive-filter-reset" id="archiveClearFiltersBtn">Reset</button>
+                </div>
 
-                <!-- Filter Popover Panel -->
-                <div class="archive-filter-popover" id="archiveFilterPopover" style="display: none;">
-                    <div class="archive-filter-popover-header">
-                        <div class="archive-filter-popover-title">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 0.95rem; height: 0.95rem;">
-                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                            </svg>
-                            <span>Filter Applicants</span>
-                        </div>
-                        <button type="button" class="btn-archive-filter-reset" id="archiveClearFiltersBtn">Reset</button>
+                <div class="archive-filter-popover-body">
+                    <!-- Barangay Filter -->
+                    <div class="archive-filter-group">
+                        <label class="archive-filter-label" for="archiveFilterBarangay">Barangay</label>
+                        <select class="archive-filter-select" id="archiveFilterBarangay">
+                            <option value="all">All Barangays</option>
+                            {% for brgy in barangays %}
+                            <option value="{{ brgy }}" {% if archive_list_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
 
-                    <div class="archive-filter-popover-body">
-                        <!-- Barangay Filter -->
-                        <div class="archive-filter-group">
-                            <label class="archive-filter-label" for="archiveFilterBarangay">Barangay</label>
-                            <select class="archive-filter-select" id="archiveFilterBarangay">
-                                <option value="all">All Barangays</option>
-                                {% for brgy in barangays %}
-                                <option value="{{ brgy }}" {% if archive_list_barangay == brgy %}selected{% endif %}>{{ brgy }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Requirements Status Filter -->
-                        <div class="archive-filter-group">
-                            <label class="archive-filter-label" for="archiveFilterStatus">Requirements Status</label>
-                            <select class="archive-filter-select" id="archiveFilterStatus">
-                                <option value="all">All Statuses</option>
-                                <option value="complete">Complete</option>
-                                <option value="pending">Pending</option>
-                                <option value="incomplete">Incomplete</option>
-                            </select>
-                        </div>
-
-                        <!-- Situation Filter -->
-                        <div class="archive-filter-group">
-                            <label class="archive-filter-label" for="archiveFilterSituation">Applicant Situation</label>
-                            <select class="archive-filter-select" id="archiveFilterSituation">
-                                <option value="all">All Situations</option>
-                                <option value="danger_zone">Option A — Danger Zone</option>
-                                <option value="ejected">Option B — Ejected</option>
-                                <option value="relocated">Option C — Relocated</option>
-                                <option value="not_abc">Option D — Other</option>
-                            </select>
-                        </div>
+                    <!-- Requirements Status Filter -->
+                    <div class="archive-filter-group">
+                        <label class="archive-filter-label" for="archiveFilterStatus">Requirements Status</label>
+                        <select class="archive-filter-select" id="archiveFilterStatus">
+                            <option value="all">All Statuses</option>
+                            <option value="complete">Complete</option>
+                            <option value="pending">Pending</option>
+                            <option value="incomplete">Incomplete</option>
+                        </select>
                     </div>
 
-                    <div class="archive-filter-popover-footer">
-                        <button type="button" class="btn-archive-filter-apply" id="archiveApplyFiltersBtn">Apply Filters</button>
+                    <!-- Situation Filter -->
+                    <div class="archive-filter-group">
+                        <label class="archive-filter-label" for="archiveFilterSituation">Applicant Situation</label>
+                        <select class="archive-filter-select" id="archiveFilterSituation">
+                            <option value="all">All Situations</option>
+                            <option value="danger_zone">Option A — Danger Zone</option>
+                            <option value="ejected">Option B — Ejected</option>
+                            <option value="relocated">Option C — Relocated</option>
+                            <option value="not_abc">Option D — Other</option>
+                        </select>
                     </div>
+                </div>
+
+                <div class="archive-filter-popover-footer">
+                    <button type="button" class="btn-archive-filter-apply" id="archiveApplyFiltersBtn">Apply Filters</button>
                 </div>
             </div>
         </div>
