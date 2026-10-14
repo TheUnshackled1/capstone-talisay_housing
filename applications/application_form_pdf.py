@@ -40,6 +40,22 @@ def _safe_str(value, empty: str = '') -> str:
     return str(value).strip()
 
 
+def _na(value, empty: str = 'N/A') -> str:
+    """Return value string, or 'N/A' if blank/None."""
+    s = _safe_str(value)
+    return s if s else empty
+
+
+def _na_ascii(value, max_len: int | None = None) -> str:
+    """Like _overlay_ascii but returns 'N/A' for empty values."""
+    s = _overlay_ascii(value)
+    if not s:
+        return 'N/A'
+    if max_len is not None:
+        s = s[:max_len]
+    return s
+
+
 def _overlay_ascii(text: str, max_len: int | None = None) -> str:
     """Helvetica overlay: strip/replace chars outside printable ASCII (avoids stray '?')."""
     s = _safe_str(text)
@@ -258,19 +274,19 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     ext = _safe_str(applicant.extension_name)
     if ext:
         middle_with_ext = f'{middle_with_ext} {ext}'.strip()
-    _baseline(p0, 456, 288.95, _overlay_ascii(middle_with_ext, 12), fontsize=FS)
+    _baseline(p0, 456, 288.95, _na_ascii(middle_with_ext, 12), fontsize=FS)
 
-    sex_display = applicant.get_sex_display() if applicant.sex else ''
+    sex_display = applicant.get_sex_display() if applicant.sex else 'N/A'
     _baseline(p0, LX, 309.45, sex_display[:22], fontsize=FS)
-    age_val = applicant.age if applicant.age is not None else ''
+    age_val = applicant.age if applicant.age is not None else 'N/A'
     _baseline(p0, 392, 309.45, _safe_str(age_val), fontsize=FS)
 
-    _baseline(p0, LX, 323.9, _fmt_date(applicant.date_of_birth), fontsize=FS)
-    _baseline(p0, 428, 323.9, _safe_str(applicant.place_of_birth), fontsize=FS)
+    _baseline(p0, LX, 323.9, _fmt_date(applicant.date_of_birth) or 'N/A', fontsize=FS)
+    _baseline(p0, 428, 323.9, _na(applicant.place_of_birth), fontsize=FS)
 
     _baseline(p0, LX, 336.0, 'Filipino', fontsize=FS)
-    civ_display = applicant.get_civil_status_display() if applicant.civil_status else ''
-    if civ_display:
+    civ_display = applicant.get_civil_status_display() if applicant.civil_status else 'N/A'
+    if applicant.civil_status:
         # White-out right portion of the Citizenship underline so Civil status sits clean.
         p0.draw_rect(
             fitz.Rect(330, 336.5, 545, 338.5),
@@ -297,8 +313,13 @@ def build_filled_application_pdf(applicant, application) -> bytes:
 
     _baseline(p0, LX, 372.5, _safe_str(applicant.years_residing), fontsize=FS)
 
-    _baseline(p0, LX, 396.8, _safe_str(applicant.spouse_name), fontsize=FS)
-    _baseline(p0, LX, 408.9, _safe_str(applicant.phone_number), fontsize=FS)
+    _baseline(p0, LX, 396.8, _na(applicant.spouse_name), fontsize=FS)
+    _baseline(p0, LX, 408.9, _na(applicant.phone_number), fontsize=FS)
+
+    # Comm. Tax. Cert. / Issued On / Issued At — not collected by system; show N/A.
+    _insert_after(p0, 'Comm. Tax. Cert.', 'N/A', dx=3, dy=2, fontsize=FS)
+    _insert_after(p0, 'Issued On:', 'N/A', dx=3, dy=2, fontsize=FS)
+    _insert_after(p0, 'Issued At:', 'N/A', dx=3, dy=2, fontsize=FS)
 
     members = list(applicant.household_members.all()[:4])
     # Household rows — align slightly above each underscore (same tuning idea as Section A).
@@ -318,11 +339,11 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     row1_bl = 553.92
     row2_bl = 565.62
 
-    occ = _overlay_ascii(applicant.occupation, 42)
+    occ = _na_ascii(applicant.occupation, 42)
     emp_status = (
         _overlay_ascii(applicant.get_employment_status_display(), 34)
         if applicant.employment_status
-        else ''
+        else 'N/A'
     )
     _baseline(p0, 147, row1_bl, occ, fontsize=FS)
     _baseline_after_needle(
@@ -334,13 +355,16 @@ def build_filled_application_pdf(applicant, application) -> bytes:
         fontsize=FS,
     )
 
-    employer_txt = ''
+    employer_txt = 'N/A'
     inc = applicant.monthly_income
     inc_txt = _overlay_ascii(_safe_str(inc) if inc is not None else '', 22)
     _baseline(p0, 147, row2_bl, employer_txt, fontsize=FS)
     # Place income value directly on the underline using measured coordinate.
     # 'Monthly Income :' label ends at x≈398; underline starts at x≈401.
     _baseline(p0, 401, row2_bl, inc_txt, fontsize=FS)
+
+    # Other source of income — not collected by system; show N/A.
+    _insert_after(p0, 'Other source of Income', 'N/A', dx=3, dy=2, fontsize=FS)
 
     # --- Page 2 ---
     if len(doc) > 1:
