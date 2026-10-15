@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="IHSMS-Deployment-Architecture" version="22.1.0" type="device">
+  <diagram id="deployment_architecture" name="Production Deployment Topology">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="650" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Header Title -->
+        <mxCell id="dep_title" value="&lt;b style=&quot;font-size: 18px;&quot;&gt;Production Deployment Topology&lt;/b&gt;&lt;br&gt;Integrated Housing Services and Monitoring System (IHSMS) · Talisay City Housing Authority (THA)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="100" y="20" width="800" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Traffic Banner -->
+        <mxCell id="dep_banner" value="🌐 Client Requests: Citizens, Housing Staff, City Inspectors, Google OAuth Callbacks, Semaphore SMS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E293B;strokeColor=#0F172A;fontColor=#F8FAFC;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="85" width="940" height="35" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 1: Edge & Gateway -->
+        <mxCell id="n1_edge" value="&lt;b&gt;EDGE &amp;amp; ROUTING&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;Railway / Cloud Edge&lt;/b&gt;&lt;br&gt;  Auto-managed TLS/SSL&lt;br&gt;  `ihsms.up.railway.app`&lt;br&gt;&lt;br&gt;• &lt;b&gt;PythonAnywhere / Nginx&lt;/b&gt;&lt;br&gt;  HTTPS Force Termination&lt;br&gt;&lt;br&gt;• &lt;b&gt;Security Filters&lt;/b&gt;&lt;br&gt;  `ALLOWED_HOSTS`&lt;br&gt;  `CSRF_TRUSTED_ORIGINS`" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#3B82F6;align=left;spacing=10;fontSize=11;fontColor=#1E3A8A;" vertex="1" parent="1">
+          <mxGeometry x="40" y="150" width="215" height="280" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 2: Web Server & WSGI -->
+        <mxCell id="n2_wsgi" value="&lt;b&gt;WEB SERVER &amp;amp; WSGI&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;Gunicorn Process Manager&lt;/b&gt;&lt;br&gt;  Multi-worker &amp;amp; gthread&lt;br&gt;  Port `8080` / Unix socket&lt;br&gt;&lt;br&gt;• &lt;b&gt;WSGI Application Handler&lt;/b&gt;&lt;br&gt;  `talisay_housing.wsgi`&lt;br&gt;&lt;br&gt;• &lt;b&gt;Static Asset Delivery&lt;/b&gt;&lt;br&gt;  WhiteNoise Middleware&lt;br&gt;  Gzip / Brotli compression" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#8B5CF6;align=left;spacing=10;fontSize=11;fontColor=#4C1D95;" vertex="1" parent="1">
+          <mxGeometry x="280" y="150" width="215" height="280" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector N1 -> N2 -->
+        <mxCell id="dep_c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="n1_edge" target="n2_wsgi">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 3: Core Application -->
+        <mxCell id="n3_app" value="&lt;b&gt;CORE DJANGO APP&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;Django 6.0 Core&lt;/b&gt;&lt;br&gt;  Accounts, Intake, Units&lt;br&gt;  Applications, Cases, Vault&lt;br&gt;&lt;br&gt;• &lt;b&gt;PyMuPDF Form Engine&lt;/b&gt;&lt;br&gt;  THA form generation&lt;br&gt;&lt;br&gt;• &lt;b&gt;DWT Scanner Module&lt;/b&gt;&lt;br&gt;  Hardware scanner capture&lt;br&gt;&lt;br&gt;• &lt;b&gt;Role-Based Auth&lt;/b&gt;&lt;br&gt;  Staff &amp;amp; Member portals" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#06B6D4;align=left;spacing=10;fontSize=11;fontColor=#0E7490;" vertex="1" parent="1">
+          <mxGeometry x="520" y="150" width="215" height="280" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector N2 -> N3 -->
+        <mxCell id="dep_c2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="n2_wsgi" target="n3_app">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Node 4: Persistence & Integrations -->
+        <mxCell id="n4_data" value="&lt;b&gt;DATA &amp;amp; SERVICES&lt;/b&gt;&lt;br&gt;&lt;br&gt;• &lt;b&gt;PostgreSQL Database&lt;/b&gt;&lt;br&gt;  Managed Cloud DB / local&lt;br&gt;  Conn pooling (`conn_max_age`)&lt;br&gt;&lt;br&gt;• &lt;b&gt;Cache &amp;amp; Sessions&lt;/b&gt;&lt;br&gt;  Redis / DB cache table&lt;br&gt;&lt;br&gt;• &lt;b&gt;Google OAuth &amp;amp; Drive&lt;/b&gt;&lt;br&gt;  Picker API &amp;amp; SocialApp&lt;br&gt;&lt;br&gt;• &lt;b&gt;Semaphore SMS Gateway&lt;/b&gt;&lt;br&gt;  Automated notice delivery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#10B981;align=left;spacing=10;fontSize=11;fontColor=#064E3B;" vertex="1" parent="1">
+          <mxGeometry x="760" y="150" width="220" height="280" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector N3 -> N4 -->
+        <mxCell id="dep_c3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="n3_app" target="n4_data">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Bottom Footer Note -->
+        <mxCell id="dep_footer" value="⚡ Continuous Deployment via Git · Zero Downtime Rolling Restarts · Auto-Synced Domain Configuration" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1F5F9;strokeColor=#CBD5E1;fontColor=#475569;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="460" width="940" height="35" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

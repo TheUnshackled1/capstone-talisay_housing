@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 460" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+      text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .title { font-size: 20px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 13px; font-weight: 500; fill: #64748b; }
+      .badge-text { font-size: 10px; font-weight: 700; fill: #ffffff; letter-spacing: 0.5px; }
+      .node-title { font-size: 14px; font-weight: 700; fill: #0f172a; }
+      .bullet-title { font-size: 12px; font-weight: 600; fill: #1e293b; }
+      .bullet-desc { font-size: 11px; font-weight: 400; fill: #64748b; }
+      .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+    <linearGradient id="dep-card1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eff6ff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="dep-card2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f3ff"/>
+      <stop offset="100%" stop-color="#ede9fe"/>
+    </linearGradient>
+    <linearGradient id="dep-card3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ecfeff"/>
+      <stop offset="100%" stop-color="#cffafe"/>
+    </linearGradient>
+    <linearGradient id="dep-card4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="100%" stop-color="#d1fae5"/>
+    </linearGradient>
+    <marker id="dep-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <filter id="dep-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1020" height="460" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Top Title Banner -->
+  <g transform="translate(40, 25)">
+    <text x="470" y="24" text-anchor="middle" class="title">Production Deployment Topology</text>
+    <text x="470" y="44" text-anchor="middle" class="subtitle">Integrated Housing Services and Monitoring System (IHSMS) · Talisay City Housing Authority (THA)</text>
+  </g>
+
+  <!-- Traffic / Ingress Bar -->
+  <g transform="translate(40, 85)">
+    <rect width="940" height="34" rx="8" fill="#1e293b" filter="url(#dep-shadow)"/>
+    <text x="470" y="22" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="600">
+      🌐 Incoming Traffic: Citizens (Public Portal), Housing Staff, City Inspectors, Google OAuth, Semaphore SMS
+    </text>
+  </g>
+
+  <!-- Card 1: Edge & Routing -->
+  <g transform="translate(40, 135)" filter="url(#dep-shadow)">
+    <rect width="215" height="255" rx="12" fill="url(#dep-card1)" stroke="#3b82f6" stroke-width="1.5"/>
+    <rect x="15" y="15" width="80" height="20" rx="4" fill="#3b82f6"/>
+    <text x="55" y="29" text-anchor="middle" class="badge-text">EDGE TIER</text>
+    <text x="15" y="58" class="node-title">Edge &amp; Routing</text>
+
+    <text x="15" y="85" class="bullet-title">• Railway / Cloud Edge</text>
+    <text x="25" y="102" class="bullet-desc">Auto-managed TLS/SSL</text>
+    <text x="25" y="117" class="bullet-desc">ihsms.up.railway.app</text>
+
+    <text x="15" y="142" class="bullet-title">• PythonAnywhere / Nginx</text>
+    <text x="25" y="159" class="bullet-desc">Reverse proxy routing</text>
+    <text x="25" y="174" class="bullet-desc">Force HTTPS redirection</text>
+
+    <text x="15" y="199" class="bullet-title">• Ingress Security</text>
+    <text x="25" y="216" class="bullet-desc">ALLOWED_HOSTS filtering</text>
+    <text x="25" y="231" class="bullet-desc">CSRF_TRUSTED_ORIGINS</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <path d="M 255 262 L 280 262" class="arrow" marker-end="url(#dep-arrow)"/>
+
+  <!-- Card 2: Web Server & WSGI -->
+  <g transform="translate(280, 135)" filter="url(#dep-shadow)">
+    <rect width="215" height="255" rx="12" fill="url(#dep-card2)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <rect x="15" y="15" width="80" height="20" rx="4" fill="#8b5cf6"/>
+    <text x="55" y="29" text-anchor="middle" class="badge-text">WEB TIER</text>
+    <text x="15" y="58" class="node-title">Server &amp; WSGI</text>
+
+    <text x="15" y="85" class="bullet-title">• Gunicorn Process Pool</text>
+    <text x="25" y="102" class="bullet-desc">Multi-worker &amp; gthread</text>
+    <text x="25" y="117" class="bullet-desc">Worker timeout: 180s</text>
+
+    <text x="15" y="142" class="bullet-title">• WSGI Handler</text>
+    <text x="25" y="159" class="bullet-desc">talisay_housing.wsgi</text>
+    <text x="25" y="174" class="bullet-desc">Python 3.12 / 3.13 venv</text>
+
+    <text x="15" y="199" class="bullet-title">• WhiteNoise Static</text>
+    <text x="25" y="216" class="bullet-desc">Zero-overhead assets</text>
+    <text x="25" y="231" class="bullet-desc">Gzip &amp; Brotli cached</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <path d="M 495 262 L 520 262" class="arrow" marker-end="url(#dep-arrow)"/>
+
+  <!-- Card 3: Core Application -->
+  <g transform="translate(520, 135)" filter="url(#dep-shadow)">
+    <rect width="215" height="255" rx="12" fill="url(#dep-card3)" stroke="#06b6d4" stroke-width="1.5"/>
+    <rect x="15" y="15" width="80" height="20" rx="4" fill="#06b6d4"/>
+    <text x="55" y="29" text-anchor="middle" class="badge-text">APP TIER</text>
+    <text x="15" y="58" class="node-title">Django Core</text>
+
+    <text x="15" y="85" class="bullet-title">• IHSMS Modules</text>
+    <text x="25" y="102" class="bullet-desc">Accounts, Intake, Units</text>
+    <text x="25" y="117" class="bullet-desc">Applications, Cases, Vault</text>
+
+    <text x="15" y="142" class="bullet-title">• PyMuPDF Engine</text>
+    <text x="25" y="159" class="bullet-desc">Dynamic THA form PDF</text>
+    <text x="25" y="174" class="bullet-desc">2x2 photo overlay</text>
+
+    <text x="15" y="199" class="bullet-title">• Multi-Portal Roles</text>
+    <text x="25" y="216" class="bullet-desc">Board Members 2 &amp; 4</text>
+    <text x="25" y="231" class="bullet-desc">Housing Inspector portal</text>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <path d="M 735 262 L 760 262" class="arrow" marker-end="url(#dep-arrow)"/>
+
+  <!-- Card 4: Data & Services -->
+  <g transform="translate(760, 135)" filter="url(#dep-shadow)">
+    <rect width="220" height="255" rx="12" fill="url(#dep-card4)" stroke="#10b981" stroke-width="1.5"/>
+    <rect x="15" y="15" width="85" height="20" rx="4" fill="#10b981"/>
+    <text x="57" y="29" text-anchor="middle" class="badge-text">DATA &amp; CLOUD</text>
+    <text x="15" y="58" class="node-title">Data &amp; Services</text>
+
+    <text x="15" y="85" class="bullet-title">• PostgreSQL Database</text>
+    <text x="25" y="102" class="bullet-desc">Managed Cloud DB (Railway)</text>
+    <text x="25" y="117" class="bullet-desc">conn_max_age connection pool</text>
+
+    <text x="15" y="142" class="bullet-title">• Tiered Cache &amp; Sessions</text>
+    <text x="25" y="159" class="bullet-desc">Redis / DatabaseCache table</text>
+    <text x="25" y="174" class="bullet-desc">clearsessions on deploy</text>
+
+    <text x="15" y="199" class="bullet-title">• External Integrations</text>
+    <text x="25" y="216" class="bullet-desc">Google OAuth 2.0 &amp; Drive</text>
+    <text x="25" y="231" class="bullet-desc">Semaphore SMS Gateway</text>
+  </g>
+
+  <!-- Bottom Footer Bar -->
+  <g transform="translate(40, 405)">
+    <rect width="940" height="30" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="470" y="20" text-anchor="middle" fill="#475569" font-size="11" font-weight="500">
+      ⚡ Continuous Deployment via Git · Automated Migrations · Zero-Downtime Hot Reloads
+    </text>
+  </g>
+</svg>
