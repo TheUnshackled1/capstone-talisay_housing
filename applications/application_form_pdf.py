@@ -317,12 +317,11 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     _baseline(p0, LX, 408.9, _na(applicant.phone_number), fontsize=FS)
 
     # Comm. Tax. Cert. / Issued On / Issued At — not collected by system; show N/A.
-    # Comm.Tax.Cert label ends x=150.8; colon+underline span starts at x=180.0.
-    # Use fixed x=183 so N/A lands after the colon, not between label and colon.
-    _baseline(p0, 183, 386.1, 'N/A', fontsize=FS)
+    # Use LX (188) and baseline_y=382.5 so values sit cleanly above each underline rule.
+    _baseline(p0, LX, 382.5, 'N/A', fontsize=FS)
     # Issued On/At: needle ends at x=372/465 — dx=3 correctly lands on underline.
-    _baseline_after_needle(p0, 'Issued On:', 'N/A', dx=3, baseline_y=386.1, fontsize=FS)
-    _baseline_after_needle(p0, 'Issued At:', 'N/A', dx=3, baseline_y=386.1, fontsize=FS)
+    _baseline_after_needle(p0, 'Issued On:', 'N/A', dx=3, baseline_y=382.5, fontsize=FS)
+    _baseline_after_needle(p0, 'Issued At:', 'N/A', dx=3, baseline_y=382.5, fontsize=FS)
 
     members = list(applicant.household_members.all()[:4])
     # Household rows — align slightly above each underscore (same tuning idea as Section A).
@@ -369,7 +368,7 @@ def build_filled_application_pdf(applicant, application) -> bytes:
     # Other source of income — not collected by system; show N/A.
     # The full label is one span: 'Other source of Income if any: :'
     # Needle 'if any: :' ends at x=206.5 — dx=3 places N/A at x≈210 on the underline.
-    _baseline_after_needle(p0, 'if any: :', 'N/A', dx=3, baseline_y=579.2, fontsize=FS)
+    _baseline_after_needle(p0, 'if any: :', 'N/A', dx=3, baseline_y=577.6, fontsize=FS)
 
     # --- Page 2 ---
     if len(doc) > 1:
