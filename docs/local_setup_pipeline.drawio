@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="IHSMS-Local-Setup-Pipeline" version="22.1.0" type="device">
+  <diagram id="local_setup_pipeline" name="Local Development Setup Pipeline">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Header Title -->
+        <mxCell id="setup_title" value="&lt;b style=&quot;font-size: 18px;&quot;&gt;Local Development Setup Pipeline (Windows)&lt;/b&gt;&lt;br&gt;Integrated Housing Services and Monitoring System (IHSMS) · Talisay City Housing Authority (THA)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="100" y="20" width="800" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 1: Clone -->
+        <mxCell id="s1" value="&lt;b&gt;STEP 1: Clone Repo&lt;/b&gt;&lt;br&gt;&lt;br&gt;• Open PowerShell&lt;br&gt;• `git clone &amp;lt;repo-url&amp;gt;`&lt;br&gt;• `cd capstone`&lt;br&gt;• Verify project tree" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#3B82F6;align=left;spacing=10;fontSize=11;fontColor=#1E3A8A;" vertex="1" parent="1">
+          <mxGeometry x="25" y="100" width="145" height="230" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 2: Venv & Deps -->
+        <mxCell id="s2" value="&lt;b&gt;STEP 2: Env &amp;amp; Deps&lt;/b&gt;&lt;br&gt;&lt;br&gt;• `python -m venv venv`&lt;br&gt;• `.\\venv\\Scripts\\Activate`&lt;br&gt;• `pip install -r reqs`&lt;br&gt;• `npm install` (Tailwind)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#8B5CF6;align=left;spacing=10;fontSize=11;fontColor=#4C1D95;" vertex="1" parent="1">
+          <mxGeometry x="190" y="100" width="145" height="230" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 1 -> 2 -->
+        <mxCell id="se1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s1" target="s2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 3: Config -->
+        <mxCell id="s3" value="&lt;b&gt;STEP 3: Configure .env&lt;/b&gt;&lt;br&gt;&lt;br&gt;• `copy .env.example .env`&lt;br&gt;• Set `SECRET_KEY`&lt;br&gt;• Configure DB (PG/SQLite)&lt;br&gt;• Add Google &amp;amp; SMS keys" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#06B6D4;align=left;spacing=10;fontSize=11;fontColor=#0E7490;" vertex="1" parent="1">
+          <mxGeometry x="355" y="100" width="145" height="230" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 2 -> 3 -->
+        <mxCell id="se2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s2" target="s3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 4: Migrations -->
+        <mxCell id="s4" value="&lt;b&gt;STEP 4: Database Prep&lt;/b&gt;&lt;br&gt;&lt;br&gt;• `manage.py migrate`&lt;br&gt;• `python seed_requirements.py`&lt;br&gt;• `createcachetable`&lt;br&gt;• Populate barangays" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#F59E0B;align=left;spacing=10;fontSize=11;fontColor=#78350F;" vertex="1" parent="1">
+          <mxGeometry x="520" y="100" width="145" height="230" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 3 -> 4 -->
+        <mxCell id="se3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s3" target="s4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 5: Auth & Superuser -->
+        <mxCell id="s5" value="&lt;b&gt;STEP 5: Auth &amp;amp; Admin&lt;/b&gt;&lt;br&gt;&lt;br&gt;• `createsuperuser`&lt;br&gt;• `setup_google_oauth`&lt;br&gt;• Verify callback URI&lt;br&gt;• Assign staff role gates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE7F3;strokeColor=#EC4899;align=left;spacing=10;fontSize=11;fontColor=#831843;" vertex="1" parent="1">
+          <mxGeometry x="685" y="100" width="145" height="230" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 4 -> 5 -->
+        <mxCell id="se4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s4" target="s5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Step 6: Run Server -->
+        <mxCell id="s6" value="&lt;b&gt;STEP 6: Start Server&lt;/b&gt;&lt;br&gt;&lt;br&gt;• `manage.py runserver`&lt;br&gt;• `npm run watch:tailwind`&lt;br&gt;• Visit `localhost:8000`&lt;br&gt;• Ready for development" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#10B981;align=left;spacing=10;fontSize=11;fontColor=#064E3B;" vertex="1" parent="1">
+          <mxGeometry x="850" y="100" width="145" height="230" as="geometry"/>
+        </mxCell>
+
+        <!-- Connector 5 -> 6 -->
+        <mxCell id="se5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#94A3B8;strokeWidth=2;" edge="1" parent="1" source="s5" target="s6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
