@@ -18,6 +18,7 @@
 [![Accomplishment Report](https://img.shields.io/badge/📊_Accomplishment_Report-ACCOMPLISHMENT__REPORT.md-8b5cf6?style=flat-square)](ACCOMPLISHMENT_REPORT.md)
 [![Changelog](https://img.shields.io/badge/📜_Changelog-CHANGELOG.md-ec4899?style=flat-square)](CHANGELOG.md)
 [![Roadmap](https://img.shields.io/badge/🗺️_Roadmap-ROADMAP.md-0ea5e9?style=flat-square)](ROADMAP.md)
+[![Support](https://img.shields.io/badge/💬_Support-SUPPORT.md-06b6d4?style=flat-square)](SUPPORT.md)
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-6.0.6-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -44,6 +45,7 @@
 
 ### 📄 Detailed Documentation Files
 - 🗺️ [System Feature Roadmap (`ROADMAP.md`)](ROADMAP.md)
+- 💬 [Getting Support (`SUPPORT.md`)](SUPPORT.md)
 - 🗂️ [Entity Relationship Diagram (`docs/ERD.md`)](docs/ERD.md)
 - 📖 [Staff User Guide (`notes/user_guide.md`)](notes/user_guide.md)
 - 📊 [Dashboard Analytics Explainer (`notes/dashboard_analytics_explainer.md`)](notes/dashboard_analytics_explainer.md)
