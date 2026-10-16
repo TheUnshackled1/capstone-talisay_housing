@@ -100,9 +100,28 @@
 .tha-confirm-btn--cancel:hover { background: #cbd5e1; color: #1e293b; }
 .tha-confirm-btn--danger { background: #ef4444; color: #fff; }
 .tha-confirm-btn--danger:hover { background: #dc2626; }
-/* Place of Birth cascading dropdowns */
-.pob-dropdown-group { display: flex; gap: 0.4rem; }
-.pob-dropdown-group .form-input { flex: 1; min-width: 0; font-size: 0.82rem; }
+/* Place of Birth cascading dropdowns layout */
+.tha-reg-modal #addApplicantForm .pob-group {
+    grid-column: span 2;
+}
+.tha-reg-modal #addApplicantForm .pob-dropdown-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+}
+.tha-reg-modal #addApplicantForm .pob-dropdown-group .form-select {
+    width: 100%;
+    font-size: 0.82rem;
+}
+@media (max-width: 768px) {
+    .tha-reg-modal #addApplicantForm .pob-group {
+        grid-column: auto;
+    }
+    .tha-reg-modal #addApplicantForm .pob-dropdown-group {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
 </style>
 {% endblock %}
 
@@ -2124,14 +2143,14 @@
                         </div>
 
                         <!-- Place of birth & spouse -->
-                        <div class="form-row three-cols">
-                            <div class="form-group">
+                        <div class="form-row four-cols">
+                            <div class="form-group pob-group">
                                 <label class="form-label">Place of birth</label>
                                 <div class="pob-dropdown-group">
-                                    <select class="form-input" id="pobProvince" aria-label="Province">
+                                    <select class="form-select" id="pobProvince" aria-label="Province">
                                         <option value="">— Province —</option>
                                     </select>
-                                    <select class="form-input" id="pobCity" disabled aria-label="City / Municipality">
+                                    <select class="form-select" id="pobCity" disabled aria-label="City / Municipality">
                                         <option value="">— City / Municipality —</option>
                                     </select>
                                 </div>
