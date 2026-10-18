@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="IHSMS-Testing" version="22.1.0" type="device">
+  <diagram id="test_suite_architecture" name="IHSMS Automated Test Suite Architecture">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="580" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Header -->
+        <mxCell id="ts_title" value="&lt;b style=&quot;font-size: 18px;&quot;&gt;Integrated Housing Services and Monitoring System (IHSMS)&lt;/b&gt;&lt;br&gt;Automated Test Suite Architecture &amp;amp; Quality Assurance Coverage — Talisay City Housing Authority (THA)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#0F172A;" vertex="1" parent="1">
+          <mxGeometry x="100" y="20" width="900" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Suite 1: accounts/tests.py -->
+        <mxCell id="s1" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;🔐 accounts/tests.py&lt;/b&gt;&lt;br&gt;&lt;i style=&quot;color: #1e40af; font-size: 10px;&quot;&gt;AUTH &amp;amp; PORTAL SECURITY&lt;/i&gt;&lt;br&gt;&lt;br&gt;• PortalRoleHelperTests&lt;br&gt;  - Role normalization&lt;br&gt;  - OAuth state priority&lt;br&gt;  - Portal role access guards&lt;br&gt;• SocialAccountAdapterTests&lt;br&gt;  - Domain whitelist checking&lt;br&gt;  - @talisayhousing.gov.ph&lt;br&gt;  - @chmsu.edu.ph whitelist&lt;br&gt;  - Reject unauthorized domains&lt;br&gt;• LoginViewRoleResolutionTests&lt;br&gt;  - LAST_PORTAL_ROLE_COOKIE&lt;br&gt;  - Position redirect routing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#2563EB;strokeWidth=1.5;align=left;spacing=8;fontSize=11;fontColor=#1E3A8A;" vertex="1" parent="1">
+          <mxGeometry x="30" y="95" width="195" height="400" as="geometry"/>
+        </mxCell>
+
+        <!-- Suite 2: intake/tests.py -->
+        <mxCell id="s2" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;📥 intake/tests.py&lt;/b&gt;&lt;br&gt;&lt;i style=&quot;color: #065f46; font-size: 10px;&quot;&gt;INTAKE &amp;amp; ELIGIBILITY RULES&lt;/i&gt;&lt;br&gt;&lt;br&gt;• TestTable1_Authentication&lt;br&gt;  - verify_position decorator&lt;br&gt;  - Route access denial checks&lt;br&gt;• TestTable2_ISFRegistration&lt;br&gt;  - duplicate_preview detection&lt;br&gt;  - 5-year residency threshold&lt;br&gt;  - Applicant data updates&lt;br&gt;• TestTable3_DocumentManagement&lt;br&gt;  - MIME type normalization&lt;br&gt;• TestTable4_EligibilityAndSMS&lt;br&gt;  - Dynamic SMS clauses&lt;br&gt;  - Evaluation SMS formatting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#059669;strokeWidth=1.5;align=left;spacing=8;fontSize=11;fontColor=#064E3B;" vertex="1" parent="1">
+          <mxGeometry x="245" y="95" width="195" height="400" as="geometry"/>
+        </mxCell>
+
+        <!-- Suite 3: applications/tests.py -->
+        <mxCell id="s3" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;📄 applications/tests.py&lt;/b&gt;&lt;br&gt;&lt;i style=&quot;color: #5b21b6; font-size: 10px;&quot;&gt;APPLICATION PIPELINE&lt;/i&gt;&lt;br&gt;&lt;br&gt;• WhiteBoxFormQueueTests&lt;br&gt;  - TC-WForm001: Signed form&lt;br&gt;    progression block&lt;br&gt;  - doc_signed_application&lt;br&gt;    payload verification&lt;br&gt;  - TC-WForm002: Form queue&lt;br&gt;    SMS notification trigger&lt;br&gt;  - Reference number format&lt;br&gt;    integrity in SMS output&lt;br&gt;  - Deep evaluation triage&lt;br&gt;    progression gates" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#7C3AED;strokeWidth=1.5;align=left;spacing=8;fontSize=11;fontColor=#4C1D95;" vertex="1" parent="1">
+          <mxGeometry x="460" y="95" width="195" height="400" as="geometry"/>
+        </mxCell>
+
+        <!-- Suite 4: units/tests.py -->
+        <mxCell id="s4" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;🏘️ units/tests.py&lt;/b&gt;&lt;br&gt;&lt;i style=&quot;color: #92400e; font-size: 10px;&quot;&gt;LOT AWARDS &amp;amp; MAP PERF&lt;/i&gt;&lt;br&gt;&lt;br&gt;• WhiteBoxHousingTests&lt;br&gt;  - TC-WAward001: Orientation&lt;br&gt;    schedule formatting&lt;br&gt;  - TC-WAward002: LotAward&lt;br&gt;    database state save&lt;br&gt;  - TC-WBlk002: Blacklist record&lt;br&gt;    creation &amp;amp; reason auditing&lt;br&gt;• HousingUnitsMonitoringQueryTests&lt;br&gt;  - CaptureQueriesContext&lt;br&gt;  - N+1 query prevention&lt;br&gt;  - Interactive lot map queries&lt;br&gt;  - Railway upstream guards" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;strokeWidth=1.5;align=left;spacing=8;fontSize=11;fontColor=#78350F;" vertex="1" parent="1">
+          <mxGeometry x="675" y="95" width="195" height="400" as="geometry"/>
+        </mxCell>
+
+        <!-- Suite 5: cases/tests.py -->
+        <mxCell id="s5" value="&lt;b style=&quot;font-size: 13px;&quot;&gt;⚖️ cases/tests.py&lt;/b&gt;&lt;br&gt;&lt;i style=&quot;color: #0e7490; font-size: 10px;&quot;&gt;CASE DESK OPTIMIZATION&lt;/i&gt;&lt;br&gt;&lt;br&gt;• CaseDeskListPerfGuardTests&lt;br&gt;  - Row limits enforcement&lt;br&gt;  - _DESK_ACTIVE_ROW_LIMIT (25)&lt;br&gt;  - _SETTLED_INCIDENT_LIMIT (50)&lt;br&gt;  - _DRAWER_CASE_LIST_LIMIT&lt;br&gt;  - Deferred heavy text fields&lt;br&gt;    (investigation_notes)&lt;br&gt;    (resolution_notes)&lt;br&gt;  - Lean context memory cap&lt;br&gt;  - Query count budget tests" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFFAFE;strokeColor=#0891B2;strokeWidth=1.5;align=left;spacing=8;fontSize=11;fontColor=#0E7490;" vertex="1" parent="1">
+          <mxGeometry x="890" y="95" width="180" height="400" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
