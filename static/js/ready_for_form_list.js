@@ -517,6 +517,8 @@
         const hcRefRow = document.getElementById('hcRefRow');
         const hcBrgy = document.getElementById('hcBrgy');
         const hcDob = document.getElementById('hcDob');
+        const hcPob = document.getElementById('hcPob');
+        const hcPobRow = document.getElementById('hcPobRow');
         const hcDispRow = document.getElementById('hcDispRow');
         const hcDispBadge = document.getElementById('hcDispBadge');
 
@@ -540,6 +542,7 @@
             const refCode = nameSpan.dataset.refCode || '';
             const barangay = nameSpan.dataset.barangay || 'Not specified';
             const dob = nameSpan.dataset.dob || 'Not specified';
+            const pob = nameSpan.dataset.pob || '';
 
             // Populate card
             hcName.textContent = fullName;
@@ -568,6 +571,13 @@
             }
             hcBrgy.textContent = barangay;
             hcDob.textContent = dob;
+
+            if (pob && pob !== 'Not specified') {
+                if (hcPob) hcPob.textContent = pob;
+                if (hcPobRow) hcPobRow.style.display = 'flex';
+            } else {
+                if (hcPobRow) hcPobRow.style.display = 'none';
+            }
 
             const dispReason = nameSpan.dataset.dispReason || '';
             if (dispReason && hcDispRow && hcDispBadge) {

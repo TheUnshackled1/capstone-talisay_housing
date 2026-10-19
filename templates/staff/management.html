@@ -177,7 +177,8 @@
                                           data-tx-id="APP-{{ applicant.id|slice:":8" }}..."
                                           data-ref-code="{{ applicant.reference_number|default:'' }}"
                                           data-barangay="{{ applicant.hover_location|default:'Not specified' }}"
-                                          data-dob="{% if applicant.date_of_birth %}{{ applicant.date_of_birth|date:'M d, Y' }}{% else %}Not specified{% endif %}">{{ applicant.full_name }}</span>
+                                          data-dob="{% if applicant.date_of_birth %}{{ applicant.date_of_birth|date:'M d, Y' }}{% else %}Not specified{% endif %}"
+                                          data-pob="{{ applicant.place_of_birth|default:'Not specified' }}">{{ applicant.full_name }}</span>
                                 </div>
                                 {% if applicant.applicant_status_detail %}
                                 <div style="display: flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem; justify-content: flex-start;">
@@ -548,6 +549,10 @@
         <div class="hover-card-meta-row">
             <span class="hover-card-label">Birth Date</span>
             <span class="hover-card-value" id="hcDob">—</span>
+        </div>
+        <div class="hover-card-meta-row" id="hcPobRow" style="display: none;">
+            <span class="hover-card-label">Place of Birth</span>
+            <span class="hover-card-value" id="hcPob" style="max-width: 160px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">—</span>
         </div>
     </div>
     <div class="hover-card-footer">
