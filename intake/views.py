@@ -2399,11 +2399,61 @@ def walkin_register(request, position):
         civil_status = request.POST.get(f'hh_member_{i}_status', 'single').strip()
         contact_number_raw = request.POST.get(f'hh_member_{i}_contact', '').strip()
         contact_number = re.sub(r'\D', '', contact_number_raw) if contact_number_raw else ''
+        dob_raw = request.POST.get(f'hh_member_{i}_dob', '').strip()
+        sex_raw = request.POST.get(f'hh_member_{i}_sex', '').strip().lower()
 
         # Only create if at least name and relationship are provided
         if name and relationship:
             try:
                 age_int = int(age) if age else 0
+
+                # Parse member date of birth (Flatpickr sends YYYY-MM-DD)
+                member_dob = None
+                if dob_raw:
+                    try:
+                        from django.utils.dateparse import parse_date as _parse_date
+                        member_dob = _parse_date(dob_raw)
+                    except (ValueError, TypeError):
+                        member_dob = None
+
+                # Derive age from DOB when available — more accurate than manual entry
+                if member_dob:
+                    age_int = _age_from_dob(member_dob)
+
+                # Normalise sex value to model's single-char representation
+                if sex_raw in ('male', 'm'):
+                    sex_val = 'M'
+                elif sex_raw in ('female', 'f'):
+                    sex_val = 'F'
+                else:
+                    sex_val = ''
+
+                # Server-side cross-validation: parent must be older, child must be younger
+                MUST_BE_OLDER = {'mother', 'father', 'grandfather', 'grandmother'}
+                MUST_BE_YOUNGER = {'son', 'daughter', 'grandchild'}
+                applicant_age = computed_age or 0
+                if applicant_age > 0 and age_int > 0:
+                    if relationship in MUST_BE_OLDER and age_int <= applicant_age:
+                        err_msg = (
+                            f'Household Member {i} ({name.title()}): '
+                            f'As {relationship.replace("_", " ").title()}, their age ({age_int}) '
+                            f'must be greater than the applicant\'s age ({applicant_age}).'
+                        )
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                            return JsonResponse({'success': False, 'error': err_msg})
+                        messages.error(request, err_msg)
+                        return redirect(applicants_list_url)
+                    if relationship in MUST_BE_YOUNGER and age_int >= applicant_age:
+                        err_msg = (
+                            f'Household Member {i} ({name.title()}): '
+                            f'As {relationship.title()}, their age ({age_int}) '
+                            f'must be less than the applicant\'s age ({applicant_age}).'
+                        )
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                            return JsonResponse({'success': False, 'error': err_msg})
+                        messages.error(request, err_msg)
+                        return redirect(applicants_list_url)
+
                 if contact_number and (len(contact_number) != 11 or not contact_number.startswith('09')):
                     msg = f'Household Member {i}: contact number must be 11 digits and start with 09.'
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -2416,6 +2466,8 @@ def walkin_register(request, position):
                     full_name=name,
                     relationship=relationship,
                     age=age_int,
+                    date_of_birth=member_dob,
+                    sex=sex_val,
                     civil_status=civil_status,
                     contact_number=contact_number,
                 )

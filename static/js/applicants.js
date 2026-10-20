@@ -4630,7 +4630,8 @@ function getCsrfToken() {
         for (let i = 1; i <= householdMemberCount; i++) {
             const nameEl = document.querySelector(`input[name="hh_member_${i}_name"]`);
             const relEl = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
-            const ageEl = document.querySelector(`input[name="hh_member_${i}_age"]`);
+            const ageEl = document.getElementById(`hhMember${i}Age`);
+            const dobEl = document.getElementById(`hhMember${i}Dob`);
             const sexEl = document.querySelector(`input[name="hh_member_${i}_sex"]:checked`);
             const statusEl = document.querySelector(`select[name="hh_member_${i}_status"]`);
             const contactEl = document.querySelector(`input[name="hh_member_${i}_contact"]`);
@@ -4638,6 +4639,7 @@ function getCsrfToken() {
                 name: nameEl ? nameEl.value : '',
                 relationship: relEl ? relEl.value : '',
                 age: ageEl ? ageEl.value : '',
+                dob: dobEl ? dobEl.value : '',
                 sex: sexEl ? sexEl.value : '',
                 status: statusEl ? statusEl.value : '',
                 contact: contactEl ? contactEl.value : '',
@@ -4650,14 +4652,18 @@ function getCsrfToken() {
         if (!data) return;
         const nameEl = document.querySelector(`input[name="hh_member_${i}_name"]`);
         const relEl = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
-        const ageEl = document.querySelector(`input[name="hh_member_${i}_age"]`);
+        const ageEl = document.getElementById(`hhMember${i}Age`);
+        const dobEl = document.getElementById(`hhMember${i}Dob`);
         const statusEl = document.querySelector(`select[name="hh_member_${i}_status"]`);
         const contactEl = document.querySelector(`input[name="hh_member_${i}_contact"]`);
         if (nameEl) nameEl.value = data.name || '';
         if (relEl) relEl.value = data.relationship || '';
-        if (ageEl) ageEl.value = data.age || '';
+        // Restore manual age only when no DOB is set; DOB-derived age is recalculated by initMemberDobPickers
+        if (ageEl && !data.dob) ageEl.value = data.age || '';
         if (statusEl) statusEl.value = data.status || '';
         if (contactEl) contactEl.value = data.contact || '';
+        // Store DOB value on the underlying input; Flatpickr reads it in onReady
+        if (dobEl && data.dob) dobEl.value = data.dob;
         if (data.sex) {
             const sexRadio = document.querySelector(`input[name="hh_member_${i}_sex"][value="${data.sex}"]`);
             if (sexRadio) sexRadio.checked = true;
@@ -4718,13 +4724,16 @@ function getCsrfToken() {
                         <option value="grandfather">Grandfather</option>
                         <option value="grandmother">Grandmother</option>
                         <option value="grandchild">Grandchild</option>
-                        <option value="live_in_partner">Live-in Partner</option>
                         <option value="other">Other relative</option>
                     </select>
                 </div>
+                <div class="form-group tha-fp-anchor hh-member-dob-group">
+                    <label class="form-label">Date of birth</label>
+                    <input type="text" class="form-input hh-member-field hh-member-dob" name="hh_member_${i}_dob" id="hhMember${i}Dob" placeholder="dd/mm/yyyy" onchange="calculateMemberAge(${i})" autocomplete="off">
+                </div>
                 <div class="form-group">
                     <label class="form-label">Age</label>
-                    <input type="text" class="form-input hh-member-field hh-member-age" placeholder="Years" name="hh_member_${i}_age" maxlength="2" inputmode="numeric" pattern="[0-9]{1,2}" oninput="this.value = this.value.replace(/\\D/g, '').slice(0, 2); updateHouseholdSize();" onchange="updateHouseholdSize()" autocomplete="off">
+                    <input type="number" class="form-input hh-member-field hh-member-age" placeholder="Years" name="hh_member_${i}_age" id="hhMember${i}Age" min="0" max="120" oninput="onMemberAgeInput(${i}, this); updateHouseholdSize();" onchange="updateHouseholdSize()" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Sex</label>
@@ -4757,11 +4766,7 @@ function getCsrfToken() {
         container.querySelectorAll('input[name^="hh_member_"][name$="_name"]').forEach((el) => {
             attachUppercaseField(el);
         });
-        container.querySelectorAll('input[name*="_age"]').forEach((el) => {
-            el.addEventListener('input', function() {
-                this.value = this.value.replace(/\D/g, '').slice(0, 2);
-            });
-        });
+        initMemberDobPickers();
         updateHouseholdSize();
     }
 
@@ -4789,6 +4794,8 @@ function getCsrfToken() {
     window.addHouseholdMember = addHouseholdMember;
     window.deleteHouseholdMember = deleteHouseholdMember;
     window.updateHouseholdSize = updateHouseholdSize;
+    window.calculateMemberAge = calculateMemberAge;
+    window.onMemberAgeInput = onMemberAgeInput;
 
 
     /** Date inputs: material-style Flatpickr with native fallback. */
@@ -4899,6 +4906,83 @@ function getCsrfToken() {
 
         ageInput.value = age;
         return age;
+    }
+
+    /** Auto-calculate a household member's age from their date of birth.
+     *  Makes Age read-only when DOB is provided; editable again when DOB is cleared. */
+    function calculateMemberAge(i) {
+        const dobEl = document.getElementById(`hhMember${i}Dob`);
+        const ageEl = document.getElementById(`hhMember${i}Age`);
+        if (!dobEl || !ageEl) return;
+
+        if (!dobEl.value) {
+            ageEl.readOnly = false;
+            ageEl.removeAttribute('readonly');
+            ageEl.style.backgroundColor = '';
+            ageEl.style.cursor = '';
+            ageEl.style.fontWeight = '';
+            ageEl.value = '';
+            updateHouseholdSize();
+            return;
+        }
+
+        const age = ageFromDobValue(dobEl.value);
+        if (age == null) {
+            ageEl.value = '';
+            updateHouseholdSize();
+            return;
+        }
+        ageEl.value = age;
+        ageEl.readOnly = true;
+        ageEl.style.backgroundColor = '#f1f5f9';
+        ageEl.style.cursor = 'not-allowed';
+        ageEl.style.fontWeight = '600';
+        updateHouseholdSize();
+    }
+
+    /** Restrict manually-typed age to digits only, up to 3 chars (when DOB is not set). */
+    function onMemberAgeInput(i, el) {
+        if (!el.readOnly) {
+            el.value = el.value.replace(/\D/g, '').slice(0, 3);
+        }
+    }
+
+    /** Initialize Flatpickr date-pickers on all household member DOB inputs.
+     *  Called after renderHouseholdMembers rebuilds the DOM. Restores snapshot values via onReady. */
+    function initMemberDobPickers() {
+        if (!window.flatpickr) return;
+        const container = document.getElementById('householdMembersContainer');
+        if (!container) return;
+        container.querySelectorAll('input.hh-member-dob').forEach((el) => {
+            if (el._flatpickr) return; // already initialised
+            const match = el.name.match(/hh_member_(\d+)_dob/);
+            const memberIndex = match ? parseInt(match[1]) : null;
+            flatpickr(el, {
+                appendTo: document.body,
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd/m/Y',
+                altInputClass: 'form-input',
+                allowInput: true,
+                disableMobile: true,
+                maxDate: new Date(),
+                closeOnSelect: true,
+                onReady: function (_s, _ds, fp) {
+                    if (fp.altInput) {
+                        fp.altInput.placeholder = 'dd/mm/yyyy';
+                        fp.altInput.setAttribute('aria-label', 'Member date of birth');
+                    }
+                    // Restore a pre-set value from snapshot into the Flatpickr display
+                    if (el.value && memberIndex) {
+                        fp.setDate(el.value, false);
+                        calculateMemberAge(memberIndex);
+                    }
+                },
+                onChange: function (_s, _ds, _fp) {
+                    if (memberIndex) calculateMemberAge(memberIndex);
+                },
+            });
+        });
     }
 
     /** First letter uppercase only; keeps pasted casing for the rest. */
@@ -5148,11 +5232,16 @@ function getCsrfToken() {
 
         calculateAge();
 
+        // Age-relationship cross-validation constants
+        const MEMBER_MUST_BE_OLDER = ['mother', 'father', 'grandfather', 'grandmother'];
+        const MEMBER_MUST_BE_YOUNGER = ['son', 'daughter', 'grandchild'];
+        const applicantAge = parseInt(document.getElementById('age')?.value) || 0;
+
         // Validate household members - if any field is filled, all must be filled
         for (let i = 1; i <= householdMemberCount; i++) {
             const nameField = document.querySelector(`input[name="hh_member_${i}_name"]`);
             const relationshipField = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
-            const ageField = document.querySelector(`input[name="hh_member_${i}_age"]`);
+            const ageField = document.getElementById(`hhMember${i}Age`);
             const statusField = document.querySelector(`select[name="hh_member_${i}_status"]`);
             const contactField = document.querySelector(`input[name="hh_member_${i}_contact"]`);
 
@@ -5179,6 +5268,33 @@ function getCsrfToken() {
                     showNoticeModal({
                         title: `Household Member ${i}`,
                         message: 'Contact number must be 11 digits and start with 09.',
+                        type: 'warning',
+                    });
+                    return;
+                }
+            }
+
+            // Cross-validate member age against applicant age based on relationship
+            const memberAge = parseInt(ageField?.value) || 0;
+            const rel = (relationshipField?.value || '').toLowerCase();
+            const memberDisplayName = (nameField?.value || '').trim() || `Member ${i}`;
+            if (applicantAge > 0 && memberAge > 0 && rel) {
+                if (MEMBER_MUST_BE_OLDER.includes(rel) && memberAge <= applicantAge) {
+                    showNoticeModal({
+                        title: `Age Conflict — Household Member ${i}`,
+                        message: `"${memberDisplayName}" is listed as ${rel.replace(/_/g, ' ')}. `
+                               + `Their age (${memberAge} yrs) must be greater than the applicant's age `
+                               + `(${applicantAge} yrs). Please verify the date of birth.`,
+                        type: 'warning',
+                    });
+                    return;
+                }
+                if (MEMBER_MUST_BE_YOUNGER.includes(rel) && memberAge >= applicantAge) {
+                    showNoticeModal({
+                        title: `Age Conflict — Household Member ${i}`,
+                        message: `"${memberDisplayName}" is listed as ${rel}. `
+                               + `Their age (${memberAge} yrs) must be less than the applicant's age `
+                               + `(${applicantAge} yrs). Please verify the date of birth.`,
                         type: 'warning',
                     });
                     return;
@@ -5302,7 +5418,8 @@ function getCsrfToken() {
             for (let i = 1; i <= householdMemberCount; i++) {
                 const nameF = document.querySelector(`input[name="hh_member_${i}_name"]`);
                 const relF = document.querySelector(`select[name="hh_member_${i}_relationship"]`);
-                const ageF = document.querySelector(`input[name="hh_member_${i}_age"]`);
+                const ageF = document.getElementById(`hhMember${i}Age`);
+                const dobF = document.getElementById(`hhMember${i}Dob`);
                 const sexF = document.querySelector(`select[name="hh_member_${i}_sex"]`) || document.querySelector(`input[name="hh_member_${i}_sex"]:checked`);
                 const statF = document.querySelector(`select[name="hh_member_${i}_status"]`);
                 const contF = document.querySelector(`input[name="hh_member_${i}_contact"]`);
@@ -5312,12 +5429,15 @@ function getCsrfToken() {
                     if (sexF && sexF.options) {
                         sexText = sexF.selectedIndex > 0 ? sexF.options[sexF.selectedIndex].text : '';
                     } else if (sexF) {
-                        sexText = sexF.value === 'M' ? 'Male' : (sexF.value === 'F' ? 'Female' : '');
+                        // Radio buttons send 'male'/'female' — normalise for display
+                        const sv = (sexF.value || '').toLowerCase();
+                        sexText = (sv === 'm' || sv === 'male') ? 'Male' : (sv === 'f' || sv === 'female') ? 'Female' : '';
                     }
 
                     let itemText = `<strong>${nameF.value}</strong>`;
                     let details = [];
                     if (relF && relF.selectedIndex > 0) details.push(relF.options[relF.selectedIndex].text);
+                    if (dobF && dobF.value) details.push('DOB: ' + dobF.value);
                     if (ageF && ageF.value) details.push(ageF.value + ' yrs');
                     if (sexText) details.push(sexText);
                     if (statF && statF.selectedIndex > 0) details.push(statF.options[statF.selectedIndex].text);
