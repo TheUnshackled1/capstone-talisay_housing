@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.cache import cache
 from functools import wraps
 from urllib.parse import urlencode
-from .models import Applicant, Barangay, Archive, SMSLog
+from .models import Applicant, Barangay, Archive, SMSLog, HouseholdMember
 from applications.staff_pipeline_status import (
     archive_applicant_status,
     archive_stage_filter_key,
@@ -2411,8 +2411,7 @@ def walkin_register(request, position):
                 member_dob = None
                 if dob_raw:
                     try:
-                        from django.utils.dateparse import parse_date as _parse_date
-                        member_dob = _parse_date(dob_raw)
+                        member_dob = parse_date(dob_raw)  # parse_date imported at module top
                     except (ValueError, TypeError):
                         member_dob = None
 
@@ -2460,7 +2459,6 @@ def walkin_register(request, position):
                         return JsonResponse({'success': False, 'error': msg})
                     messages.error(request, msg)
                     return redirect(applicants_list_url)
-                from intake.models import HouseholdMember
                 HouseholdMember.objects.create(
                     applicant=applicant,
                     full_name=name,
