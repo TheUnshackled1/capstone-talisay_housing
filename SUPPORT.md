@@ -23,10 +23,16 @@ Before opening an issue or contacting support, check the comprehensive documenta
 |---|---|
 | **[INSTRUCTIONS.md](INSTRUCTIONS.md)** | Step-by-step local setup, Windows installation, database configuration, Semaphore SMS settings, Google OAuth setup, and troubleshooting guide. |
 | **[README.md](README.md)** | Full system overview, core module workflows, tech stack, URL routing table, and endpoint reference. |
-| **[notes/user_guide.md](notes/user_guide.md)** | Staff role operational guide for Second Member, Fourth Member, Caretaker (Ronda), and Field Staff. |
+| **[TESTING.md](TESTING.md)** | Testing & Quality Assurance guide, test suite architecture across all apps, and query performance guards. |
 | **[DEPLOYMENT.md](DEPLOYMENT.md)** | Production deployment procedures for Railway Cloud, PythonAnywhere, and Linux (Nginx + Gunicorn + PostgreSQL). |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Deep dive into system architecture, Model-View-Template (MVT) design, and data flows. |
-| **[docs/ERD.md](docs/ERD.md)** | Complete database Entity Relationship Diagram and schema reference. |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | Deep dive into system architecture, Model-View-Template (MVT) design, ORM relationships, and data flows. |
+| **[docs/ERD.md](docs/ERD.md)** | Complete database Entity Relationship Diagram and schema reference (38 managed models). |
+| **[ROADMAP.md](ROADMAP.md)** | Strategic product vision, completed features, and phased short/medium/long-term roadmap milestones. |
+| **[CHANGELOG.md](CHANGELOG.md)** | Version release notes, bug fixes, and continuous milestone history. |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Contributor onboarding, local development workflow, and pull request submission guidelines. |
+| **[SECURITY.md](SECURITY.md)** | Confidential vulnerability reporting policy, response timelines, and built-in defense layers. |
+| **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** | Contributor Covenant Code of Conduct and community standards. |
+| **[notes/user_guide.md](notes/user_guide.md)** | Staff role operational guide for Second Member, Fourth Member, Caretaker (Ronda), and Field Staff. |
 | **[notes/dashboard_analytics_explainer.md](notes/dashboard_analytics_explainer.md)** | Explanation of dashboard metric cards, analytics calculations, and status definitions. |
 | **[.env.example](.env.example)** | Reference template for all environment variables and API keys. |
 

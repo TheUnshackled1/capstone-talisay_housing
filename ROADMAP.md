@@ -48,6 +48,7 @@ The initial production release successfully digitized the end-to-end socialized 
 - [x] **Walk-in Applicant Intake & Registration**:
   - Modal-driven registration capturing applicant personal information, spouse details, household roster, and income.
   - Cascading Philippine Standard Geographic Code (PSGC) birthplace selectors (Province → City/Municipality).
+  - Household roster with optional Flatpickr birthdates, real-time age auto-calculation, and cross-generational age-relationship validations (preventing parent younger than applicant, or child older than applicant).
   - 5-layer eligibility pre-screening: income ceiling threshold, 5+ years Talisay residency verification, property ownership check, CDRRMO hazard verification, and administrative blacklist check.
   - Instant duplicate applicant detection using phonetic and exact matching algorithms.
 - [x] **Document Vault Management**:

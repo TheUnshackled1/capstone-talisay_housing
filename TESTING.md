@@ -135,6 +135,7 @@ Validates citizen intake, duplicate prevention, and automated eligibility busine
   - `test_tc_wreg001_duplicate_preview`: Asserts the asynchronous duplicate preview API detects existing applicants sharing date of birth, surname, given name, and barangay.
   - `test_tc_wreg002_update_applicant`: Validates applicant profile data amendments, income adjustments, and database refreshes.
   - `test_tc_wreg003_residency_eligible`: Asserts that residency &lt; 5 years returns `False` and &ge; 5 years returns `True`.
+  - **Household Member & Age Validation**: Verifies that household member birthdates (`hh_member_i_dob`) and biological sex are correctly parsed and saved, age is dynamically auto-calculated, and cross-generational relationship validation rejects invalid submissions (e.g., child older than applicant or parent younger than applicant).
 - **`TestTable3_DocumentManagement`**:
   - `test_tc_wdoc002_normalize_content_type`: Tests MIME type normalization (`_normalize_blob_content_type`) for scanned document uploads (e.g., mapping `application/octet-stream` on `.pdf` files to `application/pdf`).
 - **`TestTable4_EligibilityAndSMS`**:
@@ -264,7 +265,7 @@ class LotMapQueryBudgetTest(TestCase):
         ...
         
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get('/units/settlements/')
+            response = self.client.get('/housing-units/second_member/')
             self.assertEqual(response.status_code, 200)
             
         # Ensure query count does not exceed established budget (prevents N+1 loops)

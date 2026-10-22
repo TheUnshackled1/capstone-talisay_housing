@@ -107,15 +107,15 @@ The result: a unified, role-gated platform that gives every THA staff position �
 
 ### 📥 Module 1 — Applicant Registration & Eligibility
 
-- **Walk-In Registration** — Comprehensive modal form capturing name, civil status, barangay, household size, monthly income, danger zone details, and document checklist.
+- **Walk-In Registration** — Comprehensive modal form capturing applicant legal name components, civil status, mobile contact (`09XXXXXXXXX`), birthdate with dynamic age calculation, cascading PSGC birthplace selectors (Province → City/Municipality), spouse details, Talisay residency years, monthly income, and displacement category.
 - **Duplicate Detection** — Pre-registration duplicate-preview check to prevent repeat registrations.
-- **Multi-Layer Eligibility Screening** — Automated gate checks: income ceiling (₱10,000/month), Talisay residency, no existing property, blacklist check, CDRRMO hazard certification routing.
+- **Multi-Layer Eligibility Screening** — Automated gate checks: income ceiling (₱10,000/month), Talisay residency (5+ years threshold), no existing property, blacklist check, CDRRMO hazard certification routing.
 - **CDRRMO Verification Workflow** — Applicants with hazard claims are routed to Field/Ronda staff for physical situation certification before eligibility is confirmed.
 - **Queue System** — Priority and walk-in queue entries for eligible applicants proceeding to Module 2.
-- **SMS Notifications** — Automatic Semaphore SMS on registration confirmation and eligibility result.
+- **SMS Notifications** — Automatic Semaphore SMS on registration confirmation and eligibility result, deep-linked to the public status tracker (`/status/<ref>/`).
 - **Archive System** — Formally archive or restore applicant records with full audit snapshot at point of archival.
 - **Document Deadline Tracking** — Set and track deadlines for baseline required document submission.
-- **Household Members** — Register all household members linked to an applicant for occupancy compliance.
+- **Household Members & Age Validation** — Register all co-habitating household members with kinship relationship, optional birthdate (Flatpickr calendar), dynamic age calculation (read-only toggle), biological sex, and generational cross-validation (`applicant_age < parent_age` and `applicant_age > child_age` error prevention).
 
 ### 📋 Module 2 — Application & Evaluation
 
