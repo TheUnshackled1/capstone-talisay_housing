@@ -171,7 +171,9 @@ erDiagram
     uuid applicant_id FK
     string full_name
     string relationship
+    date date_of_birth
     int age
+    string sex
   }
   Archive {
     uuid id PK

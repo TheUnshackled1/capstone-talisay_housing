@@ -53,7 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 #### 🎯 Lot Awarding & Beneficiary Notifications
 - **Award Ceremony Queue**: Structured queue for managing public lot-drawing sessions and unit allocation ceremonies.
-- **Automated Twilio SMS Engine**: Programmable SMS dispatch sending orientation schedules, dates, times, and venue notices directly to beneficiaries.
+- **Automated Semaphore SMS Engine**: Live SMS dispatch sending orientation schedules, dates, times, and venue notices directly to beneficiaries.
 - **Binding Legal Award Records**: Creation of immutable `LotAward` records bridging applications to designated relocation site lots.
 
 #### 🏘️ Housing Unit Inventory & Relocation Monitoring
@@ -68,7 +68,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Multi-Level Date Filters**: Interactive Year and Month dropdown filtering updating all dashboard analytics without full page reloads.
 
 #### 🔐 Role-Based Access Control & Security Portal
-- **Dedicated Staff Portals**: Role-gated workflows customized for `Second Member`, `Fourth Member`, and `Field Inspector`.
+- **Dedicated Staff Portals**: Role-gated workflows customized for `Second Member`, `Fourth Member`, `Caretaker (Ronda)`, and `Field Staff`.
 - **Google OAuth 2.0 Integration**: Social login powered by `django-allauth` with verified email account linking and cryptographic state verification.
 - **Defense-in-Depth Security**: Full CSRF protection across 100% of POST endpoints, `ALLOWED_HOSTS` verification, proxy SSL header trust, and zero hardcoded credentials.
 

@@ -5,6 +5,8 @@
 🌐 **Live Demo:** [ihsms.up.railway.app](https://ihsms.up.railway.app/)
 
 📄 **Quick File Links:**
+[![Setup Instructions](https://img.shields.io/badge/📖_Setup_Instructions-INSTRUCTIONS.md-3b82f6?style=flat-square)](INSTRUCTIONS.md)
+[![Deployment Guide](https://img.shields.io/badge/🌐_Deployment_Guide-DEPLOYMENT.md-0ea5e9?style=flat-square)](DEPLOYMENT.md)
 [![ERD Diagram](https://img.shields.io/badge/🗂️_Entity_Relationship_Diagram-docs/ERD.md-2563eb?style=flat-square)](docs/ERD.md)
 [![Architecture Deep Dive](https://img.shields.io/badge/🏗️_Architecture-ARCHITECTURE.md-6366f1?style=flat-square)](ARCHITECTURE.md)
 [![User Guide](https://img.shields.io/badge/📖_Staff_User_Guide-notes/user__guide.md-6366f1?style=flat-square)](notes/user_guide.md)
@@ -45,6 +47,8 @@
 - 🧑‍💻 [About](#-about)
 
 ### 📄 Detailed Documentation Files
+- 📖 [Setup & Configuration Instructions (`INSTRUCTIONS.md`)](INSTRUCTIONS.md)
+- 🌐 [Production Deployment Guide (`DEPLOYMENT.md`)](DEPLOYMENT.md)
 - 🗺️ [System Feature Roadmap (`ROADMAP.md`)](ROADMAP.md)
 - 💬 [Getting Support (`SUPPORT.md`)](SUPPORT.md)
 - 🧪 [Testing & Quality Assurance Guide (`TESTING.md`)](TESTING.md)
