@@ -95,11 +95,11 @@ pip install -r requirements.txt
 ```
 
 This installs:
-- **Django 6.0** (Core Web Framework)
+- **Django 6.0.6** (Core Web Framework)
 - **PyMuPDF / fitz** (Application form PDF generation & 2x2 photo overlay)
 - **django-allauth** (Google OAuth 2.0 authentication engine)
 - **whitenoise** (High-efficiency static asset streaming)
-- **psycopg2-binary & dj-database-url** (PostgreSQL adapter & connection parsing)
+- **psycopg[binary] 3.3.4 & dj-database-url** (PostgreSQL adapter — psycopg 3 for Django 6 — & connection parsing)
 - **requests & python-dotenv** (API calls & environment variable loading)
 
 ### Step 3.2 — Install Frontend Assets (Tailwind CSS 4)
@@ -250,13 +250,14 @@ The application is now accessible at:
 
 | Portal | Local URL | Description |
 |---|---|---|
-| **Public Citizen Intake** | [http://127.0.0.1:8000/](http://127.0.0.1:8000/) | Housing pre-application, inquiries, and eligibility rules |
-| **Resident Portal** | [http://127.0.0.1:8000/resident/portal/](http://127.0.0.1:8000/resident/portal/) | Beneficiary status tracker, lot awards, payment ledger |
+| **Public Landing Page** | [http://127.0.0.1:8000/](http://127.0.0.1:8000/) | Public homepage, live statistics, and housing requirements |
+| **Public Applicant Status Tracker** | [http://127.0.0.1:8000/status/<ref>/](http://127.0.0.1:8000/status/APP-20260827-1234/) | Unauthenticated status tracker (SMS deep-link for applicants) |
 | **Staff & Member Login** | [http://127.0.0.1:8000/login/](http://127.0.0.1:8000/login/) | Role-gated portal login with Google OAuth integration |
-| **Second Member Portal** | [http://127.0.0.1:8000/dashboard/second-member/](http://127.0.0.1:8000/dashboard/second-member/) | Board member review, approvals, and executive statistics |
-| **Fourth Member Portal** | [http://127.0.0.1:8000/dashboard/fourth-member/](http://127.0.0.1:8000/dashboard/fourth-member/) | Award verification and settlement allocation |
-| **Housing Inspector Portal** | [http://127.0.0.1:8000/dashboard/inspector/](http://127.0.0.1:8000/dashboard/inspector/) | Field inspection logging, occupancy verification |
-| **Django Admin** | [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) | Complete system models, logs, and database administration |
+| **Second Member Portal** | [http://127.0.0.1:8000/dashboard/second-member/](http://127.0.0.1:8000/dashboard/second-member/) | Intake overview, Module 1 & 2 queues, and executive analytics |
+| **Fourth Member Portal** | [http://127.0.0.1:8000/dashboard/fourth-member/](http://127.0.0.1:8000/dashboard/fourth-member/) | Application pipeline, lot awarding queue, and analytics |
+| **Caretaker Monitoring Portal** | [http://127.0.0.1:8000/dashboard/caretaker/](http://127.0.0.1:8000/dashboard/caretaker/) | Caretaker monitoring tasks, unit inspections, and reports |
+| **Field Staff Portal** | [http://127.0.0.1:8000/dashboard/field/](http://127.0.0.1:8000/dashboard/field/) | Field verification, CDRRMO hazard certification, and case desk |
+| **Django Admin** | [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) | Complete system models, Jazzmin admin, and user management |
 
 ---
 
@@ -266,11 +267,12 @@ The application is now accessible at:
 |---|---|---|---|
 | `/login/google/?role=second_member` | `GET` | Staff / Google Auth | Initiates Google OAuth flow tagged for Second Member portal access. |
 | `/login/google/?role=fourth_member` | `GET` | Staff / Google Auth | Initiates Google OAuth flow tagged for Fourth Member portal access. |
-| `/login/google/?role=inspector` | `GET` | Staff / Google Auth | Initiates Google OAuth flow tagged for Housing Inspector portal access. |
-| `/applications/<id>/pdf/` | `GET` | Staff (`@login_required`) | Generates filled 2-page `APPLICATION-FORM-THA.pdf` using PyMuPDF. |
-| `/units/settlements/` | `GET` | Staff / Admin | Visual settlement subdivision map with block & lot statuses. |
-| `/cases/<id>/summons/` | `POST` | Staff / Mediator | Issues hearing summons with automated Semaphore SMS notification. |
-| `/documents/vault/` | `GET/POST` | Staff / Admin | Central document repository with Google Drive Picker & scanner upload. |
+| `/login/google/?role=caretaker` | `GET` | Staff / Google Auth | Initiates Google OAuth flow tagged for Caretaker portal access. |
+| `/login/google/?role=field` | `GET` | Staff / Google Auth | Initiates Google OAuth flow tagged for Field Staff portal access. |
+| `/applications/staff/<position>/application-form-pdf/<uuid>/` | `GET` | Staff (`@login_required`) | Generates filled 2-page `APPLICATION-FORM-THA.pdf` using PyMuPDF. |
+| `/housing-units/<position>/` | `GET` | Staff / Admin | Interactive relocation site block & lot subdivision map with unit statuses. |
+| `/cases/<position>/create/` | `POST` | Staff / Mediator | Logs community disputes/violations with automated timeline tracking. |
+| `/documents/<position>/management/` | `GET` | Staff / Admin | Central digital vault with Google Drive Picker & scanned file uploads. |
 
 ---
 

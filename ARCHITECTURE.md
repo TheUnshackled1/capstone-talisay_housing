@@ -9,10 +9,11 @@
 - [System Architecture Overview](#-system-architecture-overview)
 - [Data Models & Schema Reference](#-data-models--schema-reference)
   - [1. Applicant Model (`intake.Applicant`)](#1-applicant-model-intakeapplicant)
-  - [2. Application Model (`applications.Application`)](#2-application-model-applicationsapplication)
-  - [3. HousingUnit Model (`units.HousingUnit`)](#3-housingunit-model-unitshousingunit)
-  - [4. LotAward Model (`units.LotAward`)](#4-lotaward-model-unitslotaward)
-  - [5. Case Model (`cases.Case`)](#5-case-model-casescase)
+  - [2. HouseholdMember Model (`intake.HouseholdMember`)](#2-householdmember-model-intakehouseholdmember)
+  - [3. Application Model (`applications.Application`)](#3-application-model-applicationsapplication)
+  - [4. HousingUnit Model (`units.HousingUnit`)](#4-housingunit-model-unitshousingunit)
+  - [5. LotAward Model (`units.LotAward`)](#5-lotaward-model-unitslotaward)
+  - [6. Case Model (`cases.Case`)](#6-case-model-casescase)
 - [ORM Relationships & Cascade Rules](#-orm-relationships--cascade-rules)
 - [Socialized Housing Lifecycle State Machine](#-socialized-housing-lifecycle-state-machine)
 - [Automated PDF Form Generation & PyMuPDF Engine](#-automated-pdf-form-generation--pymupdf-engine)
@@ -29,10 +30,10 @@ The system is engineered as a full-stack Django 6.0 web application implementing
 
 ### Architecture Highlights
 - **Presentation Layer**: Django template engine enhanced by Tailwind CSS 4, Heroicons, and Lucide icons. Dynamic client-side interactions utilize Vanilla JavaScript and Fetch API for modal forms, filtering, and scanner orchestration.
-- **Application Logic**: Role-gated views protected by `@login_required` and custom portal role middleware (`Second Member`, `Fourth Member`, `Field Inspector`).
+- **Application Logic**: Role-gated views protected by `@login_required` and custom portal role middleware (`Second Member`, `Fourth Member`, `Caretaker / Ronda`, `Field Staff`).
 - **Data Persistence**: Relational schema powered by PostgreSQL (production on Railway) and SQLite (local dev), managed through Django ORM migrations.
 - **Static & Media Serving**: WhiteNoise for high-performance static asset streaming; secure local storage with PyMuPDF document vault sanitization.
-- **External Integrations**: Google OAuth 2.0 via `django-allauth`, Twilio Programmable SMS API for applicant notifications, and local Dynamic Web TWAIN hardware scanner bridge.
+- **External Integrations**: Google OAuth 2.0 via `django-allauth`, Semaphore SMS API for automated applicant notifications, and local Dynamic Web TWAIN hardware scanner bridge.
 
 ---
 
@@ -47,24 +48,49 @@ The primary hub entity representing an individual citizen applying for socialize
 | Field Name | Django Field Type | Constraints & Options | Description |
 |---|---|---|---|
 | `id` | `UUIDField` | Primary Key, `default=uuid.uuid4`, Editable=False | Universally unique applicant identifier |
-| `reference_number` | `CharField(max_length=50)` | Unique, Indexed | Generated tracking code (e.g., `APP-20260829-8245`) |
-| `first_name` | `CharField(max_length=100)` | Required | Applicant given name |
-| `last_name` | `CharField(max_length=100)` | Required, Indexed | Applicant family name |
-| `middle_name` | `CharField(max_length=100)` | Blank=True | Applicant middle name |
-| `barangay` | `ForeignKey(Barangay)` | `on_delete=models.PROTECT`, Related=`applicants` | Origin barangay within Talisay City |
-| `monthly_income` | `DecimalField(max_digits=12, decimal_places=2)` | Default: 0.00 | Declared monthly household income |
-| `years_residing` | `PositiveIntegerField` | CheckConstraint: `years_residing <= 99` | Length of residency in Talisay City |
+| `reference_number` | `CharField(max_length=20)` | Unique, Indexed, Editable=False | Generated tracking code (e.g., `APP-20260829-8245`) |
+| `last_name` | `CharField(max_length=15)` | Required | Applicant surname / family name |
+| `first_name` | `CharField(max_length=15)` | Required | Applicant given name(s) |
+| `middle_name` | `CharField(max_length=10)` | Blank=True | Applicant middle name |
+| `extension_name` | `CharField(max_length=5)` | Blank=True | Extension suffix (Jr., Sr., III, etc.) |
+| `full_name` | `CharField(max_length=30)` | Auto-composed, Editable=False | Full formatted legal name |
+| `sex` | `CharField(max_length=1)` | Choices: `M`, `F` | Gender / biological sex |
+| `civil_status` | `CharField(max_length=20)` | Choices: `single`, `married`, `widowed`, etc. | Civil / marital status |
+| `date_of_birth` | `DateField` | Null=True, Blank=True | Applicant birthdate |
+| `age` | `PositiveIntegerField` | Null=True, Blank=True | Auto-calculated from birthdate |
+| `place_of_birth` | `CharField(max_length=30)` | Cascading PSGC selector | Province and municipality of birth |
+| `phone_number` | `CharField(max_length=20)` | Philippine mobile validator (`09XXXXXXXXX`) | Applicant primary mobile contact |
+| `spouse_name` | `CharField(max_length=30)` | Blank=True | Full name of spouse |
+| `spouse_phone` | `CharField(max_length=20)` | Philippine mobile validator | Spouse contact number |
+| `barangay` | `ForeignKey(Barangay)` | `on_delete=models.PROTECT`, Related=`applicants` | Origin barangay within Talisay City (27 barangays) |
+| `current_address` | `TextField` | Required | House number, street, purok/sitio |
+| `years_residing` | `PositiveSmallIntegerField` | CheckConstraint: `years_residing <= 99` | Years residing in Talisay City (threshold: 5+ years) |
+| `is_registered_voter_talisay` | `BooleanField` | Default: False | Talisay City residency / voter declaration |
+| `monthly_income` | `DecimalField(max_digits=10, decimal_places=2)` | Default: 0.00 | Declared monthly household income (ceiling: ₱10,000) |
 | `household_size` | `PositiveIntegerField` | Default: 1 | Number of co-habitating family members |
-| `status` | `CharField(max_length=30)` | Choices: `registered`, `evaluating`, `form_ready`, `lot_awarded`, `archived` | Lifecycle stage of the applicant |
-| `situation` | `CharField(max_length=50)` | Choices: `cdrmmo`, `ejected`, `displaced`, `none` | Special displacement circumstance |
-| `registered_voter` | `BooleanField` | Default: False | Talisay City voter registration status |
-| `created_by` | `ForeignKey(User)` | `on_delete=models.SET_NULL`, Null=True | Staff user who recorded initial intake |
+| `status` | `CharField(max_length=30)` | Choices: `pending`, `eligible`, `disqualified`, `standby`, `awarded` | Lifecycle stage of the applicant |
 | `created_at` | `DateTimeField` | `auto_now_add=True`, Indexed | Initial walk-in registration timestamp |
 | `updated_at` | `DateTimeField` | `auto_now=True` | Timestamp of last record update |
 
 ---
 
-### 2. Application Model (`applications.Application`)
+### 2. HouseholdMember Model (`intake.HouseholdMember`)
+
+Co-habitating family members of an applicant authorized to occupy the awarded relocation unit.
+
+| Field Name | Django Field Type | Constraints & Options | Description |
+|---|---|---|---|
+| `id` | `UUIDField` | Primary Key, `default=uuid.uuid4`, Editable=False | Unique member identifier |
+| `applicant` | `ForeignKey(Applicant)` | `on_delete=models.CASCADE`, Related=`household_members` | Associated household head / applicant |
+| `full_name` | `CharField(max_length=30)` | Required | Member full legal name |
+| `relationship` | `CharField(max_length=20)` | Choices: `spouse`, `son`, `daughter`, `mother`, `father`, etc. | Kinship relationship to applicant |
+| `date_of_birth` | `DateField` | Null=True, Blank=True | Member birthdate (Flatpickr datepicker) |
+| `age` | `PositiveIntegerField` | `MaxValueValidator(120)` | Auto-calculated age or direct entry |
+| `sex` | `CharField(max_length=1)` | Choices: `M`, `F` | Gender / biological sex |
+
+---
+
+### 3. Application Model (`applications.Application`)
 
 Formal government application record created when an applicant clears preliminary screening.
 
@@ -82,7 +108,7 @@ Formal government application record created when an applicant clears preliminar
 
 ---
 
-### 3. HousingUnit Model (`units.HousingUnit`)
+### 4. HousingUnit Model (`units.HousingUnit`)
 
 Physical housing unit inventory in a Talisay City relocation site (e.g., GK Cabatangan).
 
@@ -98,7 +124,7 @@ Physical housing unit inventory in a Talisay City relocation site (e.g., GK Caba
 
 ---
 
-### 4. LotAward Model (`units.LotAward`)
+### 5. LotAward Model (`units.LotAward`)
 
 Binding award record linking an approved application to an allocated housing unit.
 
@@ -114,7 +140,7 @@ Binding award record linking an approved application to an allocated housing uni
 
 ---
 
-### 5. Case Model (`cases.Case`)
+### 6. Case Model (`cases.Case`)
 
 Community dispute, unauthorized occupancy, or compliance case linked to an applicant or unit.
 
@@ -160,7 +186,7 @@ The socialized housing allocation pipeline enforces a deterministic 6-phase qual
    - **Needs Documents**: Returns applicant to document queue with flagged checklist items.
    - **Disqualify**: Marks as ineligible with documented legal rationale.
 4. **Form Generation (`ready_for_form` → `form_generated`)**: PyMuPDF injects records into the official 2-page THA application form. Downloaded for physical department head signatures.
-5. **Awarding Queue (`ready_for_lot_award` → `awarded`)**: Signed form scanned back into system. Staff schedule orientation, trigger automated Twilio SMS notice, and execute lot award.
+5. **Awarding Queue (`ready_for_lot_award` → `awarded`)**: Signed form scanned back into system. Staff schedule orientation, trigger automated Semaphore SMS notice, and execute lot award.
 6. **Post-Occupancy (`occupied`)**: Housing unit marked occupied. Starts 30-day monitoring cycle with site visits, progress verification, and compliance checks.
 
 ---
@@ -248,4 +274,4 @@ Asynchronous operations adhere to a predictable JSON envelope:
 - `POST /documents/scan/upload/`: Asynchronous document vault upload.
 - `POST /applications/<id>/evaluate/`: Evaluation decision submission.
 - `GET /applications/<id>/generate-pdf/`: In-memory PDF streaming.
-- `POST /units/<id>/award/`: Formal lot assignment and Twilio SMS trigger.
+- `POST /units/<id>/award/`: Formal lot assignment and Semaphore SMS trigger.

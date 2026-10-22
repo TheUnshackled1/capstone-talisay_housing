@@ -45,12 +45,12 @@ If you discover a security vulnerability or suspect a security flaw within the a
 The system enforces comprehensive multi-layer security controls out of the box:
 
 - **CSRF Protection**: `django.middleware.csrf.CsrfViewMiddleware` active with `{% csrf_token %}` across 100% of POST forms, reinforced with strict `CSRF_TRUSTED_ORIGINS` validation.
-- **Role-Gated Portal Access**: Discrete staff positions (`second_member`, `fourth_member`, `field_inspector`) protected by `@login_required` decorators, portal role normalization, and view-level authorization checks.
+- **Role-Gated Portal Access**: Discrete staff positions (`second_member`, `fourth_member`, `caretaker`, `field`) protected by `@login_required` decorators, portal role normalization, and view-level authorization checks.
 - **Secure Google OAuth Integration**: Powered by `django-allauth` with OAuth state validation, verified email linking, and defensive callback sanitization.
 - **Document Vault Sanitization**: File uploads restricted by size limits and validated MIME types; PyMuPDF handles server-side document parsing and preview generation securely.
 - **Hardware Isolation for Scanner Integration**: Dynamic Web TWAIN hardware scanner interactions operate strictly inside a local desktop sandbox via localhost service communication, avoiding exposure of raw hardware drivers to remote networks.
 - **Cross-Module Activity Audit Trail**: Real-time staff logging across applicant registration, qualification review, lot awards, inspection reports, and case management for complete accountability.
-- **Environment & Secret Isolation**: Sensitive credentials (`SECRET_KEY`, `DATABASE_URL`, Twilio API keys, and email configs) loaded dynamically via `.env` / environment variables with zero hardcoded credentials.
+- **Environment & Secret Isolation**: Sensitive credentials (`SECRET_KEY`, `DATABASE_URL`, Semaphore API keys, and email configs) loaded dynamically via `.env` / environment variables with zero hardcoded credentials.
 
 ---
 

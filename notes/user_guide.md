@@ -1,4 +1,4 @@
-x`# IHSMS Staff User Guide
+# 📖 IHSMS Staff User Guide
 ### Integrated Housing Services and Monitoring System
 **Talisay City Housing Authority** · Talisay City, Negros Occidental
 
@@ -141,13 +141,27 @@ This is where staff register new housing applicants.
 
 1. Click the **"+ Register New Applicant"** button on the page.
 2. Fill in the applicant's personal information:
-   - Full Name, Date of Birth, Barangay / Address
-   - Contact Number
-   - Applicant Situation (CDRRMO, Ejected, Displaced, None)
-   - Voter Registration status
-   - Gender and family member information
-3. Review for accuracy, then click **"Save"** / **"Register"**.
-4. The system generates a unique **Reference Number** (e.g., `APP-20260829-8245`).
+   - **Identity**: Last Name, First Name, Middle Name, Extension Name (Jr., Sr., III, etc.), and Sex (Male / Female).
+   - **Residency & Property**: Resident of Talisay City (Yes/No), Has Property in Talisay City (Yes/No), and Years of Residence in Talisay City (must be at least 5 years for standard eligibility).
+   - **Contact & Demographics**: Civil Status, Mobile Number (`09XXXXXXXXX`), Date of Birth, and Age (automatically calculated from birthdate).
+   - **Address**: House No. / Street / Purok, and Barangay of present address (selected from Talisay City's 27 barangays).
+   - **Place of Birth**: Cascading PSGC dropdowns (select Province first, then select City / Municipality).
+   - **Spouse Information**: Name of spouse and spouse mobile number (if applicable).
+   - **Household Members**:
+     - Click **"Add Member"** for each co-habitating family member.
+     - Enter member **Full Name** (Surname, given name, extension).
+     - Select **Relationship to Applicant** (*Spouse, Child, Parent, Sibling, Grandparent, Grandchild, Other Relative*).
+     - Enter **Birthdate** using the Flatpickr calendar (optional). The system automatically calculates the exact age.
+     - If birthdate is omitted, **Age** can be typed directly. When a birthdate is selected, Age becomes read-only.
+     - Select **Sex** (Male / Female).
+     - **Cross-Validation**: Built-in rules prevent generational inconsistencies (e.g., an applicant cannot be younger than their parent, and an applicant cannot be older than their child).
+   - **Socioeconomic & Special Circumstances**:
+     - Declared Monthly Household Income (ceiling threshold: ₱10,000/month).
+     - Applicant Situation (CDRRMO Disaster-displaced, Court-ejected, Infrastructure-displaced, or None).
+     - Talisay City Registered Voter status (Yes/No).
+3. Review the entered data in the confirmation summary modal, then click **"Register Applicant"**.
+4. The system automatically performs a duplicate preview check, stores the applicant record, and generates a unique **Reference Number** (e.g., `APP-20260829-8245`).
+5. An automated **Semaphore SMS notification** is dispatched to the applicant's mobile number containing their reference code and public status tracker link (`/status/<ref>/`).
 
 > The applicant is now in **"Registered"** status. Proceed to document scanning next.
 

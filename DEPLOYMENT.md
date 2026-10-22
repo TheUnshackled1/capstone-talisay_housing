@@ -84,7 +84,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-This installs Django 6.0, `pymupdf` (fitz), `django-allauth`, `whitenoise`, `psycopg2-binary`, `dj-database-url`, `requests`, and related IHSMS dependencies.
+This installs Django 6.0.6, `pymupdf` (fitz), `django-allauth`, `whitenoise`, `psycopg[binary] 3.3.4`, `dj-database-url`, `requests`, and related IHSMS dependencies.
 
 ---
 
@@ -331,7 +331,7 @@ sudo certbot --nginx -d yourdomain.gov.ph
 After reloading the application, verify the following:
 
 1. **Dashboard & Views**: Visit your domain — verify that Tailwind CSS styling, glassmorphism tokens, and icons render correctly.
-2. **Staff Google OAuth**: Test logging in via `/login/google/?role=second_member` and `/login/google/?role=inspector` to confirm callback domain matching.
+2. **Staff Google OAuth**: Test logging in via `/login/google/?role=second_member` and `/login/google/?role=caretaker` (or `field`) to confirm callback domain matching.
 3. **PDF Generation (PyMuPDF)**: Click **Open PDF** on an applicant in the Form Generation queue to verify overlay text and N/A coordinates render cleanly on `APPLICATION-FORM-THA.pdf`.
 4. **SMS Delivery**: Trigger an applicant status update or notice to confirm live Semaphore SMS messages deliver to beneficiary mobile numbers.
 5. **System Health**: Run `python manage.py check` to verify zero system issues or warnings.

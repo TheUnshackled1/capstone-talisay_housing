@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [1.1.0] - 2026-10-21
+
+### ✨ Added & Improved
+
+#### 📥 Household Member Demographics & Validation
+- **Household Member Birthdate Field**: Added optional datepicker input (`Flatpickr`) for each household member in the walk-in registration and update modals.
+- **Dynamic Age Auto-Calculation**: Member age is automatically computed in real time upon selecting a birthdate; age input automatically transitions to read-only when birthdate is populated.
+- **Generational Age Validation**: Added cross-generational validation rules ensuring:
+  - An applicant's age is greater than any declared child's age (`applicant_age > child_age`).
+  - An applicant's age is less than any declared parent's age (`applicant_age < parent_age`).
+- **Relationship Dropdown Alignment**: Removed `live_in_partner` from new registration dropdown options while preserving choice definition for legacy database records.
+- **Cascading Place of Birth**: Added two-stage Philippine Standard Geographic Code (PSGC) cascading selectors (Province → City/Municipality) for applicant birthplaces.
+- **Test Suite Expansion**: Added unit tests covering household member birthdate parsing, auto-age calculations, and relationship cross-validation.
+
+---
+
 ## [1.0.0] - 2026-10-12
 
 ![System Version History](docs/changelog_timeline.drawio.svg)
