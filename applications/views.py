@@ -2178,25 +2178,6 @@ def update_cdrrmo_certification(request, position):
         if decision == 'certified':
             queue_entry, _ = _ensure_module2_queue_entry(applicant, 'priority', added_by=request.user)
 
-            if applicant.phone_number:
-                if office_receipt:
-                    sms_msg = (
-                        f'THA: Official CDRRMO certification was received and filed at our intake office. '
-                        f'Priority queue no. {queue_entry.position}. Ref {applicant.reference_number}. '
-                        f'Please visit the Talisay Housing Authority when instructed for next steps.'
-                    )
-                    sms_event = 'cdrrmo_office_certified'
-                else:
-                    sms_msg = (
-                        f'THA: Your hazard-area certification is on file. Priority queue no. {queue_entry.position}. '
-                        f'Ref {applicant.reference_number}. Please visit the Talisay Housing Authority for next steps.'
-                    )
-                    sms_event = 'cdrrmo_certified'
-                sent = send_sms(applicant.phone_number, sms_msg, sms_event, applicant=applicant, module='applications')
-                if sent and not applicant.eligibility_sms_sent:
-                    applicant.eligibility_sms_sent = True
-                    applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
-
             cache.delete('dashboard_field_payload_v1')
             return JsonResponse({
                 'success': True,
@@ -2206,16 +2187,6 @@ def update_cdrrmo_certification(request, position):
             })
 
         queue_entry, _ = _ensure_module2_queue_entry(applicant, 'walk_in', added_by=request.user)
-        if applicant.phone_number:
-            sms_msg = (
-                "CDRRMO certification was not provided/verified in Module 2. "
-                f"You are currently placed in Walk-in Queue position #{queue_entry.position}. "
-                f"Reference: {applicant.reference_number}. Final eligibility processing remains under regular processing rules."
-            )
-            sent = send_sms(applicant.phone_number, sms_msg, 'cdrrmo_not_certified', applicant=applicant, module='applications')
-            if sent and not applicant.eligibility_sms_sent:
-                applicant.eligibility_sms_sent = True
-                applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
         cache.delete('dashboard_field_payload_v1')
         return JsonResponse({
             'success': True,
@@ -2639,12 +2610,6 @@ def update_cdrrmo_status(request, position):
         applicant.save()
         queue_entry, _ = _ensure_module2_queue_entry(applicant, 'walk_in', added_by=request.user)
         cert.save()
-        if applicant.phone_number:
-            walk_in_msg = (
-                f"Your housing application has been assigned to Walk-in Queue position #{queue_entry.position}. "
-                f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
-            )
-            sent = send_sms(applicant.phone_number, walk_in_msg, 'eligibility_passed', applicant=applicant, module='applications')
 
         cache.delete('dashboard_field_payload_v1')
         return JsonResponse({
