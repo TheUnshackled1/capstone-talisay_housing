@@ -980,6 +980,7 @@ def _module2_evaluations_applicants_queryset():
     )
 
     return applicants.select_related(
+
         'application',
         'cdrrmo_certification',
         'registered_by',
@@ -2583,16 +2584,6 @@ def update_cdrrmo_status(request, position):
 
             applicant.save()
             cert.save()
-            if applicant.phone_number:
-                eligible_msg = (
-                    "✅ Great news! Your housing application passed eligibility. "
-                    f"You are assigned {queue_type} Queue Position {queue_entry.position}. "
-                    f"Reference: {applicant.reference_number}. Please visit THA office for next steps."
-                )
-                sent = send_sms(applicant.phone_number, eligible_msg, 'eligibility_passed', applicant=applicant, module='applications')
-                if sent and not applicant.eligibility_sms_sent:
-                    applicant.eligibility_sms_sent = True
-                    applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
             cache.delete('dashboard_field_payload_v1')
             return JsonResponse({
@@ -3447,16 +3438,6 @@ def evaluate_applicant(request, position):
 
         queue_entry, _ = _ensure_module2_queue_entry(applicant, queue_type, added_by=request.user)
         queue_label = 'Priority Queue' if queue_type == 'priority' else 'Walk-in Queue'
-        if applicant.phone_number:
-            msg = (
-                "Congratulations! You are eligible for housing assistance. "
-                f"You are now in {queue_label} position #{queue_entry.position}. "
-                f"Reference: {applicant.reference_number}."
-            )
-            sent = send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant, module='applications')
-            if sent and not applicant.eligibility_sms_sent:
-                applicant.eligibility_sms_sent = True
-                applicant.save(update_fields=['eligibility_sms_sent', 'updated_at'])
 
         return JsonResponse({
             'success': True,
@@ -3590,19 +3571,11 @@ def generate_form(request, position, applicant_id):
     # Module 1 should have placed every eligible applicant into FIFO queue.
     # Self-heal older records so Module 2 can proceed without manual queue fixes.
     if applicant.status in ['eligible', 'requirements', 'application']:
-        queue_entry, queue_created = _ensure_module2_queue_entry(
+        queue_entry, _ = _ensure_module2_queue_entry(
             applicant,
             rules['recommended_queue_type'],
             added_by=request.user,
         )
-        if queue_created and applicant.phone_number:
-            queue_label = 'Priority Queue' if queue_entry.queue_type == 'priority' else 'Walk-in Queue'
-            msg = (
-                "Great news! Your housing application is now queued for processing. "
-                f"{queue_label} Position #{queue_entry.position}. "
-                f"Reference: {applicant.reference_number}"
-            )
-            send_sms(applicant.phone_number, msg, 'eligibility_passed', applicant=applicant, module='applications')
 
     if not rules.get('form_generation_ready'):
         hint = (rules.get('readiness_hint') or '').strip()
