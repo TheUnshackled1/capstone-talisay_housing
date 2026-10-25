@@ -6951,11 +6951,15 @@
                     overflow-y: visible;
                     -webkit-overflow-scrolling: touch;
                     margin-bottom: 0.25rem;
+                    /* Layout below reacts to THIS box's width (modal width), not the viewport. */
+                    container-type: inline-size;
+                    container-name: hhmembers;
                 }
 
                 .tha-reg-modal .hh-member-row {
                     display: grid;
-                    grid-template-columns: minmax(9rem, 1.2fr) minmax(8rem, 1fr) minmax(5rem, 0.6fr) minmax(10rem, 1.1fr) minmax(8rem, 1fr) minmax(9.5rem, 1.4fr);
+                    /* Relationship | DOB | Age | Sex | Civil status | Contact */
+                    grid-template-columns: minmax(8rem, 1.2fr) minmax(8.5rem, 1fr) minmax(4.5rem, 0.5fr) minmax(9.5rem, 1fr) minmax(8rem, 1fr) minmax(9rem, 1.2fr);
                     gap: 0.65rem;
                     align-items: start;
                     border: 1px solid #e2e8f0;
@@ -7134,14 +7138,89 @@
                     margin: 0;
                 }
 
-                @media (max-width: 1200px) {
+                /* ---- Member age rule: inline message + invalid state ---- */
+                .tha-reg-modal .hh-member-row .hh-member-error {
+                    grid-column: 1 / -1;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.45rem;
+                    margin: 0;
+                    padding: 0.5rem 0.7rem;
+                    border: 1px solid #fecaca;
+                    border-left: 4px solid #dc2626;
+                    border-radius: 0.4rem;
+                    background: #fef2f2;
+                    color: #991b1b;
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    line-height: 1.4;
+                    overflow-wrap: anywhere;
+                }
+
+                .tha-reg-modal .hh-member-row .hh-member-error::before {
+                    content: "!";
+                    flex: 0 0 1.1rem;
+                    height: 1.1rem;
+                    margin-top: 0.05rem;
+                    border-radius: 50%;
+                    background: #dc2626;
+                    color: #ffffff;
+                    font-size: 0.7rem;
+                    font-weight: 800;
+                    line-height: 1.1rem;
+                    text-align: center;
+                }
+
+                .tha-reg-modal .hh-member-row .hh-member-error[hidden] {
+                    display: none;
+                }
+
+                .tha-reg-modal .hh-member-row.hh-member-invalid {
+                    border-color: #fca5a5;
+                    background: #fffafa;
+                }
+
+                .tha-reg-modal .hh-member-row [aria-invalid="true"] {
+                    border-color: #dc2626 !important;
+                    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+                }
+
+                /* Keep cell contents inside their column at every width */
+                .tha-reg-modal .hh-member-row .hh-sex-group {
+                    flex-wrap: wrap;
+                    row-gap: 0.25rem;
+                }
+
+                .tha-reg-modal .hh-member-row input.hh-member-age {
+                    text-align: center;
+                    font-variant-numeric: tabular-nums;
+                }
+
+                /* ---- Responsive member row: driven by container (modal) width ----
+                   wide  (> 56rem): 6 columns in one row
+                   <= 56rem       : 3 x 2   (Relationship | DOB | Age / Sex | Civil | Contact)
+                   <= 34rem       : 2 columns, Relationship + Contact full width
+                   <= 22rem       : 1 column                                              */
+                @container hhmembers (max-width: 56rem) {
                     .tha-reg-modal .hh-member-row {
-                        grid-template-columns: 1fr;
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                    }
+                }
+
+                @container hhmembers (max-width: 34rem) {
+                    .tha-reg-modal .hh-member-row {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
                     }
 
-                    .tha-reg-modal .hh-row-1,
-                    .tha-reg-modal .hh-row-2 {
-                        display: contents;
+                    .tha-reg-modal .hh-member-row > .hh-member-rel-group,
+                    .tha-reg-modal .hh-member-row > .hh-member-contact-group {
+                        grid-column: 1 / -1;
+                    }
+                }
+
+                @container hhmembers (max-width: 22rem) {
+                    .tha-reg-modal .hh-member-row {
+                        grid-template-columns: minmax(0, 1fr);
                     }
                 }
 
@@ -7171,7 +7250,6 @@
                     }
 
                     .tha-reg-modal .hh-member-row {
-                        grid-template-columns: 1fr;
                         padding: 0.75rem;
                     }
 

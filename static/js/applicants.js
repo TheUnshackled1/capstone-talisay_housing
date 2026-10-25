@@ -4610,6 +4610,126 @@ function getCsrfToken() {
 
     let householdMemberCount = 0;
 
+    /* ------------------------------------------------------------------
+     * Member age ↔ relationship rule (single source of truth for the client).
+     * Keep in sync with MUST_BE_OLDER / MUST_BE_YOUNGER in intake/views.py.
+     * ------------------------------------------------------------------ */
+    const MEMBER_MUST_BE_OLDER = ['mother', 'father', 'grandfather', 'grandmother'];
+    const MEMBER_MUST_BE_YOUNGER = ['son', 'daughter', 'grandchild'];
+
+    function getApplicantAge() {
+        return parseInt(document.getElementById('age')?.value, 10) || 0;
+    }
+
+    function getMemberRelationship(i) {
+        return (document.querySelector(`select[name="hh_member_${i}_relationship"]`)?.value || '').toLowerCase();
+    }
+
+    /** Returns '' when OK, otherwise a human-readable conflict message for member row i. */
+    function memberAgeConflictMessage(i) {
+        const rel = getMemberRelationship(i);
+        const memberAge = parseInt(document.getElementById(`hhMember${i}Age`)?.value, 10);
+        const applicantAge = getApplicantAge();
+        // Nothing to compare yet (no relationship, applicant age unknown, or member age empty).
+        if (!rel || !applicantAge || Number.isNaN(memberAge)) return '';
+        const relLabel = rel.replace(/_/g, ' ');
+        if (MEMBER_MUST_BE_OLDER.includes(rel) && memberAge <= applicantAge) {
+            return `A ${relLabel} must be older than the applicant (${applicantAge} yrs). Entered: ${memberAge} yrs. Please verify the date of birth.`;
+        }
+        if (MEMBER_MUST_BE_YOUNGER.includes(rel) && memberAge >= applicantAge) {
+            return `A ${relLabel} must be younger than the applicant (${applicantAge} yrs). Entered: ${memberAge} yrs. Please verify the date of birth.`;
+        }
+        return '';
+    }
+
+    /** Show/clear the inline conflict message and invalid styling for member row i. */
+    function validateMemberAge(i) {
+        const row = document.getElementById(`hhMember${i}`);
+        if (!row) return '';
+        const msg = memberAgeConflictMessage(i);
+        const errEl = document.getElementById(`hhMember${i}Error`);
+        if (errEl) {
+            errEl.textContent = msg;
+            errEl.hidden = !msg;
+        }
+        row.classList.toggle('hh-member-invalid', !!msg);
+
+        const dobEl = document.getElementById(`hhMember${i}Dob`);
+        const targets = [
+            dobEl,
+            dobEl && dobEl._flatpickr ? dobEl._flatpickr.altInput : null,
+            document.getElementById(`hhMember${i}Age`),
+            document.querySelector(`select[name="hh_member_${i}_relationship"]`),
+        ];
+        targets.forEach((el) => {
+            if (!el) return;
+            if (msg) el.setAttribute('aria-invalid', 'true');
+            else el.removeAttribute('aria-invalid');
+        });
+        return msg;
+    }
+
+    function _memberYearsAgo(n) {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() - n);
+        return d;
+    }
+
+    /** Restrict the member's DOB picker so impossible birthdates cannot be selected.
+     *  Bounds come from the applicant's whole-year age so the picker and the rule always agree. */
+    function applyMemberDobBounds(i) {
+        const dobEl = document.getElementById(`hhMember${i}Dob`);
+        const fp = dobEl && dobEl._flatpickr;
+        if (!fp) return;
+        const rel = getMemberRelationship(i);
+        const applicantAge = getApplicantAge();
+        let minDate = new Date(1900, 0, 1);
+        let maxDate = new Date();
+        if (applicantAge > 0) {
+            if (MEMBER_MUST_BE_OLDER.includes(rel)) {
+                // age >= applicantAge + 1  ->  born on/before (today - (applicantAge+1) years)
+                maxDate = _memberYearsAgo(applicantAge + 1);
+            } else if (MEMBER_MUST_BE_YOUNGER.includes(rel)) {
+                // age <= applicantAge - 1  ->  born after (today - applicantAge years)
+                minDate = _memberYearsAgo(applicantAge);
+                minDate.setDate(minDate.getDate() + 1);
+            }
+        }
+        fp.set('minDate', minDate);
+        fp.set('maxDate', maxDate);
+    }
+
+    /** Re-check every rendered member row (bounds + inline message). Reads rows from the DOM. */
+    function revalidateAllMemberAges() {
+        const container = document.getElementById('householdMembersContainer');
+        if (!container) return;
+        container.querySelectorAll('.hh-member-row').forEach((row) => {
+            const m = /^hhMember(\d+)$/.exec(row.id || '');
+            if (!m) return;
+            const i = parseInt(m[1], 10);
+            applyMemberDobBounds(i);
+            validateMemberAge(i);
+        });
+    }
+
+    function onMemberRelationshipChange(i) {
+        applyMemberDobBounds(i);
+        validateMemberAge(i);
+    }
+
+    /** Bring a member row into view and focus its most relevant control. */
+    function focusMemberRow(i) {
+        const row = document.getElementById(`hhMember${i}`);
+        if (!row) return;
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const dobEl = document.getElementById(`hhMember${i}Dob`);
+        const target = (dobEl && dobEl._flatpickr && dobEl._flatpickr.altInput)
+            || document.getElementById(`hhMember${i}Age`);
+        if (target && typeof target.focus === 'function') {
+            setTimeout(() => target.focus({ preventScroll: true }), 250);
+        }
+    }
+
     function updateHouseholdSize() {
         // Count filled household members (at least one field has data)
         let filledCount = 0;
@@ -4710,9 +4830,9 @@ function getCsrfToken() {
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group hh-member-rel-group">
                     <label class="form-label">Relationship</label>
-                    <select class="form-select hh-member-field" name="hh_member_${i}_relationship" onchange="updateHouseholdSize()">
+                    <select class="form-select hh-member-field" name="hh_member_${i}_relationship" onchange="onMemberRelationshipChange(${i}); updateHouseholdSize()">
                         <option value="">— Select —</option>
                         <option value="spouse">Spouse</option>
                         <option value="son">Son</option>
@@ -4753,11 +4873,12 @@ function getCsrfToken() {
                         <option value="separated">Separated</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group hh-member-contact-group">
                     <label class="form-label">Contact (Opt)</label>
                     <input type="tel" class="form-input hh-member-field ph-phone" placeholder="09XXXXXXXXXX" maxlength="11" inputmode="numeric" autocomplete="tel-national" name="hh_member_${i}_contact">
                     <span class="hh-member-help">11 digits only</span>
                 </div>
+                <div class="hh-member-error" id="hhMember${i}Error" role="alert" aria-live="polite" hidden></div>
             `;
             container.appendChild(memberDiv);
             applyHouseholdMemberSnapshot(i, preserved[i - 1]);
@@ -4767,6 +4888,7 @@ function getCsrfToken() {
             attachUppercaseField(el);
         });
         initMemberDobPickers();
+        revalidateAllMemberAges();
         updateHouseholdSize();
     }
 
@@ -4796,6 +4918,7 @@ function getCsrfToken() {
     window.updateHouseholdSize = updateHouseholdSize;
     window.calculateMemberAge = calculateMemberAge;
     window.onMemberAgeInput = onMemberAgeInput;
+    window.onMemberRelationshipChange = onMemberRelationshipChange;
 
 
     /** Date inputs: material-style Flatpickr with native fallback. */
@@ -4888,7 +5011,14 @@ function getCsrfToken() {
     }
 
     // Auto-calculate age from date of birth (optional; no eligibility gates).
+    // Wrapper: after the applicant's age changes, every member row is re-validated.
     function calculateAge() {
+        const result = calculateApplicantAgeCore();
+        revalidateAllMemberAges();
+        return result;
+    }
+
+    function calculateApplicantAgeCore() {
         const dobInput = document.getElementById('dateOfBirth');
         const ageInput = document.getElementById('age');
         if (!dobInput || !ageInput) return null;
@@ -4909,8 +5039,14 @@ function getCsrfToken() {
     }
 
     /** Auto-calculate a household member's age from their date of birth.
-     *  Makes Age read-only when DOB is provided; editable again when DOB is cleared. */
+     *  Makes Age read-only when DOB is provided; editable again when DOB is cleared.
+     *  Also refreshes the inline parent/child age check for that row. */
     function calculateMemberAge(i) {
+        calculateMemberAgeCore(i);
+        validateMemberAge(i);
+    }
+
+    function calculateMemberAgeCore(i) {
         const dobEl = document.getElementById(`hhMember${i}Dob`);
         const ageEl = document.getElementById(`hhMember${i}Age`);
         if (!dobEl || !ageEl) return;
@@ -4945,6 +5081,7 @@ function getCsrfToken() {
         if (!el.readOnly) {
             el.value = el.value.replace(/\D/g, '').slice(0, 3);
         }
+        validateMemberAge(i);
     }
 
     /** Initialize Flatpickr date-pickers on all household member DOB inputs.
@@ -5232,10 +5369,7 @@ function getCsrfToken() {
 
         calculateAge();
 
-        // Age-relationship cross-validation constants
-        const MEMBER_MUST_BE_OLDER = ['mother', 'father', 'grandfather', 'grandmother'];
-        const MEMBER_MUST_BE_YOUNGER = ['son', 'daughter', 'grandchild'];
-        const applicantAge = parseInt(document.getElementById('age')?.value) || 0;
+        // Age-relationship rule: shared with the live inline validation (see memberAgeConflictMessage).
 
         // Validate household members - if any field is filled, all must be filled
         for (let i = 1; i <= householdMemberCount; i++) {
@@ -5275,30 +5409,16 @@ function getCsrfToken() {
             }
 
             // Cross-validate member age against applicant age based on relationship
-            const memberAge = parseInt(ageField?.value) || 0;
-            const rel = (relationshipField?.value || '').toLowerCase();
-            const memberDisplayName = (nameField?.value || '').trim() || `Member ${i}`;
-            if (applicantAge > 0 && memberAge > 0 && rel) {
-                if (MEMBER_MUST_BE_OLDER.includes(rel) && memberAge <= applicantAge) {
-                    showNoticeModal({
-                        title: `Age Conflict — Household Member ${i}`,
-                        message: `"${memberDisplayName}" is listed as ${rel.replace(/_/g, ' ')}. `
-                               + `Their age (${memberAge} yrs) must be greater than the applicant's age `
-                               + `(${applicantAge} yrs). Please verify the date of birth.`,
-                        type: 'warning',
-                    });
-                    return;
-                }
-                if (MEMBER_MUST_BE_YOUNGER.includes(rel) && memberAge >= applicantAge) {
-                    showNoticeModal({
-                        title: `Age Conflict — Household Member ${i}`,
-                        message: `"${memberDisplayName}" is listed as ${rel}. `
-                               + `Their age (${memberAge} yrs) must be less than the applicant's age `
-                               + `(${applicantAge} yrs). Please verify the date of birth.`,
-                        type: 'warning',
-                    });
-                    return;
-                }
+            const ageConflict = validateMemberAge(i);
+            if (ageConflict) {
+                const memberDisplayName = (nameField?.value || '').trim() || `Member ${i}`;
+                showNoticeModal({
+                    title: `Age Conflict — Household Member ${i}`,
+                    message: `"${memberDisplayName}": ${ageConflict}`,
+                    type: 'warning',
+                });
+                focusMemberRow(i);
+                return;
             }
         }
 

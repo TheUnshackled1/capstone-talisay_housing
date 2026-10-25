@@ -305,6 +305,11 @@ def _intake_blacklist_payloads_for_applicants(applicants):
 MODULE1_MIN_YEARS_RESIDING_TALISAY = 5
 MODULE1_MAX_YEARS_RESIDING_TALISAY = 99
 
+# Household-member age rule relative to the applicant (whole years).
+# Keep in sync with MEMBER_MUST_BE_OLDER / MEMBER_MUST_BE_YOUNGER in static/js/applicants.js.
+MEMBER_MUST_BE_OLDER = {'mother', 'father', 'grandfather', 'grandmother'}
+MEMBER_MUST_BE_YOUNGER = {'son', 'daughter', 'grandchild'}
+
 
 def _age_from_dob(date_of_birth):
     """Whole-year age from a date of birth. Returns None if missing or future."""
@@ -2428,11 +2433,12 @@ def walkin_register(request, position):
                     sex_val = ''
 
                 # Server-side cross-validation: parent must be older, child must be younger
-                MUST_BE_OLDER = {'mother', 'father', 'grandfather', 'grandmother'}
-                MUST_BE_YOUNGER = {'son', 'daughter', 'grandchild'}
+                # (rule constants: MEMBER_MUST_BE_OLDER / MEMBER_MUST_BE_YOUNGER, module level)
                 applicant_age = computed_age or 0
-                if applicant_age > 0 and age_int > 0:
-                    if relationship in MUST_BE_OLDER and age_int <= applicant_age:
+                # Compare whenever a real age is known (a DOB, or a typed age) — age 0 is a valid infant age.
+                has_member_age = bool(member_dob) or bool(age)
+                if applicant_age > 0 and has_member_age:
+                    if relationship in MEMBER_MUST_BE_OLDER and age_int <= applicant_age:
                         err_msg = (
                             f'Household Member {i} ({name.title()}): '
                             f'As {relationship.replace("_", " ").title()}, their age ({age_int}) '
@@ -2442,7 +2448,7 @@ def walkin_register(request, position):
                             return JsonResponse({'success': False, 'error': err_msg})
                         messages.error(request, err_msg)
                         return redirect(applicants_list_url)
-                    if relationship in MUST_BE_YOUNGER and age_int >= applicant_age:
+                    if relationship in MEMBER_MUST_BE_YOUNGER and age_int >= applicant_age:
                         err_msg = (
                             f'Household Member {i} ({name.title()}): '
                             f'As {relationship.title()}, their age ({age_int}) '
