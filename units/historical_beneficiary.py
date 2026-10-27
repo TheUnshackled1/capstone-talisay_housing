@@ -1,10 +1,3 @@
-"""
-Historical / on-site beneficiary backfill (Option A + C).
-
-Creates Applicant + Application + active LotAward on an existing block/lot,
-with backdated awarded_at from beneficiary year — without running intake queues.
-"""
-
 from __future__ import annotations
 
 import csv
