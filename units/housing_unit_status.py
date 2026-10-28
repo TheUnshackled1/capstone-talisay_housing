@@ -1,10 +1,3 @@
-"""
-Whether an awarded lot counts as a housing unit on file (map, KPIs, pipeline).
-
-Requires construction at 100% **and** staff Housing unit (normal_progress) on the
-binding final monitoring visit — not caretaker submit alone.
-"""
-
 from __future__ import annotations
 
 from units.monitoring_policy import (
