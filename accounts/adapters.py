@@ -1,5 +1,3 @@
-"""django-allauth adapters for THA staff Google OAuth."""
-
 from __future__ import annotations
 
 from django.conf import settings
