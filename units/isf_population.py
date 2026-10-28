@@ -1,10 +1,3 @@
-"""
-ISF population counts from Module 4 lot awards (GK Masterlist / housing units source).
-
-Counts beneficiary heads and household members on units with an active LotAward,
-plus legacy occupant_name rows when no award record exists.
-"""
-
 from django.db.models import Prefetch
 
 from intake.models import HouseholdMember
