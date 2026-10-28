@@ -1,15 +1,3 @@
-"""
-Module 4 occupancy monitoring schedule (office policy).
-
-Timeline after lot award:
-  - 30-day possession grace
-  - Initial field visit at monitoring day 90
-  - Final (120 Day) visit 120 calendar days after the 90 Day due date
-
-Explanation-letter extension (120-day build window):
-  - Extension 120 Day visit at extension start + 120 days (final extension inspection)
-"""
-
 from __future__ import annotations
 
 from datetime import date, timedelta
