@@ -307,19 +307,6 @@ def verify_position(view_func):
 @verify_position
 @never_cache
 def housing_units_monitoring(request, position):
-    """
-    Housing Unit & Occupancy Monitoring Dashboard
-    Displays all housing units grouped by block with status, occupant info,
-    and notice tracking. Supports grid and table views.
-
-    URL: /units/housing-units/<position>/  (e.g. …/second_member/, …/fourth_member/)
-
-    Template: units/housing_units_monitoring.html
-
-    Actors: Second Member, Fourth Member, Field desk, and other staff (nav uses role-specific URL).
-    Purpose: Monitor unit occupancy, track compliance notices, manage escalations
-    """
-
     # Get site - assume user is assigned to a site
     # For Fourth Member (Jocel), this would be their primary site
     site_id = request.GET.get('site_id')
