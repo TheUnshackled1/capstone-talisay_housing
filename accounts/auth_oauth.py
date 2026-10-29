@@ -1,5 +1,3 @@
-"""Google OAuth configuration helpers."""
-
 from __future__ import annotations
 
 
