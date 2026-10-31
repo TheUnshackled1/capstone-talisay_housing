@@ -18,13 +18,9 @@ urlpatterns = [
     path("units/", include("units.urls")),
     path("cases/", include("cases.urls")),
 
-    # Public — Applicant status tracker (no login required, SMS deep link)
-    # Clean short URL: talisayihms.com/status/APP-20260827-1234/
     path("status/<str:ref>/", intake_views.applicant_status_tracker, name='applicant_status_tracker'),
 ]
 
-# Serve user uploads in both dev and production. WhiteNoise only covers STATIC_ROOT,
-# so MEDIA_ROOT (a mounted Volume on Railway) needs its own route.
 urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
