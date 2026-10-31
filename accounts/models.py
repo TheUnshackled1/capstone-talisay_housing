@@ -1,8 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-
-# Staff roles that share the unified field verification desk (Channel B / CDRRMO).
-# Caretaker duties are folded into ronda in process; occupancy uses the same set.
+from django.contrib.auth.models import AbstractUseret.
 FIELD_INSPECTOR_POSITIONS = frozenset({'ronda', 'field'})
 
 
