@@ -1,7 +1,3 @@
-"""
-Module 2 utility helpers.
-"""
-
 from units.models import Blacklist as UnitsBlacklist
 from intake.utils import send_sms as _base_send_sms
 
