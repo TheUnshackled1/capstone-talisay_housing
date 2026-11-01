@@ -990,9 +990,6 @@ def _module2_evaluations_applicants_queryset():
         'documents',
         'eligibility_check_decisions',
         'household_members',
-        # archives not needed in the main loop (only in the throttled preflight
-        # which has its own queryset). Removed to avoid fetching unused data.
-        # cdrrmo field_photos prefetched to avoid per-applicant COUNT queries.
         'cdrrmo_certification__field_photos',
     ).order_by('module2_handoff_at', 'created_at', 'id')
 
