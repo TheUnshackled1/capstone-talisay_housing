@@ -968,9 +968,7 @@ def _module2_evaluations_applicants_queryset():
         evaluation_approval_status='approved'
     )
 
-    # requirement_submissions: only prefetch verified Group A submissions — the only
-    # field used in the loop is group_a_verified count. This avoids fetching every
-    # historical submission row for every applicant.
+
     verified_group_a_submissions_prefetch = Prefetch(
         'requirement_submissions',
         queryset=RequirementSubmission.objects.filter(
