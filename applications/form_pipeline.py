@@ -1,11 +1,3 @@
-"""
-Application form lifecycle helpers (Module 2).
-
-Physically printed/signed forms are ingested via vault document type ``signed_application``.
-When a real scan/file payload exists while ``Application.status`` is ``draft``, we advance to
-``completed`` and stamp ``applicant_signed_at`` (first transition only for the timestamp).
-"""
-
 from django.apps import apps
 from django.db import transaction
 from django.utils import timezone

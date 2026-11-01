@@ -1,8 +1,3 @@
-"""
-Shared staff-facing labels for applicant pipeline stage (Modules 2–4 + blacklist registry).
-Used by Document Management and Intake Archives.
-"""
-
 from __future__ import annotations
 
 from intake.models import Applicant
