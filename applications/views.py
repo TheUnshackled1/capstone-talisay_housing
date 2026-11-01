@@ -983,8 +983,6 @@ def _module2_evaluations_applicants_queryset():
         'cdrrmo_certification',
         'registered_by',
         'module2_handoff_by',
-        # barangay included so applicant.barangay.name doesn't fire a per-row query
-        # when the search filter accesses it (and for template renders).
         'barangay',
     ).prefetch_related(
         verified_group_a_submissions_prefetch,
