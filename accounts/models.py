@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUseret.
+from django.contrib.auth.models import AbstractUser
 FIELD_INSPECTOR_POSITIONS = frozenset({'ronda', 'field'})
 
 
