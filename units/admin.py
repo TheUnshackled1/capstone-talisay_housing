@@ -34,7 +34,6 @@ class StaticSettlementAdmin(admin.ModelAdmin):
     )
 
     def get_readonly_fields(self, request, obj=None):
-        # Number is assigned automatically on create; editable only when changing.
         if obj is None:
             return self.readonly_fields + ('number',)
         return self.readonly_fields
