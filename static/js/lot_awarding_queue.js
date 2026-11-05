@@ -3,8 +3,8 @@ function lawqShowAlert(message, title, onConfirm, variant) {
     }
 
     var LAWQ_SMS_DEFAULT = (
-        'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
-        + 'Maghulat sang schedule para sa inyo orientasyon. Salamat!'
+        'Congratulations! Your forms have been signed. You have now been officially assigned a lot. '
+        + 'Please wait for the schedule of your orientation. Thank you!'
     );
 
     function lawqFormatOrientationLabel(isoLocal) {
@@ -24,8 +24,8 @@ function lawqShowAlert(message, title, onConfirm, variant) {
         var whenLabel = lawqFormatOrientationLabel(isoLocal);
         if (!whenLabel) return LAWQ_SMS_DEFAULT;
         return (
-            'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
-            + 'Ang inyo orientasyon sa ' + whenLabel + '. Salamat!'
+            'Congratulations! Your forms have been signed. You have now been officially assigned a lot. '
+            + 'Your orientation is on ' + whenLabel + '. Thank you!'
         );
     }
 

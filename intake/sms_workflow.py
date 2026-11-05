@@ -26,10 +26,12 @@ PROCEED_TO_EVALUATION = 'proceed_evaluation'
 READY_FOR_FORM_QUEUE_REMINDER = 'ready_for_form_queue_reminder'
 PROCEED_TO_LOT_AWARDING = 'proceed_to_lot_awarding'
 
-# Hiligaynon phrases in lot-awarding queue bulk SMS (for SMSLog lookup / legacy rows).
+# Phrases in lot-awarding queue bulk SMS (for SMSLog lookup / legacy rows).
 LOT_AWARDING_SMS_BODY_MARKERS = (
     'Pirmanado na ang imo forms',
     'assignan na sang lot',
+    'Your forms have been signed',
+    'officially assigned a lot',
 )
 
 
@@ -172,18 +174,18 @@ def format_orientation_schedule(when) -> str:
 
 def lot_awarding_notify_body(*, orientation_at=None) -> str:
     """
-    Core Hiligaynon body for lot-awarding / orientation SMS (no THA header, no name suffix).
+    Core body for lot-awarding / orientation SMS (no THA header, no name suffix).
     When orientation_at is set, include the schedule instead of "wait for schedule".
     """
     if orientation_at:
         when_label = format_orientation_schedule(orientation_at)
         return (
-            'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
-            f'Ang inyo orientasyon sa {when_label}. Salamat!'
+            'Congratulations! Your forms have been signed. You have now been officially assigned a lot. '
+            f'Your orientation is on {when_label}. Thank you!'
         )
     return (
-        'Congratulations! Pirmanado na ang imo forms. Ikaw ang assignan na sang lot. '
-        'Maghulat sang schedule para sa inyo orientasyon. Salamat!'
+        'Congratulations! Your forms have been signed. You have now been officially assigned a lot. '
+        'Please wait for the schedule of your orientation. Thank you!'
     )
 
 
