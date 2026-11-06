@@ -1684,8 +1684,6 @@ function getCsrfToken() {
 
     document.addEventListener('DOMContentLoaded', function () {
         const archiveReqFileInput = document.getElementById('archiveRequirementFileInput');
-        let hasShownVoterRequirementAlert = false;
-        let hasShownPropertyRequirementAlert = false;
         if (archiveReqFileInput) {
             archiveReqFileInput.addEventListener('change', handleArchiveRequirementFileSelected);
         }
@@ -1773,58 +1771,10 @@ function getCsrfToken() {
                 });
             });
         }
-        const voterYes = document.getElementById('voterYes');
-        const voterNo = document.getElementById('voterNo');
-        if (voterNo) {
-            voterNo.addEventListener('change', function () {
-                if (!voterNo.checked) return;
-                if (!hasShownVoterRequirementAlert) {
-                    hasShownVoterRequirementAlert = true;
-                    if (typeof window.showFlowAlert === 'function') {
-                        window.showFlowAlert(
-                            'Applicants must be a Resident of Talisay City before you proceed with registration.',
-                            'Office requirement',
-                            null,
-                            'warning'
-                        );
-                    } else {
-                        window.alert('Office requirement: Applicants must be a Resident of Talisay City before you proceed with registration.');
-                    }
-                }
-                if (voterYes) {
-                    voterYes.checked = true;
-                    voterYes.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            });
-        }
-        const hasPropertyYes = document.getElementById('hasPropertyYes');
-        const hasPropertyNo = document.getElementById('hasPropertyNo');
         const yearsResidingInput = document.getElementById('yearsResiding');
         const monthlyIncomeInput = document.getElementById('monthlyIncome');
         let hasShownResidencyRequirementAlert = false;
         let hasShownIncomeRequirementAlert = false;
-        if (hasPropertyYes) {
-            hasPropertyYes.addEventListener('change', function () {
-                if (!hasPropertyYes.checked) return;
-                if (!hasShownPropertyRequirementAlert) {
-                    hasShownPropertyRequirementAlert = true;
-                    if (typeof window.showFlowAlert === 'function') {
-                        window.showFlowAlert(
-                            'The office only accepts applicants who do not own property in Talisay City.',
-                            'Office requirement',
-                            null,
-                            'warning'
-                        );
-                    } else {
-                        window.alert('Office requirement: The office only accepts applicants who do not own property in Talisay City.');
-                    }
-                }
-                if (hasPropertyNo) {
-                    hasPropertyNo.checked = true;
-                    hasPropertyNo.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            });
-        }
         attachYearsResidingDigitLimit(yearsResidingInput, { minYears: MODULE1_MIN_YEARS_RESIDING });
         const isfEditYearsInput = document.getElementById('isfEditYears');
         attachYearsResidingDigitLimit(isfEditYearsInput, { minYears: 0 });
