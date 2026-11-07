@@ -1683,6 +1683,7 @@ function getCsrfToken() {
     window.openArchiveRequirementsModal = openArchiveRequirementsModal;
 
     document.addEventListener('DOMContentLoaded', function () {
+        ensureDefaultEligibilityRadios();
         const archiveReqFileInput = document.getElementById('archiveRequirementFileInput');
         if (archiveReqFileInput) {
             archiveReqFileInput.addEventListener('change', handleArchiveRequirementFileSelected);
@@ -4397,8 +4398,16 @@ function getCsrfToken() {
         if (relocated) relocated.hidden = v !== 'relocated';
     }
 
+    function ensureDefaultEligibilityRadios() {
+        const voterYesEl = document.getElementById('voterYes');
+        if (voterYesEl) voterYesEl.checked = true;
+        const hasPropertyNoEl = document.getElementById('hasPropertyNo');
+        if (hasPropertyNoEl) hasPropertyNoEl.checked = true;
+    }
+
     function openAddModal() {
         const modal = document.getElementById('addModal');
+        ensureDefaultEligibilityRadios();
         if (modal) {
             modal.classList.add('active');
             // Keep sidebar accessible — offset modal by current sidebar width
@@ -4441,6 +4450,7 @@ function getCsrfToken() {
         }
         if (modal) modal.classList.remove('active');
         if (form) form.reset();
+        ensureDefaultEligibilityRadios();
         const dispMenu = document.getElementById('displacementMenu');
         const dispToggle = document.getElementById('displacementToggle');
         const dispText = document.getElementById('displacementToggleText');
@@ -5187,6 +5197,8 @@ function getCsrfToken() {
         incomeFields.forEach(field => {
             field.value = field.value.replace(/,/g, '');
         });
+
+        ensureDefaultEligibilityRadios();
 
         const formData = new FormData(form);
 
