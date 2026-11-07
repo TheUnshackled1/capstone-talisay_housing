@@ -49,7 +49,6 @@ def isf_population_stats(site=None, period_start=None, period_end=None):
     else:
         units_qs = units_qs.filter(site__is_active=True)
 
-    # Materialize once — do not use .iterator() here; it disables prefetch_related.
     units = list(units_qs.prefetch_related(Prefetch('lot_awards', queryset=active_award_qs)))
 
     total_isf = 0
